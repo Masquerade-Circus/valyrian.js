@@ -2,16 +2,16 @@ import Store from '../store';
 import Components from '../components';
 
 
-// m.router(document.body)
-//     // Use middlewares available for all requests
-//     .use(() => console.log('ok'))
-//     .get('/', () => console.log('Also ok'))
-//     .get('/', [
-//         () => console.log('Init'),
-//         () => Components.Counter
-//     ])
-//     .get('/hello', () => Components.Hello)
-//     .get('/counter', () => Components.Counter);
+m.router(document.body)
+    // Use middlewares available for all requests
+    .use(() => console.log('ok'))
+    .get('/', () => console.log('Also ok'))
+    .get('/', [
+        () => console.log('Init'),
+        () => Components.Hello
+    ])
+    .get('/hello', () => Components.Hello)
+    .get('/counter', () => Components.Counter);
 
 window.Store = Store;
 
@@ -25,10 +25,10 @@ setTimeout(function () {
     Store.name('Mundo');
 }, 7000);
 
-// setTimeout(function(){
-//     m.router.go('/counter');
-// }, 10000);
+setTimeout(function(){
+    m.router.go('/counter');
+}, 10000);
 
 console.log(m.isNode);
 
-m.mount(document.body, Components.Counter);
+// m.mount(document.body, Components.Hello);

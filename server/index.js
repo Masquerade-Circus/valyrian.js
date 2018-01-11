@@ -12,7 +12,7 @@ let router = Router();
 router
 
     // Default returned responses
-    .get('/', () => m.render(Components.Home, {children: Components.Counter.view()}))
+    .get('/', () => m.render(Components.Home, {children: Components.Hello.view()}))
     .get('/hello', () => m.render(Components.Home, {children: Components.Hello.view()}))
     .get('/counter', () => m.render(Components.Home, {children: Components.Counter.view()}))
     .get('/index.js', (req, res) => Helper.serveFile(res, `./client/index.cjs.js`))
