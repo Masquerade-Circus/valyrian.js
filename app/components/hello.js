@@ -1,6 +1,6 @@
 let Hello = {
     view() {
-        return m('div#mundo.hola', Store.message());
+        return v('div#mundo.hola', Store.message());
     }
 };
 

@@ -1,9 +1,9 @@
 let Main = {
     view() {
-        return m('div', [
+        return v('div', [
             Main.attributes.children,
-            // m('script', {src: 'lib.js'}),
-            m('script', {src: 'index.js'})
+            // v('script', {src: 'lib.js'}),
+            v('script', {src: 'index.js'})
         ]);
     }
 };

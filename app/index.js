@@ -2,7 +2,7 @@ import '../dist';
 import Store from './store';
 import Components from './components';
 
-if (m.isNode){
+if (v.isNode){
     global.Store = Store;
     global.Components = Components;
 } else {
@@ -10,20 +10,20 @@ if (m.isNode){
     window.Components = Components;
 }
 
-m.router(m.isNode ? m.container : document.body)
+v.router(v.isNode ? v.container : document.body)
     // Use middlewares available for all requests
     .use(() => console.log('ok'))
     .get('/', () => console.log('Also ok'))
     .get('/', [
         () => console.log('Init'),
         () => {
-            return m.isNode ? Components.Home : Components.Hello;
+            return v.isNode ? Components.Home : Components.Hello;
         }
     ])
     .get('/hello', () => Components.Hello)
     .get('/counter', () => Components.Counter);
 
-if (!m.isNode){
+if (!v.isNode){
     setTimeout(function () {
         console.log('hello');
         Store.hello('Hola');
@@ -35,11 +35,11 @@ if (!m.isNode){
     }, 7000);
 
     setTimeout(function(){
-        m.router.go('/counter');
+        v.router.go('/counter');
     }, 10000);
 }
 
 
-console.log(m.isNode);
+console.log(v.isNode);
 
-// m.mount(document.body, Components.Hello);
+// v.mount(document.body, Components.Hello);

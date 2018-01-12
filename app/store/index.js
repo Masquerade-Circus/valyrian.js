@@ -1,9 +1,9 @@
 let Store = {
-    hello: m.data('hello'),
-    name: m.data('name'),
-    count: m.data(2)
+    hello: v.data('hello'),
+    name: v.data('name'),
+    count: v.data(2)
 };
 
-Store.message = m.data(() => Store.hello + ' ' + Store.name);
+Store.message = v.data(() => Store.hello + ' ' + Store.name);
 
 module.exports = Store;
