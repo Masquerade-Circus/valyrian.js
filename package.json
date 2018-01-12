@@ -8,7 +8,7 @@
   "license": "Apache-2.0",
   "private": false,
   "scripts": {
-    "dev": "nodemon -w ./server -w ./client/index.cjs.js -w ./dist -w ./components -w ./store index.js"
+    "dev": "nodemon -w ./server -w ./client -w ./dist -w ./components -w ./store index.js"
   },
   "dependencies": {
     "html-element": "^2.2.0"

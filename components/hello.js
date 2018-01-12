@@ -1,6 +1,6 @@
 let Hello = {
     view() {
-        return m('div.hello', Store.message());
+        return m('div', Store.message());
     }
 };
 

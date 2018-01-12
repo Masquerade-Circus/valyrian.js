@@ -37,30 +37,8 @@ module.exports = [
           'html-element': 'htmlelement'
         },
         plugins: [
-            uglify,
+            // uglify,
             new BundleAnalyzerPlugin()
-        ]
-    },
-    {
-        entry: './lib/router.js',
-        output: {
-            path: path.resolve(__dirname, 'dist'),
-            filename: 'router.js'
-        },
-        watch: true,
-        node: {
-            console: false,
-        	global: false,
-        	process: false,
-        	Buffer: false,
-        	setImmediate: false
-        },
-        externals: {
-
-        },
-        plugins: [
-            uglify,
-            // new BundleAnalyzerPlugin()
         ]
     },
     {
@@ -71,7 +49,7 @@ module.exports = [
         },
         watch: true,
         plugins: [
-            uglify
+            // uglify
         ]
     }
 ];
