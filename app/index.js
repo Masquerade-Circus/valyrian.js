@@ -1,6 +1,6 @@
 import '../dist';
-import Store from '../store';
-import Components from '../components';
+import Store from './store';
+import Components from './components';
 
 if (m.isNode){
     global.Store = Store;
@@ -9,8 +9,6 @@ if (m.isNode){
     window.Store = Store;
     window.Components = Components;
 }
-
-
 
 m.router(m.isNode ? m.container : document.body)
     // Use middlewares available for all requests
@@ -36,9 +34,9 @@ if (!m.isNode){
         Store.name('Mundo');
     }, 7000);
 
-    // setTimeout(function(){
-    //     m.router.go('/counter');
-    // }, 10000);
+    setTimeout(function(){
+        m.router.go('/counter');
+    }, 10000);
 }
 
 

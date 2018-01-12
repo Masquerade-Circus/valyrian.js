@@ -42,10 +42,10 @@ module.exports = [
         ]
     },
     {
-        entry: './client/index.js',
+        entry: './app/index.js',
         output: {
-            path: path.resolve(__dirname, 'client'),
-            filename: 'index.cjs.js'
+            path: path.resolve(__dirname, 'app'),
+            filename: 'index.min.js'
         },
         watch: true,
         plugins: [
