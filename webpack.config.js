@@ -37,7 +37,7 @@ module.exports = [
           'html-element': 'htmlelement'
         },
         plugins: [
-            // uglify,
+            uglify,
             new BundleAnalyzerPlugin()
         ]
     },
@@ -49,7 +49,7 @@ module.exports = [
         },
         watch: true,
         plugins: [
-            // uglify
+            uglify
         ]
     }
 ];
