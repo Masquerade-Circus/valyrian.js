@@ -10,15 +10,13 @@ if (v.isNode){
     window.Components = Components;
 }
 
-v.router(v.isNode ? v.container : document.body)
+v.router(v.isNode ? v.container : document.body, Components.Main)
     // Use middlewares available for all requests
     .use(() => console.log('ok'))
     .get('/', () => console.log('Also ok'))
     .get('/', [
         () => console.log('Init'),
-        () => {
-            return v.isNode ? Components.Home : Components.Hello;
-        }
+        () => Components.Hello
     ])
     .get('/hello', () => Components.Hello)
     .get('/counter', () => Components.Counter);
@@ -38,8 +36,5 @@ if (!v.isNode){
         v.router.go('/counter');
     }, 10000);
 }
-
-
-console.log(v.isNode);
 
 // v.mount(document.body, Components.Hello);

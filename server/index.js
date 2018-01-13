@@ -9,9 +9,9 @@ require('../app/index.min.js');
 let router = Router();
 
 router
-    .get('/', () => v.router.go('/', v(Components.Hello)))
-    .get('/hello', () => v.router.go('/', v(Components.Hello)))
-    .get('/counter', () => v.router.go('/', v(Components.Counter)))
+    .get('/', () => v.router.go('/'))
+    .get('/hello', () => v.router.go('/hello'))
+    .get('/counter', () => v.router.go('/counter'))
     .get('/index.js', (req, res) => Helper.serveFile(res, `./app/index.min.js`))
 ;
 

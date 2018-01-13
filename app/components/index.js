@@ -1,10 +1,10 @@
-let Home = require('./home'),
+let Main = require('./main'),
     Hello = require('./hello'),
     Counter = require('./counter')
 ;
 
 module.exports = {
-    Home,
+    Main,
     Hello,
     Counter
 };
