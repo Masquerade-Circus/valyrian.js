@@ -30,7 +30,8 @@ var Counter = {
                 v('br'),
                 v(function(){
                     return v('h1','ok2');
-                })
+                }),
+                v('img.div[src=http://placeimg.com/640/480/any]#ok')
             ])
         ]);
     }

@@ -15,7 +15,6 @@ router
     .get('/index.js', (req, res) => Helper.serveFile(res, `./app/index.min.js`))
 ;
 
-
 // Init micro server
 let server = micro(router);
 
