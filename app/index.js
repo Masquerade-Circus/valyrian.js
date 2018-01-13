@@ -10,6 +10,8 @@ if (v.isNode){
     window.Components = Components;
 }
 
+console.log(v);
+
 v.router(v.isNode ? v.container : document.body, Components.Main)
     // Use middlewares available for all requests
     .use(() => console.log('ok'))
