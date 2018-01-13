@@ -1,10 +1,27 @@
 const path = require('path');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
-const uglify = new UglifyJsPlugin({
+const uglify5 = new UglifyJsPlugin({
     parallel: true,
     uglifyOptions: {
         ecma: 5,
+        mangle: true,
+        compress: {
+            warnings: false, // Suppress uglification warnings
+            pure_getters: true,
+            unsafe: true
+        },
+        output: {
+            comments: false
+        },
+        exclude: [/\.min\.js$/gi]
+    }
+});
+
+const uglify8 = new UglifyJsPlugin({
+    parallel: true,
+    uglifyOptions: {
+        ecma: 8,
         mangle: true,
         compress: {
             warnings: false, // Suppress uglification warnings
@@ -37,7 +54,7 @@ module.exports = [
           'html-element': 'htmlelement'
         },
         plugins: [
-            uglify,
+            uglify5,
             new BundleAnalyzerPlugin()
         ]
     },
@@ -49,7 +66,7 @@ module.exports = [
         },
         watch: true,
         plugins: [
-            uglify
+            uglify5
         ]
     }
 ];

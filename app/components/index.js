@@ -1,10 +1,7 @@
-let Main = require('./main'),
-    Hello = require('./hello'),
-    Counter = require('./counter')
-;
-
-module.exports = {
-    Main,
-    Hello,
-    Counter
+let Components = {
+    Main: require('./main'),
+    Hello: require('./hello'),
+    Counter: require('./counter')
 };
+
+module.exports = Components;
