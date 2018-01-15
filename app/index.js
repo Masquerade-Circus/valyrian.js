@@ -5,6 +5,8 @@ require('../dist');
     this.Store = require('./store');
     this.Components = require('./components');
 
+    v.r.nodeUrl = 'http://localhost:3000';
+
     v.router(v.isNode ? v.container : document.body, Components.Main)
         // Use middlewares available for all requests
         .use(() => console.log('ok'))
@@ -13,7 +15,10 @@ require('../dist');
             () => console.log('Init'),
             () => Components.Hello
         ])
-        .get('/hello', () => Components.Hello)
+        .get('/hello', [
+            () => Components.Hello.getServer(),
+            () => Components.Hello
+        ])
         .get('/counter', () => Components.Counter);
 
     if (!v.isNode){

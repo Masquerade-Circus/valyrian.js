@@ -51,7 +51,8 @@ module.exports = [
         	setImmediate: false
         },
         externals: {
-          'html-element': 'htmlelement'
+          'html-element': 'htmlElement',
+          'node-fetch': 'nodeFetch'
         },
         plugins: [
             uglify5,

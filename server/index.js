@@ -2,7 +2,8 @@ let micro = require('micro');
 let Router = require('micro-ex-router');
 let Helper = require('./helpers');
 
-global.htmlelement = require('html-element');
+global.htmlElement = require('html-element');
+global.nodeFetch = require('node-fetch');
 require('../app/index.min.js');
 
 // Create a new router
@@ -12,6 +13,7 @@ router
     .get('/', () => v.router.go('/'))
     .get('/hello', () => v.router.go('/hello'))
     .get('/counter', () => v.router.go('/counter'))
+    .get('/hola', () => ({hello: 'Aloha', name: 'meine welt'}))
     .get('/index.js', (req, res) => Helper.serveFile(res, `./app/index.min.js`))
 ;
 

@@ -10,12 +10,12 @@
   "scripts": {
     "dev": "nodemon -w ./server -w ./app -w ./dist ./server/index.js"
   },
-  "dependencies": {
-    "html-element": "^2.2.0"
-  },
+  "dependencies": {},
   "devDependencies": {
+    "html-element": "^2.2.0",
     "micro": "^9.1.0",
     "micro-ex-router": "^1.5.4",
+    "node-fetch": "^1.7.3",
     "nodemon": "^1.14.11",
     "uglifyjs-webpack-plugin": "^1.1.6",
     "webpack": "^3.10.0",
