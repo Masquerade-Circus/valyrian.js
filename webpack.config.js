@@ -54,6 +54,7 @@ module.exports = [
           'html-element': 'htmlElement',
           'node-fetch': 'nodeFetch'
         },
+        devtool: 'cheap-module-source-map',
         plugins: [
             uglify5,
             new BundleAnalyzerPlugin()
@@ -65,9 +66,10 @@ module.exports = [
             path: path.resolve(__dirname, 'app'),
             filename: 'index.min.js'
         },
+        devtool: 'cheap-module-source-map',
         watch: true,
         plugins: [
-            uglify5
+            // uglify5
         ]
     }
 ];
