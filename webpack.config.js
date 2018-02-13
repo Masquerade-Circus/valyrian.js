@@ -56,8 +56,8 @@ module.exports = [
         },
         devtool: 'cheap-module-source-map',
         plugins: [
-            uglify5,
-            new BundleAnalyzerPlugin()
+            // uglify5,
+            // new BundleAnalyzerPlugin()
         ]
     },
     {

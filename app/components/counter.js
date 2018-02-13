@@ -7,7 +7,7 @@ var Counter = {
     },
     view: () => {
           return v("div", [
-            v("h1", Store.count),
+            v("h1", Store.count()),
             v("button", { onclick: () => Counter.down(1) }, "-"),
             v("button", { onclick: () => Counter.up(1) }, "+"),
             v("button", { onclick: () => Store.hello('aloha') }, "Aloha"),
@@ -20,17 +20,19 @@ var Counter = {
                 v('br'),
                 v(true),
                 v('br'),
-                v('Ok'),
-                v('br'),
                 v({},{}),
                 v('br'),
                 v(null),
                 v('br'),
                 v(undefined),
                 v('br'),
-                v(function(){
-                    return v('h1','ok2');
-                }),
+                v('ul', (function(){
+                    let elem = [];
+                    for (let l = Store.count(); l--;){
+                        elem.push(v('li', l));
+                    }
+                    return elem;
+                })()),
                 v('img.div[src=http://placeimg.com/640/480/any]#ok')
             ])
         ]);
