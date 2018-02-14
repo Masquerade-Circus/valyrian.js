@@ -40,19 +40,19 @@ module.exports = [
         entry: './lib/index.js',
         output: {
             path: path.resolve(__dirname, 'dist'),
-            filename: 'index.js'
+            filename: 'valyrian.min.js'
         },
         watch: true,
         node: {
             console: false,
-        	global: false,
-        	process: false,
-        	Buffer: false,
-        	setImmediate: false
+            global: false,
+            process: false,
+            Buffer: false,
+            setImmediate: false
         },
         externals: {
-          'html-element': 'htmlElement',
-          'node-fetch': 'nodeFetch'
+            'html-element': 'htmlElement',
+            'node-fetch': 'nodeFetch'
         },
         devtool: 'cheap-module-source-map',
         plugins: [

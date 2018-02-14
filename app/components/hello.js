@@ -1,6 +1,6 @@
 let Hello = {
     getServer: () => {
-        return v.get('/hola').then(data => {
+        return v.get('/api/hola').then(data => {
             Store.hello(data.hello);
             Store.name(data.name);
         });

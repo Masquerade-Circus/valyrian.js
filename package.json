@@ -22,6 +22,10 @@
     "webpack-bundle-analyzer": "^2.9.2"
   },
   "jscsConfig": {
-    "requireSemicolons": true
+    "requireSemicolons": true,
+    "validateIndentation": {
+        "value": 4,
+        "allExcept": ["emptyLines"]
+    }
   }
 }
