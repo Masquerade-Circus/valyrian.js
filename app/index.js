@@ -1,4 +1,3 @@
-require('../dist');
 (function(){
     var root = this; // window or global
     this.v = Valyrian();

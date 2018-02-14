@@ -28,9 +28,12 @@ var Counter = {
                 v('br'),
                 v('ul', (function(){
                     let elem = [];
-                    for (let l = Store.count(); l--;){
-                        elem.push(v('li', l));
+                    if (Store.count() >= 0){
+                        for (let l = Store.count(); l--;){
+                            elem.push(v('li', l));
+                        }
                     }
+
                     return elem;
                 })()),
                 v('img.div[src=http://placeimg.com/640/480/any]#ok')

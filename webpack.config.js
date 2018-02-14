@@ -56,8 +56,8 @@ module.exports = [
         },
         devtool: 'cheap-module-source-map',
         plugins: [
-            // uglify5,
-            // new BundleAnalyzerPlugin()
+            uglify5,
+            new BundleAnalyzerPlugin()
         ]
     },
     {
@@ -69,7 +69,7 @@ module.exports = [
         devtool: 'cheap-module-source-map',
         watch: true,
         plugins: [
-            // uglify5
+            uglify5
         ]
     }
 ];
