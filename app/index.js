@@ -18,9 +18,12 @@
             () => Components.Hello
         ])
         .get('/counter', () => Components.Counter)
-        .get('/diff', () => Components.Diff);
+        .get('/diff', () => Components.Diff)
+        .get('/lifecycle', () => Components.Lifecycle)
+    ;
 
     if (!v.isNode){
+
         // setTimeout(function () {
         //     console.log('hello');
         //     Store.hello('Hola');

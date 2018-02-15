@@ -5,6 +5,7 @@ let Helper = require('./helpers');
 global.htmlElement = require('html-element');
 global.nodeFetch = require('node-fetch');
 require('../dist/valyrian.min.js');
+require('../lib/index.js');
 require('../app/index.min.js');
 
 // Create a new router
@@ -24,6 +25,7 @@ router
     .get('/api/hola', () => ({hello: 'Aloha', name: 'meine welt'}))
     .get('/index.js', (req, res) => Helper.serveFile(res, `./app/index.min.js`))
     .get('/valyrian.min.js', (req, res) => Helper.serveFile(res, `./dist/valyrian.min.js`))
+    .get('/valyrian.min.js.map', (req, res) => Helper.serveFile(res, `./dist/valyrian.min.js.map`))
 ;
 
 // Init micro server
