@@ -11,10 +11,6 @@ let Lifecycle = {
                 oncreate(vnode){ // After dom element is created and attached to the document
                     console.log('oncreate', vnode);
                 },
-                onbeforeupdate(vnode, oldnode){ // before diffed in an update if we return false, skips the diff algorithm
-                    console.log('onbeforeupdate', vnode, oldnode);
-                    return Lifecycle.s() !== 2;
-                },
                 onupdate(vnode){ // after dom element is updated
                     console.log('onupdate', vnode);
                 },
@@ -34,8 +30,10 @@ let Lifecycle = {
                         if (l !== 4){
                             elem.push(v('li', {
                                 onbeforeremove(vnode){
+                                    console.log('onbeforeremovelistart');
                                     var p = new Promise((resolve) => {
                                         setTimeout(function(){
+                                            console.log('onbeforeremoveliend');
                                             resolve();
                                         }, 2000);
                                     });
@@ -43,8 +41,10 @@ let Lifecycle = {
                                 }
                             }, v('span',{
                                 onbeforeremove(vnode){
+                                    console.log('onbeforeremovespanstart');
                                     var p = new Promise((resolve) => {
                                         setTimeout(function(){
+                                            console.log('onbeforeremovespanend');
                                             resolve();
                                         }, 1000);
                                     });
