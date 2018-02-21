@@ -1,5 +1,5 @@
 {
-  "name": "Valyrian.js",
+  "name": "valyrian.js",
   "version": "0.0.1",
   "description": "Minimal Frontend framework with server side rendering inspired on Mithril and Hyperapp",
   "main": "index.js",
