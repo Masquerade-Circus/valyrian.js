@@ -5,18 +5,18 @@ let Helper = require('./helpers');
 global.htmlElement = require('html-element');
 global.nodeFetch = require('node-fetch');
 require('../dist/valyrian.min.js');
-require('../lib/index.js');
+// require('../lib/index.js');
 require('../app/index.min.js');
 
 // Create a new router
 let router = Router();
 
-router.get('/', () => v.router.go('/'));
+router.get('/', Helper.render(() => v.router.go('/')));
 
 v.router.paths.forEach(function(path){
     if (path.method === 'get'){
         if (path.path !== ''){
-            router.get(path.path, () => v.router.go(path.path));
+            router.get(path.path, Helper.render(() => v.router.go(path.path)));
         }
     }
 });
