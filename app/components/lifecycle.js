@@ -2,6 +2,21 @@ let Lifecycle = {
     s: v.data(1),
     up: () => Lifecycle.s(Lifecycle.s+1),
     down: () => Lifecycle.s(Lifecycle.s-1),
+    oninit(vnode){ // Before dom element is created
+        console.log('component oninit', vnode);
+    },
+    oncreate(vnode){ // After dom element is created and attached to the document
+        console.log('component oncreate', vnode);
+    },
+    onupdate(vnode){ // after dom element is updated
+        console.log('component onupdate', vnode);
+    },
+    onbeforeremove(vnode){ // before dom element is detached from the document
+        console.log('component onbeforeremove', vnode);
+    },
+    onremove(vnode){ // after dom element is removed
+        console.log('component onremove', vnode);
+    },
     view() {
         return v('div', [
             Lifecycle.s() > 0 ? v('h1', {
