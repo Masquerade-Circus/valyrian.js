@@ -1,6 +1,6 @@
 {
   "name": "valyrian.js",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Minimal Frontend framework with server side rendering inspired on Mithril and Hyperapp",
   "main": "index.js",
   "repository": "git@github.com:Masquerade-Circus/valyrian.js.git",
