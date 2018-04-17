@@ -6,4 +6,4 @@ let Store = {
 
 Store.message = v.data(() => Store.hello + ' ' + Store.name);
 
-module.exports = Store;
+export default Store;

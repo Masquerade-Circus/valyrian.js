@@ -1,0 +1,1 @@
+(typeof window === 'undefined' ? global : window).v = Valyrian();

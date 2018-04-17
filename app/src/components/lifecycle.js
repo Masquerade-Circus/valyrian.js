@@ -79,4 +79,4 @@ let Lifecycle = {
     }
 };
 
-module.exports = Lifecycle;
+export default Lifecycle;

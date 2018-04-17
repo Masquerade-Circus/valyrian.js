@@ -10,4 +10,4 @@ let Hello = {
     }
 };
 
-module.exports = Hello;
+export default Hello;
