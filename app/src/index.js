@@ -26,17 +26,17 @@ v.router(v.isNode ? v.container : document.body, Components.Main)
 
 if (!v.isNode) {
 
-    // setTimeout(function () {
-    //     console.log('hello');
-    //     Store.hello('Hola');
-    // }, 5000);
+    setTimeout(function () {
+        console.log('hello');
+        Store.hello('Hola');
+    }, 5000);
     //
-    // setTimeout(function () {
-    //     console.log('world');
-    //     Store.name('Mundo');
-    // }, 7000);
+    setTimeout(function () {
+        console.log('world');
+        Store.name('Mundo');
+    }, 7000);
 
-    // setTimeout(function(){
-    //     v.router.go('/counter');
-    // }, 10000);
+    setTimeout(function () {
+        v.router.go('/counter');
+    }, 10000);
 }

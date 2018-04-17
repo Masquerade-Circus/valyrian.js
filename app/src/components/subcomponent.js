@@ -1,18 +1,25 @@
 let Subcomponent = {
+    hidden: true,
     view() {
-        return v('div', 'Hello');
+        console.log(this);
+        return [
+            v('button', {
+                onclick: () => {
+                    this.hidden = !this.hidden;
+                    console.log(this);
+                    v.update();
+                }
+            }, this.hidden ? 'Unhide' : 'Hide'),
+            v('div', this.hidden ? 'Hidden' : 'Unhidden')
+        ]
     }
 };
 
 let Component = {
-    getSubcomponent() {
-        let view = v(Subcomponent);
-        console.log(view);
-        return view;
-    },
     view() {
         return [
-            Component.getSubcomponent()
+            v(Subcomponent, { hidden: false }),
+            v(Subcomponent, { hidden: true })
         ];
     }
 };
