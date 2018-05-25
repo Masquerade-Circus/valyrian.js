@@ -1,40 +1,35 @@
+let fs = require('fs');
 let micro = require('micro');
 let Router = require('micro-ex-router');
 let Helper = require('./helpers');
 
-global.htmlElement = require('html-element');
-global.nodeFetch = require('node-fetch');
+// Require valyrian and main app
 require('../dist/valyrian.min.js');
-// require('../lib/index.js');
-require('../app/dist/index.min.js');
+let App = require('../app/dist/index.min.js');
+
+// Set the internal nodejs url
+v.request.nodeUrl = 'http://localhost:3001';
+
+// Set the title and version for the Main component
+let packageJson = require('../package.json');
+App.Components.Main.title = 'Valyrian.js';
+App.Components.Main.version = packageJson.version;
 
 // Create a new router
 let router = Router();
 
-router.get('/', Helper.render(() => v.router.go('/')));
+// Add Valyrian routes
+v.routes().forEach(path => router.get(path, (req, res) => v.routes.go(path, App.Components.Main)));
 
-v.router.paths.forEach(function (path) {
-    console.log(path);
-    if (path.method === 'get') {
-        if (path.path !== '') {
-            router.get(path.path, Helper.render(() => v.router.go(path.path)));
-        }
-    }
-});
-
+// Add api routes
 router
     .get('/api/hola', () => ({ hello: 'Aloha', name: 'meine welt' }))
-    .get('/index.min.js', (req, res) => Helper.serveFile(res, `./app/dist/index.min.js`))
-    .get('/index.min.js.map', (req, res) => Helper.serveFile(res, `./app/dist/index.min.js.map`))
-    .get('/valyrian.min.js', (req, res) => Helper.serveFile(res, `./dist/valyrian.min.js`))
-    .get('/valyrian.min.js.map', (req, res) => Helper.serveFile(res, `./dist/valyrian.min.js.map`))
+    .use(Helper.serveDir('./app/dist'))
+    .use(Helper.serveDir('./dist'))
+    .get('/favicon.ico', () => 'Not found')
     ;
 
 // Init micro server
-let server = micro(router);
-
-// v.router.go('/diff').catch(console.log);
-
-server.listen(3000, async () => {
-    console.log('Micro listening on port 3000');
+micro(router).listen(3001, async () => {
+    console.log('Micro listening on port 3001');
 });

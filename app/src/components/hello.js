@@ -1,12 +1,18 @@
 let Hello = {
+    data: {
+        hello: '',
+        name: ''
+    },
+    oninit(){
+        return Hello.getServer();
+    },
     getServer: () => {
         return v.get('/api/hola').then(data => {
-            Store.hello(data.hello);
-            Store.name(data.name);
+            Hello.data = data;
         });
     },
     view() {
-        return v('div#mundo.hola', Store.message());
+        return v('div#mundo.hola', `${Hello.data.hello} ${Hello.data.name}`);
     }
 };
 

@@ -1,25 +1,32 @@
-let Subcomponent = {
-    hidden: true,
-    view() {
-        console.log(this);
-        return [
-            v('button', {
-                onclick: () => {
-                    this.hidden = !this.hidden;
-                    console.log(this);
-                    v.update();
-                }
-            }, this.hidden ? 'Unhide' : 'Hide'),
-            v('div', this.hidden ? 'Hidden' : 'Unhidden')
-        ]
-    }
+let SubcomponentFactory = function(){
+    let Subcomponent = {
+        hidden: true,
+        view(vnode) {
+            return [
+                v('button', {
+                    onclick: () => {
+                        this.hidden = !this.hidden;
+                        v.update();
+                    }
+                }, this.hidden ? 'Unhide' : 'Hide'),
+                v('div', this.hidden ? 'Hidden' : 'Unhidden')
+            ]
+        }
+    };
+    return Subcomponent;
 };
 
 let Component = {
+    oninit(vnode){
+        Component.sub1 = SubcomponentFactory();
+        Component.sub2 = SubcomponentFactory();
+        Component.sub3 = SubcomponentFactory();
+    },
     view() {
         return [
-            v(Subcomponent, { hidden: false }),
-            v(Subcomponent, { hidden: true })
+            v(Component.sub1, { hidden: false }),
+            v(Component.sub2, { hidden: true }),
+            v(Component.sub3)
         ];
     }
 };

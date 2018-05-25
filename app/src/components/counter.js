@@ -1,35 +1,39 @@
 var Counter = {
+    count: 0,
     down: value => {
-        Store.count(Store.count - value);
+        Counter.count -= value;
     },
     up: value => {
-        Store.count(Store.count + value);
+        Counter.count += value;
     },
     view: () => {
         return v("div", [
-            v("h1", Store.count()),
+            v("h1", Counter.count),
             v("button", { onclick: () => Counter.down(1) }, "-"),
             v("button", { onclick: () => Counter.up(1) }, "+"),
-            v("button", { onclick: () => Store.hello('aloha') }, "Aloha"),
-            v("button", { onclick: () => v.router.go('/hello') }, "<"),
-            v("button", { onclick: () => v.router.go(-1) }, "-1"),
-            v("button", { onclick: () => v.router.back() }, "back"),
-            v("button", { onclick: () => v.router.forward() }, "forward"),
+            v("button", { onclick: () => v.routes.go('/hello') }, "Go to hello"),
             v([
-                Store.count() === 2 ? v(2) : '',
+                Counter.count === 2 ? v(2) : '',
                 v('br'),
+                v('','boolean true'),
                 v(true),
                 v('br'),
+                v('','boolean false'),
+                v(false),
+                v('br'),
+                v('','empty object'),
                 v({}, {}),
                 v('br'),
+                v('','null'),
                 v(null),
                 v('br'),
+                v('','undefined'),
                 v(undefined),
                 v('br'),
                 v('ul', (function () {
                     let elem = [];
-                    if (Store.count() >= 0) {
-                        for (let l = Store.count(); l--;) {
+                    if (Counter.count >= 0) {
+                        for (let l = Counter.count; l--;) {
                             elem.push(v('li', l));
                         }
                     }

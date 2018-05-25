@@ -1,7 +1,7 @@
 let Lifecycle = {
-    s: v.data(1),
-    up: () => Lifecycle.s(Lifecycle.s+1),
-    down: () => Lifecycle.s(Lifecycle.s-1),
+    s: 1,
+    up: () => Lifecycle.s+=1,
+    down: () => Lifecycle.s+=-1,
     oninit(vnode){ // Before dom element is created
         console.log('component oninit', vnode);
     },
@@ -19,7 +19,7 @@ let Lifecycle = {
     },
     view() {
         return v('div', [
-            Lifecycle.s() > 0 ? v('h1', {
+            Lifecycle.s > 0 ? v('h1', {
                 oninit(vnode){ // Before dom element is created
                     console.log('oninit', vnode);
                 },
@@ -35,13 +35,13 @@ let Lifecycle = {
                 onremove(vnode){ // after dom element is removed
                     console.log('onremove', vnode);
                 }
-            }, Lifecycle.s()) : v('small', ''),
+            }, Lifecycle.s) : v('small', ''),
             v('button', {onclick: Lifecycle.up}, '+'),
             v('button', {onclick: Lifecycle.down}, '-'),
             v('ul', (function(){
                 let elem = [];
-                if (Lifecycle.s() >= 0){
-                    for (let l = Lifecycle.s(); l--;){
+                if (Lifecycle.s >= 0){
+                    for (let l = Lifecycle.s; l--;){
                         if (l !== 4){
                             elem.push(v('li', {
                                 onbeforeremove(vnode){

@@ -21,10 +21,10 @@ let uglifyOptions = {
 };
 
 let inputOptions = {
-    input: './app/src/index.js',
+    input: './lib/index.js',
     plugins: [
         progress({ clearLine: false }),
-        includepaths({ paths: ['./app/src', './dist', './node_modules'] }),
+        includepaths({ paths: ['./lib', './node_modules'] }),
         nodeResolve({
             jsnext: true,
             main: true,
@@ -44,10 +44,9 @@ let inputOptions = {
 };
 
 let outputOptions = {
-    file: './app/dist/index.min.js',
-    format: 'umd',
+    file: './dist/valyrian.min.js',
+    format: 'iife',
     sourcemap: true,
-    name: 'App'
 };
 
 if (process.env.NODE_ENV === 'production') {
@@ -60,11 +59,12 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 if (process.env.NODE_ENV !== 'production') {
+    inputOptions.plugins.push(uglify(uglifyOptions));
     inputOptions.plugins.push(filesize());
 
     inputOptions.output = outputOptions;
     inputOptions.watch = {
-        include: ['./app/src/**'],
+        include: ['./lib/**'],
         chokidar: false
     };
 
