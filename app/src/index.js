@@ -1,3 +1,4 @@
+import '../../dist/valyrian.min.js';
 import Components from './components';
 
 // Create a router

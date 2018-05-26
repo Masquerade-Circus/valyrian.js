@@ -4,7 +4,7 @@ let Router = require('micro-ex-router');
 let Helper = require('./helpers');
 
 // Require valyrian and main app
-require('../dist/valyrian.min.js');
+//require('../dist/valyrian.min.js');
 let App = require('../app/dist/index.min.js');
 
 // Set the internal nodejs url
@@ -14,6 +14,7 @@ v.request.nodeUrl = 'http://localhost:3001';
 let packageJson = require('../package.json');
 App.Components.Main.title = 'Valyrian.js';
 App.Components.Main.version = packageJson.version;
+//App.Components.Main.script = fs.readFileSync('./app/dist/index.min.js','utf8');
 
 // Create a new router
 let router = Router();

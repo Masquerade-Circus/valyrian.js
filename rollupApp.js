@@ -64,7 +64,7 @@ if (process.env.NODE_ENV !== 'production') {
 
     inputOptions.output = outputOptions;
     inputOptions.watch = {
-        include: ['./app/src/**'],
+        include: ['./app/src/**', './dist/**'],
         chokidar: false
     };
 
