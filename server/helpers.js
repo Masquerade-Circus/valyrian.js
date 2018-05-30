@@ -111,6 +111,8 @@ let render = (htmlOrFunc) => {
             'Pragma': 'no-cache'
         });
 
+        console.log(html);
+
         res.end(html);
     };
 };

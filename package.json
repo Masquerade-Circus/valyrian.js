@@ -15,8 +15,10 @@
     "start": "cross-env NODE_ENV=production node server.js"
   },
   "dependencies": {
+    "he": "^1.1.1",
     "html-element": "^2.2.0",
-    "node-fetch": "^2.1.2"
+    "node-fetch": "^2.1.2",
+    "uncss": "^0.16.2"
   },
   "devDependencies": {
     "cross-env": "^5.1.6",
@@ -35,6 +37,7 @@
     "rollup-plugin-node-globals": "^1.2.0",
     "rollup-plugin-node-resolve": "^3.3.0",
     "rollup-plugin-progress": "^0.4.0",
+    "rollup-plugin-string": "^2.0.2",
     "rollup-plugin-uglify": "^3.0.0"
   },
   "jscsConfig": {

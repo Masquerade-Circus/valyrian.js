@@ -6,6 +6,7 @@ let filesize = require('rollup-plugin-filesize');
 let progress = require('rollup-plugin-progress');
 let uglify = require('rollup-plugin-uglify');
 let buble = require('rollup-plugin-buble');
+let string = require('rollup-plugin-string');
 
 let uglifyOptions = {
     ecma: 5,
@@ -30,7 +31,9 @@ let inputOptions = {
             main: true,
             browser: true,
         }),
-
+        string({
+            include: '**/*.tpl.js'
+        }),
         commonjs({
             include: [
                 './node_modules/**'

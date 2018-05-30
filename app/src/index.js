@@ -17,6 +17,9 @@ router
     .get('/diff', () => Components.Diff)
     .get('/lifecycle', () => Components.Lifecycle)
     .get('/subcomponent', () => Components.Subcomponent)
+    .get('/hello/:ok', (params) => {
+        return Components.Hello;
+    })
     ;
 
 // Assign routes to ValyrianJs

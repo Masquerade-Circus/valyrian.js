@@ -2,7 +2,7 @@ let Main = {
     title: '',
     version: '',
     css: '',
-    script: '',
+    js: '',
     view() {
         return [
             v('head', [
@@ -11,9 +11,7 @@ let Main = {
             ]),
             v('body', [
                 Main.attributes.children,
-                // v('script', { src: 'valyrian.min.js' }),
-                v('script', { src: 'index.min.js?v='+Main.version })
-                //v('script', Main.script)
+                v('script', Main.js)
             ])
         ];
     }
