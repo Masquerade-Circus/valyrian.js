@@ -1,6 +1,8 @@
 import '../../dist/valyrian.min.js';
 import Components from './components';
 
+console.log(v);
+
 // Create a router
 let router = v.router();
 router

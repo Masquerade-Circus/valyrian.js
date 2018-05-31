@@ -212,7 +212,7 @@ let RouterFactory = () => {
 };
 
 let h = function (...args) {
-    var vnode = {
+    let vnode = {
         name: 'div',
         props: {},
         children: []
@@ -315,7 +315,7 @@ let Request = function (baseUrl = '', options = {}) {
     let url = baseUrl.replace(/\/$/gi, '').trim(),
         opts = Object.assign({}, options);
 
-    let methods = ['get', 'post', 'put', 'patch', 'delete', 'options', 'head'];
+    let methods = ['get', 'post', 'put', 'patch', 'delete'];
 
     let r = function (baseUrl, options) {
         let url = r.baseUrl + '/' + baseUrl,
@@ -436,7 +436,7 @@ let PatchFactory = function (v) {
 
     function updateProps(newNode, oldNode = {}) {
         // const props = Object.assign({}, newProps, oldProps);
-        var newProps = newNode.props,
+        let newProps = newNode.props,
             oldProps = oldNode.props || {};
 
         const props = Object.assign(
@@ -451,19 +451,12 @@ let PatchFactory = function (v) {
         }
     }
 
-    async function lifecycleCall(vnode, methodName, ...args) {
-        if (v.isVnode(vnode)) {
-            let method = vnode.props[methodName];
-            if (method && method.call) {
-                args.unshift(vnode);
-                let response = await method.apply(vnode, args);
-                return response;
-            }
-        }
+    function lifecycleCall(vnode, methodName) {
+        return vnode.props && vnode.props[methodName] && vnode.props[methodName](vnode);
     }
 
     function createElement(vnode) {
-        var $el;
+        let $el;
         delete vnode.dom;
         lifecycleCall(vnode, 'oninit');
         $el = vnode.name === 'textNode' ?
@@ -500,28 +493,22 @@ let PatchFactory = function (v) {
     }
 
     function patch($parent, newNode, oldNode) {
-        // console.log(0, $parent, newNode, oldNode);
 
         // New node
         if (oldNode === undefined && newNode !== undefined) {
-            // console.log(2, newNode);
             $parent.appendChild(createElement(newNode));
-            return $parent;
         }
 
         // Deleted node
         if (newNode === undefined) {
-            // console.log(3, oldNode);
             removeElement(oldNode);
-            return $parent;
         }
 
-        if (v.isVnode(oldNode) && v.isVnode(newNode)) {
+        if (h.isVnode(oldNode) && h.isVnode(newNode)) {
             newNode.dom = oldNode.dom;
 
             // Same node
             if (newNode.name === 'textNode' && oldNode.value == newNode.value) {
-                // console.log(1, newNode, oldNode);
                 return $parent;
             }
 
@@ -530,7 +517,6 @@ let PatchFactory = function (v) {
                 (newNode.name === 'textNode' && newNode.value != oldNode.value) ||
                 newNode.name !== oldNode.name
             ) {
-                // console.log(4, $parent, newNode, oldNode);
                 createElement(newNode);
                 Promise.resolve(removeElement(oldNode, true))
                     .then(() => {
@@ -538,12 +524,6 @@ let PatchFactory = function (v) {
                     });
                 return $parent;
             }
-
-            // Same node updated
-            // console.log(5, newNode, oldNode);
-            // if (lifecycleCall(newNode, 'onbeforeupdate', oldNode) === false){
-            //     return $parent;
-            // }
 
             // if (!v.isMounted) {
             //     lifecycleCall(newNode, 'oninit');
@@ -562,277 +542,263 @@ let PatchFactory = function (v) {
             }
 
             lifecycleCall(newNode, 'onupdate');
-            return $parent;
         }
-
-        // console.log(6, newNode, oldNode);
 
         return $parent;
     }
     return patch;
 };
 
-let VFactory = function () {
-
-    let v = function (...args) {
-        if (v.isComponent(args[0])) {
-            return render.apply(v, args);
-        }
-
-        return h.apply(h, args);
-    };
-
-    v.ready = function(callback){
-        addEvent(
-            document, 
-            /https?:\/\//.test(window.document.URL) ?
-                'DOMContentLoaded' :
-                'deviceready', 
-            callback, 
-            false
-        );
-    };
-
-    v.request = Request$1;
-    Object.keys(Request$1).forEach(key => {
-        if (typeof Request$1[key] === 'function'){
-            v[key] = (...args) => Request$1[key]
-                .apply(Request$1, args)
-                .then(res => {
-                    v.update();
-                    return res;
-                });
-        }
-    });
-
-    v.router = RouterFactory;
-
-    v.isVnode = h.isVnode;
-    v.vnode = h.vnode;
-    v.flatenArray = h.flatenArray;
-
-    v.isNode = typeof window === 'undefined';
-    v.isBrowser = !v.isNode;
-
-    v.window = v.isNode ? require('html-element') : window;
-    v.document = v.window.document;
-
-    let patch = PatchFactory(v);
-
-    function resetToDefaults() {
-        v.isMounted = false;
-        v.container = v.document.createElement('html');
-        v.parent = v.document.createElement('div');
-        v.parent.appendChild(v.container);
-        v.rootTree = v.vnode(v.container);
-        v.oldTree = Object.assign({}, v.rootTree);
-    }    resetToDefaults();
-
-    v.rootComponent = undefined;
-
-    function assignAttributes(component, attributes = {}) {
-        if (attributes.name && attributes.props && Array.isArray(attributes.children)) {
-            component.attributes = { children: attributes };
-            return;
-        } 
-
-        if (Array.isArray(attributes)){
-            component.attributes = {children: attributes.length === 1 ? attributes[0] : attributes};
-            return;
-        }
-        
-        component.attributes = Object.assign({}, component.attributes, attributes);
-    }
-    function render(component, attributes = {}) {
-        assignAttributes(component, attributes);
-
-        let nodes = component.view();
-
-        return Array.isArray(nodes) ? nodes : [nodes];
-    }
-    function addEvent(container, events, handler, useCapture){
-        if (v.isBrowser){
-            events.split(' ').forEach(event => {
-                container.addEventListener(
-                    event,
-                    handler,
-                    useCapture
-                );
-            });   
-        }
+let v = function (...args) {
+    if (isComponent(args[0])) {
+        return render.apply(v, args);
     }
 
-    function removeEvent(container, events, handler){
-        if (v.isBrowser){
-            events.split(' ').forEach(event => {
-                container.removeEventListener(
-                    event,
-                    handler
-                );
-            });
-        }
-    }
-
-    v.mount = function (container, component, attributes = {}) {
-        if (container === undefined) {
-            throw new Error('A container element is required as first element');
-            return;
-        }
-
-        if (!v.isComponent(component)) {
-            throw new Error('A component is required as a second argument');
-            return;
-        }
-
-        if (v.isBrowser && v.container){
-            removeEvent(v.container, 'mouseup keyup', v.update);
-        }
-
-        v.container = v.isNode ? v.document.createElement('div') : typeof container === 'string' ? v.document.querySelectorAll(container)[0] : container;
-        v.rootTree = v.vnode(v.container);
-        v.oldTree = Object.assign({}, v.rootTree);
-
-        if (v.isBrowser){
-            addEvent(v.container, 'mouseup keyup', v.update, false);
-        }
-
-        return v.update(component, attributes);
-    };
-
-    function redraw(component, attributes = {}){
-        if (v.isComponent(component)) {
-            assignAttributes(component, attributes);
-            v.rootComponent = component;
-            v.rootTree.props = {};
-            Object.keys(v.rootComponent).forEach(prop => {
-                if (typeof v.rootComponent[prop] === 'function') {
-                    v.rootTree.props[prop] = (...args) => v.rootComponent[prop].apply(v.rootComponent, args);
-                }
-            });
-        }
-        if (v.rootComponent){
-            if (v.isNode) {
-                resetToDefaults();
-            }
-    
-            v.rootTree.children = render(v.rootComponent);
-    
-            // console.log('******************************');
-            patch(v.rootTree.dom.parentElement, v.rootTree, v.oldTree);
-            // console.log('******************************');
-    
-            v.oldTree = Object.assign({}, v.rootTree);
-    
-            if (!v.isMounted) {
-                v.isMounted = true;
-            }
-        }
-        
-        return v.isNode ? require('he').decode(v.rootTree.dom.parentElement.innerHTML) : v.rootTree.dom.parentElement;
-    }
-    v.update = function (component, attributes = {}) {
-        if (v.isBrowser){
-            requestAnimationFrame(() => redraw(component, attributes));
-            return;
-        }
-        return redraw(component, attributes);
-    };
-
-    v.isComponent = function (component) {
-        return typeof component === 'object' &&
-            component !== null &&
-            typeof component.view === 'function';
-    };
-
-    v.routes = function(container, router) {
-        if (container && router){
-            v.routes.router = router;
-            v.routes.container = container;
-            // Activate the use of the router
-            v.routes.init();
-            return;
-        }
-        
-        let routes = [];
-        v.routes.router.paths.forEach(path => {
-            if (path.method === 'get') {
-                routes.push(path.path === '' ? '/' : path.path);
-            }
-        });
-        return routes;
-    };
-
-    v.routes.run = async function(url = '/', parentComponent = undefined){
-        let response = await v.routes.router(url);
-        if (!v.isComponent(response)){
-            let r = response;
-            response = {view(){return r}};
-        }
-
-        if (parentComponent){
-            let c = response;
-            response = {view(){return v(parentComponent, v(c))}};
-        }
-
-        
-        if (v.isNode || !v.isMounted) {
-            return v.mount(v.routes.container, response, {params: v.routes.router.params});
-        }
-
-        
-        return v.update(response, {params: v.routes.router.params});
-    };
-
-    v.routes.go = function (url, parentComponent) {
-        if (v.isBrowser) {
-            window.history.pushState({}, '', url);
-        }
-        return v.routes.run(url, parentComponent);
-    };
-
-    v.routes.init = function(){
-        if (v.isBrowser) {
-            addEvent(window, 'popstate', function (e) {
-                v.routes.run(document.location.pathname);
-            }, false);
-            
-            v.ready(() => {
-                v.routes.run(document.location.pathname);
-            });
-        }
-    };
-
-    if (v.isBrowser){
-        v.sw = {
-            ready: false,
-            file: '/sw.js',
-            options: {scope: '/'},
-            register(file = v.sw.file, options = v.sw.options){
-                return navigator.serviceWorker.register(file, options)
-                    .then(() => navigator.serviceWorker.ready)
-                    .then(registration => {
-                        v.sw.ready = true;
-                        v.sw.file = file;
-                        v.sw.options = options;
-                        return new Promise((resolve, reject) => {
-                            setTimeout(() => {
-                                resolve();
-                            }, 10);
-                        });
-                    })
-                    .catch(err => console.error('ServiceWorker registration failed: ', err))
-            }
-        };
-    }
-
-    if (v.isNode && typeof VNodeFactory !== 'undefined'){
-        VNodeFactory(v);
-    }
-
-    v.new = VFactory;
-    
-    return v;
+    return h.apply(h, args);
 };
 
-(typeof window === 'undefined'? global : window).v = VFactory();
+v.ready = function(callback){
+    addEvent(
+        document, 
+        /https?:\/\//.test(window.document.URL) ?
+            'DOMContentLoaded' :
+            'deviceready', 
+        callback, 
+        false
+    );
+};
+
+v.request = Request$1;
+Object.keys(Request$1).forEach(key => {
+    if (typeof Request$1[key] === 'function'){
+        v[key] = (...args) => Request$1[key]
+            .apply(Request$1, args)
+            .then(res => {
+                v.update();
+                return res;
+            });
+    }
+});
+
+v.router = RouterFactory;
+v.isNode = typeof window === 'undefined';
+v.isBrowser = !v.isNode;
+
+v.window = v.isNode ? require('html-element') : window;
+v.document = v.window.document;
+
+let patch = PatchFactory(v);
+
+function resetToDefaults() {
+    v.isMounted = false;
+    v.container = v.document.createElement('html');
+    v.parent = v.document.createElement('div');
+    v.parent.appendChild(v.container);
+    v.rootTree = h.vnode(v.container);
+    v.oldTree = Object.assign({}, v.rootTree);
+}resetToDefaults();
+
+v.rootComponent = undefined;
+
+function assignAttributes(component, attributes = {}) {
+    if (attributes.name && attributes.props && Array.isArray(attributes.children)) {
+        component.attributes = { children: attributes };
+        return;
+    } 
+
+    if (Array.isArray(attributes)){
+        component.attributes = {children: attributes.length === 1 ? attributes[0] : attributes};
+        return;
+    }
+    
+    component.attributes = Object.assign({}, component.attributes, attributes);
+}
+function render(component, attributes = {}) {
+    assignAttributes(component, attributes);
+
+    let nodes = component.view();
+
+    return Array.isArray(nodes) ? nodes : [nodes];
+}
+function addEvent(container, events, handler, useCapture){
+    if (v.isBrowser){
+        events.split(' ').forEach(event => {
+            container.addEventListener(
+                event,
+                handler,
+                useCapture
+            );
+        });   
+    }
+}
+
+function removeEvent(container, events, handler){
+    if (v.isBrowser){
+        events.split(' ').forEach(event => {
+            container.removeEventListener(
+                event,
+                handler
+            );
+        });
+    }
+}
+
+v.mount = function (container, component, attributes = {}) {
+    if (container === undefined) {
+        throw new Error('A container element is required as first element');
+        return;
+    }
+
+    if (!isComponent(component)) {
+        throw new Error('A component is required as a second argument');
+        return;
+    }
+
+    if (v.isBrowser && v.container){
+        removeEvent(v.container, 'mouseup keyup', v.update);
+    }
+
+    v.container = v.isNode ? v.document.createElement('div') : typeof container === 'string' ? v.document.querySelectorAll(container)[0] : container;
+    v.rootTree = h.vnode(v.container);
+    v.oldTree = Object.assign({}, v.rootTree);
+
+    if (v.isBrowser){
+        addEvent(v.container, 'mouseup keyup', v.update, false);
+    }
+
+    return v.update(component, attributes);
+};
+
+function redraw(component, attributes = {}){
+    if (isComponent(component)) {
+        assignAttributes(component, attributes);
+        v.rootComponent = component;
+        v.rootTree.props = {};
+        Object.keys(v.rootComponent).forEach(prop => {
+            if (typeof v.rootComponent[prop] === 'function') {
+                v.rootTree.props[prop] = (...args) => v.rootComponent[prop].apply(v.rootComponent, args);
+            }
+        });
+    }
+    if (v.rootComponent){
+        if (v.isNode) {
+            resetToDefaults();
+        }
+
+        v.rootTree.children = render(v.rootComponent);
+
+        // console.log('******************************');
+        patch(v.rootTree.dom.parentElement, v.rootTree, v.oldTree);
+        // console.log('******************************');
+
+        v.oldTree = Object.assign({}, v.rootTree);
+
+        if (!v.isMounted) {
+            v.isMounted = true;
+        }
+    }
+    
+    return v.isNode ? require('he').decode(v.rootTree.dom.parentElement.innerHTML) : v.rootTree.dom.parentElement;
+}
+v.update = function (component, attributes = {}) {
+    if (v.isBrowser){
+        requestAnimationFrame(() => redraw(component, attributes));
+        return;
+    }
+    return redraw(component, attributes);
+};
+
+function isComponent(component) {
+    return typeof component === 'object' &&
+        component !== null &&
+        typeof component.view === 'function';
+}
+v.routes = function(container, router) {
+    if (container && router){
+        v.routes.router = router;
+        v.routes.container = container;
+        // Activate the use of the router
+        v.routes.init();
+        return;
+    }
+    
+    let routes = [];
+    v.routes.router.paths.forEach(path => {
+        if (path.method === 'get') {
+            routes.push(path.path === '' ? '/' : path.path);
+        }
+    });
+    return routes;
+};
+
+v.routes.run = async function(url = '/', parentComponent = undefined){
+    let response = await v.routes.router(url);
+    if (!isComponent(response)){
+        let r = response;
+        response = {view(){return r}};
+    }
+
+    if (parentComponent){
+        let c = response;
+        response = {view(){return v(parentComponent, v(c))}};
+    }
+
+    
+    if (v.isNode || !v.isMounted) {
+        return v.mount(v.routes.container, response, {params: v.routes.router.params});
+    }
+
+    
+    return v.update(response, {params: v.routes.router.params});
+};
+
+v.routes.go = function (url, parentComponent) {
+    if (v.isBrowser) {
+        window.history.pushState({}, '', url);
+    }
+    return v.routes.run(url, parentComponent);
+};
+
+v.routes.init = function(){
+    if (v.isBrowser) {
+        addEvent(window, 'popstate', function (e) {
+            v.routes.run(document.location.pathname);
+        }, false);
+        
+        v.ready(() => {
+            v.routes.run(document.location.pathname);
+        });
+    }
+};
+
+if (v.isBrowser){
+    v.sw = {
+        ready: false,
+        file: '/sw.js',
+        options: {scope: '/'},
+        register(file = v.sw.file, options = v.sw.options){
+            return navigator.serviceWorker.register(file, options)
+                .then(() => navigator.serviceWorker.ready)
+                .then(registration => {
+                    v.sw.ready = true;
+                    v.sw.file = file;
+                    v.sw.options = options;
+                    return new Promise((resolve, reject) => {
+                        setTimeout(() => {
+                            resolve();
+                        }, 10);
+                    });
+                })
+                .catch(err => console.error('ServiceWorker registration failed: ', err))
+        }
+    };
+}
+
+if (v.isNode && typeof VNodeFactory !== 'undefined'){
+    VNodeFactory(v);
+}
+
+(v.isNode ? global : window).v = v;
+
+console.log({v});
 //# sourceMappingURL=valyrian.esm.js.map

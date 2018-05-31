@@ -47,8 +47,9 @@ let inputOptions = {
 
 let outputOptions = {
     file: './dist/valyrian.min.js',
-    format: 'umd',
+    format: 'iife',
     sourcemap: true,
+    name: 'v'
 };
 
 if (process.env.NODE_ENV === 'production') {
@@ -58,7 +59,7 @@ if (process.env.NODE_ENV === 'production') {
         // Normal bundle
         {
             file: fileDir + 'valyrian.js',
-            format: 'iife',
+            format: 'umd',
             sourcemap: true
         },
         // Esm bundle

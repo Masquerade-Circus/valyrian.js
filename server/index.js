@@ -5,12 +5,14 @@ let Helper = require('./helpers');
 
 // Require valyrian and main app
 require('../dist/valyrian.node.min.js');
+// global.v = require('../dist/valyrian.min.js');
 let App = require('../app/dist/index.min.js');
 
 // Set the internal nodejs url
 v.request.nodeUrl = 'http://localhost:3001';
 
 // Inline styles and javascript
+v.inline.js('./dist/valyrian.min.js');
 v.inline.js('./app/dist/index.min.js');
 v.inline.css('./app/public/main.css');
 
