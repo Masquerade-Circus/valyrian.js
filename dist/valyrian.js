@@ -857,7 +857,5 @@
 
     (v.isNode ? global : window).v = v;
 
-    console.log({v: v});
-
 })));
 //# sourceMappingURL=valyrian.js.map

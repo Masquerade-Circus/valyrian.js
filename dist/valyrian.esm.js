@@ -799,6 +799,4 @@ if (v.isNode && typeof VNodeFactory !== 'undefined'){
 }
 
 (v.isNode ? global : window).v = v;
-
-console.log({v});
 //# sourceMappingURL=valyrian.esm.js.map
