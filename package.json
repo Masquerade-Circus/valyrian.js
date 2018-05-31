@@ -12,8 +12,11 @@
     "dev:source": "cross-env NODE_ENV=development node rollupSource.js",
     "dev:source-node": "cross-env NODE_ENV=development node rollupSourceNode.js",
     "dev:app": "cross-env NODE_ENV=development node rollupApp.js",
-    "build": "cross-env NODE_ENV=production node rollupSource.js",
-    "build:assets": "node ./server/buildAssets.js",
+    "build": "yarn build:assets && yarn build:source && yarn build:source-node && yarn build:app",
+    "build:assets": "cross-env NODE_ENV=production node buildAssets.js",
+    "build:source": "cross-env NODE_ENV=production node rollupSource.js",
+    "build:source-node": "cross-env NODE_ENV=production node rollupSourceNode.js",
+    "build:app": "cross-env NODE_ENV=production node rollupApp.js",
     "start": "cross-env NODE_ENV=production node server.js"
   },
   "dependencies": {

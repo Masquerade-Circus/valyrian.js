@@ -1,9 +1,9 @@
 // Require valyrian and main app
-require('../dist/valyrian.node.min.js');
-require('../dist/valyrian.min.js');
+require('./dist/valyrian.node.min.js');
+require('./dist/valyrian.min.js');
 
 // Require package json to obtain the version
-let packageJson = require('../package.json');
+let packageJson = require('./package.json');
 
 console.log('Generating service worker...');
 v.sw.generate('./app/public/sw.js', {
