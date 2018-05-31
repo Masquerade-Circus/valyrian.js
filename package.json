@@ -2,7 +2,7 @@
   "name": "valyrian.js",
   "version": "1.0.2",
   "description": "Minimal Frontend framework with server side rendering inspired on Mithril and Hyperapp",
-  "main": "lib/index.js",
+  "main": "dist/valyrian.esm.js",
   "jsnext:main": "dist/valyrian.esm.js",
   "module": "dist/valyrian.esm.js",
   "minified:main": "dist/valyrian.min.js",
