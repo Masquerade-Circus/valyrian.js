@@ -1,3 +1,5 @@
+import links from './links';
+
 let Main = {
     title: '',
     version: '',
@@ -7,7 +9,8 @@ let Main = {
         return [
             v('head', [
                 v('title', Main.title),
-                v('style', Main.css)
+                v('style', Main.css),
+                v(links)
             ]),
             v('body', [
                 Main.attributes.children,

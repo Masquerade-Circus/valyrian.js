@@ -4,7 +4,7 @@ let Router = require('micro-ex-router');
 let Helper = require('./helpers');
 
 // Require valyrian and main app
-//require('../dist/valyrian.min.js');
+require('../dist/valyrian.node.min.js');
 let App = require('../app/dist/index.min.js');
 
 // Set the internal nodejs url
@@ -19,18 +19,14 @@ let packageJson = require('../package.json');
 App.Components.Main.title = 'Valyrian.js';
 App.Components.Main.version = packageJson.version;
 App.Components.Main.css = v.inline.css();
-let renderedHtml = v.routes().map(path => v.routes.go(path, App.Components.Main));
-v.inline.uncss(renderedHtml)
+//let renderedHtml = v.routes().map(path => v.routes.go(path, App.Components.Main));
+let renderedHtml= ['<html></html>'];
+v.inline
+    .uncss(renderedHtml)
     .then((css) => {
         App.Components.Main.css = css;
         App.Components.Main.js = v.inline.js();
     });
-
-v.sw.create('./app/public/sw.js', {
-    name: 'Test',
-    version: packageJson.version,
-    urls: ['/', '/hello']
-});
 
 // Create a new router
 let router = Router();
@@ -51,3 +47,7 @@ v.routes().forEach(path => router.get(path, (req, res) => v.routes.go(req.url, A
 micro(router).listen(3001, async () => {
     console.log('Micro listening on port 3001');
 });
+
+
+
+

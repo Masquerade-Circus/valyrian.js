@@ -1,6 +1,9 @@
 let Lifecycle = {
     s: 1,
-    up: () => Lifecycle.s+=1,
+    up: () => {
+        Lifecycle.s+=1;
+        console.log(Lifecycle.s);
+    },
     down: () => Lifecycle.s+=-1,
     oninit(vnode){ // Before dom element is created
         console.log('component oninit', vnode);
