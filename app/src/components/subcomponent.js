@@ -1,4 +1,4 @@
-let SubcomponentFactory = function(){
+let SubcomponentFactory = function () {
     let Subcomponent = {
         hidden: true,
         view(vnode) {
@@ -10,14 +10,14 @@ let SubcomponentFactory = function(){
                     }
                 }, this.hidden ? 'Unhide' : 'Hide'),
                 v('div', this.hidden ? 'Hidden' : 'Unhidden')
-            ]
+            ];
         }
     };
     return Subcomponent;
 };
 
 let Component = {
-    oninit(vnode){
+    oninit(vnode) {
         Component.sub1 = SubcomponentFactory();
         Component.sub2 = SubcomponentFactory();
         Component.sub3 = SubcomponentFactory();

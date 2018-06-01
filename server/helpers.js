@@ -4,11 +4,11 @@ let fs = require('fs'),
     config = require('./config.js');
 
 /**
- * Helper function to serve a file from the file system
+ * @description Helper function to serve a file from the file system
  * @method serveFile
  * @param  {Object}  res        Response object
  * @param  {String}  filePath   Path of the file to serve
- * @return {Promise}
+ * @return {Promise} Promise that resolves with the stream
  */
 let serveFile = (res, filePath) => {
     let extension = filePath.split('/').pop().split('.').pop();
@@ -86,15 +86,15 @@ let serveDir = function (dir) {
 };
 
 /**
- * Helper function to render an html string
+ * @description Helper function to render an html string
  * @method render
- * @param  {Object} res     Response object
+ * @param  {Object} htmlOrFunc     Html string or method returning an html string
  * @param  {String} html    Html string
- * @return {Void}
+ * @return {Function} Middleware function to pass to express/micro
  */
 let render = (htmlOrFunc) => {
     return async (req, res) => {
-        var html;
+        let html;
         if (typeof htmlOrFunc === 'function') {
             html = await htmlOrFunc(req, res);
         }
@@ -119,10 +119,16 @@ let render = (htmlOrFunc) => {
 
 
 /**
- * Small and super fast logic-less template engine in 132 bytes.
+ * @description Small and super fast logic-less template engine in 132 bytes.
  * https://gist.github.com/Masquerade-Circus/d441541cc604624552a9
+ * @param {String} a The string template
+ * @param {Object} b An optional objet to call on init
+ * @returns {Function} Compiled function
  */
-let compile = function (a, b, c) { return c = Function("o", "return " + JSON.stringify(a).replace(/{{(.+?)}}/g, '" + (o["$1"]||"") + "') + ";"), b != []._ ? c(b) : c; };
+let compile = function (a, b) {
+    let c = Function("o", "return " + JSON.stringify(a).replace(/{{(.+?)}}/g, '" + (o["$1"]||"") + "') + ";");
+    return b !== undefined ? c(b) : c;
+};
 
 
 /**

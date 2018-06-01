@@ -6,7 +6,7 @@ let Diff = {
         return v('div', [
             Diff.s > 0 ? v('h1', Diff.s) : v('small', ''),
             v('button', { onclick: Diff.up }, '+'),
-            v('button', { onclick: Diff.down }, '-'),
+            v('button', { onclick: Diff.down }, '-')
         ]);
     }
 };

@@ -14,11 +14,11 @@ let uglifyOptions = {
     compress: {
         warnings: false, // Suppress uglification warnings
         pure_getters: true,
-        unsafe: true,
+        unsafe: true
     },
     output: {
-        comments: false,
-    },
+        comments: false
+    }
 };
 
 let inputOptions = {
@@ -29,7 +29,7 @@ let inputOptions = {
         nodeResolve({
             jsnext: true,
             main: true,
-            browser: true,
+            browser: true
         }),
         string({
             include: '**/*.tpl.js'
@@ -37,9 +37,9 @@ let inputOptions = {
         commonjs({
             include: [
                 './node_modules/**'
-            ],  // Default: undefined
+            ], // Default: undefined
             // if false then skip sourceMap generation for CommonJS modules
-            sourceMap: true,  // Default: true
+            sourceMap: true // Default: true
         })
     ],
     cache: undefined
@@ -81,26 +81,26 @@ if (process.env.NODE_ENV === 'production') {
             new Promise((resolve, reject) => {
                 let options = Object.assign({}, inputOptions);
                 options.plugins = inputOptions.plugins.map(item => item);
-                if (bundleOutput.format !== 'es'){
+                if (bundleOutput.format !== 'es') {
                     options.plugins.push(buble());
                 }
 
-                if (bundleOutput.sourcemap === false){
+                if (bundleOutput.sourcemap === false) {
                     options.plugins.push(uglify(uglifyOptions));
                 }
 
                 options.plugins.push(filesize());
 
                 rollup
-                        .rollup(options)
-                        .then(bundle => bundle.write(bundleOutput))
-                        .then(resolve)
-                        .catch(reject);
+                    .rollup(options)
+                    .then(bundle => bundle.write(bundleOutput))
+                    .then(resolve)
+                    .catch(reject);
 
             })
         );
     });
-    
+
     Promise.all(promises)
         .then(() => console.log('Bundle finished.'));
 }

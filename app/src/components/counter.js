@@ -1,4 +1,4 @@
-var Counter = {
+let Counter = {
     count: 0,
     down: value => {
         Counter.count -= value;
@@ -15,19 +15,19 @@ var Counter = {
             v([
                 Counter.count === 2 ? v(2) : '',
                 v('br'),
-                v('','boolean true'),
+                v('', 'boolean true'),
                 v(true),
                 v('br'),
-                v('','boolean false'),
+                v('', 'boolean false'),
                 v(false),
                 v('br'),
-                v('','empty object'),
+                v('', 'empty object'),
                 v({}, {}),
                 v('br'),
-                v('','null'),
+                v('', 'null'),
                 v(null),
                 v('br'),
-                v('','undefined'),
+                v('', 'undefined'),
                 v(undefined),
                 v('br'),
                 v('ul', (function () {
@@ -39,7 +39,7 @@ var Counter = {
                     }
 
                     return elem;
-                })()),
+                }())),
                 v('img.div[src=http://placeimg.com/640/480/any]#ok')
             ])
         ]);

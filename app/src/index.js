@@ -1,8 +1,6 @@
 import '../../dist/valyrian.min.js';
 import Components from './components';
 
-console.log(v);
-
 // Create a router
 let router = v.router();
 router
@@ -22,13 +20,13 @@ router
     .get('/hello/:ok', (params) => {
         return Components.Hello;
     })
-    ;
+;
 
 // Assign routes to ValyrianJs
 v.routes('body', router);
 
-if (v.isBrowser){
-    v.sw.register('./sw.js')
+if (v.isBrowser) {
+    v.sw('./sw.js')
         .then(() => {
             console.log('SW registered');
         });

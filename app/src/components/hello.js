@@ -3,11 +3,11 @@ let Hello = {
         hello: '',
         name: ''
     },
-    oninit(){
+    oninit() {
         return Hello.getServer();
     },
     getServer: () => {
-        return v.get('/api/hola').then(data => {
+        return v.request.get('/api/hola').then(data => {
             Hello.data = data;
         });
     },

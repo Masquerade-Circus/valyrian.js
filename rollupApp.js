@@ -13,11 +13,11 @@ let uglifyOptions = {
     compress: {
         warnings: false, // Suppress uglification warnings
         pure_getters: true,
-        unsafe: true,
+        unsafe: true
     },
     output: {
-        comments: false,
-    },
+        comments: false
+    }
 };
 
 let inputOptions = {
@@ -28,15 +28,15 @@ let inputOptions = {
         nodeResolve({
             jsnext: true,
             main: true,
-            browser: true,
+            browser: true
         }),
 
         commonjs({
             include: [
                 './node_modules/**'
-            ],  // Default: undefined
+            ], // Default: undefined
             // if false then skip sourceMap generation for CommonJS modules
-            sourceMap: true,  // Default: true
+            sourceMap: true // Default: true
         }),
         buble()
     ],
