@@ -1,6 +1,6 @@
 {
   "name": "valyrian.js",
-  "version": "1.0.5",
+  "version": "1.1.0",
   "description": "Minimal Frontend framework with server side rendering inspired on Mithril and Hyperapp",
   "main": "dist/valyrian.min.js",
   "jsnext:main": "dist/valyrian.esm.js",
