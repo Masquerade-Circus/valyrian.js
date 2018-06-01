@@ -25,11 +25,12 @@ let parseMiddlewares = (middlewares, array = []) => {
 };
 
 /**
- * Adds a path to a router
+ * @description Adds a path to a router
  * @method addPath
  * @param  {Router} router              The router in which to add the path
  * @param  {String} method              The method that will handle this path
  * @param  {Array} args                The mixed params (String|Function|Array)
+ * @returns {Router}                    The router
  */
 let addPath = (router, method, args) => {
     let path, middlewares;
@@ -101,7 +102,7 @@ let addPath = (router, method, args) => {
 
             // Set the object to the path
             router.regexpList[path] = {
-                regexp : new RegExp('^' + regexpPath  + '/?(\\?.*)?$', 'gi'),
+                regexp: new RegExp('^' + regexpPath + '/?(\\?.*)?$', 'gi'),
                 params: params
             };
         }
@@ -120,9 +121,8 @@ let addPath = (router, method, args) => {
 let RouterFactory = () => {
     /**
      * new Rotuer
-     * @param  {Request}    req     NodeJs Request object
-     * @param  {Response}   res     NodeJs Response object
-     * @return {Function}           The async function to be passed to micro
+     * @param  {String}    url     The path to call
+     * @return {Any}           The final response
      */
     let Router = async function (url = '/') {
         let method = 'get',
@@ -131,7 +131,7 @@ let RouterFactory = () => {
             response,
             i = 0,
             l = Router.paths.length;
-        
+
         Router.url = url;
 
         for (; i < l; i++) {
@@ -174,7 +174,7 @@ let RouterFactory = () => {
             }
         }
 
-        if (Router.throwNotFound){
+        if (Router.throwNotFound) {
             // If no response was sent to the client throw an error
             throw new Error(`The url ${url} requested wasn't found`);
         }
@@ -213,10 +213,10 @@ let RouterFactory = () => {
 
 let h = function (...args) {
     let vnode = {
-        name: 'div',
-        props: {},
-        children: []
-    },
+            name: 'div',
+            props: {},
+            children: []
+        },
         l,
         i,
         attributes;
@@ -266,7 +266,7 @@ let h = function (...args) {
     return vnode;
 };
 
-h.flatenArray = function(nodes, array = []) {
+h.flatenArray = function (nodes, array = []) {
     if (!Array.isArray(nodes)) {
         array.push(nodes);
         return array;
@@ -313,22 +313,12 @@ h.vnode = function ($el) {
 
 let Request = function (baseUrl = '', options = {}) {
     let url = baseUrl.replace(/\/$/gi, '').trim(),
-        opts = Object.assign({}, options);
+        opts = Object.assign({}, options),
+        isNode = typeof window === 'undefined',
+        Fetch = isNode ? require('node-fetch') : fetch.bind(window),
+        parseUrl;
 
     let methods = ['get', 'post', 'put', 'patch', 'delete'];
-
-    let r = function (baseUrl, options) {
-        let url = r.baseUrl + '/' + baseUrl,
-            opts = Object.assign({}, r.options, options);
-        return Request(url, opts);
-    };
-
-    r.apiUrl = undefined;
-    r.nodeUrl = undefined;
-    r.isNode = typeof window === 'undefined';
-    r.options = opts;
-    r.baseUrl = url;
-    let Fetch = r.isNode ? require('node-fetch') : fetch.bind(window);
 
     function serialize(obj, prefix) {
         let e = encodeURIComponent;
@@ -342,33 +332,14 @@ let Request = function (baseUrl = '', options = {}) {
                 e(k) + '=' + e(obj[k]);
         }).join('&');
     }
-    function parseUrl (url) {
-        let u = (r.baseUrl + '/' + url).trim().replace(/^\/\//gi, '/').trim();
-        if (
-            r.isNode &&
-            typeof r.nodeUrl === 'string'
-        ) {
-            r.nodeUrl = r.nodeUrl.replace(/\/$/gi, '').trim();
-
-            if (/^http/gi.test(u) && typeof r.apiUrl === 'string') {
-                r.apiUrl = r.apiUrl.replace(/\/$/gi, '').trim();
-                u = u.replace(r.apiUrl, r.nodeUrl);
-            }
-
-            if (!/^http/gi.test(u)) {
-                u = r.nodeUrl + u;
-            }
-        }
-        return u;
-    }
     function request(method, url, data, options = {}) {
         let opts = Object.assign({
-            method: method.toLowerCase(),
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            }
-        }, r.options, options),
+                method: method.toLowerCase(),
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            }, request.options, options),
             type = opts.headers.Accept;
 
         if (data !== undefined) {
@@ -400,17 +371,51 @@ let Request = function (baseUrl = '', options = {}) {
                 return response;
             });
     }
+    parseUrl = function parseUrl(url) {
+        let u = /^https?/gi.test(url)
+            ? url
+            : (request.baseUrl + '/' + url).trim().replace(/^\/\//gi, '/').trim();
+
+        if (
+            isNode &&
+            typeof request.nodeUrl === 'string'
+        ) {
+            request.nodeUrl = request.nodeUrl.replace(/\/$/gi, '').trim();
+
+            if (/^https?/gi.test(u) && typeof request.apiUrl === 'string') {
+                request.apiUrl = request.apiUrl.replace(/\/$/gi, '').trim();
+                u = u.replace(request.apiUrl, request.nodeUrl);
+            }
+
+            if (!/^https?/gi.test(u)) {
+                u = request.nodeUrl + u;
+            }
+        }
+        return u;
+    };
+
+    request.new = function (baseUrl, options) {
+        let url = request.baseUrl + '/' + baseUrl,
+            opts = Object.assign({}, request.options, options);
+        return Request(url, opts);
+    };
+
+    request.apiUrl = undefined;
+    request.nodeUrl = undefined;
+    request.options = opts;
+    request.baseUrl = url;
+
     methods.forEach(method =>
-        r[method] = (url, data, options) => request(method, url, data, options)
+        request[method] = (url, data, options) => request(method, url, data, options)
     );
 
-    return r;
+    return request;
 };
 
 var Request$1 = Request();
 
 let PatchFactory = function (v) {
-    let document = v.document;
+    let document = v.window.document;
 
     function setProp($target, name, value) {
         if (name === 'className') {
@@ -549,91 +554,51 @@ let PatchFactory = function (v) {
     return patch;
 };
 
-let v = function (...args) {
+function isComponent(component) {
+    return typeof component === 'object' &&
+        component !== null &&
+        typeof component.view === 'function';
+}
+function assignAttributes(component, attributes = {}) {
+    if (attributes.name && attributes.props && Array.isArray(attributes.children)) {
+        component.attributes = { children: attributes };
+        return;
+    }
+
+    if (Array.isArray(attributes)) {
+        component.attributes = {children: attributes.length === 1 ? attributes[0] : attributes};
+        return;
+    }
+
+    component.attributes = Object.assign({}, component.attributes, attributes);
+}
+function render(component, attributes = {}) {
+    assignAttributes(component, attributes);
+    let nodes = component.view();
+
+    return Array.isArray(nodes) ? nodes : [nodes];
+}
+function v(...args) {
     if (isComponent(args[0])) {
         return render.apply(v, args);
     }
 
     return h.apply(h, args);
-};
-
-v.ready = function(callback){
-    addEvent(
-        document, 
-        /https?:\/\//.test(window.document.URL) ?
-            'DOMContentLoaded' :
-            'deviceready', 
-        callback, 
-        false
-    );
-};
-
-v.request = Request$1;
-Object.keys(Request$1).forEach(key => {
-    if (typeof Request$1[key] === 'function'){
-        v[key] = (...args) => Request$1[key]
-            .apply(Request$1, args)
-            .then(res => {
-                v.update();
-                return res;
-            });
-    }
-});
-
-v.router = RouterFactory;
-v.isNode = typeof window === 'undefined';
-v.isBrowser = !v.isNode;
-
-v.window = v.isNode ? require('html-element') : window;
-v.document = v.window.document;
-
-let patch = PatchFactory(v);
-
-function resetToDefaults() {
-    v.isMounted = false;
-    v.container = v.document.createElement('html');
-    v.parent = v.document.createElement('div');
-    v.parent.appendChild(v.container);
-    v.rootTree = h.vnode(v.container);
-    v.oldTree = Object.assign({}, v.rootTree);
-}resetToDefaults();
-
-v.rootComponent = undefined;
-
-function assignAttributes(component, attributes = {}) {
-    if (attributes.name && attributes.props && Array.isArray(attributes.children)) {
-        component.attributes = { children: attributes };
-        return;
-    } 
-
-    if (Array.isArray(attributes)){
-        component.attributes = {children: attributes.length === 1 ? attributes[0] : attributes};
-        return;
-    }
-    
-    component.attributes = Object.assign({}, component.attributes, attributes);
 }
-function render(component, attributes = {}) {
-    assignAttributes(component, attributes);
-
-    let nodes = component.view();
-
-    return Array.isArray(nodes) ? nodes : [nodes];
-}
-function addEvent(container, events, handler, useCapture){
-    if (v.isBrowser){
+function addEvent(container, events, handler, useCapture) {
+    if (v.is.browser) {
         events.split(' ').forEach(event => {
             container.addEventListener(
                 event,
                 handler,
                 useCapture
             );
-        });   
+        });
     }
 }
 
-function removeEvent(container, events, handler){
-    if (v.isBrowser){
+function removeEvent(container, events, handler) {
+    if (v.is.browser) {
         events.split(' ').forEach(event => {
             container.removeEventListener(
                 event,
@@ -643,8 +608,44 @@ function removeEvent(container, events, handler){
     }
 }
 
-v.mount = function (container, component, attributes = {}) {
-    if (container === undefined) {
+v.ready = function (callback) {
+    addEvent(
+        document,
+        /https?:\/\//.test(window.document.URL) ?
+            'DOMContentLoaded' :
+            'deviceready',
+        callback,
+        false
+    );
+};
+
+v.request = Request$1;
+v.router = RouterFactory;
+v.is = {};
+v.is.node = typeof window === 'undefined';
+v.is.browser = !v.is.node;
+v.is.mounted = false;
+
+v.window = v.is.node ? require('html-element') : window;
+
+let patch = PatchFactory(v),
+    container,
+    rootTree,
+    oldTree,
+    rootComponent,
+    mainRouter,
+    RoutesContainer;
+
+function resetToDefaults() {
+    v.is.mounted = false;
+    container = v.window.document.createElement('html');
+    v.window.document.createElement('div').appendChild(container);
+    rootTree = h.vnode(container);
+    oldTree = Object.assign({}, rootTree);
+}resetToDefaults();
+
+v.mount = function (elementContainer, component, attributes = {}) {
+    if (elementContainer === undefined) {
         throw new Error('A container element is required as first element');
         return;
     }
@@ -654,76 +655,96 @@ v.mount = function (container, component, attributes = {}) {
         return;
     }
 
-    if (v.isBrowser && v.container){
-        removeEvent(v.container, 'mouseup keyup', v.update);
+    if (v.is.browser && container) {
+        removeEvent(container, 'mouseup keyup', v.update);
     }
 
-    v.container = v.isNode ? v.document.createElement('div') : typeof container === 'string' ? v.document.querySelectorAll(container)[0] : container;
-    v.rootTree = h.vnode(v.container);
-    v.oldTree = Object.assign({}, v.rootTree);
-
-    if (v.isBrowser){
-        addEvent(v.container, 'mouseup keyup', v.update, false);
+    container = v.is.node ? v.window.document.createElement('div') : typeof elementContainer === 'string' ? v.window.document.querySelectorAll(elementContainer)[0] : elementContainer;
+    rootTree = h.vnode(container);
+    oldTree = Object.assign({}, rootTree);
+    if (v.is.browser) {
+        addEvent(container, 'mouseup keyup', v.update, false);
     }
 
     return v.update(component, attributes);
 };
 
-function redraw(component, attributes = {}){
+function redraw(component, attributes = {}) {
     if (isComponent(component)) {
         assignAttributes(component, attributes);
-        v.rootComponent = component;
-        v.rootTree.props = {};
-        Object.keys(v.rootComponent).forEach(prop => {
-            if (typeof v.rootComponent[prop] === 'function') {
-                v.rootTree.props[prop] = (...args) => v.rootComponent[prop].apply(v.rootComponent, args);
+        rootComponent = component;
+        rootTree.props = {};
+        Object.keys(rootComponent).forEach(prop => {
+            if (typeof rootComponent[prop] === 'function') {
+                rootTree.props[prop] = (...args) => rootComponent[prop].apply(rootComponent, args);
             }
         });
     }
-    if (v.rootComponent){
-        if (v.isNode) {
+    if (rootComponent) {
+        if (v.is.node) {
             resetToDefaults();
         }
 
-        v.rootTree.children = render(v.rootComponent);
+        rootTree.children = render(rootComponent);
 
         // console.log('******************************');
-        patch(v.rootTree.dom.parentElement, v.rootTree, v.oldTree);
+        patch(rootTree.dom.parentElement, rootTree, oldTree);
         // console.log('******************************');
 
-        v.oldTree = Object.assign({}, v.rootTree);
-
-        if (!v.isMounted) {
-            v.isMounted = true;
+        oldTree = Object.assign({}, rootTree);
+        if (!v.is.mounted) {
+            v.is.mounted = true;
         }
     }
-    
-    return v.isNode ? require('he').decode(v.rootTree.dom.parentElement.innerHTML) : v.rootTree.dom.parentElement;
+    return v.is.node ? require('he').decode(rootTree.dom.parentElement.innerHTML) : rootTree.dom.parentElement;
 }
 v.update = function (component, attributes = {}) {
-    if (v.isBrowser){
+    if (v.is.browser) {
         requestAnimationFrame(() => redraw(component, attributes));
         return;
     }
+
     return redraw(component, attributes);
 };
 
-function isComponent(component) {
-    return typeof component === 'object' &&
-        component !== null &&
-        typeof component.view === 'function';
+async function runRoute(url = '/', parentComponent = undefined) {
+    let response = await mainRouter(url);
+
+    if (!isComponent(response)) {
+        let r = response;
+        response = {view() {
+            return r;
+        }};
+    }
+
+    if (parentComponent) {
+        let c = response;
+        response = {view() {
+            return v(parentComponent, v(c));
+        }};
+    }
+
+    if (v.is.node || !v.is.mounted) {
+        return v.mount(RoutesContainer, response, {params: mainRouter.params});
+    }
+
+    return v.update(response, {params: mainRouter.params});
 }
-v.routes = function(container, router) {
-    if (container && router){
-        v.routes.router = router;
-        v.routes.container = container;
+v.routes = function (elementContainer, router) {
+    if (elementContainer && router) {
+        mainRouter = router;
+        RoutesContainer = elementContainer;
         // Activate the use of the router
-        v.routes.init();
+        if (v.is.browser) {
+            let path = document.location.pathname;
+            addEvent(window, 'popstate', () => v.routes.go(path), false);
+            v.ready(() => v.routes.go(path));
+        }
         return;
     }
-    
+
     let routes = [];
-    v.routes.router.paths.forEach(path => {
+    mainRouter.paths.forEach(path => {
         if (path.method === 'get') {
             routes.push(path.path === '' ? '/' : path.path);
         }
@@ -731,72 +752,44 @@ v.routes = function(container, router) {
     return routes;
 };
 
-v.routes.run = async function(url = '/', parentComponent = undefined){
-    let response = await v.routes.router(url);
-    if (!isComponent(response)){
-        let r = response;
-        response = {view(){return r}};
-    }
+v.routes.current = '/';
+v.routes.params = {};
 
-    if (parentComponent){
-        let c = response;
-        response = {view(){return v(parentComponent, v(c))}};
-    }
-
-    
-    if (v.isNode || !v.isMounted) {
-        return v.mount(v.routes.container, response, {params: v.routes.router.params});
-    }
-
-    
-    return v.update(response, {params: v.routes.router.params});
-};
-
-v.routes.go = function (url, parentComponent) {
-    if (v.isBrowser) {
+v.routes.go = async function (url, parentComponent) {
+    if (v.is.browser) {
         window.history.pushState({}, '', url);
     }
-    return v.routes.run(url, parentComponent);
+
+    let response = await runRoute(url, parentComponent);
+
+    return response;
 };
 
-v.routes.init = function(){
-    if (v.isBrowser) {
-        addEvent(window, 'popstate', function (e) {
-            v.routes.run(document.location.pathname);
-        }, false);
-        
-        v.ready(() => {
-            v.routes.run(document.location.pathname);
-        });
-    }
-};
-
-if (v.isBrowser){
-    v.sw = {
-        ready: false,
-        file: '/sw.js',
-        options: {scope: '/'},
-        register(file = v.sw.file, options = v.sw.options){
-            return navigator.serviceWorker.register(file, options)
-                .then(() => navigator.serviceWorker.ready)
-                .then(registration => {
-                    v.sw.ready = true;
-                    v.sw.file = file;
-                    v.sw.options = options;
-                    return new Promise((resolve, reject) => {
-                        setTimeout(() => {
-                            resolve();
-                        }, 10);
-                    });
-                })
-                .catch(err => console.error('ServiceWorker registration failed: ', err))
-        }
+if (v.is.browser) {
+    v.sw = function (file = v.sw.file, options = v.sw.options) {
+        return navigator.serviceWorker.register(file, options)
+            .then(() => navigator.serviceWorker.ready)
+            .then(registration => {
+                v.sw.ready = true;
+                v.sw.file = file;
+                v.sw.options = options;
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        resolve(navigator.serviceWorker);
+                    }, 10);
+                });
+            })
+            .catch(err => console.error('ServiceWorker registration failed: ', err));
     };
+
+    v.sw.ready = false;
+    v.sw.file = '/sw.js';
+    v.sw.options = {scope: '/'};
 }
 
-if (v.isNode && typeof VNodeFactory !== 'undefined'){
+if (v.is.node && typeof VNodeFactory !== 'undefined') {
     VNodeFactory(v);
 }
 
-(v.isNode ? global : window).v = v;
+(v.is.node ? global : window).v = v;
 //# sourceMappingURL=valyrian.esm.js.map

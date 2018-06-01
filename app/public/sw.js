@@ -1,7 +1,7 @@
 let Log = () => {};
 
 let config = {
-    version: 'v1.0.4::',
+    version: 'v1.0.5::',
     name: 'Test',
     urls: ["/","/hello"]
 };
@@ -15,9 +15,9 @@ let fetchedFromNetwork = event => response => {
 
     let cacheCopy = response.clone();
     caches
-      .open(config.version + config.name)
-      .then(cache => cache.put(event.request, cacheCopy))
-      .then(() => Log('WORKER: fetch response stored in cache.', event.request.url));
+        .open(config.version + config.name)
+        .then(cache => cache.put(event.request, cacheCopy))
+        .then(() => Log('WORKER: fetch response stored in cache.', event.request.url));
     return response;
 };
 
