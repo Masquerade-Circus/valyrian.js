@@ -14,15 +14,15 @@ v.request.nodeUrl = 'http://localhost:3001';
 // Inline styles and javascript
 v.inline.js('./dist/valyrian.min.js');
 v.inline.js('./app/dist/index.min.js');
-v.inline.css('./app/public/main.css')
+//v.inline.css('./app/public/main.css')
+v.inline.css('https://masquerade-circus.github.io/pure-material-css/css/pure-material.css')
     .then(() => {
-        let renderedHtml = v.routes().map(path => v.routes.go(path, App.Components.Main));
+        //let renderedHtml = v.routes().map(path => v.routes.go(path, App.Components.Main));
         //console.log(renderedHtml);
-        //let renderedHtml = ['<html></html>'];
+        let renderedHtml = ['<html><body></body></html>'];
         v.inline
             .uncss(renderedHtml)
             .then((css) => {
-                console.log(css);
                 App.Components.Main.css = css;
                 App.Components.Main.js = v.inline.js();
             });
