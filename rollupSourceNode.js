@@ -47,8 +47,8 @@ let inputOptions = {
 };
 
 let outputOptions = {
-    file: './dist/valyrian.node.min.js',
-    format: 'iife',
+    file: './dist/valyrian.node.helpers.min.js',
+    format: 'es',
     sourcemap: true
 };
 

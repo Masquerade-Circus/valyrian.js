@@ -1,5 +1,5 @@
 // Require valyrian and main app
-require('./dist/valyrian.node.min.js');
+require('./dist/valyrian.node.helpers.min.js');
 require('./dist/valyrian.min.js');
 
 // Require package json to obtain the version
@@ -16,7 +16,7 @@ v.sw('./app/public/sw.js', {
         console.log('Generating app icons and manifest...');
         let favicons = {
             iconsPath: './app/public/icons/', // Path to the generated icons
-            linksViewPath: './app/src/components', // Path to the generated links file
+            linksViewPath: './app/src/pages', // Path to the generated links file
 
             // favicons options
             path: '/icons/', // Path for overriding default icons path. `string`

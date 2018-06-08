@@ -1,5 +1,5 @@
 import '../../dist/valyrian.min.js';
-import Components from './components';
+import Pages from './pages';
 
 // Create a router
 let router = v.router();
@@ -7,18 +7,18 @@ router
     .use(() => console.log('ok'))
     .get('/', [
         () => console.log('Init'),
-        () => Components.Hello
+        () => Pages.Hello
     ])
     .get('/hello', [
-        () => Components.Hello.getServer(),
-        () => Components.Hello
+        () => Pages.Hello.getServer(),
+        () => Pages.Hello
     ])
-    .get('/counter', () => Components.Counter)
-    .get('/diff', () => Components.Diff)
-    .get('/lifecycle', () => Components.Lifecycle)
-    .get('/subcomponent', () => Components.Subcomponent)
+    .get('/counter', () => Pages.Counter)
+    .get('/diff', () => Pages.Diff)
+    .get('/lifecycle', () => Pages.Lifecycle)
+    .get('/subcomponent', () => Pages.Subcomponent)
     .get('/hello/:ok', (params) => {
-        return Components.Hello;
+        return Pages.Hello;
     })
 ;
 
@@ -33,4 +33,4 @@ if (v.isBrowser) {
 }
 
 // Export what is needed for the backend
-export default {Components};
+export default {Pages};

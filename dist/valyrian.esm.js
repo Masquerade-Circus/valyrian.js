@@ -313,12 +313,12 @@ h.vnode = function ($el) {
 
 let Request = function (baseUrl = '', options = {}) {
     let url = baseUrl.replace(/\/$/gi, '').trim(),
-        opts = Object.assign({}, options),
+        opts = Object.assign({
+            methods: ['get', 'post', 'put', 'patch', 'delete']
+        }, options),
         isNode = typeof window === 'undefined',
-        Fetch = isNode ? require('node-fetch') : fetch.bind(window),
+        Fetch = isNode ? require('node-fetch') : window.fetch,
         parseUrl;
-
-    let methods = ['get', 'post', 'put', 'patch', 'delete'];
 
     function serialize(obj, prefix) {
         let e = encodeURIComponent;
@@ -395,17 +395,16 @@ let Request = function (baseUrl = '', options = {}) {
     };
 
     request.new = function (baseUrl, options) {
-        let url = request.baseUrl + '/' + baseUrl,
-            opts = Object.assign({}, request.options, options);
-        return Request(url, opts);
+        return Request(baseUrl, options);
     };
 
+    // Change this to  request.urls.api etc...
     request.apiUrl = undefined;
     request.nodeUrl = undefined;
     request.options = opts;
     request.baseUrl = url;
 
-    methods.forEach(method =>
+    opts.methods.forEach(method =>
         request[method] = (url, data, options) => request(method, url, data, options)
     );
 
@@ -779,7 +778,12 @@ if (v.is.browser) {
                     }, 10);
                 });
             })
-            .catch(err => console.error('ServiceWorker registration failed: ', err));
+            .catch(err => {
+                process.stdout.write('ServiceWorker registration failed: \n');
+                process.stdout.write(err.status + '\n'); // HTTP error code (e.g. `200`) or `null`
+                process.stdout.write(err.name + '\n'); // Error name e.g. "API Error"
+                process.stdout.write(err.message + '\n'); // Error description e.g. "An unknown error has occurred"
+            });
     };
 
     v.sw.ready = false;
@@ -787,8 +791,8 @@ if (v.is.browser) {
     v.sw.options = {scope: '/'};
 }
 
-if (v.is.node && typeof VNodeFactory !== 'undefined') {
-    VNodeFactory(v);
+if (v.is.node && typeof VNodeHelpersFactory !== 'undefined') {
+    VNodeHelpersFactory(v);
 }
 
 (v.is.node ? global : window).v = v;

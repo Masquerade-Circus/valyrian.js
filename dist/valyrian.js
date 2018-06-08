@@ -336,12 +336,12 @@
         if ( options === void 0 ) options = {};
 
         var url = baseUrl.replace(/\/$/gi, '').trim(),
-            opts = Object.assign({}, options),
+            opts = Object.assign({
+                methods: ['get', 'post', 'put', 'patch', 'delete']
+            }, options),
             isNode = typeof window === 'undefined',
-            Fetch = isNode ? require('node-fetch') : fetch.bind(window),
+            Fetch = isNode ? require('node-fetch') : window.fetch,
             parseUrl;
-
-        var methods = ['get', 'post', 'put', 'patch', 'delete'];
 
         function serialize(obj, prefix) {
             var e = encodeURIComponent;
@@ -420,17 +420,16 @@
         };
 
         request.new = function (baseUrl, options) {
-            var url = request.baseUrl + '/' + baseUrl,
-                opts = Object.assign({}, request.options, options);
-            return Request(url, opts);
+            return Request(baseUrl, options);
         };
 
+        // Change this to  request.urls.api etc...
         request.apiUrl = undefined;
         request.nodeUrl = undefined;
         request.options = opts;
         request.baseUrl = url;
 
-        methods.forEach(function (method) { return request[method] = function (url, data, options) { return request(method, url, data, options); }; }
+        opts.methods.forEach(function (method) { return request[method] = function (url, data, options) { return request(method, url, data, options); }; }
         );
 
         return request;
@@ -831,7 +830,12 @@
                         }, 10);
                     });
                 })
-                .catch(function (err) { return console.error('ServiceWorker registration failed: ', err); });
+                .catch(function (err) {
+                    process.stdout.write('ServiceWorker registration failed: \n');
+                    process.stdout.write(err.status + '\n'); // HTTP error code (e.g. `200`) or `null`
+                    process.stdout.write(err.name + '\n'); // Error name e.g. "API Error"
+                    process.stdout.write(err.message + '\n'); // Error description e.g. "An unknown error has occurred"
+                });
         };
 
         v.sw.ready = false;
@@ -839,8 +843,8 @@
         v.sw.options = {scope: '/'};
     }
 
-    if (v.is.node && typeof VNodeFactory !== 'undefined') {
-        VNodeFactory(v);
+    if (v.is.node && typeof VNodeHelpersFactory !== 'undefined') {
+        VNodeHelpersFactory(v);
     }
 
     (v.is.node ? global : window).v = v;

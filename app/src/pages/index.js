@@ -5,7 +5,7 @@ import Diff from './diff';
 import Lifecycle from './lifecycle';
 import Subcomponent from './subcomponent';
 
-let Components = {
+let Pages = {
     Main,
     Hello,
     Counter,
@@ -14,4 +14,4 @@ let Components = {
     Subcomponent
 };
 
-export default Components;
+export default Pages;

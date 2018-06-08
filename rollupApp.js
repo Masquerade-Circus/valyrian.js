@@ -6,6 +6,7 @@ let filesize = require('rollup-plugin-filesize');
 let progress = require('rollup-plugin-progress');
 let uglify = require('rollup-plugin-uglify');
 let buble = require('rollup-plugin-buble');
+let json = require('rollup-plugin-json');
 
 let uglifyOptions = {
     ecma: 5,
@@ -38,6 +39,7 @@ let inputOptions = {
             // if false then skip sourceMap generation for CommonJS modules
             sourceMap: true // Default: true
         }),
+        json(),
         buble()
     ],
     cache: undefined
