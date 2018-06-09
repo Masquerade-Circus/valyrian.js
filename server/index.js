@@ -5,6 +5,7 @@ let Helper = require('./helpers');
 
 // Require valyrian and main app
 require('../dist/valyrian.node.helpers.min.js');
+require('../dist/valyrian.min.js');
 let App = require('../app/dist/index.min.js');
 
 let v = global.v;

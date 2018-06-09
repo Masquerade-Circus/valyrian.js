@@ -1,4 +1,3 @@
-import '../../dist/valyrian.min.js';
 import Pages from './pages';
 
 // Create a router
@@ -20,6 +19,7 @@ router
     .get('/hello/:ok', (params) => {
         return Pages.Hello;
     })
+    .get('/hyperscript', () => Pages.Hyperscript)
 ;
 
 // Assign routes to ValyrianJs

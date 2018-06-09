@@ -231,7 +231,7 @@
         while ( len-- ) args[ len ] = arguments[ len ];
 
         var vnode = {
-                name: 'div',
+                name: '',
                 props: {},
                 children: []
             },
@@ -253,12 +253,12 @@
         }
 
         if (/(\.|\[|#)/gi.test(vnode.name)) {
-            attributes = vnode.name.match(/([\.|\#]\w+|\[[^\]]+\])/gi);
-            vnode.name = vnode.name.replace(/([\.|\#]\w+|\[[^\]]+\])/gi, '');
+            attributes = vnode.name.match(/([\.\#][\w-]+|\[[^\]]+\])/gi);
+            vnode.name = vnode.name.replace(/([\.\#][\w-]+|\[[^\]]+\])/gi, '');
             if (attributes) {
                 for (l = attributes.length; l--;) {
                     if (attributes[l].charAt(0) === '#') {
-                        vnode.props.id = attributes[l].slice(1);
+                        vnode.props.id = attributes[l].slice(1).trim();
                         continue;
                     }
 
@@ -269,7 +269,7 @@
 
                     if (attributes[l].charAt(0) === '[') {
                         attributes[l] = attributes[l].trim().slice(1, -1).split('=');
-                        vnode.props[attributes[l][0]] = attributes[l][1];
+                        vnode.props[attributes[l][0]] = (attributes[l][1] || 'true').replace(/^["'](.*)["']$/gi, '$1');
                     }
                 }
             }
@@ -280,6 +280,8 @@
         for (i = 0, l = nodes.length; i < l; i++) {
             vnode.children.push(h.isVnode(nodes[i]) ? nodes[i] : h('textNode', nodes[i]));
         }
+
+        vnode.name = vnode.name.trim() === '' ? 'div' : vnode.name.trim();
 
         return vnode;
     };
