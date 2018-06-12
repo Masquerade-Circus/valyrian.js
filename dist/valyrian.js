@@ -845,7 +845,8 @@
         v.sw.options = {scope: '/'};
     }
 
-    if (v.is.node && typeof VNodeHelpersFactory !== 'undefined') {
+    if (v.is.node) {
+        var VNodeHelpersFactory = require('./valyrian.node.helpers.min.js');
         VNodeHelpersFactory(v);
     }
 

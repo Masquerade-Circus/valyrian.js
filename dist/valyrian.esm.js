@@ -793,7 +793,8 @@ if (v.is.browser) {
     v.sw.options = {scope: '/'};
 }
 
-if (v.is.node && typeof VNodeHelpersFactory !== 'undefined') {
+if (v.is.node) {
+    let VNodeHelpersFactory = require('./valyrian.node.helpers.min.js');
     VNodeHelpersFactory(v);
 }
 

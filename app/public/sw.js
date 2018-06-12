@@ -1,7 +1,7 @@
 let Log = () => {};
 
 let config = {
-    version: 'v1.1.1::',
+    version: 'v1.1.2::',
     name: 'Test',
     urls: ["/","/hello"]
 };

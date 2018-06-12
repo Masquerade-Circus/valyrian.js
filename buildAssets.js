@@ -1,5 +1,4 @@
 // Require valyrian and main app
-require('./dist/valyrian.node.helpers.min.js');
 require('./dist/valyrian.min.js');
 
 // Require package json to obtain the version
