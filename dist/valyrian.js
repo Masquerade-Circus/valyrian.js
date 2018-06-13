@@ -313,24 +313,29 @@
     };
 
     h.vnode = function ($el) {
+        var obj = {
+            name: '',
+            props: {},
+            children: [],
+            dom: $el
+        };
+
         if ($el) {
             if ($el.nodeType === 3) {
-                return {
-                    value: $el.nodeValue,
-                    name: 'textNode',
-                    props: {},
-                    children: [],
-                    dom: $el
-                };
+                obj.value = $el.nodeValue;
+                obj.name = 'textNode';
             }
 
-            return {
-                name: $el.nodeName.toLowerCase(),
-                props: {},
-                children: Array.prototype.map.call($el.childNodes, function ($el) { return h.vnode($el); }),
-                dom: $el
-            };
+            if ($el.nodeType !== 3) {
+                Array.prototype.map.call($el.attributes, function (property) {
+                    obj.props[property.nodeName] = property.nodeValue;
+                });
+                obj.name = $el.nodeName.toLowerCase();
+                obj.children = Array.prototype.map.call($el.childNodes, function ($el) { return h.vnode($el); });
+            }
         }
+
+        return obj;
     };
 
     var Request = function (baseUrl, options) {
@@ -684,12 +689,7 @@
         var div = v.window.document.createElement('div');
         div.innerHTML = htmlString.trim();
 
-        var elements = [];
-        for (var i = 0, l = div.childNodes.length; i < l; i++) {
-            elements.push(h.vnode(div.childNodes[i]));
-        }
-
-        return elements;
+        return Array.prototype.map.call(div.childNodes, function (item) { return h.vnode(item); });
     };
 
     v.mount = function (elementContainer, component, attributes) {

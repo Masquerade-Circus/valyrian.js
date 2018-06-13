@@ -25,7 +25,7 @@ let Page = {
             v('[hola_mundo]'),
             v('[hola="mundo"]'),
             v('div#hola-mundo.hola-mundo.mundo[hola="mundo"][hola-mundo=ok]'),
-            v('div', v.trust('<h1>Hola mundo</h1>'))
+            v('div', v.trust('<h1 id="hola">Hola mundo</h1>'))
         ];
     }
 };
