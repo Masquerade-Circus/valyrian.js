@@ -244,7 +244,7 @@
         }
 
         if (vnode.name === 'textNode') {
-            vnode.value = args.join(' ').trim();
+            vnode.value = args.join('');
             return vnode;
         }
 
