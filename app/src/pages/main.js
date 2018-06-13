@@ -1,22 +1,21 @@
 import links from './links';
+import {version} from '../../../package.json';
 
 let Main = {
-    title: '',
-    version: '',
-    css: '',
-    js: '',
+    title: 'Valyrian.js',
+    version: version,
     view() {
-        return [
+        return v('html[lang=en]', [
             v('head', [
                 v('title', Main.title),
-                v('style', Main.css),
+                v('style', v.inline.uncss()),
                 v(links)
             ]),
             v('body', [
                 Main.attributes.children,
-                v('script', Main.js)
+                v('script', v.inline.js())
             ])
-        ];
+        ]);
     }
 };
 

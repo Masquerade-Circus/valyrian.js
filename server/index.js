@@ -13,24 +13,13 @@ let v = global.v;
 v.request.nodeUrl = 'http://localhost:3001';
 
 // Inline styles and javascript
-v.inline.js('./dist/valyrian.min.js');
-v.inline.js('./app/dist/index.min.js');
-v.inline.css('https://masquerade-circus.github.io/pure-material-css/css/pure-material.css')
-    .then(() => {
-        let renderedHtml = v.routes().map(path => v.routes.go(path, App.Pages.Main));
-        v.inline
-            .uncss(renderedHtml)
-            .then((css) => {
-                App.Pages.Main.css = css;
-                App.Pages.Main.js = v.inline.js();
-            });
-    });
-
-// Set the title and version for the Main component
-let packageJson = require('../package.json');
-App.Pages.Main.title = 'Valyrian.js';
-App.Pages.Main.version = packageJson.version;
-App.Pages.Main.css = v.inline.css();
+let renderedHtml = v.routes().map(path => v.routes.go(path, App.Pages.Main));
+v.inline(
+    './dist/valyrian.min.js',
+    './app/dist/index.min.js',
+    'https://masquerade-circus.github.io/pure-material-css/css/pure-material.css'
+)
+    .then(() => v.inline.uncss(renderedHtml));
 
 
 // Create a new router

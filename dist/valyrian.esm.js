@@ -632,7 +632,8 @@ v.is.node = typeof window === 'undefined';
 v.is.browser = !v.is.node;
 v.is.mounted = false;
 
-v.window = v.is.node ? require('html-element') : window;
+
+v.window = v.is.node ? (new (require('jsdom')).JSDOM()).window : window;
 
 let patch = PatchFactory(v),
     container,
@@ -644,7 +645,7 @@ let patch = PatchFactory(v),
 
 function resetToDefaults() {
     v.is.mounted = false;
-    container = v.window.document.createElement('html');
+    container = v.window.document.createElement('div');
     v.window.document.createElement('div').appendChild(container);
     rootTree = h.vnode(container);
     oldTree = Object.assign({}, rootTree);
@@ -709,7 +710,7 @@ function redraw(component, attributes = {}) {
             v.is.mounted = true;
         }
     }
-    return v.is.node ? require('he').decode(rootTree.dom.parentElement.innerHTML) : rootTree.dom.parentElement;
+    return v.is.node ? rootTree.dom.innerHTML : rootTree.dom.parentElement;
 }
 v.update = function (component, attributes = {}) {
     if (v.is.browser) {
