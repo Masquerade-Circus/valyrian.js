@@ -680,6 +680,18 @@
         oldTree = Object.assign({}, rootTree);
     }resetToDefaults();
 
+    v.trust = function (htmlString) {
+        var div = v.window.document.createElement('div');
+        div.innerHTML = htmlString.trim();
+
+        var elements = [];
+        for (var i = 0, l = div.childNodes.length; i < l; i++) {
+            elements.push(h.vnode(div.childNodes[i]));
+        }
+
+        return elements;
+    };
+
     v.mount = function (elementContainer, component, attributes) {
         if ( attributes === void 0 ) attributes = {};
 

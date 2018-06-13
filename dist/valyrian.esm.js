@@ -645,6 +645,18 @@ function resetToDefaults() {
     oldTree = Object.assign({}, rootTree);
 }resetToDefaults();
 
+v.trust = function (htmlString) {
+    let div = v.window.document.createElement('div');
+    div.innerHTML = htmlString.trim();
+
+    let elements = [];
+    for (let i = 0, l = div.childNodes.length; i < l; i++) {
+        elements.push(h.vnode(div.childNodes[i]));
+    }
+
+    return elements;
+};
+
 v.mount = function (elementContainer, component, attributes = {}) {
     if (elementContainer === undefined) {
         throw new Error('A container element is required as first element');
