@@ -24,9 +24,8 @@
   },
   "dependencies": {
     "favicons": "^5.1.1",
-    "he": "^1.1.1",
-    "html-element": "^2.2.0",
     "html2hs": "^1.0.3",
+    "jsdom": "^11.11.0",
     "node-fetch": "^2.1.2",
     "uncss": "^0.16.2"
   },
