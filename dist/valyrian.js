@@ -206,18 +206,19 @@
          */
         Router.regexpList = {};
 
-        /**
-         * For each accepted method, add the method to the router
-         * @type {Array}
-         */
-        ['get', 'use'].map(function (method) {
-            Router[method] = function () {
-                var args = [], len = arguments.length;
-                while ( len-- ) args[ len ] = arguments[ len ];
+        // For each accepted method, add the method to the router
+        Router.get = function () {
+            var args = [], len = arguments.length;
+            while ( len-- ) args[ len ] = arguments[ len ];
 
-                return addPath(Router, method, args);
-            };
-        });
+            return addPath(Router, 'get', args);
+        };
+        Router.use = function () {
+            var args = [], len = arguments.length;
+            while ( len-- ) args[ len ] = arguments[ len ];
+
+            return addPath(Router, 'use', args);
+        };
 
         /**
          * Return the new router
@@ -448,8 +449,8 @@
         var document = v.window.document;
 
         function setProp($target, name, value) {
-            if (name === 'className') {
-                $target.setAttribute('class', value);
+            if (!value) {
+                $target.removeAttribute(name);
                 return;
             }
 
@@ -462,11 +463,7 @@
                 $target[name] = value;
             }
 
-            if (value !== undefined && value !== false) {
-                $target.setAttribute(name, value);
-            } else {
-                $target.removeAttribute(name);
-            }
+            $target.setAttribute(name === 'className' ? 'class' : name, value);
         }
 
         function updateProps(newNode, oldNode) {
@@ -759,39 +756,37 @@
     v.update = function (component, attributes) {
         if ( attributes === void 0 ) attributes = {};
 
-        if (v.is.browser) {
-            requestAnimationFrame(function () { return redraw(component, attributes); });
-            return;
-        }
-
-        return redraw(component, attributes);
+        return v.is.browser
+            ? requestAnimationFrame(function () { return redraw(component, attributes); })
+            : redraw(component, attributes);
     };
 
-    async function runRoute(url, parentComponent) {
+    function runRoute(url, parentComponent) {
         if ( url === void 0 ) url = '/';
         if ( parentComponent === void 0 ) parentComponent = undefined;
 
-        var response = await mainRouter(url);
+        return mainRouter(url)
+            .then(function (response) {
+                if (!isComponent(response)) {
+                    var r = response;
+                    response = {view: function view() {
+                        return r;
+                    }};
+                }
 
-        if (!isComponent(response)) {
-            var r = response;
-            response = {view: function view() {
-                return r;
-            }};
-        }
+                if (parentComponent) {
+                    var c = response;
+                    response = {view: function view() {
+                        return v(parentComponent, v(c));
+                    }};
+                }
 
-        if (parentComponent) {
-            var c = response;
-            response = {view: function view() {
-                return v(parentComponent, v(c));
-            }};
-        }
+                if (v.is.node || !v.is.mounted) {
+                    return v.mount(RoutesContainer, response, {params: mainRouter.params});
+                }
 
-        if (v.is.node || !v.is.mounted) {
-            return v.mount(RoutesContainer, response, {params: mainRouter.params});
-        }
-
-        return v.update(response, {params: mainRouter.params});
+                return v.update(response, {params: mainRouter.params});
+            });
     }
     v.routes = function (elementContainer, router) {
         if (elementContainer && router) {
@@ -799,9 +794,11 @@
             RoutesContainer = elementContainer;
             // Activate the use of the router
             if (v.is.browser) {
-                var path = document.location.pathname;
-                addEvent(window, 'popstate', function () { return v.routes.go(path); }, false);
-                v.ready(function () { return v.routes.go(path); });
+                function onPopStateGoToRoute() {
+                    v.routes.go(document.location.pathname);
+                }
+                addEvent(window, 'popstate', onPopStateGoToRoute, false);
+                v.ready(onPopStateGoToRoute);
             }
             return;
         }
@@ -818,14 +815,12 @@
     v.routes.current = '/';
     v.routes.params = {};
 
-    v.routes.go = async function (url, parentComponent) {
+    v.routes.go = function (url, parentComponent) {
         if (v.is.browser) {
             window.history.pushState({}, '', url);
         }
 
-        var response = await runRoute(url, parentComponent);
-
-        return response;
+        return runRoute(url, parentComponent);
     };
 
     if (v.is.browser) {

@@ -196,13 +196,13 @@ let RouterFactory = () => {
      */
     Router.regexpList = {};
 
-    /**
-     * For each accepted method, add the method to the router
-     * @type {Array}
-     */
-    ['get', 'use'].map(method => {
-        Router[method] = (...args) => addPath(Router, method, args);
-    });
+    // For each accepted method, add the method to the router
+    Router.get = function (...args) {
+        return addPath(Router, 'get', args);
+    };
+    Router.use = function (...args) {
+        return addPath(Router, 'use', args);
+    };
 
     /**
      * Return the new router
@@ -424,8 +424,8 @@ let PatchFactory = function (v) {
     let document = v.window.document;
 
     function setProp($target, name, value) {
-        if (name === 'className') {
-            $target.setAttribute('class', value);
+        if (!value) {
+            $target.removeAttribute(name);
             return;
         }
 
@@ -438,11 +438,7 @@ let PatchFactory = function (v) {
             $target[name] = value;
         }
 
-        if (value !== undefined && value !== false) {
-            $target.setAttribute(name, value);
-        } else {
-            $target.removeAttribute(name);
-        }
+        $target.setAttribute(name === 'className' ? 'class' : name, value);
     }
 
     function updateProps(newNode, oldNode = {}) {
@@ -713,36 +709,34 @@ function redraw(component, attributes = {}) {
     return v.is.node ? rootTree.dom.innerHTML : rootTree.dom.parentElement;
 }
 v.update = function (component, attributes = {}) {
-    if (v.is.browser) {
-        requestAnimationFrame(() => redraw(component, attributes));
-        return;
-    }
-
-    return redraw(component, attributes);
+    return v.is.browser
+        ? requestAnimationFrame(() => redraw(component, attributes))
+        : redraw(component, attributes);
 };
 
-async function runRoute(url = '/', parentComponent = undefined) {
-    let response = await mainRouter(url);
+function runRoute(url = '/', parentComponent = undefined) {
+    return mainRouter(url)
+        .then(response => {
+            if (!isComponent(response)) {
+                let r = response;
+                response = {view() {
+                    return r;
+                }};
+            }
 
-    if (!isComponent(response)) {
-        let r = response;
-        response = {view() {
-            return r;
-        }};
-    }
+            if (parentComponent) {
+                let c = response;
+                response = {view() {
+                    return v(parentComponent, v(c));
+                }};
+            }
 
-    if (parentComponent) {
-        let c = response;
-        response = {view() {
-            return v(parentComponent, v(c));
-        }};
-    }
+            if (v.is.node || !v.is.mounted) {
+                return v.mount(RoutesContainer, response, {params: mainRouter.params});
+            }
 
-    if (v.is.node || !v.is.mounted) {
-        return v.mount(RoutesContainer, response, {params: mainRouter.params});
-    }
-
-    return v.update(response, {params: mainRouter.params});
+            return v.update(response, {params: mainRouter.params});
+        });
 }
 v.routes = function (elementContainer, router) {
     if (elementContainer && router) {
@@ -750,9 +744,11 @@ v.routes = function (elementContainer, router) {
         RoutesContainer = elementContainer;
         // Activate the use of the router
         if (v.is.browser) {
-            let path = document.location.pathname;
-            addEvent(window, 'popstate', () => v.routes.go(path), false);
-            v.ready(() => v.routes.go(path));
+            function onPopStateGoToRoute() {
+                v.routes.go(document.location.pathname);
+            }
+            addEvent(window, 'popstate', onPopStateGoToRoute, false);
+            v.ready(onPopStateGoToRoute);
         }
         return;
     }
@@ -769,14 +765,12 @@ v.routes = function (elementContainer, router) {
 v.routes.current = '/';
 v.routes.params = {};
 
-v.routes.go = async function (url, parentComponent) {
+v.routes.go = function (url, parentComponent) {
     if (v.is.browser) {
         window.history.pushState({}, '', url);
     }
 
-    let response = await runRoute(url, parentComponent);
-
-    return response;
+    return runRoute(url, parentComponent);
 };
 
 if (v.is.browser) {
