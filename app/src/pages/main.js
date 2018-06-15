@@ -9,11 +9,12 @@ let Main = {
             v('head', [
                 v('title', Main.title),
                 v('style', v.inline.uncss()),
-                v(links)
+                v(links),
+                v('script', {src: 'http://localhost:3001/index.min.js'})
             ]),
             v('body', [
-                Main.attributes.children,
-                v('script', v.inline.js())
+                Main.attributes.children
+                // v('script', v.inline.js())
             ])
         ]);
     }

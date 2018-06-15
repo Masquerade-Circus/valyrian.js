@@ -15,7 +15,7 @@
     "valid-jsdoc": 2,
     "new-cap":"off",
     "no-var":"error",
-    "no-undef":"warn",
+    "no-undef":0,
     "eqeqeq":"off",
     "no-multi-spaces":"error",
     "no-multiple-empty-lines":"error",
