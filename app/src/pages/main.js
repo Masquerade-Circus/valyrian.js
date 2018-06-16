@@ -10,7 +10,7 @@ let Main = {
                 v('title', Main.title),
                 v('style', v.inline.uncss()),
                 v(links),
-                v('script', {src: '/index.min.js'})
+                v('script', {src: '/index.min.js', async: true})
             ]),
             v('body', [
                 Main.attributes.children

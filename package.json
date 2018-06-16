@@ -23,6 +23,8 @@
     "start": "cross-env NODE_ENV=production node server.js"
   },
   "dependencies": {
+    "clean-css": "^4.1.11",
+    "cssnano": "^3.10.0",
     "favicons": "^5.1.1",
     "html2hs": "^1.0.3",
     "jsdom": "^11.11.0",
