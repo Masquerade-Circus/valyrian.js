@@ -705,17 +705,14 @@ function runRoute(url = '/', parentComponent = undefined) {
     return mainRouter(url)
         .then(response => {
             if (!isComponent(response)) {
-                let r = response;
-                response = {view() {
-                    return r;
-                }};
+                throw new Error('A component is required as response to a route');
+                return;
             }
 
             if (parentComponent) {
-                let c = response;
-                response = {view() {
-                    return v(parentComponent, v(c));
-                }};
+                parentComponent.attributes = parentComponent.attributes || {};
+                parentComponent.attributes.children = v(response);
+                response = parentComponent;
             }
 
             if (v.is.node || !v.is.mounted) {
