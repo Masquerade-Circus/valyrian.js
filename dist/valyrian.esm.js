@@ -442,7 +442,6 @@ let PatchFactory = function (v) {
     }
 
     function updateProps(newNode, oldNode = {}) {
-        // const props = Object.assign({}, newProps, oldProps);
         let newProps = newNode.props,
             oldProps = oldNode.props || {};
 
@@ -532,10 +531,10 @@ let PatchFactory = function (v) {
                 return $parent;
             }
 
-            // if (!v.isMounted) {
-            //     lifecycleCall(newNode, 'oninit');
-            //     lifecycleCall(newNode, 'oncreate');
-            // }
+            if (!v.isMounted) {
+                lifecycleCall(newNode, 'oninit');
+                lifecycleCall(newNode, 'oncreate');
+            }
 
             updateProps(newNode, oldNode);
 
@@ -610,24 +609,12 @@ function removeEvent(container, events, handler) {
     }
 }
 
-v.ready = function (callback) {
-    addEvent(
-        document,
-        /https?:\/\//.test(window.document.URL) ?
-            'DOMContentLoaded' :
-            'deviceready',
-        callback,
-        false
-    );
-};
-
 v.request = Request$1;
 v.router = RouterFactory;
 v.is = {};
 v.is.node = typeof window === 'undefined';
 v.is.browser = !v.is.node;
 v.is.mounted = false;
-
 
 v.window = v.is.node ? (new (require('jsdom')).JSDOM()).window : window;
 
@@ -748,7 +735,7 @@ v.routes = function (elementContainer, router) {
                 v.routes.go(document.location.pathname);
             }
             addEvent(window, 'popstate', onPopStateGoToRoute, false);
-            v.ready(onPopStateGoToRoute);
+            onPopStateGoToRoute();
         }
         return;
     }

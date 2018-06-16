@@ -51,6 +51,7 @@ router.get('/index.min.js', (req, res) => {
     res.end(js);
 });
 
+router.get('/index.min.js.map', (req, res) => Helper.serveFile(res, './app/dist/index.min.js.map'));
 
 // Init micro server
 micro(router).listen(3001, async () => {
