@@ -15,11 +15,10 @@ let parseMiddlewares = (middlewares, array = []) => {
     for (; i < l; i++) {
         if (Array.isArray(middlewares[i])) {
             parseMiddlewares(middlewares[i], array);
+            continue;
         }
 
-        if (!Array.isArray(middlewares[i])) {
-            array.push(middlewares[i]);
-        }
+        array.push(middlewares[i]);
     }
     return array;
 };
@@ -45,8 +44,8 @@ let addPath = (router, method, args) => {
     // Treat it as a subrouter
     if (
         typeof args[0] === 'function' &&
-        args[0].paths !== undefined &&
-        args[0].regexpList !== undefined
+        args[0].paths &&
+        args[0].regexpList
     ) {
         let subrouter = args.shift(),
             i = 0,
@@ -59,13 +58,13 @@ let addPath = (router, method, args) => {
             let subpath = subrouter.paths[i].path;
 
             // If there is a path add it as prefix to the subpath
-            if (path !== undefined) {
+            if (path) {
                 subpath = path + (subpath || '*');
             }
 
-            // If there are a subpath set it as the first element
+            // If there is a subpath set it as the first element
             // on the submiddlewares array
-            if (subpath !== undefined) {
+            if (subpath) {
                 submiddlewares.unshift(subpath);
             }
 
@@ -80,16 +79,16 @@ let addPath = (router, method, args) => {
     // Add the path only if there are middlewares passed
     if (middlewares.length > 0) {
         // If the path wasn't set before, set the regexp and params list
-        if (path !== undefined && router.regexpList[path] === undefined) {
+        if (path && router.regexpList[path] === undefined) {
             // Remove the last slash
             path = path.replace(/\/(\?.*)?$/gi, '$1');
 
-            // Find the params like express params
+            // Find the express like params
             let params = path.match(/:(\w+)?/gi) || [];
 
             // Set the names of the params found
             for (let i in params) {
-                params[i] = params[i].replace(':', '');
+                params[i] = params[i].slice(1);
             }
 
             let regexpPath = path
@@ -141,7 +140,7 @@ let RouterFactory = () => {
             }
 
             if ((path.method === 'use' || method === path.method) && path.path === undefined) {
-                middlewares = parseMiddlewares(path.middlewares, middlewares);
+                parseMiddlewares(path.middlewares, middlewares);
                 continue;
             }
 
@@ -155,7 +154,7 @@ let RouterFactory = () => {
                         params[Router.regexpList[path.path].params[l]] = matches[l];
                     }
                 }
-                middlewares = parseMiddlewares(path.middlewares, middlewares);
+                parseMiddlewares(path.middlewares, middlewares);
             }
         }
 
@@ -166,9 +165,9 @@ let RouterFactory = () => {
             // call sequentially every middleware
             for (; i < l; i++) {
                 response = await middlewares[i](params);
-                // If there is a response or a response was sent to the client
+                // If there is a response
                 // break the for block
-                if (response !== undefined) {
+                if (response) {
                     return response;
                 }
             }
@@ -239,19 +238,20 @@ let h = function (...args) {
         vnode.name = vnode.name.replace(/([\.\#][\w-]+|\[[^\]]+\])/gi, '');
         if (attributes) {
             for (l = attributes.length; l--;) {
-                if (attributes[l].charAt(0) === '#') {
-                    vnode.props.id = attributes[l].slice(1).trim();
+                let attr = attributes[l];
+                if (attr.charAt(0) === '#') {
+                    vnode.props.id = attr.slice(1).trim();
                     continue;
                 }
 
-                if (attributes[l].charAt(0) === '.') {
-                    vnode.props.class = ((vnode.props.class || '') + ' ' + attributes[l].slice(1)).trim();
+                if (attr.charAt(0) === '.') {
+                    vnode.props.class = ((vnode.props.class || '') + ' ' + attr.slice(1)).trim();
                     continue;
                 }
 
-                if (attributes[l].charAt(0) === '[') {
-                    attributes[l] = attributes[l].trim().slice(1, -1).split('=');
-                    vnode.props[attributes[l][0]] = (attributes[l][1] || 'true').replace(/^["'](.*)["']$/gi, '$1');
+                if (attr.charAt(0) === '[') {
+                    attr = attr.trim().slice(1, -1).split('=');
+                    vnode.props[attr.shift()] = (attr.join('=') || 'true').replace(/^["'](.*)["']$/gi, '$1');
                 }
             }
         }
@@ -560,20 +560,10 @@ function isComponent(component) {
         component !== null &&
         typeof component.view === 'function';
 }
-function assignAttributes(component, attributes = {}) {
-    if (attributes.name && attributes.props && Array.isArray(attributes.children)) {
-        component.attributes = { children: attributes };
-        return;
-    }
-
-    if (Array.isArray(attributes)) {
-        component.attributes = {children: attributes.length === 1 ? attributes[0] : attributes};
-        return;
-    }
-
-    component.attributes = Object.assign({}, component.attributes, attributes);
+function assignAttributes(component, attributes) {
+    Object.assign(component, h.isVnode(attributes) || Array.isArray(attributes) ? {children: attributes} : attributes);
 }
-function render(component, attributes = {}) {
+function render(component, attributes) {
     assignAttributes(component, attributes);
     let nodes = component.view();
 
@@ -641,7 +631,7 @@ v.trust = function (htmlString) {
     return Array.prototype.map.call(div.childNodes, item => h.vnode(item));
 };
 
-v.mount = function (elementContainer, component, attributes = {}) {
+v.mount = function (elementContainer, component, attributes) {
     if (elementContainer === undefined) {
         throw new Error('A container element is required as first element');
         return;
@@ -666,7 +656,7 @@ v.mount = function (elementContainer, component, attributes = {}) {
     return v.update(component, attributes);
 };
 
-function redraw(component, attributes = {}) {
+function redraw(component, attributes) {
     if (isComponent(component)) {
         assignAttributes(component, attributes);
         rootComponent = component;
@@ -695,7 +685,7 @@ function redraw(component, attributes = {}) {
     }
     return v.is.node ? rootTree.dom.innerHTML : rootTree.dom.parentElement;
 }
-v.update = function (component, attributes = {}) {
+v.update = function (component, attributes) {
     return v.is.browser
         ? requestAnimationFrame(() => redraw(component, attributes))
         : redraw(component, attributes);
@@ -710,8 +700,7 @@ function runRoute(url = '/', parentComponent = undefined) {
             }
 
             if (parentComponent) {
-                parentComponent.attributes = parentComponent.attributes || {};
-                parentComponent.attributes.children = v(response);
+                assignAttributes(parentComponent, v(response));
                 response = parentComponent;
             }
 
@@ -771,12 +760,7 @@ if (v.is.browser) {
                     }, 10);
                 });
             })
-            .catch(err => {
-                process.stdout.write('ServiceWorker registration failed: \n');
-                process.stdout.write(err.status + '\n'); // HTTP error code (e.g. `200`) or `null`
-                process.stdout.write(err.name + '\n'); // Error name e.g. "API Error"
-                process.stdout.write(err.message + '\n'); // Error description e.g. "An unknown error has occurred"
-            });
+            .catch(console.log);
     };
 
     v.sw.ready = false;
@@ -785,8 +769,7 @@ if (v.is.browser) {
 }
 
 if (v.is.node) {
-    let VNodeHelpersFactory = require('./valyrian.node.helpers.min.js');
-    VNodeHelpersFactory(v);
+    require('./valyrian.node.helpers.min.js')(v);
 }
 
 (v.is.node ? global : window).v = v;

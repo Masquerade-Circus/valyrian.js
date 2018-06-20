@@ -13,7 +13,7 @@ let Main = {
                 v('script', {src: '/index.min.js', async: true})
             ]),
             v('body', [
-                Main.attributes.children
+                Main.children
                 // v('script', v.inline.js())
             ])
         ]);
