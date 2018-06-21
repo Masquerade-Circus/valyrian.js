@@ -11,8 +11,9 @@ let Counter = {
             v("h1", Counter.count),
             v("button", { onclick: () => Counter.down(1) }, "-"),
             v("button", { onclick: () => Counter.up(1) }, "+"),
-            v("button", { onclick: () => {
+            v("a[href=/hello]", { onclick(e) {
                 v.routes.go('/hello');
+                e.preventDefault();
             } }, "Go to hello"),
             v([
                 Counter.count === 2 ? v(2) : '',

@@ -594,9 +594,7 @@
     }
     function render(component, attributes) {
         assignAttributes(component, attributes);
-        var nodes = component.view();
-
-        return Array.isArray(nodes) ? nodes : [nodes];
+        return h.flatenArray(component.view());
     }
     function v() {
         var args = [], len = arguments.length;
