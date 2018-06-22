@@ -1,19 +1,20 @@
-let Hello = {
+let state = {
     data: {
-        hello: '',
-        name: ''
+        hello: 'Hello',
+        name: 'world'
     },
     oninit() {
-        return Hello.getServer();
+        return this.getServer();
     },
-    getServer: () => {
+    getServer() {
         return v.request.get('/api/hola').then(data => {
-            Hello.data = data;
+            this.data = data;
         });
-    },
-    view() {
-        return v('div#mundo.hola', `${Hello.data.hello} ${Hello.data.name}`);
     }
 };
 
-export default Hello;
+function view() {
+    return v('div#mundo.hola', `${this.data.hello} ${this.data.name}`);
+}
+
+export default v(view, state);
