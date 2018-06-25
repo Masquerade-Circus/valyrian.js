@@ -634,12 +634,12 @@ v.trust = function (htmlString) {
 
 v.mount = function (elementContainer, ...args) {
     if (elementContainer === undefined) {
-        throw new Error('A container element is required as first element');
+        throw new Error('v.domorselector.required');
         return;
     }
 
     if (!isComponent(args[0])) {
-        throw new Error('A component is required as a second argument');
+        throw new Error('v.component.required');
         return;
     }
 
@@ -691,11 +691,11 @@ v.update = function (...args) {
         : redraw(args.shift(), args);
 };
 
-function runRoute(url = '/', parentComponent = undefined, ...args) {
+function runRoute(parentComponent, url, args) {
     return mainRouter(url)
         .then(response => {
             if (!isComponent(response)) {
-                throw new Error('A component is required as response to a route');
+                throw new Error('v.router.component.required');
                 return;
             }
 
@@ -704,13 +704,13 @@ function runRoute(url = '/', parentComponent = undefined, ...args) {
                 response = parentComponent;
             }
 
+            args.unshift(response);
+
             if (v.is.node || !v.is.mounted) {
-                args.unshift(response);
                 args.unshift(RoutesContainer);
                 return v.mount.apply(v, args);
             }
 
-            args.unshift(response);
             return v.update.apply(v, args);
         });
 }
@@ -741,12 +741,27 @@ v.routes = function (elementContainer, router) {
 v.routes.current = '/';
 v.routes.params = {};
 
-v.routes.go = function (url, parentComponent) {
+v.routes.go = function (...args) {
+    let parentComponent;
+    let url;
+
+    if (isComponent(args[0])) {
+        parentComponent = args.shift();
+    }
+
+    if (typeof args[0] === 'string') {
+        url = args.shift();
+    }
+
+    if (!url) {
+        throw new Error('v.router.url.required');
+    }
+
     if (v.is.browser) {
         window.history.pushState({}, '', url);
     }
 
-    return runRoute(url, parentComponent);
+    return runRoute(parentComponent, url, args);
 };
 
 if (v.is.browser) {
@@ -762,8 +777,7 @@ if (v.is.browser) {
                         resolve(navigator.serviceWorker);
                     }, 10);
                 });
-            })
-            .catch(console.log);
+            });
     };
 
     v.sw.ready = false;

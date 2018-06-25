@@ -17,13 +17,11 @@ router
 require('../dist/valyrian.min.js');
 let App = require('../app/dist/index.min.js');
 
-v.routes.go('/', App.Pages.Main).then(console.log);
-
 // Set the internal nodejs url
 v.request.nodeUrl = 'http://localhost:3001';
 
 // Inline styles and javascript
-let renderedHtml = v.routes().map(path => v.routes.go(path, App.Pages.Main));
+let renderedHtml = v.routes().map(path => v.routes.go(App.Pages.Main, path));
 v.inline(
     './dist/valyrian.min.js',
     './app/dist/index.min.js',
@@ -37,7 +35,7 @@ v.routes()
         path,
         async (req, res) =>
             '<!DOCTYPE html>' +
-            await v.routes.go(req.url, App.Pages.Main)
+            await v.routes.go(App.Pages.Main, req.url)
     ));
 
 router.get('/index.min.js', (req, res) => {

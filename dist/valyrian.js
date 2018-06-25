@@ -669,12 +669,12 @@
         while ( len-- > 0 ) args[ len ] = arguments[ len + 1 ];
 
         if (elementContainer === undefined) {
-            throw new Error('A container element is required as first element');
+            throw new Error('v.domorselector.required');
             return;
         }
 
         if (!isComponent(args[0])) {
-            throw new Error('A component is required as a second argument');
+            throw new Error('v.component.required');
             return;
         }
 
@@ -734,16 +734,11 @@
             : redraw(args.shift(), args);
     };
 
-    function runRoute(url, parentComponent) {
-        if ( url === void 0 ) url = '/';
-        if ( parentComponent === void 0 ) parentComponent = undefined;
-        var args = [], len = arguments.length - 2;
-        while ( len-- > 0 ) args[ len ] = arguments[ len + 2 ];
-
+    function runRoute(parentComponent, url, args) {
         return mainRouter(url)
             .then(function (response) {
                 if (!isComponent(response)) {
-                    throw new Error('A component is required as response to a route');
+                    throw new Error('v.router.component.required');
                     return;
                 }
 
@@ -752,13 +747,13 @@
                     response = parentComponent;
                 }
 
+                args.unshift(response);
+
                 if (v.is.node || !v.is.mounted) {
-                    args.unshift(response);
                     args.unshift(RoutesContainer);
                     return v.mount.apply(v, args);
                 }
 
-                args.unshift(response);
                 return v.update.apply(v, args);
             });
     }
@@ -789,12 +784,30 @@
     v.routes.current = '/';
     v.routes.params = {};
 
-    v.routes.go = function (url, parentComponent) {
+    v.routes.go = function () {
+        var args = [], len = arguments.length;
+        while ( len-- ) args[ len ] = arguments[ len ];
+
+        var parentComponent;
+        var url;
+
+        if (isComponent(args[0])) {
+            parentComponent = args.shift();
+        }
+
+        if (typeof args[0] === 'string') {
+            url = args.shift();
+        }
+
+        if (!url) {
+            throw new Error('v.router.url.required');
+        }
+
         if (v.is.browser) {
             window.history.pushState({}, '', url);
         }
 
-        return runRoute(url, parentComponent);
+        return runRoute(parentComponent, url, args);
     };
 
     if (v.is.browser) {
@@ -813,8 +826,7 @@
                             resolve(navigator.serviceWorker);
                         }, 10);
                     });
-                })
-                .catch(console.log);
+                });
         };
 
         v.sw.ready = false;
