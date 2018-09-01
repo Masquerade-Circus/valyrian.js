@@ -3,8 +3,8 @@ let Diff = {
     up: () => Diff.s += 1,
     down: () => Diff.s -= 1,
     view() {
-        return v('div', [
-            Diff.s > 0 ? v('h1', Diff.s) : v('small', ''),
+        return v('div', null, [
+            Diff.s > 0 ? v('h1', null, Diff.s) : v('small'),
             v('button', { onclick: Diff.up }, '+'),
             v('button', { onclick: Diff.down }, '-')
         ]);

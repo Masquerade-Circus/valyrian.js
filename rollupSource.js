@@ -53,60 +53,16 @@ let outputOptions = {
 };
 
 if (process.env.NODE_ENV === 'production') {
-    let promises = [];
-    let fileDir = './dist/';
-    let bundlesOutput = [
-        // Normal bundle
-        {
-            file: fileDir + 'valyrian.js',
-            format: 'umd',
-            sourcemap: true
-        },
-        // Esm bundle
-        {
-            file: fileDir + 'valyrian.esm.js',
-            format: 'es',
-            sourcemap: true
-        },
-        // Minified bundle
-        {
-            file: fileDir + 'valyrian.min.js',
-            format: 'iife',
-            sourcemap: false
-        }
-    ];
-
-    bundlesOutput.forEach(bundleOutput => {
-        promises.push(
-            new Promise((resolve, reject) => {
-                let options = Object.assign({}, inputOptions);
-                options.plugins = inputOptions.plugins.map(item => item);
-                if (bundleOutput.format !== 'es') {
-                    options.plugins.push(buble());
-                }
-
-                if (bundleOutput.sourcemap === false) {
-                    options.plugins.push(uglify(uglifyOptions));
-                }
-
-                options.plugins.push(filesize());
-
-                rollup
-                    .rollup(options)
-                    .then(bundle => bundle.write(bundleOutput))
-                    .then(resolve)
-                    .catch(reject);
-
-            })
-        );
-    });
-
-    Promise.all(promises)
+    outputOptions.sourcemap = false;
+    inputOptions.plugins.push(uglify(uglifyOptions));
+    inputOptions.plugins.push(filesize());
+    rollup.rollup(inputOptions)
+        .then(bundle => bundle.write(outputOptions))
         .then(() => console.log('Bundle finished.'));
 }
 
 if (process.env.NODE_ENV !== 'production') {
-    inputOptions.plugins.push(buble());
+    // inputOptions.plugins.push(buble());
     inputOptions.plugins.push(uglify(uglifyOptions));
     inputOptions.plugins.push(filesize());
 

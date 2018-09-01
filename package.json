@@ -1,20 +1,21 @@
 {
   "name": "valyrian.js",
-  "version": "1.9.1",
+  "version": "2.0.0",
   "description": "Lightweight steel to forge PWAs. (Minimal Frontend Framework with server side rendering and other capabilities)",
   "main": "dist/valyrian.min.js",
-  "jsnext:main": "dist/valyrian.esm.js",
-  "module": "dist/valyrian.esm.js",
+  "jsnext:main": "lib/index.js",
+  "module": "lib/index.js",
   "minified:main": "dist/valyrian.min.js",
   "repository": "git@github.com:Masquerade-Circus/valyrian.js.git",
   "author": "Masquerade <christian@masquerade-circus.net>",
   "license": "Apache-2.0",
   "private": false,
   "scripts": {
-    "dev:server": "cross-env NODE_ENV=development nodemon -w ./server -w ./app/dist -w ./dist server.js",
+    "dev:server": "cross-env NODE_ENV=development nodemon -w ./server -w ./app/dist -w ./dist -w ./plugins server.js",
     "dev:source": "cross-env NODE_ENV=development node rollupSource.js",
     "dev:source-node": "cross-env NODE_ENV=development node rollupSourceNode.js",
     "dev:app": "cross-env NODE_ENV=development node rollupApp.js",
+    "dev:test": "cross-env NODE_ENV=development nodemon -w ./server -w ./app/dist -w ./dist -w ./plugins -w ./test --exec 'mocha'",
     "build": "yarn build:assets && yarn build:source && yarn build:source-node && yarn build:app",
     "build:assets": "cross-env NODE_ENV=production node buildAssets.js",
     "build:source": "cross-env NODE_ENV=production node rollupSource.js",
@@ -35,6 +36,7 @@
     "cross-env": "^5.1.6",
     "micro": "^9.1.0",
     "micro-ex-router": "^1.5.4",
+    "mocha": "^5.2.0",
     "nodemon": "^1.14.11",
     "recursive-readdir": "^2.2.2",
     "rollup": "^0.57.1",
@@ -49,7 +51,8 @@
     "rollup-plugin-node-resolve": "^3.3.0",
     "rollup-plugin-progress": "^0.4.0",
     "rollup-plugin-string": "^2.0.2",
-    "rollup-plugin-uglify": "^3.0.0"
+    "rollup-plugin-uglify": "^3.0.0",
+    "zombie": "^6.1.3"
   },
   "jscsConfig": {
     "requireSemicolons": true,

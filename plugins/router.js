@@ -144,14 +144,16 @@ let RouterFactory = () => {
                 continue;
             }
 
-            let matches = Router.regexpList[path.path].regexp.exec(url);
-            Router.regexpList[path.path].regexp.lastIndex = -1;
+            let reg = Router.regexpList[path.path];
+            let matches = reg.regexp.exec(url);
+            reg.regexp.lastIndex = -1;
             if (Array.isArray(matches)) {
                 matches.shift();
-                let l = Router.regexpList[path.path].params.length;
+                let regparams = reg.params;
+                let l = regparams.length;
                 for (; l--;) {
-                    if (params[Router.regexpList[path.path].params[l]] === undefined) {
-                        params[Router.regexpList[path.path].params[l]] = matches[l];
+                    if (params[regparams[l]] === undefined) {
+                        params[regparams[l]] = matches[l];
                     }
                 }
                 parseMiddlewares(path.middlewares, middlewares);
@@ -196,11 +198,11 @@ let RouterFactory = () => {
     Router.regexpList = {};
 
     // For each accepted method, add the method to the router
-    Router.get = function (...args) {
-        return addPath(Router, 'get', args);
+    Router.get = function () {
+        return addPath(Router, 'get', v.utils.arguments2Array(arguments));
     };
-    Router.use = function (...args) {
-        return addPath(Router, 'use', args);
+    Router.use = function () {
+        return addPath(Router, 'use', v.utils.arguments2Array(arguments));
     };
 
     /**
@@ -210,4 +212,101 @@ let RouterFactory = () => {
     return Router;
 };
 
-export default RouterFactory;
+
+let plugin = function (v) {
+    let mainRouter;
+    let RoutesContainer;
+    function runRoute(parentComponent, url, args) {
+        return mainRouter(url)
+            .then(response => {
+                if (typeof response !== 'object') {
+                    throw new Error('v.router.component.required');
+                }
+
+                if (!response.isComponent && typeof response.view === 'function') {
+                    response = v(response);
+                }
+
+                if (!response.isComponent) {
+                    throw new Error('v.router.component.required');
+                }
+
+                if (parentComponent) {
+                    args.unshift(v(response, args));
+                    response = parentComponent;
+                }
+
+                args.unshift(response);
+
+                if (v.is.node || !v.is.mounted) {
+                    args.unshift(RoutesContainer);
+                    return v.mount.apply(v, args);
+                }
+
+                return v.update.apply(v, args);
+            });
+    };
+
+    v.routes = function (elementContainer, router) {
+        if (elementContainer && router) {
+            mainRouter = router;
+            RoutesContainer = elementContainer;
+            // Activate the use of the router
+            if (v.is.browser) {
+                function onPopStateGoToRoute() {
+                    v.routes.go(document.location.pathname);
+                }
+                window.addEventListener('popstate', onPopStateGoToRoute, false);
+                onPopStateGoToRoute();
+            }
+        }
+    };
+
+    v.routes.get = function () {
+        let routes = [];
+        mainRouter.paths.forEach(path => {
+            if (path.method === 'get') {
+                routes.push(path.path === '' ? '/' : path.path);
+            }
+        });
+        return routes;
+    };
+
+    v.routes.current = '/';
+    v.routes.params = {};
+
+    v.routes.go = function () {
+        let args = v.utils.arguments2Array(arguments);
+        let parentComponent;
+        let url;
+
+        if (typeof args[0] === 'object') {
+            if (!args[0].isComponent && typeof args[0].view === 'function') {
+                args[0] = v(args[0]);
+            }
+
+            if (args[0].isComponent) {
+                parentComponent = args.shift();
+            }
+        }
+
+        if (typeof args[0] === 'string') {
+            url = args.shift();
+        }
+
+        if (!url) {
+            throw new Error('v.router.url.required');
+        }
+
+        if (v.is.browser) {
+            window.history.pushState({}, '', url);
+        }
+
+        return runRoute(parentComponent, url, args);
+    };
+
+    v.Router = RouterFactory;
+};
+
+// module.exports = plugin;
+export default plugin;

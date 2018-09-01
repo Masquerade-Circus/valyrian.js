@@ -25,7 +25,7 @@ let inputOptions = {
     input: './app/src/index.js',
     plugins: [
         progress({ clearLine: false }),
-        includepaths({ paths: ['./app/src', './dist', './node_modules'] }),
+        includepaths({ paths: ['./app/src', './dist', './plugins', './node_modules'] }),
         nodeResolve({
             jsnext: true,
             main: true,
@@ -34,7 +34,9 @@ let inputOptions = {
 
         commonjs({
             include: [
-                './node_modules/**'
+                './node_modules/**',
+                './dist/**',
+                './plugins/**'
             ], // Default: undefined
             // if false then skip sourceMap generation for CommonJS modules
             sourceMap: true // Default: true
@@ -66,7 +68,7 @@ if (process.env.NODE_ENV !== 'production') {
 
     inputOptions.output = outputOptions;
     inputOptions.watch = {
-        include: ['./app/src/**', './dist/**'],
+        include: ['./app/src/**', './dist/**', './plugins/**'],
         chokidar: false
     };
 

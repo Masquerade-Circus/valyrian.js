@@ -1,7 +1,8 @@
+import './init';
 import Pages from './pages';
 
 // Create a router
-let router = v.router();
+let router = v.Router();
 router
     .use(() => console.log('ok'))
     .get('/', [
@@ -19,18 +20,17 @@ router
     .get('/hello/:ok', (params) => {
         return Pages.Hello;
     })
-    .get('/hyperscript', () => Pages.Hyperscript)
 ;
 
 // Assign routes to ValyrianJs
 v.routes('body', router);
 
-if (v.isBrowser) {
-    v.sw('./sw.js')
-        .then(() => {
-            console.log('SW registered');
-        });
-}
+// if (v.isBrowser) {
+//     v.sw('./sw.js')
+//         .then(() => {
+//             console.log('SW registered');
+//         });
+// }
 
-// Export what is needed for the backend
+// // Export what is needed for the backend
 export default {Pages};

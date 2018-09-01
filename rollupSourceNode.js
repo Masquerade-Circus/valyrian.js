@@ -47,14 +47,15 @@ let inputOptions = {
 };
 
 let outputOptions = {
-    file: './dist/valyrian.node.helpers.min.js',
-    format: 'es',
-    sourcemap: true
+    file: './plugins/node.js',
+    format: 'umd',
+    sourcemap: false,
+    name: 'node-plugin.js'
 };
 
 if (process.env.NODE_ENV === 'production') {
     outputOptions.sourcemap = false;
-    inputOptions.plugins.push(uglify(uglifyOptions));
+    // inputOptions.plugins.push(uglify(uglifyOptions));
     inputOptions.plugins.push(filesize());
     rollup.rollup(inputOptions)
         .then(bundle => bundle.write(outputOptions))
@@ -62,7 +63,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 if (process.env.NODE_ENV !== 'production') {
-    inputOptions.plugins.push(uglify(uglifyOptions));
+    // inputOptions.plugins.push(uglify(uglifyOptions));
     inputOptions.plugins.push(filesize());
 
     inputOptions.output = outputOptions;
