@@ -199,10 +199,10 @@ let RouterFactory = () => {
 
     // For each accepted method, add the method to the router
     Router.get = function () {
-        return addPath(Router, 'get', v.utils.arguments2Array(arguments));
+        return addPath(Router, 'get', v.utils.flat(arguments));
     };
     Router.use = function () {
-        return addPath(Router, 'use', v.utils.arguments2Array(arguments));
+        return addPath(Router, 'use', v.utils.flat(arguments));
     };
 
     /**
@@ -224,7 +224,7 @@ let plugin = function (v) {
                 }
 
                 if (!response.isComponent && typeof response.view === 'function') {
-                    response = v(response);
+                    Object.assign(response, {isComponent: true});
                 }
 
                 if (!response.isComponent) {
@@ -276,13 +276,13 @@ let plugin = function (v) {
     v.routes.params = {};
 
     v.routes.go = function () {
-        let args = v.utils.arguments2Array(arguments);
+        let args = v.utils.flat(arguments);
         let parentComponent;
         let url;
 
         if (typeof args[0] === 'object') {
             if (!args[0].isComponent && typeof args[0].view === 'function') {
-                args[0] = v(args[0]);
+                args[0] = Object.assign(args[0], {isComponent: true});
             }
 
             if (args[0].isComponent) {
