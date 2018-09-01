@@ -14,7 +14,7 @@ let state = {
 };
 
 function view() {
-    return v('div#mundo.hola', `${this.data.hello} ${this.data.name}`);
+    return v('div', {id: 'mundo', class: 'hola'}, `${this.data.hello} ${this.data.name}`);
 }
 
 export default v(view, state);

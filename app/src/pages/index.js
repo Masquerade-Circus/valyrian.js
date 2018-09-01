@@ -4,7 +4,6 @@ import Counter from './counter';
 import Diff from './diff';
 import Lifecycle from './lifecycle';
 import Subcomponent from './subcomponent';
-import Hyperscript from './hyperscript';
 
 let Pages = {
     Main,
@@ -12,8 +11,7 @@ let Pages = {
     Counter,
     Diff,
     Lifecycle,
-    Subcomponent,
-    Hyperscript
+    Subcomponent
 };
 
 export default Pages;

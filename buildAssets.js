@@ -1,5 +1,7 @@
 // Require valyrian and main app
-require('./dist/valyrian.min.js');
+let nodePlugin = require('./plugins/node');
+let App = require('./app/dist/index.min.js');
+v.use(nodePlugin);
 
 // Require package json to obtain the version
 let packageJson = require('./package.json');

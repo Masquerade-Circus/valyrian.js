@@ -9,7 +9,7 @@ let SubcomponentFactory = function () {
                         v.update();
                     }
                 }, this.hidden ? 'Unhide' : 'Hide'),
-                v('div', this.hidden ? 'Hidden' : 'Unhidden')
+                v('div', null, this.hidden ? 'Hidden' : 'Unhidden')
             ];
         }
     };

@@ -5,16 +5,17 @@ let Main = {
     title: 'Valyrian.js',
     version: version,
     view(content) {
-        return v('html[lang=en]', [
-            v('head', [
-                v('title', Main.title),
-                v('style', v.inline.uncss()),
-                v(links),
-                v('script', {src: '/index.min.js', async: true})
+        return v('html', {lang: 'en'}, [
+            v('head', null, [
+                v('title', null, Main.title),
+                v('style', null, v.inline.uncss()),
+                v(links)
+                // v('script', {src: '/index.min.js', async: true})
             ]),
-            v('body', [
-                content
+            v('body', null, [
+                content,
                 // v('script', v.inline.js())
+                v('script', {src: '/index.min.js', async: true})
             ])
         ]);
     }
@@ -23,10 +24,10 @@ let Main = {
 export default Main;
 
 // function view(content) {
-//     return v('html[lang=en]', [
-//         v('head', [
-//             v('title', this.title),
-//             v('style', v.inline.uncss()),
+//     return v('html', {lang: 'en'}, [
+//         v('head', null, [
+//             v('title', null, this.title),
+//             v('style', null, v.inline.uncss()),
 //             v(links),
 //             v('script', {src: '/index.min.js', async: true})
 //         ]),
@@ -37,6 +38,6 @@ export default Main;
 //     ]);
 // };
 
-// export default v(view, {title: 'Valyrian.js'});
+// export default v(view, {title: 'Valyrian.js', version});
 
 
