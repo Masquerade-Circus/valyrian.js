@@ -63,7 +63,7 @@ if (process.env.NODE_ENV === 'production') {
 
 if (process.env.NODE_ENV !== 'production') {
     // inputOptions.plugins.push(buble());
-    inputOptions.plugins.push(uglify(uglifyOptions));
+    // inputOptions.plugins.push(uglify(uglifyOptions));
     inputOptions.plugins.push(filesize());
 
     inputOptions.output = outputOptions;

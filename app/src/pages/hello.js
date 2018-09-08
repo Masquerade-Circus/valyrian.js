@@ -3,9 +3,6 @@ let state = {
         hello: 'Hello',
         name: 'world'
     },
-    oninit() {
-        return this.getServer();
-    },
     getServer() {
         return v.request.get('/api/hola').then(data => {
             this.data = data;

@@ -199,10 +199,10 @@ let RouterFactory = () => {
 
     // For each accepted method, add the method to the router
     Router.get = function () {
-        return addPath(Router, 'get', v.utils.flat(arguments));
+        return addPath(Router, 'get', v.utils.flat(arguments, 0, []));
     };
     Router.use = function () {
-        return addPath(Router, 'use', v.utils.flat(arguments));
+        return addPath(Router, 'use', v.utils.flat(arguments, 0, []));
     };
 
     /**
@@ -276,7 +276,7 @@ let plugin = function (v) {
     v.routes.params = {};
 
     v.routes.go = function () {
-        let args = v.utils.flat(arguments);
+        let args = v.utils.flat(arguments, 0, []);
         let parentComponent;
         let url;
 

@@ -16,7 +16,7 @@ let Counter = {
                 e.preventDefault();
             } }, "Go to hello"),
             v('div', null, [
-                Counter.count === 2 ? v(2) : '',
+                Counter.count === 2 ? v('span', null, 2) : '',
                 v('br'),
                 v('div', null, 'boolean true'),
                 v('div', null, true),
