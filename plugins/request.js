@@ -41,7 +41,7 @@ let plugin = function (v) {
 
             return fetch(parseUrl(url), opts)
                 .then(response => {
-                    if (response.status < 200 || response.status > 300) {
+                    if (!response.ok) {
                         let err = new Error(response.statusText);
                         err.response = response;
                         throw err;
@@ -62,21 +62,21 @@ let plugin = function (v) {
         parseUrl = function (url) {
             let u = /^https?/gi.test(url)
                 ? url
-                : (request.baseUrl + '/' + url).trim().replace(/^\/\//gi, '/').trim();
+                : (request.urls.base + '/' + url).trim().replace(/^\/\//gi, '/').trim();
 
             if (
                 v.is.node &&
-                typeof request.nodeUrl === 'string'
+                typeof request.urls.node === 'string'
             ) {
-                request.nodeUrl = request.nodeUrl.replace(/\/$/gi, '').trim();
+                request.urls.node = request.urls.node.replace(/\/$/gi, '').trim();
 
-                if (/^https?/gi.test(u) && typeof request.apiUrl === 'string') {
-                    request.apiUrl = request.apiUrl.replace(/\/$/gi, '').trim();
-                    u = u.replace(request.apiUrl, request.nodeUrl);
+                if (/^https?/gi.test(u) && typeof request.urls.api === 'string') {
+                    request.urls.api = request.urls.api.replace(/\/$/gi, '').trim();
+                    u = u.replace(request.urls.api, request.urls.node);
                 }
 
                 if (!/^https?/gi.test(u)) {
-                    u = request.nodeUrl + u;
+                    u = request.urls.node + u;
                 }
             }
 
@@ -87,11 +87,11 @@ let plugin = function (v) {
             return Request(baseUrl, options);
         };
 
-        // Change this to  request.urls.api etc...
-        request.apiUrl = undefined;
-        request.nodeUrl = undefined;
+        request.urls = {};
+        request.urls.api = undefined;
+        request.urls.node = undefined;
+        request.urls.base = url;
         request.options = opts;
-        request.baseUrl = url;
 
         opts.methods.forEach(method =>
             request[method] = (url, data, options) => request(method, url, data, options)
