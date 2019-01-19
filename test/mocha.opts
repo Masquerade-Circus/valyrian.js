@@ -1,5 +1,0 @@
---recursive
---require colors
---timeout 600000
---full-trace
---exit

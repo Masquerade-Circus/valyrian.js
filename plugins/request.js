@@ -29,6 +29,10 @@ let plugin = function (v) {
                 }, request.options, options),
                 type = opts.headers.Accept;
 
+            if (opts.methods.indexOf(method) === -1) {
+                throw new Error('Method not allowed');
+            }
+
             if (data !== undefined) {
                 if (opts.method === 'get' && typeof data === 'object') {
                     url += data = serialize(data);
@@ -60,9 +64,8 @@ let plugin = function (v) {
         };
 
         parseUrl = function (url) {
-            let u = /^https?/gi.test(url)
-                ? url
-                : (request.urls.base + '/' + url).trim().replace(/^\/\//gi, '/').trim();
+            let u = /^https?/gi.test(url) ? url
+                : (request.urls.base + url).trim().replace(/^\/\//gi, '/').trim();
 
             if (
                 v.is.node &&
@@ -70,7 +73,7 @@ let plugin = function (v) {
             ) {
                 request.urls.node = request.urls.node.replace(/\/$/gi, '').trim();
 
-                if (/^https?/gi.test(u) && typeof request.urls.api === 'string') {
+                if (typeof request.urls.api === 'string') {
                     request.urls.api = request.urls.api.replace(/\/$/gi, '').trim();
                     u = u.replace(request.urls.api, request.urls.node);
                 }

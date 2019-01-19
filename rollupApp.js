@@ -4,12 +4,13 @@ let nodeResolve = require('rollup-plugin-node-resolve');
 let includepaths = require('rollup-plugin-includepaths');
 let filesize = require('rollup-plugin-filesize');
 let progress = require('rollup-plugin-progress');
-let uglify = require('rollup-plugin-uglify');
+let {uglify} = require('rollup-plugin-uglify');
 let buble = require('rollup-plugin-buble');
 let json = require('rollup-plugin-json');
+let butternut = require('rollup-plugin-butternut');
+let sourcemaps = require('rollup-plugin-sourcemaps');
 
 let uglifyOptions = {
-    ecma: 5,
     mangle: true,
     compress: {
         warnings: false, // Suppress uglification warnings
@@ -42,7 +43,8 @@ let inputOptions = {
             sourceMap: true // Default: true
         }),
         json(),
-        buble()
+        sourcemaps(),
+        buble({jsx: 'v', target: { chrome: 70, firefox: 60, node: 8 }})
     ],
     cache: undefined
 };
@@ -56,7 +58,8 @@ let outputOptions = {
 
 if (process.env.NODE_ENV === 'production') {
     outputOptions.sourcemap = false;
-    inputOptions.plugins.push(uglify(uglifyOptions));
+    // inputOptions.plugins.push(uglify(uglifyOptions));
+    inputOptions.plugins.push(butternut({check: true, sourcemap: false}));
     inputOptions.plugins.push(filesize());
     rollup.rollup(inputOptions)
         .then(bundle => bundle.write(outputOptions))
@@ -64,6 +67,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 if (process.env.NODE_ENV !== 'production') {
+    // inputOptions.plugins.push(butternut({check: true, sourcemap: true}));
     inputOptions.plugins.push(filesize());
 
     inputOptions.output = outputOptions;
