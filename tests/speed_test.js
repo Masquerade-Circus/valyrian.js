@@ -40,5 +40,29 @@ test('timeouts', async t => {
                 });
             });
         });
+
+        s.bench('max 1', deferred => {
+            let Component = getComponent();
+            v.mount('body', Component).then((b) => {
+                before = b;
+                Component.world = 'John Doe';
+                v.update().then((a) => {
+                    after = a;
+                    deferred.resolve();
+                });
+            });
+        });
+
+        s.bench('max 2', deferred => {
+            let Component = getComponent();
+            v.mount('body', Component).then((b) => {
+                before = b;
+                Component.world = 'John Doe';
+                v.update().then((a) => {
+                    after = a;
+                    deferred.resolve();
+                });
+            });
+        });
     });
 });
