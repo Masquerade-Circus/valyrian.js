@@ -29,3 +29,4 @@ exclude_patterns:
   - 'tests'
   - 'rollup*'
   - 'buildAssets.js'
+  - 'plugins/node.js'
