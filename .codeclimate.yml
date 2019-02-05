@@ -2,25 +2,24 @@ version: '2' # required to adjust maintainability checks
 checks:
   argument-count:
     config:
-      threshold: 4
+      threshold: 10
   complex-logic:
     config:
       threshold: 4
   file-lines:
     config:
-      threshold: 250
+      threshold: 500
   method-complexity:
-    config:
-      threshold: 20
+    enabled: false
   method-count:
     config:
       threshold: 20
   method-lines:
     config:
-      threshold: 80
+      threshold: 250
   nested-control-flow:
     config:
-      threshold: 4
+      threshold: 6
   return-statements:
     config:
       threshold: 4
