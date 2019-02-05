@@ -4,23 +4,16 @@ import Pages from './pages';
 // Create a router
 let router = v.Router();
 router
-    .use(() => console.log('ok'))
-    .get('/', [
-        () => console.log('Init'),
-        () => Pages.Hello
-    ])
-    .get('/hello', [
-        () => Pages.Hello.getServer(),
-        () => Pages.Hello
-    ])
-    .get('/counter', () => Pages.Counter)
-    .get('/diff', () => Pages.Diff)
-    .get('/lifecycle', () => Pages.Lifecycle)
-    .get('/subcomponent', () => Pages.Subcomponent)
-    .get('/hello/:ok', (params) => {
-        return Pages.Hello;
-    })
-;
+  .use(() => console.log('ok'))
+  .get('/', [() => console.log('Init'), () => Pages.Hello])
+  .get('/hello', [() => Pages.Hello.getServer(), () => Pages.Hello])
+  .get('/counter', () => Pages.Counter)
+  .get('/diff', () => Pages.Diff)
+  .get('/lifecycle', () => Pages.Lifecycle)
+  .get('/subcomponent', () => Pages.Subcomponent)
+  .get('/hello/:ok', (params) => {
+    return Pages.Hello;
+  });
 
 // Assign routes to ValyrianJs
 v.routes('body', router);
@@ -33,4 +26,4 @@ v.routes('body', router);
 // }
 
 // // Export what is needed for the backend
-export default {Pages};
+export default { Pages };

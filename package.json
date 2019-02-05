@@ -15,14 +15,16 @@
     "dev:source": "cross-env NODE_ENV=development node rollupSource.js",
     "dev:source-node": "cross-env NODE_ENV=development node rollupSourceNode.js",
     "dev:app": "cross-env NODE_ENV=development node rollupApp.js",
-    "dev:test": "cross-env NODE_ENV=development ava --watch",
+    "dev:test": "cross-env NODE_ENV=development nodemon -w ./tests -w ./lib -w ./plugins -w ./server --exec 'nyc ava --verbose'",
     "build": "yarn build:assets && yarn build:source && yarn build:source-node && yarn build:app",
     "build:assets": "cross-env NODE_ENV=production node buildAssets.js",
     "build:source": "cross-env NODE_ENV=production node rollupSource.js",
     "build:source-node": "cross-env NODE_ENV=production node rollupSourceNode.js",
     "build:app": "cross-env NODE_ENV=production node rollupApp.js",
     "start": "cross-env NODE_ENV=production node server.js",
-    "test": "cross-env NODE_ENV=development ava"
+    "test": "nyc ava",
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "remark": "remark . -o"
   },
   "dependencies": {
     "clean-css": "^4.2.1",
@@ -38,13 +40,21 @@
     "ava": "^1.1.0",
     "chuhai": "^1.2.0",
     "compression": "^1.7.3",
+    "coveralls": "^3.0.2",
     "cross-env": "^5.2.0",
+    "eslint": "^5.13.0",
+    "eslint-plugin-sonarjs": "^0.2.0",
     "esm": "^3.1.1",
+    "expect": "^24.0.0",
     "micro": "^9.3.3",
-    "micro-ex-router": "^1.5.4",
+    "micro-ex-router": "^1.6.0",
     "node-dev": "^3.1.3",
+    "nodemon": "^1.18.9",
+    "nyc": "^13.2.0",
     "puppeteer": "^1.11.0",
     "recursive-readdir": "^2.2.2",
+    "remark-cli": "^6.0.1",
+    "remark-toc": "^5.1.1",
     "rollup": "^1.1.2",
     "rollup-plugin-async": "^1.2.0",
     "rollup-plugin-buble": "^0.19.6",
@@ -68,13 +78,13 @@
     "sources": [
       "**/*.{js,jsx}"
     ],
-    "verbose": true,
     "failWithoutAssertions": false,
     "require": [
       "esm"
     ],
     "babel": {
       "testOptions": {
+        "sourceMaps": "inline",
         "presets": [
           [
             "module:ava/stage-4",
@@ -93,5 +103,16 @@
         ]
       }
     }
+  },
+  "nyc": {
+    "exclude": [
+      "tests",
+      "app"
+    ]
+  },
+  "remarkConfig": {
+    "plugins": [
+      "toc"
+    ]
   }
 }

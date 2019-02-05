@@ -278,238 +278,268 @@
     global.document = undom();
 
     var fs = require('fs'),
-        uncss = require('uncss'),
-        errorHandler = function (resolve, reject) { return function (err) {
-            if (err) {
-                return reject(err);
-            }
+      uncss = require('uncss'),
+      errorHandler = function (resolve, reject) { return function (err) {
+        if (err) {
+          return reject(err);
+        }
 
-            resolve();
-        }; };
+        resolve();
+      }; };
 
     function fileMethodFactory() {
-        var prop = '';
-        return function (file) {
-            if (!file) {
-                return prop;
-            }
+      var prop = '';
+      return function (file) {
+        if (!file) {
+          return prop;
+        }
 
-            if (/^https?:\/\//gi.test(file)) {
-                return v.request.get(file, {}, {
-                    headers: {
-                        'Accept': 'text/plain',
-                        'Content-Type': 'text/plain'
-                    }
-                })
-                    .then(function (contents) {
-                        prop += contents;
-                    });
-            }
-
-            return new Promise(function (resolve, reject) {
-                fs.readFile(file, 'utf8', function (err, contents) {
-                    if (err) {
-                        return reject(err);
-                    }
-
-                    prop += contents;
-                    resolve(prop);
-                });
+        if (/^https?:\/\//gi.test(file)) {
+          return v.request
+            .get(
+              file,
+              {},
+              {
+                headers: {
+                  Accept: 'text/plain',
+                  'Content-Type': 'text/plain'
+                }
+              }
+            )
+            .then(function (contents) {
+              prop += contents;
             });
-        };
-    }
-    function inline() {
-        var args = [], len = arguments.length;
-        while ( len-- ) args[ len ] = arguments[ len ];
-
-        var promises = args.map(function (item) {
-            var ext = item.split('.').pop();
-            if (!inline[ext]) {
-                inline[ext] = fileMethodFactory();
-            }
-            return inline[ext](item);
-        });
-
-        return Promise.all(promises);
-    }
-    inline.uncss = (function () {
-        var prop = '';
-        return function (renderedHtml, options) {
-            if ( options === void 0 ) options = {};
-
-            if (!renderedHtml) {
-                return prop;
-            }
-
-            var opt = Object.assign({
-                minify: true
-            }, options);
-
-            opt.raw = inline.css();
-            return Promise.all(renderedHtml)
-                .then(function (html) {
-                    html.forEach(function (item, index) {
-                        html[index] = item.replace(/<script [^>]*><\/script>/gi, '');
-                    });
-
-                    return new Promise(function (resolve, reject) {
-                        uncss(html, opt, function (err, output) {
-                            if (err) {
-                                return reject(err);
-                            }
-
-                            if (!opt.minify) {
-                                prop = output;
-                                return resolve(output);
-                            }
-
-                            output = new CleanCSS({
-                                level: {
-                                    1: {
-                                        roundingPrecision: 'all=3', // rounds pixel values to `N` decimal places; `false` disables rounding; defaults to `false`
-                                        specialComments: 'none' // denotes a number of /*! ... */ comments preserved; defaults to `all`
-                                    },
-                                    2: {
-                                        restructureRules: true // controls rule restructuring; defaults to false
-                                    }
-                                },
-                                compatibility: 'ie11'
-                            }).minify(output).styles;
-
-                            cssnano.process(output).then(function (result) {
-                                prop = result.css;
-                                resolve(prop);
-                            });
-                        });
-                    });
-                });
-        };
-    }());
-
-
-    function sw(file, options) {
-        if ( options === void 0 ) options = {};
-
-        var opt = Object.assign({
-                version: 'v1::',
-                name: 'Valyrian.js',
-                urls: ['/'],
-                debug: false
-            }, options),
-            contents = swTpl
-                .replace('v1::', 'v' + opt.version + '::')
-                .replace('Valyrian.js', opt.name)
-                .replace('[\'/\']', '["' + opt.urls.join('","') + '"]');
-
-        if (!opt.debug) {
-            contents = contents.replace('console.log', '() => {}');
         }
 
         return new Promise(function (resolve, reject) {
-            fs.writeFile(file, contents, 'utf8', errorHandler(resolve, reject));
+          fs.readFile(file, 'utf8', function (err, contents) {
+            if (err) {
+              return reject(err);
+            }
+
+            prop += contents;
+            resolve(prop);
+          });
         });
+      };
+    }
+
+    function inline() {
+      var args = [], len = arguments.length;
+      while ( len-- ) args[ len ] = arguments[ len ];
+
+      var promises = args.map(function (item) {
+        var ext = item.split('.').pop();
+        if (!inline[ext]) {
+          inline[ext] = fileMethodFactory();
+        }
+        return inline[ext](item);
+      });
+
+      return Promise.all(promises);
+    }
+
+    inline.uncss = (function () {
+      var prop = '';
+      return function (renderedHtml, options) {
+        if ( options === void 0 ) options = {};
+
+        if (!renderedHtml) {
+          return prop;
+        }
+
+        var opt = Object.assign(
+          {
+            minify: true
+          },
+          options
+        );
+
+        opt.raw = inline.css();
+        return Promise.all(renderedHtml).then(function (html) {
+          html.forEach(function (item, index) {
+            html[index] = item.replace(/<script [^>]*><\/script>/gi, '');
+          });
+
+          return new Promise(function (resolve, reject) {
+            uncss(html, opt, function (err, output) {
+              if (err) {
+                return reject(err);
+              }
+
+              if (!opt.minify) {
+                prop = output;
+                return resolve(output);
+              }
+
+              output = new CleanCSS({
+                level: {
+                  1: {
+                    // rounds pixel values to `N` decimal places; `false` disables rounding; defaults to `false`
+                    roundingPrecision: 'all=3',
+                    specialComments: 'none' // denotes a number of /*! ... */ comments preserved; defaults to `all`
+                  },
+                  2: {
+                    restructureRules: true // controls rule restructuring; defaults to false
+                  }
+                },
+                compatibility: 'ie11'
+              }).minify(output).styles;
+
+              cssnano.process(output).then(function (result) {
+                prop = result.css;
+                resolve(prop);
+              });
+            });
+          });
+        });
+      };
+    }());
+
+    function sw(file, options) {
+      if ( options === void 0 ) options = {};
+
+      var opt = Object.assign(
+          {
+            version: 'v1::',
+            name: 'Valyrian.js',
+            urls: ['/'],
+            debug: false
+          },
+          options
+        ),
+        contents = swTpl
+          .replace('v1::', 'v' + opt.version + '::')
+          .replace('Valyrian.js', opt.name)
+          .replace("['/']", '["' + opt.urls.join('","') + '"]');
+
+      if (!opt.debug) {
+        contents = contents.replace('console.log', '() => {}');
+      }
+
+      return new Promise(function (resolve, reject) {
+        fs.writeFile(file, contents, 'utf8', errorHandler(resolve, reject));
+      });
     }
 
     function icons(source, configuration) {
-        if ( configuration === void 0 ) configuration = {};
+      if ( configuration === void 0 ) configuration = {};
 
-        var favicons = require('favicons'),
-            html2hs = require('html2hs'),
-            options = Object.assign({}, icons.options, configuration);
+      var favicons = require('favicons'),
+        html2hs = require('html2hs'),
+        options = Object.assign({}, icons.options, configuration);
 
+      if (options.iconsPath) {
+        options.iconsPath = options.iconsPath.replace(/\/$/gi, '') + '/';
+      }
+
+      if (options.linksViewPath) {
+        options.linksViewPath = options.linksViewPath.replace(/\/$/gi, '') + '/';
+      }
+
+      function processResponse(response, options) {
+        var promises = [];
         if (options.iconsPath) {
-            options.iconsPath = options.iconsPath.replace(/\/$/gi, '') + '/';
+          var loop = function ( i ) {
+            promises.push(
+              new Promise(function (resolve, reject) {
+                fs.writeFile(
+                  options.iconsPath + response.images[i].name,
+                  response.images[i].contents,
+                  errorHandler(resolve, reject)
+                );
+              })
+            );
+          };
+
+          for (var i in response.images) loop( i );
+
+          var loop$1 = function ( i ) {
+            promises.push(
+              new Promise(function (resolve, reject) {
+                fs.writeFile(
+                  options.iconsPath + response.files[i$1].name,
+                  response.files[i$1].contents,
+                  errorHandler(resolve, reject)
+                );
+              })
+            );
+          };
+
+          for (var i$1 in response.files) loop$1( i );
         }
 
-        if (options.iconsPath) {
-            options.linksViewPath = options.linksViewPath.replace(/\/$/gi, '') + '/';
+        if (options.linksViewPath) {
+          var html = 'export default { \n    view(){ \n        return [';
+          for (var i$2 in response.html) {
+            html += '\n            ' + html2hs(response.html[i$2]) + ',';
+          }
+          html = html.replace(/,$/gi, '').replace(/h\("/gi, 'v("') + '\n        ];\n    }\n};';
+
+          promises.push(
+            new Promise(function (resolve, reject) {
+              fs.writeFile(((options.linksViewPath) + "/links.js"), html, errorHandler(resolve, reject));
+            })
+          );
         }
 
-        return new Promise(function (resolve, reject) {
-            favicons(source, options, function (err, response) {
-                if (err) {
-                    process.stdout.write(err.status + '\n'); // HTTP error code (e.g. `200`) or `null`
-                    process.stdout.write(err.name + '\n'); // Error name e.g. "API Error"
-                    process.stdout.write(err.message + '\n'); // Error description e.g. "An unknown error has occurred"
+        return Promise.all(promises);
+      }
 
-                    return reject(err);
-                }
+      return new Promise(function (resolve, reject) {
+        favicons(source, options, function (err, response) {
+          if (err) {
+            process.stdout.write(err.status + '\n'); // HTTP error code (e.g. `200`) or `null`
+            process.stdout.write(err.name + '\n'); // Error name e.g. "API Error"
+            process.stdout.write(err.message + '\n'); // Error description e.g. "An unknown error has occurred"
 
-                var promises = [];
+            return reject(err);
+          }
 
-                if (options.iconsPath) {
-                    var loop = function ( i ) {
-                        promises.push(new Promise(function (resolve, reject) {
-                            fs.writeFile(options.iconsPath + response.images[i].name, response.images[i].contents, errorHandler(resolve, reject));
-                        }));
-                    };
-
-                    for (var i in response.images) loop( i );
-
-                    var loop$1 = function ( i ) {
-                        promises.push(new Promise(function (resolve, reject) {
-                            fs.writeFile(options.iconsPath + response.files[i$1].name, response.files[i$1].contents, errorHandler(resolve, reject));
-                        }));
-                    };
-
-                    for (var i$1 in response.files) loop$1( i );
-                }
-
-                if (options.linksViewPath) {
-                    var html = 'export default { \n    view(){ \n        return [';
-                    for (var i$2 in response.html) {
-                        html += '\n            ' + html2hs(response.html[i$2]) + ',';
-                    }
-                    html = html.replace(/,$/gi, '').replace(/h\("/gi, 'v("') + '\n        ];\n    }\n};';
-
-                    promises.push(new Promise(function (resolve, reject) {
-                        fs.writeFile(((options.linksViewPath) + "/links.js"), html, errorHandler(resolve, reject));
-                    }));
-                }
-
-                Promise.all(promises)
-                    .then(function () {
-                        resolve(response);
-                    })
-                    .catch(reject);
-            });
+          processResponse(response, options)
+            .then(function () {
+              resolve(response);
+            })
+            .catch(reject);
         });
+      });
     }
-    icons.options = {
-        iconsPath: null, // Path to the generated icons
-        linksViewPath: null, // Path to the generated links file
 
-        // favicons options
-        path: '', // Path for overriding default icons path. `string`
-        appName: null, // Your application's name. `string`
-        appDescription: null, // Your application's description. `string`
-        developerName: null, // Your (or your developer's) name. `string`
-        developerURL: null,
-        dir: 'auto',
-        lang: 'en-US',
-        background: '#fff', // Background colour for flattened icons. `string`
-        theme_color: '#fff',
-        display: "standalone", // Android display: "browser" or "standalone". `string`
-        orientation: "any", // Android orientation: "any" "portrait" or "landscape". `string`
-        start_url: "/", // Android start application's URL. `string`
-        version: '1.0', // Your application's version number. `number`
-        logging: false, // Print logs to console? `boolean`
-        icons: {
-            android: true, // Create Android homescreen icon. `boolean`
-            appleIcon: true, // Create Apple touch icons. `boolean` or `{ offset: offsetInPercentage }`
-            appleStartup: true, // Create Apple startup images. `boolean`
-            coast: false, // Create Opera Coast icon with offset 25%. `boolean` or `{ offset: offsetInPercentage }`
-            favicons: true, // Create regular favicons. `boolean`
-            firefox: false, // Create Firefox OS icons. `boolean` or `{ offset: offsetInPercentage }`
-            windows: true, // Create Windows 8 tile icons. `boolean`
-            yandex: false // Create Yandex browser icon. `boolean`
-        }
+    icons.options = {
+      iconsPath: null, // Path to the generated icons
+      linksViewPath: null, // Path to the generated links file
+
+      // favicons options
+      path: '', // Path for overriding default icons path. `string`
+      appName: null, // Your application's name. `string`
+      appDescription: null, // Your application's description. `string`
+      developerName: null, // Your (or your developer's) name. `string`
+      developerURL: null,
+      dir: 'auto',
+      lang: 'en-US',
+      background: '#fff', // Background colour for flattened icons. `string`
+      theme_color: '#fff',
+      display: 'standalone', // Android display: "browser" or "standalone". `string`
+      orientation: 'any', // Android orientation: "any" "portrait" or "landscape". `string`
+      start_url: '/', // Android start application's URL. `string`
+      version: '1.0', // Your application's version number. `number`
+      logging: false, // Print logs to console? `boolean`
+      icons: {
+        android: true, // Create Android homescreen icon. `boolean`
+        appleIcon: true, // Create Apple touch icons. `boolean` or `{ offset: offsetInPercentage }`
+        appleStartup: true, // Create Apple startup images. `boolean`
+        coast: false, // Create Opera Coast icon with offset 25%. `boolean` or `{ offset: offsetInPercentage }`
+        favicons: true, // Create regular favicons. `boolean`
+        firefox: false, // Create Firefox OS icons. `boolean` or `{ offset: offsetInPercentage }`
+        windows: true, // Create Windows 8 tile icons. `boolean`
+        yandex: false // Create Yandex browser icon. `boolean`
+      }
     };
 
     var plugin = function (v) {
-        v.inline = inline;
-        v.sw = sw;
-        v.icons = icons;
+      v.inline = inline;
+      v.sw = sw;
+      v.icons = icons;
     };
 
     return plugin;

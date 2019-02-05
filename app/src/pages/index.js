@@ -6,12 +6,12 @@ import Lifecycle from './lifecycle';
 import Subcomponent from './subcomponent';
 
 let Pages = {
-    Main,
-    Hello,
-    Counter,
-    Diff,
-    Lifecycle,
-    Subcomponent
+  Main,
+  Hello,
+  Counter,
+  Diff,
+  Lifecycle,
+  Subcomponent
 };
 
 export default Pages;
