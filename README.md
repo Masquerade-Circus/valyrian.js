@@ -1,4 +1,6 @@
-[![npm version](https://img.shields.io/npm/v/valyrian.js.svg?style=flat)](https://npmjs.org/package/valyrian.js "View this project on npm")
+[![npm version](https://img.shields.io/npm/v/valyrian.js.svg?style=flat)](https://npmjs.org/package/valyrian.js 'View this project on npm')
+![](https://img.shields.io/bundlephobia/min/valyrian.js.svg?style=flat)
+![](https://img.shields.io/bundlephobia/minzip/valyrian.js.svg?style=flat)
 [![Build Status](https://travis-ci.org/Masquerade-Circus/valyrian.js.svg?branch=master)](https://travis-ci.org/Masquerade-Circus/valyrian.js)
 [![Dependencies](https://img.shields.io/david/masquerade-circus/valyrian.js.svg?style=flat)](https://david-dm.org/masquerade-circus/valyrian.js)
 ![](https://img.shields.io/github/issues/masquerade-circus/valyrian.js.svg)
@@ -14,9 +16,9 @@ Lightweight steel to forge PWAs. (Minimal Frontend Framework with server side re
 
 ## Table of Contents
 
--   [Tests](#tests)
--   [Contributing](#contributing)
--   [Legal](#legal)
+- [Tests](#tests)
+- [Contributing](#contributing)
+- [Legal](#legal)
 
 ## Tests
 
@@ -26,9 +28,9 @@ For development use `yarn dev:test`
 
 ## Contributing
 
--   Use prettify and eslint to lint your code.
--   Add tests for any new or changed functionality.
--   Update the readme with an example if you add or change any functionality.
+- Use prettify and eslint to lint your code.
+- Add tests for any new or changed functionality.
+- Update the readme with an example if you add or change any functionality.
 
 ## Legal
 
