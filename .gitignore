@@ -58,3 +58,5 @@ typings/
 .env
 
 .tmp/**
+
+!.tmp/favicon.ico
