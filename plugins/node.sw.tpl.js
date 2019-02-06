@@ -1,9 +1,9 @@
-let Log = () => {};
+let Log = console.log;
 
 let config = {
-  version: 'v2.0.8::',
-  name: 'valyrian.js',
-  urls: ["/","/hello"]
+  version: 'v1::',
+  name: 'Valyrian.js',
+  urls: ['/']
 };
 
 // Function to add the network response to the cache

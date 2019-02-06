@@ -1,7 +1,7 @@
 {
-  "name": "Valyrian.js",
-  "short_name": "Valyrian.js",
-  "description": "Lightwiegth steel to forge PWA's",
+  "name": "valyrian.js",
+  "short_name": "valyrian.js",
+  "description": "Lightweight steel to forge PWAs. (Minimal Frontend Framework with server side rendering and other capabilities)",
   "dir": "auto",
   "lang": "en-US",
   "display": "standalone",

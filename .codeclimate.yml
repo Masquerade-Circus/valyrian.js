@@ -30,3 +30,4 @@ exclude_patterns:
   - 'rollup*'
   - 'buildAssets.js'
   - 'plugins/node.js'
+  - 'tmp'

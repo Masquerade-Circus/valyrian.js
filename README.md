@@ -1,6 +1,11 @@
+<div style="text-align: center">
+
+<img src="dist/logo.png" style="width: 60%"/>
+
 [![npm version](https://img.shields.io/npm/v/valyrian.js.svg?style=flat)](https://npmjs.org/package/valyrian.js 'View this project on npm')
 ![](https://img.shields.io/bundlephobia/min/valyrian.js.svg?style=flat)
 ![](https://img.shields.io/bundlephobia/minzip/valyrian.js.svg?style=flat)
+
 [![Build Status](https://travis-ci.org/Masquerade-Circus/valyrian.js.svg?branch=master)](https://travis-ci.org/Masquerade-Circus/valyrian.js)
 [![Dependencies](https://img.shields.io/david/masquerade-circus/valyrian.js.svg?style=flat)](https://david-dm.org/masquerade-circus/valyrian.js)
 ![](https://img.shields.io/github/issues/masquerade-circus/valyrian.js.svg)
@@ -10,7 +15,9 @@
 [![Coverage Status](https://coveralls.io/repos/github/Masquerade-Circus/valyrian.js/badge.svg?branch=master)](https://coveralls.io/github/Masquerade-Circus/valyrian.js?branch=master)
 [![License](https://img.shields.io/github/license/masquerade-circus/valyrian.js.svg)](https://github.com/masquerade-circus/valyrian.js/blob/master/LICENSE)
 
-# valyrian.js
+</div>
+
+# Valyrian.js
 
 Lightweight steel to forge PWAs. (Minimal Frontend Framework with server side rendering and other capabilities)
 

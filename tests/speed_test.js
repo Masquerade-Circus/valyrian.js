@@ -14,7 +14,7 @@ test.skip('timeouts', async (t) => {
         return <div id={Component.id}>Hello {Component.world}</div>;
       }
     };
-    return Component;
+    return v(Component);
   };
 
   let before;

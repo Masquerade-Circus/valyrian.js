@@ -74,3 +74,28 @@ test.serial('Mount and update with functional stateless component', async (t) =>
     after: '<div id="example">Hello John Doe</div>'
   });
 });
+
+test.serial('Handle multiple update calls', async (t) => {
+  let Component = {
+    world: 'World',
+    id: 'example',
+    view() {
+      return <div id={Component.id}>Hello {Component.world}</div>;
+    }
+  };
+
+  // Should identify the object as a component
+  v(Component);
+
+  let result = {};
+  result.before = await v.mount('body', Component);
+  Component.world = 'John Doe';
+  result.after = await v.update();
+  result.afteragain = await v.update();
+
+  expect(result).toEqual({
+    before: '<div id="example">Hello World</div>',
+    after: '<div id="example">Hello John Doe</div>',
+    afteragain: '<div id="example">Hello John Doe</div>'
+  });
+});
