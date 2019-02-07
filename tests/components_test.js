@@ -23,14 +23,11 @@ test('POJO component', ({ deepEqual }) => {
     }
   };
 
-  // Initialize as component
-  v(Component);
-
   expect(v(Component)).toEqual(expected);
   expect(<Component />).toEqual(expected);
 });
 
-test('Functional statefull component', ({ deepEqual, log }) => {
+test('Functional stateful component', ({ deepEqual, log }) => {
   let Component = function () {
     return <div id={this.id}>Hello {this.world}</div>;
   };
@@ -40,7 +37,7 @@ test('Functional statefull component', ({ deepEqual, log }) => {
   };
 
   // Initialize as component and assign state
-  v(Component, state);
+  v.addState(Component, state);
 
   expect(v(Component)).toEqual(expected);
   expect(<Component />).toEqual(expected);
@@ -48,9 +45,6 @@ test('Functional statefull component', ({ deepEqual, log }) => {
 
 test('Functional stateless component', ({ deepEqual }) => {
   let Component = (props, world) => <div id={props.id}>Hello {world}</div>;
-
-  // Initialize as component
-  v(Component);
 
   expect(v(Component, { id: 'example' }, 'World')).toEqual(expected);
   expect(<Component id="example">World</Component>).toEqual(expected);
@@ -62,14 +56,12 @@ test('Functional stateless component antipattern', ({ deepEqual }) => {
     id: 'example'
   };
   let Component = () => <div id={state.id}>Hello {state.world}</div>;
-  // Initialize as component
-  v(Component);
 
   expect(v(Component)).toEqual(expected);
   expect(<Component>World</Component>).toEqual(expected);
 });
 
-test('Functional statefull error context', ({ deepEqual, log }) => {
+test('Functional stateful error context', ({ deepEqual, log }) => {
   // this.id and this.world will be undefined due to the use of an arrow function
   let Component = () => {
     return <div id={this.id}>Hello {this.world}</div>;
@@ -80,7 +72,7 @@ test('Functional statefull error context', ({ deepEqual, log }) => {
   };
 
   // Initialize as component
-  v(Component, state);
+  v.addState(Component, state);
 
   let expected = [
     {
@@ -107,13 +99,10 @@ test('Create POJO component', (t) => {
     }
   };
 
-  // Should identify the object as a component
-  v(Component);
-
-  expect(Component.isComponent).toBeTruthy();
+  expect(typeof Component.view).toEqual('function');
 });
 
-test('Create Functional statefull component', (t) => {
+test('Create Functional stateful component', (t) => {
   let Component = function () {
     return <div id={this.id}>Hello {this.world}</div>;
   };
@@ -123,9 +112,8 @@ test('Create Functional statefull component', (t) => {
   };
 
   // Should identify the function as a component
-  v(Component, state);
+  v.addState(Component, state);
 
-  expect(Component.isComponent).toBeTruthy();
   expect(typeof Component.view).toEqual('function');
   expect(Component.world).toEqual(state.world);
   expect(Component.id).toEqual(state.id);
@@ -135,8 +123,7 @@ test('Create Functional stateless component', (t) => {
   let Component = (props) => <div id={props.id}>Hello {props.world}</div>;
 
   // Should identify the function as a component
-  v(Component);
+  v(Component, { id: 'id', world: 'mundo' });
 
-  expect(Component.isComponent).toBeTruthy();
   expect(typeof Component.view).toEqual('function');
 });

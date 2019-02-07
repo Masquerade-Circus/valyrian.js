@@ -4,7 +4,7 @@ import '../lib';
 import nodePlugin from '../plugins/node';
 v.use(nodePlugin);
 
-test.serial('Mount and update with POJO component', async (t) => {
+test.serial('Mount and update with POJO component', (t) => {
   let Component = {
     world: 'World',
     id: 'example',
@@ -13,13 +13,10 @@ test.serial('Mount and update with POJO component', async (t) => {
     }
   };
 
-  // Should identify the object as a component
-  v(Component);
-
   let result = {};
-  result.before = await v.mount('body', Component);
+  result.before = v.mount('body', Component);
   Component.world = 'John Doe';
-  result.after = await v.update();
+  result.after = v.update();
 
   expect(result).toEqual({
     before: '<div id="example">Hello World</div>',
@@ -27,7 +24,7 @@ test.serial('Mount and update with POJO component', async (t) => {
   });
 });
 
-test.serial('Mount and update with functional statefull component', async (t) => {
+test.serial('Mount and update with functional stateful component', (t) => {
   let Component = function () {
     return <div id={this.id}>Hello {this.world}</div>;
   };
@@ -37,12 +34,12 @@ test.serial('Mount and update with functional statefull component', async (t) =>
   };
 
   // Should identify the function as a component
-  v(Component, state);
+  v.addState(Component, state);
 
   let result = {};
-  result.before = await v.mount('body', Component);
+  result.before = v.mount('body', Component);
   Component.world = 'John Doe';
-  result.after = await v.update();
+  result.after = v.update();
 
   expect(result).toEqual({
     before: '<div id="example">Hello World</div>',
@@ -50,7 +47,7 @@ test.serial('Mount and update with functional statefull component', async (t) =>
   });
 });
 
-test.serial('Mount and update with functional stateless component', async (t) => {
+test.serial('Mount and update with functional stateless subcomponent', (t) => {
   let SubComponent = (props) => <div id={props.id}>Hello {props.world}</div>;
   let state = {
     world: 'World',
@@ -60,14 +57,10 @@ test.serial('Mount and update with functional stateless component', async (t) =>
     return <SubComponent {...state} />;
   };
 
-  // Should identify the function as a component
-  v(SubComponent);
-  v(Component);
-
   let result = {};
-  result.before = await v.mount('body', Component);
+  result.before = v.mount('body', Component);
   state.world = 'John Doe';
-  result.after = await v.update();
+  result.after = v.update();
 
   expect(result).toEqual({
     before: '<div id="example">Hello World</div>',
@@ -75,7 +68,7 @@ test.serial('Mount and update with functional stateless component', async (t) =>
   });
 });
 
-test.serial('Handle multiple update calls', async (t) => {
+test.serial('Handle multiple update calls', (t) => {
   let Component = {
     world: 'World',
     id: 'example',
@@ -84,18 +77,51 @@ test.serial('Handle multiple update calls', async (t) => {
     }
   };
 
-  // Should identify the object as a component
-  v(Component);
-
   let result = {};
-  result.before = await v.mount('body', Component);
+  result.before = v.mount('body', Component);
   Component.world = 'John Doe';
-  result.after = await v.update();
-  result.afteragain = await v.update();
+  result.after = v.update();
+  result.afteragain = v.update();
 
   expect(result).toEqual({
     before: '<div id="example">Hello World</div>',
     after: '<div id="example">Hello John Doe</div>',
     afteragain: '<div id="example">Hello John Doe</div>'
+  });
+});
+
+test.serial('Antipattern: Mount and update with functional stateless component', (t) => {
+  let Component = (props) => <div id={props.id}>Hello {props.world}</div>;
+  let props = {
+    world: 'World',
+    id: 'example'
+  };
+
+  let result = {};
+  result.before = v.mount('body', Component, props);
+  props.world = 'John Doe';
+  result.after = v.update(Component, props);
+
+  expect(result).toEqual({
+    before: '<div id="example">Hello World</div>',
+    after: '<div id="example">Hello John Doe</div>'
+  });
+});
+
+test.serial('Antipattern: Mount and update with functional stateless component using only state', (t) => {
+  let Component = (props) => <div id={props.id}>Hello {props.world}</div>;
+  let props = {
+    world: 'World',
+    id: 'example'
+  };
+
+  let result = {};
+  result.before = v.mount('body', Component, props);
+  props.world = 'John Doe';
+  result.after = v.update(props);
+
+  expect(result).toEqual({
+    before: '<div id="example">Hello World</div>',
+    after: '<div id="example">Hello John Doe</div>'
   });
 });
