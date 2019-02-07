@@ -51,12 +51,12 @@ test('Should generate icons, manifest.json and a links component', async (t) => 
     logging: false, // Print logs to console? `boolean`
     icons: {
       android: true, // Create Android homescreen icon. `boolean`
-      appleIcon: true, // Create Apple touch icons. `boolean` or `{ offset: offsetInPercentage }`
-      appleStartup: true, // Create Apple startup images. `boolean`
+      appleIcon: false, // Create Apple touch icons. `boolean` or `{ offset: offsetInPercentage }`
+      appleStartup: false, // Create Apple startup images. `boolean`
       coast: false, // Create Opera Coast icon with offset 25%. `boolean` or `{ offset: offsetInPercentage }`
       favicons: true, // Create regular favicons. `boolean`
       firefox: false, // Create Firefox OS icons. `boolean` or `{ offset: offsetInPercentage }`
-      windows: true, // Create Windows 8 tile icons. `boolean`
+      windows: false, // Create Windows 8 tile icons. `boolean`
       yandex: false // Create Yandex browser icon. `boolean`
     }
   };

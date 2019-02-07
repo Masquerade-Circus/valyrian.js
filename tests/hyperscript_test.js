@@ -137,19 +137,20 @@ test('should create a div element with props', (t) => {
   });
 });
 
-// TODO: This could not be working with undom for server side
-// See: https://github.com/developit/undom/issues/7
-test.skip('should create a div element from string', (t) => {
-  expect(v.trust('<div id="unique" class="unique"></div>')).toEqual({
-    name: 'div',
-    props: {
-      id: 'unique',
-      class: 'unique'
-    },
-    children: [],
-    dom: null,
-    isVnode: true,
-    nt: 1,
-    isSVG: false
-  });
+test('should create a div element from string', (t) => {
+  expect(v.trust('<div id="unique" class="unique"></div>')).toEqual([
+    {
+      name: 'div',
+      props: {
+        id: 'unique',
+        class: 'unique'
+      },
+      children: [],
+      dom: expect.anything(),
+      isVnode: true,
+      nt: 1,
+      isSVG: false,
+      nodeValue: null
+    }
+  ]);
 });
