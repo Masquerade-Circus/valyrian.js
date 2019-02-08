@@ -1,10 +1,8 @@
-let undom = require('undom');
 let cssnano = require('cssnano');
 let CleanCSS = require('clean-css');
 let htmlparser = require('htmlparser2');
 
 global.fetch = require('node-fetch');
-// global.document = undom();
 global.document = (new (require('jsdom')).JSDOM()).window.document;
 
 let fs = require('fs');
