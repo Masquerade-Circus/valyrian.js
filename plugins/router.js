@@ -168,7 +168,13 @@ let RouterFactory = () => {
         // If there is a response
         // break the for block
         if (response) {
-          return response;
+          if (!response.view && typeof response === 'function') {
+            response.view = response;
+          }
+
+          if (response.view) {
+            return response;
+          }
         }
       }
     }
@@ -213,34 +219,23 @@ let RouterFactory = () => {
 let plugin = function (v) {
   let mainRouter;
   let RoutesContainer;
-  function runRoute(parentComponent, url, args) {
-    return mainRouter(url).then((response) => {
-      if (typeof response !== 'object') {
-        throw new Error('v.router.component.required');
-      }
+  async function runRoute(parentComponent, url, args) {
+    let response = await mainRouter(url);
 
-      if (!response.isComponent && typeof response.view === 'function') {
-        Object.assign(response, { isComponent: true });
-      }
+    if (parentComponent) {
+      args.unshift(v(response, ...args));
+      args.unshift(null);
+      response = parentComponent;
+    }
 
-      if (!response.isComponent) {
-        throw new Error('v.router.component.required');
-      }
+    args.unshift(response);
 
-      if (parentComponent) {
-        args.unshift(v(response, args));
-        response = parentComponent;
-      }
+    if (v.is.node || !v.is.mounted) {
+      args.unshift(RoutesContainer);
+      return v.mount.apply(v, args);
+    }
 
-      args.unshift(response);
-
-      if (v.is.node || !v.is.mounted) {
-        args.unshift(RoutesContainer);
-        return v.mount.apply(v, args);
-      }
-
-      return v.update.apply(v, args);
-    });
+    return v.update.apply(v, args);
   }
 
   v.routes = function (elementContainer, router) {
@@ -276,12 +271,12 @@ let plugin = function (v) {
     let parentComponent;
     let url;
 
-    if (typeof args[0] === 'object') {
-      if (!args[0].isComponent && typeof args[0].view === 'function') {
-        args[0] = Object.assign(args[0], { isComponent: true });
+    if (args[0]) {
+      if (!args[0].view && typeof args[0] === 'function') {
+        args[0].view = args[0];
       }
 
-      if (args[0].isComponent) {
+      if (args[0].view) {
         parentComponent = args.shift();
       }
     }
@@ -304,5 +299,4 @@ let plugin = function (v) {
   v.Router = RouterFactory;
 };
 
-// module.exports = plugin;
-export default plugin;
+module.exports = plugin;
