@@ -230,6 +230,12 @@ let plugin = function (v) {
 
     args.unshift(response);
 
+    v.routes.params = mainRouter.params;
+    v.routes.current = url;
+    if (v.is.browser) {
+      window.history.pushState({}, '', url);
+    }
+
     if (v.is.node || !v.is.mounted) {
       args.unshift(RoutesContainer);
       return v.mount.apply(v, args);
@@ -263,6 +269,23 @@ let plugin = function (v) {
     return routes;
   };
 
+  v.routes.link = function (e) {
+    let url = (e.target.getAttribute('href') || '').trim();
+    if (url.length > 0) {
+      if (url.charAt(0) !== '/') {
+        let current = v.routes.current
+          .split('?')
+          .shift()
+          .split('/');
+        current.pop();
+        url = `${current.join('/')}/${url}`;
+      }
+
+      v.routes.go(url);
+    }
+    e.preventDefault();
+  };
+
   v.routes.current = '/';
   v.routes.params = {};
 
@@ -287,10 +310,6 @@ let plugin = function (v) {
 
     if (!url) {
       throw new Error('v.router.url.required');
-    }
-
-    if (v.is.browser) {
-      window.history.pushState({}, '', url);
     }
 
     return runRoute(parentComponent, url, args);
