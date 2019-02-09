@@ -109,6 +109,7 @@ test.serial('Mount and update with POJO component', (t) => {
     'onupdate',
     'component onupdate',
     'onupdate',
+    'onspanremove',
     'component onupdate',
     'onupdate',
     'component onupdate',

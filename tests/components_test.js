@@ -9,7 +9,7 @@ let expected = [
     children: ['Hello ', 'World'],
     dom: null,
     isVnode: true,
-    nt: 1,
+    el: true,
     isSVG: false
   }
 ];
@@ -81,7 +81,7 @@ test('Functional stateful error context', ({ deepEqual, log }) => {
       children: ['Hello '],
       dom: null,
       isVnode: true,
-      nt: 1,
+      el: true,
       isSVG: false
     }
   ];

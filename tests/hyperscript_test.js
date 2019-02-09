@@ -11,7 +11,7 @@ let expected = [
     children: ['Hello ', 'World'],
     dom: null,
     isVnode: true,
-    nt: 1,
+    el: true,
     isSVG: false
   }
 ];
@@ -23,7 +23,7 @@ test('should create a div element', (t) => {
     children: [],
     dom: null,
     isVnode: true,
-    nt: 1,
+    el: true,
     isSVG: false
   });
 });
@@ -35,7 +35,7 @@ test('should create a div element with a text child', (t) => {
     children: ['Hello'],
     dom: null,
     isVnode: true,
-    nt: 1,
+    el: true,
     isSVG: false
   });
 });
@@ -51,13 +51,13 @@ test('should create a div element with an element child', (t) => {
         children: [],
         dom: null,
         isVnode: true,
-        nt: 1,
+        el: true,
         isSVG: false
       }
     ],
     dom: null,
     isVnode: true,
-    nt: 1,
+    el: true,
     isSVG: false
   });
 });
@@ -69,7 +69,7 @@ test('should create a div element with comma separated children', (t) => {
     children: ['Hello ', 'world'],
     dom: null,
     isVnode: true,
-    nt: 1,
+    el: true,
     isSVG: false
   });
 });
@@ -81,7 +81,7 @@ test('should create a div element with array of children', (t) => {
     children: ['Hello ', 'world'],
     dom: null,
     isVnode: true,
-    nt: 1,
+    el: true,
     isSVG: false
   });
 });
@@ -99,13 +99,13 @@ test('should create a div element with mixed array of children and comma separat
         children: ['Whats up'],
         dom: null,
         isVnode: true,
-        nt: 1,
+        el: true,
         isSVG: false
       }
     ],
     dom: null,
     isVnode: true,
-    nt: 1,
+    el: true,
     isSVG: false
   });
 });
@@ -117,7 +117,7 @@ test('should create a div element with mixed nested arrays of children ', (t) =>
     children: ['Hello ', 'world', 'Only', 'for', 'this', 'time'],
     dom: null,
     isVnode: true,
-    nt: 1,
+    el: true,
     isSVG: false
   });
 });
@@ -132,7 +132,7 @@ test('should create a div element with props', (t) => {
     children: [],
     dom: null,
     isVnode: true,
-    nt: 1,
+    el: true,
     isSVG: false
   });
 });
@@ -148,9 +148,8 @@ test('should create a div element from string', (t) => {
       children: [],
       dom: expect.anything(),
       isVnode: true,
-      nt: 1,
-      isSVG: false,
-      nodeValue: null
+      el: true,
+      isSVG: false
     }
   ]);
 });
