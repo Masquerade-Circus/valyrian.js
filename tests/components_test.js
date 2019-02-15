@@ -1,12 +1,12 @@
-import test from 'ava';
-import expect from 'expect';
-import '../lib';
+import test from "ava";
+import expect from "expect";
+import "../lib";
 
 let expected = [
   {
-    name: 'div',
-    props: { id: 'example' },
-    children: ['Hello ', 'World'],
+    name: "div",
+    props: { id: "example" },
+    children: ["Hello ", "World"],
     dom: null,
     isVnode: true,
     el: true,
@@ -14,10 +14,10 @@ let expected = [
   }
 ];
 
-test('POJO component', ({ deepEqual }) => {
+test("POJO component", ({ deepEqual }) => {
   let Component = {
-    world: 'World',
-    id: 'example',
+    world: "World",
+    id: "example",
     view() {
       return <div id={Component.id}>Hello {Component.world}</div>;
     }
@@ -27,13 +27,13 @@ test('POJO component', ({ deepEqual }) => {
   expect(<Component />).toEqual(expected);
 });
 
-test('Functional stateful component', ({ deepEqual, log }) => {
+test("Functional stateful component", ({ deepEqual, log }) => {
   let Component = function () {
     return <div id={this.id}>Hello {this.world}</div>;
   };
   let state = {
-    world: 'World',
-    id: 'example'
+    world: "World",
+    id: "example"
   };
 
   // Initialize as component and assign state
@@ -43,17 +43,17 @@ test('Functional stateful component', ({ deepEqual, log }) => {
   expect(<Component />).toEqual(expected);
 });
 
-test('Functional stateless component', ({ deepEqual }) => {
+test("Functional stateless component", ({ deepEqual }) => {
   let Component = (props, world) => <div id={props.id}>Hello {world}</div>;
 
-  expect(v(Component, { id: 'example' }, 'World')).toEqual(expected);
+  expect(v(Component, { id: "example" }, "World")).toEqual(expected);
   expect(<Component id="example">World</Component>).toEqual(expected);
 });
 
-test('Functional stateless component antipattern', ({ deepEqual }) => {
+test("Functional stateless component antipattern", ({ deepEqual }) => {
   let state = {
-    world: 'World',
-    id: 'example'
+    world: "World",
+    id: "example"
   };
   let Component = () => <div id={state.id}>Hello {state.world}</div>;
 
@@ -61,14 +61,14 @@ test('Functional stateless component antipattern', ({ deepEqual }) => {
   expect(<Component>World</Component>).toEqual(expected);
 });
 
-test('Functional stateful error context', ({ deepEqual, log }) => {
+test("Functional stateful error context", ({ deepEqual, log }) => {
   // this.id and this.world will be undefined due to the use of an arrow function
   let Component = () => {
     return <div id={this.id}>Hello {this.world}</div>;
   };
   let state = {
-    world: 'World',
-    id: 'example'
+    world: "World",
+    id: "example"
   };
 
   // Initialize as component
@@ -76,9 +76,9 @@ test('Functional stateful error context', ({ deepEqual, log }) => {
 
   let expected = [
     {
-      name: 'div',
+      name: "div",
       props: { id: undefined },
-      children: ['Hello '],
+      children: ["Hello "],
       dom: null,
       isVnode: true,
       el: true,
@@ -90,40 +90,40 @@ test('Functional stateful error context', ({ deepEqual, log }) => {
   expect(<Component />).toEqual(expected);
 });
 
-test('Create POJO component', (t) => {
+test("Create POJO component", t => {
   let Component = {
-    world: 'World',
-    id: 'example',
+    world: "World",
+    id: "example",
     view() {
       return <div id={Component.id}>Hello {Component.world}</div>;
     }
   };
 
-  expect(typeof Component.view).toEqual('function');
+  expect(typeof Component.view).toEqual("function");
 });
 
-test('Create Functional stateful component', (t) => {
+test("Create Functional stateful component", t => {
   let Component = function () {
     return <div id={this.id}>Hello {this.world}</div>;
   };
   let state = {
-    world: 'World',
-    id: 'example'
+    world: "World",
+    id: "example"
   };
 
   // Should identify the function as a component
   v.addState(Component, state);
 
-  expect(typeof Component.view).toEqual('function');
+  expect(typeof Component.view).toEqual("function");
   expect(Component.world).toEqual(state.world);
   expect(Component.id).toEqual(state.id);
 });
 
-test('Create Functional stateless component', (t) => {
-  let Component = (props) => <div id={props.id}>Hello {props.world}</div>;
+test("Create Functional stateless component", t => {
+  let Component = props => <div id={props.id}>Hello {props.world}</div>;
 
   // Should identify the function as a component
-  v(Component, { id: 'id', world: 'mundo' });
+  v(Component, { id: "id", world: "mundo" });
 
-  expect(typeof Component.view).toEqual('function');
+  expect(typeof Component.view).toEqual("function");
 });
