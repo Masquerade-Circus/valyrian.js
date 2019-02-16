@@ -11,10 +11,6 @@ let Lifecycle = {
     return (
       <div
         {...{
-          oninit(vnode) {
-            // Before dom element is created
-            Lifecycle.calls.push('component oninit');
-          },
           oncreate(vnode) {
             // After dom element is created and attached to the document
             Lifecycle.calls.push('component oncreate');
@@ -32,10 +28,6 @@ let Lifecycle = {
         {Lifecycle.s > 0 ? (
           <h1
             {...{
-              oninit(vnode) {
-                // Before dom element is created
-                Lifecycle.calls.push('oninit');
-              },
               oncreate(vnode) {
                 // After dom element is created and attached to the document
                 Lifecycle.calls.push('oncreate');
@@ -96,14 +88,12 @@ test.serial('Mount and update with POJO component', (t) => {
     '<div><small></small><ul></ul></div>'
   ];
   let expectedLifeCycleCalls = [
-    'component oninit',
-    'oninit',
-    'oncreate',
     'component oncreate',
+    'oncreate',
+    'component onupdate',
     'onremove',
     'onspanremove',
     'component onupdate',
-    'oninit',
     'oncreate',
     'component onupdate',
     'onupdate',
@@ -116,8 +106,7 @@ test.serial('Mount and update with POJO component', (t) => {
     'onremove',
     'onspanremove',
     'onspanremove',
-    'onspanremove',
-    'component onupdate'
+    'onspanremove'
   ];
 
   result.push(v.mount('body', Lifecycle));
