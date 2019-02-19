@@ -125,3 +125,33 @@ test.serial('Antipattern: Mount and update with functional stateless component u
     after: '<div id="example">Hello John Doe</div>'
   });
 });
+
+test.serial('Should update text node with dom node', (t) => {
+  let text = true;
+  let Component = () => text ? 'Hello world' : <div>Hello world</div>;
+
+  let result = {};
+  result.before = v.mount('body', Component);
+  text = false;
+  result.after = v.update();
+  
+  expect(result).toEqual({
+    before: 'Hello world',
+    after: '<div>Hello world</div>'
+  });
+});
+
+test.serial('Should update dom node with text node', (t) => {
+  let text = false;
+  let Component = () => text ? 'Hello world' : <div>Hello world</div>;
+
+  let result = {};
+  result.before = v.mount('body', Component);
+  text = true;
+  result.after = v.update();
+
+  expect(result).toEqual({
+    before: '<div>Hello world</div>',
+    after: 'Hello world'
+  });
+});

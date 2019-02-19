@@ -43,7 +43,7 @@ let outputOptions = {
 
 if (process.env.NODE_ENV === 'production') {
   outputOptions.sourcemap = false;
-  inputOptions.plugins.push(buble({ jsx: 'v', target: { chrome: 70, firefox: 60, node: 8 } }));
+  inputOptions.plugins.push(buble({ jsx: 'v', target: { chrome: 70, firefox: 60, safari: 10, node: 8 } }));
   inputOptions.plugins.push(terser({ warnings: 'verbose', sourcemap: false }));
   rollup
     .rollup(inputOptions)
@@ -52,7 +52,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 if (process.env.NODE_ENV !== 'production') {
-  inputOptions.plugins.push(buble({ jsx: 'v', target: { chrome: 70, firefox: 60, node: 8 } }));
+  inputOptions.plugins.push(buble({ jsx: 'v', target: { chrome: 70, firefox: 60, safari: 10, node: 8 } }));
   inputOptions.plugins.push(terser({ warnings: 'verbose' }));
 
   inputOptions.output = outputOptions;
