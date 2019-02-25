@@ -153,3 +153,17 @@ test('should create a div element from string', (t) => {
     }
   ]);
 });
+
+test('should different types of data', (t) => {
+  let date = new Date();
+
+  expect(v('div', null, [null, 'Hello', , 1, date, { hello: 'world' }, ['Hello']])).toEqual({
+    name: 'div',
+    props: {},
+    children: ['Hello', 1, date, { hello: 'world' }, 'Hello'],
+    dom: null,
+    isVnode: true,
+    el: true,
+    isSVG: false
+  });
+});
