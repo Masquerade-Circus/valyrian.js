@@ -90,25 +90,7 @@ test.serial('Handle multiple update calls', (t) => {
   });
 });
 
-test.serial.failing('Antipattern: Mount and update with functional stateless component', (t) => {
-  let Component = (props) => <div id={props.id}>Hello {props.world}</div>;
-  let props = {
-    world: 'World',
-    id: 'example'
-  };
-
-  let result = {};
-  result.before = v.mount('body', Component, props);
-  props.world = 'John Doe';
-  result.after = v.update(Component, props);
-
-  expect(result).toEqual({
-    before: '<div id="example">Hello World</div>',
-    after: '<div id="example">Hello John Doe</div>'
-  });
-});
-
-test.serial.failing('Antipattern: Mount and update with functional stateless component using only state', (t) => {
+test.serial('Antipattern: Mount and update with functional stateless component', (t) => {
   let Component = (props) => <div id={props.id}>Hello {props.world}</div>;
   let props = {
     world: 'World',

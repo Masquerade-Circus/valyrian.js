@@ -224,7 +224,7 @@ let plugin = function (v) {
 
     if (parentComponent) {
       args.unshift(v(response, ...args));
-      args.unshift(null);
+      args.unshift({});
       response = parentComponent;
     }
 

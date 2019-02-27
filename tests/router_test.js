@@ -90,32 +90,7 @@ test.serial("Mount and update with functional stateless subcomponent", async t =
   });
 });
 
-test.serial.failing("Antipattern: Mount and update with functional stateless component", async t => {
-  let Component = props => <div id={props.id}>Hello {props.world}</div>;
-  let props = {
-    world: "World",
-    id: "example"
-  };
-
-  let result = {};
-  let router = v.Router();
-  router.get("/", () => Component);
-  v.routes("body", router);
-
-  result.before = await v.routes.go("/", props);
-  props.world = "John Doe";
-  result.after = await v.routes.go("/", props);
-  props.world = "World";
-  result.final = v.update(Component, props);
-
-  expect(result).toEqual({
-    before: '<div id="example">Hello World</div>',
-    after: '<div id="example">Hello John Doe</div>',
-    final: '<div id="example">Hello World</div>'
-  });
-});
-
-test.serial.failing("Antipattern: Mount and update with functional stateless component using only state", async t => {
+test.serial("Antipattern: Mount and update with functional stateless component", async t => {
   let Component = props => <div id={props.id}>Hello {props.world}</div>;
   let props = {
     world: "World",
