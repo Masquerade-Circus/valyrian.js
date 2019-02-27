@@ -90,7 +90,7 @@ test.serial("Mount and update with functional stateless subcomponent", async t =
   });
 });
 
-test.serial("Antipattern: Mount and update with functional stateless component", async t => {
+test.serial.failing("Antipattern: Mount and update with functional stateless component", async t => {
   let Component = props => <div id={props.id}>Hello {props.world}</div>;
   let props = {
     world: "World",
@@ -115,7 +115,7 @@ test.serial("Antipattern: Mount and update with functional stateless component",
   });
 });
 
-test.serial("Antipattern: Mount and update with functional stateless component using only state", async t => {
+test.serial.failing("Antipattern: Mount and update with functional stateless component using only state", async t => {
   let Component = props => <div id={props.id}>Hello {props.world}</div>;
   let props = {
     world: "World",

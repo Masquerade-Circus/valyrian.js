@@ -236,12 +236,8 @@ let plugin = function (v) {
       window.history.pushState({}, '', url);
     }
 
-    if (v.is.node || !v.is.mounted) {
-      args.unshift(RoutesContainer);
-      return v.mount.apply(v, args);
-    }
-
-    return v.update.apply(v, args);
+    args.unshift(RoutesContainer);
+    return v.mount.apply(v, args);
   }
 
   v.routes = function (elementContainer, router) {
