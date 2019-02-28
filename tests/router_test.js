@@ -5,6 +5,39 @@ import nodePlugin from "../plugins/node";
 import router from "../plugins/router";
 v.use(nodePlugin).use(router);
 
+test.serial("Dev test", async t => {
+  let Component = () => <div>Hello world</div>;
+  let router = v.Router();
+  router
+    .get('/', () => console.log('Hello 1'), () => Component)
+    .get('/hello', [() => console.log('Hello 2'), () => Component])
+    .get('/hello/', [() => console.log('Hello 3'), () => Component])
+    .get('/:hello', [() => console.log('Hello 4'), () => Component])
+    .get('/hello/(.*)', [() => console.log('Hello 5'), () => Component])
+    .get('/:hello/world', () => console.log('Hello 6'), [() => console.log('Hello 6')], () => Component)
+    .get('/hello/:world', [() => console.log('Hello 7'), () => Component], () => console.log('Hello 7'));
+
+  let subrouter = v.Router();
+
+  subrouter
+    .get('/', () => console.log('Hello 1'), () => Component)
+    .get('/hello', [() => console.log('Hello 2'), () => Component])
+    .get('/hello/', [() => console.log('Hello 3'), () => Component])
+    .get('/:hello', [() => console.log('Hello 4'), () => Component])
+    .get('/hello/(.*)', [() => console.log('Hello 5'), () => Component])
+    .get('/:hello/world', () => console.log('Hello 6'), [() => console.log('Hello 6')], () => Component)
+    .get('/hello/:world', [() => console.log('Hello 7'), () => Component], () => console.log('Hello 7'))
+    .use(() => () => 'Not ok');
+  
+  router.use('/ok', subrouter);
+  router.use(() => () => 'Not found');
+
+
+  v.routes("body", router);
+  expect(await v.routes.go('/ok/not/found/url?hello=world')).toEqual('Not ok');
+  expect(await v.routes.go('/not/found/url?hello=world')).toEqual('Not found');
+});
+
 test.serial("Mount and update with POJO component", async t => {
   let Component = {
     world: "World",
@@ -151,7 +184,7 @@ test.serial("Test params", async t => {
   let router = v.Router();
   router.get("/hello", () => v.addState(Hello, Store), () => Hello);
   router.get("/hello/:world/whats/:up", [
-    params => {
+    ({params}) => {
       Store.world = params.world;
       Store.up = params.up;
       v.addState(Hello, Store);
@@ -221,12 +254,12 @@ test.serial("Test subrouter", async t => {
 
   let subrouter = v.Router();
   subrouter
-    .get("/from/:country", params => {
+    .get("/from/:country", ({params}) => {
       Component.world = params.world;
       Component.country = params.country;
       return Component;
     })
-    .get("/", params => {
+    .get("/", ({params}) => {
       Component.world = params.world;
       Component.country = "USA";
       return Component;
@@ -306,5 +339,8 @@ test.serial("Test get routes", t => {
 
   v.routes("body", router);
 
-  expect(v.routes.get()).toEqual(["/hello/:world/from/:country", "/hello/:world*", "/"]);
+  expect(v.routes.get()).toEqual(["/hello/:world/from/:country", "/hello/:world", "/"]);
 });
+
+
+
