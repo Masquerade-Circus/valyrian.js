@@ -138,7 +138,7 @@ test.serial('Should update dom node with text node', (t) => {
   });
 });
 
-test.serial('Should handle different types of data', (t) => {
+test.serial.only('Should handle different types of data', (t) => {
   let date = new Date();
   let Component = () => v('div', null, [null, 'Hello', , 1, date, { hello: 'world' }, ['Hello']]);
   expect(v.mount('body', Component)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
