@@ -9,8 +9,6 @@ let expected = [
     name: 'div',
     props: { id: 'example' },
     children: ['Hello ', 'World'],
-    dom: null,
-    isVnode: true,
     el: true,
     isSVG: false
   }
@@ -21,8 +19,6 @@ test('should create a div element', (t) => {
     name: 'div',
     props: {},
     children: [],
-    dom: null,
-    isVnode: true,
     el: true,
     isSVG: false
   });
@@ -33,8 +29,6 @@ test('should create a div element with a text child', (t) => {
     name: 'div',
     props: {},
     children: ['Hello'],
-    dom: null,
-    isVnode: true,
     el: true,
     isSVG: false
   });
@@ -49,14 +43,10 @@ test('should create a div element with an element child', (t) => {
         name: 'span',
         props: {},
         children: [],
-        dom: null,
-        isVnode: true,
         el: true,
         isSVG: false
       }
     ],
-    dom: null,
-    isVnode: true,
     el: true,
     isSVG: false
   });
@@ -67,8 +57,6 @@ test('should create a div element with comma separated children', (t) => {
     name: 'div',
     props: {},
     children: ['Hello ', 'world'],
-    dom: null,
-    isVnode: true,
     el: true,
     isSVG: false
   });
@@ -79,8 +67,6 @@ test('should create a div element with array of children', (t) => {
     name: 'div',
     props: {},
     children: ['Hello ', 'world'],
-    dom: null,
-    isVnode: true,
     el: true,
     isSVG: false
   });
@@ -97,14 +83,10 @@ test('should create a div element with mixed array of children and comma separat
         name: 'span',
         props: {},
         children: ['Whats up'],
-        dom: null,
-        isVnode: true,
         el: true,
         isSVG: false
       }
     ],
-    dom: null,
-    isVnode: true,
     el: true,
     isSVG: false
   });
@@ -115,8 +97,6 @@ test('should create a div element with mixed nested arrays of children ', (t) =>
     name: 'div',
     props: {},
     children: ['Hello ', 'world', 'Only', 'for', 'this', 'time'],
-    dom: null,
-    isVnode: true,
     el: true,
     isSVG: false
   });
@@ -130,8 +110,6 @@ test('should create a div element with props', (t) => {
       class: 'unique'
     },
     children: [],
-    dom: null,
-    isVnode: true,
     el: true,
     isSVG: false
   });
@@ -147,7 +125,6 @@ test('should create a div element from string', (t) => {
       },
       children: [],
       dom: expect.anything(),
-      isVnode: true,
       el: true,
       isSVG: false
     }
@@ -161,8 +138,6 @@ test('should different types of data', (t) => {
     name: 'div',
     props: {},
     children: ['Hello', 1, date, { hello: 'world' }, 'Hello'],
-    dom: null,
-    isVnode: true,
     el: true,
     isSVG: false
   });

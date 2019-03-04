@@ -7,8 +7,6 @@ let expected = [
     name: "div",
     props: { id: "example" },
     children: ["Hello ", "World"],
-    dom: null,
-    isVnode: true,
     el: true,
     isSVG: false
   }
@@ -79,8 +77,6 @@ test("Functional stateful error context", ({ deepEqual, log }) => {
       name: "div",
       props: { id: undefined },
       children: ["Hello "],
-      dom: null,
-      isVnode: true,
       el: true,
       isSVG: false
     }
