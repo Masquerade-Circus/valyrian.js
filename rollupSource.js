@@ -5,7 +5,7 @@ let includepaths = require('rollup-plugin-includepaths');
 let filesize = require('rollup-plugin-filesize');
 let progress = require('rollup-plugin-progress');
 let buble = require('rollup-plugin-buble');
-let string = require('rollup-plugin-string');
+let { string } = require('rollup-plugin-string');
 let sourcemaps = require('rollup-plugin-sourcemaps');
 let { terser } = require('rollup-plugin-terser');
 
