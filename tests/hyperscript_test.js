@@ -28,7 +28,7 @@ test('should create a div element with a text child', (t) => {
   expect(v('div', null, 'Hello')).toEqual({
     name: 'div',
     props: {},
-    children: ['Hello'],
+    children: [{ props: {}, nodeValue: 'Hello', children: [], el: false }],
     el: true,
     isSVG: false
   });
@@ -56,7 +56,10 @@ test('should create a div element with comma separated children', (t) => {
   expect(v('div', null, 'Hello ', 'world')).toEqual({
     name: 'div',
     props: {},
-    children: ['Hello ', 'world'],
+    children: [
+      { props: {}, nodeValue: 'Hello ', children: [], el: false },
+      { props: {}, nodeValue: 'world', children: [], el: false }
+    ],
     el: true,
     isSVG: false
   });
@@ -66,7 +69,10 @@ test('should create a div element with array of children', (t) => {
   expect(v('div', null, ['Hello ', 'world'])).toEqual({
     name: 'div',
     props: {},
-    children: ['Hello ', 'world'],
+    children: [
+      { props: {}, nodeValue: 'Hello ', children: [], el: false },
+      { props: {}, nodeValue: 'world', children: [], el: false }
+    ],
     el: true,
     isSVG: false
   });
@@ -77,12 +83,12 @@ test('should create a div element with mixed array of children and comma separat
     name: 'div',
     props: {},
     children: [
-      'Hello ',
-      'world',
+      { props: {}, nodeValue: 'Hello ', children: [], el: false },
+      { props: {}, nodeValue: 'world', children: [], el: false },
       {
         name: 'span',
         props: {},
-        children: ['Whats up'],
+        children: [{ props: {}, nodeValue: 'Whats up', children: [], el: false }],
         el: true,
         isSVG: false
       }
@@ -96,7 +102,14 @@ test('should create a div element with mixed nested arrays of children ', (t) =>
   expect(v('div', null, ['Hello ', 'world', ['Only', ['for', 'this', ['time']]]])).toEqual({
     name: 'div',
     props: {},
-    children: ['Hello ', 'world', 'Only', 'for', 'this', 'time'],
+    children: [
+      { props: {}, nodeValue: 'Hello ', children: [], el: false },
+      { props: {}, nodeValue: 'world', children: [], el: false },
+      { props: {}, nodeValue: 'Only', children: [], el: false },
+      { props: {}, nodeValue: 'for', children: [], el: false },
+      { props: {}, nodeValue: 'this', children: [], el: false },
+      { props: {}, nodeValue: 'time', children: [], el: false }
+    ],
     el: true,
     isSVG: false
   });
@@ -137,7 +150,19 @@ test('should different types of data', (t) => {
   expect(v('div', null, [null, 'Hello', , 1, date, { hello: 'world' }, ['Hello']])).toEqual({
     name: 'div',
     props: {},
-    children: ['Hello', 1, date, { hello: 'world' }, 'Hello'],
+    children: [
+      { props: {}, nodeValue: 'Hello', children: [], el: false },
+      { props: {}, nodeValue: '1', children: [], el: false },
+      { props: {},
+       nodeValue: String(date),
+       children: [],
+       el: false },
+      { props: {},
+       nodeValue: '[object Object]',
+       children: [],
+       el: false },
+      { props: {}, nodeValue: 'Hello', children: [], el: false }
+    ],
     el: true,
     isSVG: false
   });
