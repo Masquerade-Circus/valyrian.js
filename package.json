@@ -14,14 +14,14 @@
     "dev:server": "cross-env NODE_ENV=development node-dev --no-deps server.js",
     "dev:source": "cross-env NODE_ENV=development node rollupSource.js",
     "dev:app": "cross-env NODE_ENV=development node rollupApp.js",
-    "dev:test": "cross-env NODE_ENV=development ava --watch --verbose",
-    "dev:nyc:test": "cross-env NODE_ENV=development nodemon -w ./tests -w ./lib -w ./plugins -w ./server --exec 'nyc ava --verbose'",
-    "build": "yarn build:assets && yarn build:source",
+    "dev:test": "cross-env NODE_ENV=development node dev.js -w",
+    "dev:nyc:test": "cross-env NODE_ENV=development nodemon -w ./test -w ./lib -w ./plugins --exec 'nyc --reporter=text --reporter=lcov node dev.js'",
+    "build": "yarn build:assets && yarn build:source && yarn remark",
     "build:assets": "cross-env NODE_ENV=production node buildAssets.js",
     "build:source": "cross-env NODE_ENV=production node rollupSource.js",
     "build:app": "cross-env NODE_ENV=production node rollupApp.js",
     "start": "cross-env NODE_ENV=production node server.js",
-    "test": "nyc ava",
+    "test": "cross-env NODE_ENV=development nyc node dev.js",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "remark": "remark . -o"
   },
@@ -35,23 +35,24 @@
     "uncss": "^0.17.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.5.5",
     "@babel/plugin-transform-react-jsx": "^7.3.0",
-    "ava": "^2.2.0",
-    "chuhai": "^1.2.0",
+    "@babel/preset-env": "^7.5.5",
+    "@babel/register": "^7.5.5",
+    "@istanbuljs/nyc-config-babel": "^2.1.1",
+    "babel-plugin-istanbul": "^5.2.0",
     "compression": "^1.7.4",
     "coveralls": "^3.0.6",
     "cross-env": "^5.2.0",
     "eslint": "^6.1.0",
     "eslint-plugin-sonarjs": "^0.4.0",
     "esm": "^3.2.25",
+    "exam": "^2.1.1",
     "expect": "^24.8.0",
     "micro": "^9.3.4",
     "micro-ex-router": "^1.7.1",
     "node-dev": "^4.0.0",
-    "nodemon": "^1.19.1",
     "nyc": "^14.1.1",
-    "puppeteer": "^1.19.0",
-    "recursive-readdir": "^2.2.2",
     "remark-cli": "^7.0.0",
     "remark-toc": "^6.0.0",
     "rollup": "^1.19.4",
@@ -65,47 +66,46 @@
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-progress": "^1.1.1",
+    "rollup-plugin-size-snapshot": "^0.10.0",
     "rollup-plugin-sourcemaps": "^0.4.2",
     "rollup-plugin-string": "^3.0.0",
-    "rollup-plugin-terser": "^5.1.1"
+    "rollup-plugin-terser": "^5.1.1",
+    "yargs": "^14.0.0"
   },
-  "ava": {
-    "files": [
-      "tests/**/*_test.js"
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "targets": {
+            "esmodules": true,
+            "node": true
+          }
+        }
+      ]
     ],
-    "sources": [
-      "**/*.{js,jsx}"
+    "plugins": [
+      [
+        "@babel/plugin-transform-react-jsx",
+        {
+          "pragma": "v"
+        }
+      ]
     ],
-    "failWithoutAssertions": false,
-    "require": [
-      "esm"
-    ],
-    "babel": {
-      "testOptions": {
-        "sourceMaps": "inline",
-        "presets": [
-          [
-            "module:ava/stage-4",
-            {
-              "modules": false
-            }
-          ]
-        ],
+    "env": {
+      "development": {
         "plugins": [
-          [
-            "@babel/transform-react-jsx",
-            {
-              "pragma": "v"
-            }
-          ]
+          "istanbul"
         ]
       }
     }
   },
   "nyc": {
+    "extends": "@istanbuljs/nyc-config-babel",
     "exclude": [
-      "tests",
-      "app"
+      "test",
+      "app",
+      "dev.js"
     ]
   },
   "remarkConfig": {

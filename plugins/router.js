@@ -1,6 +1,10 @@
 
 
 let plugin = function (v) {
+  function flat(array) {
+    return Array.isArray(array) ? array.flat(Infinity) : [array];
+  }
+
   let addPath = (router, method, path, middlewares, i) => {
     if (middlewares.length === 0) {
       return;
@@ -23,7 +27,7 @@ let plugin = function (v) {
     router.paths.push({
       method,
       path: realpath,
-      middlewares,
+      middlewares: flat(middlewares),
       params,
       regexp: new RegExp(regexpPath, 'i')
     });
@@ -121,12 +125,11 @@ let plugin = function (v) {
   v.Router = function () {
     const router = {
       paths: [],
-      get(path) {
-        addPath(router, 'get', path, v.utils.flat(arguments, 1, []));
+      get(path, ...args) {
+        addPath(router, 'get', path, args);
         return router;
       },
-      use() {
-        let args = v.utils.flat(arguments, 0, []);
+      use(...args) {
         let path = typeof args[0] === 'string' ? args.shift() : '/';
         let i;
         let k;
@@ -190,7 +193,7 @@ let plugin = function (v) {
     v.routes.path = mainRouter.path;
     v.routes.matches = mainRouter.matches;
 
-    if (v.is.browser) {
+    if (!v.isNode) {
       window.history.pushState(null, null, url);
     }
 
@@ -203,7 +206,7 @@ let plugin = function (v) {
       mainRouter = router;
       RoutesContainer = elementContainer;
       // Activate the use of the router
-      if (v.is.browser) {
+      if (!v.isNode) {
         function onPopStateGoToRoute() {
           v.routes.go(document.location.pathname);
         }
@@ -219,8 +222,7 @@ let plugin = function (v) {
   v.routes.path = '';
   v.routes.matches = [];
 
-  v.routes.go = function () {
-    let args = v.utils.flat(arguments, 0, []);
+  v.routes.go = function (...args) {
     let parentComponent;
     let url;
 

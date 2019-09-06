@@ -60,3 +60,5 @@ typings/
 .tmp/**
 
 !.tmp/favicon.ico
+
+.cache

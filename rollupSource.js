@@ -8,9 +8,14 @@ let buble = require('rollup-plugin-buble');
 let { string } = require('rollup-plugin-string');
 let sourcemaps = require('rollup-plugin-sourcemaps');
 let { terser } = require('rollup-plugin-terser');
+let {sizeSnapshot } = require('rollup-plugin-size-snapshot');
+
+const argv = require('yargs').argv;
+let file = argv.file || 'index';
+let distFile = file === 'index' ? 'valyrian' : file;
 
 let inputOptions = {
-  input: './lib/index.js',
+  input: './lib/' + file + '.js',
   plugins: [
     progress({ clearLine: false }),
     includepaths({ paths: ['./lib', './node_modules'] }),
@@ -22,19 +27,21 @@ let inputOptions = {
     string({
       include: '**/*.tpl.js'
     }),
+    buble({ jsx: 'v', target: { chrome: 71, firefox: 64, safari: 10, node: 8.7 } }),
     commonjs({
       include: ['./node_modules/**'], // Default: undefined
       // if false then skip sourceMap generation for CommonJS modules
       sourceMap: true // Default: true
     }),
     sourcemaps(),
-    filesize()
+    filesize(),
+    sizeSnapshot()
   ],
   cache: undefined
 };
 
 let outputOptions = {
-  file: './dist/valyrian.min.js',
+  file: './dist/' + distFile + '.min.js',
   format: 'iife',
   sourcemap: true,
   name: 'v',
@@ -43,7 +50,6 @@ let outputOptions = {
 
 if (process.env.NODE_ENV === 'production') {
   outputOptions.sourcemap = false;
-  inputOptions.plugins.push(buble({ jsx: 'v', target: { chrome: 70, firefox: 60, safari: 10, node: 8 } }));
   inputOptions.plugins.push(terser({ warnings: 'verbose', sourcemap: false }));
   rollup
     .rollup(inputOptions)
@@ -52,8 +58,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 if (process.env.NODE_ENV !== 'production') {
-  inputOptions.plugins.push(buble({ jsx: 'v', target: { chrome: 70, firefox: 60, safari: 10, node: 8 } }));
-  inputOptions.plugins.push(terser({ warnings: 'verbose' }));
+  // inputOptions.plugins.push(terser({ warnings: 'verbose' }));
 
   inputOptions.output = outputOptions;
   inputOptions.watch = {
