@@ -107,12 +107,12 @@ describe('Store slim', () => {
     expect(() => store.commit('hello')).toThrowError('The mutation "hello" does not exists.');
   });
 
-  it('Mutate the state by dispatch', async (done) => {
+  it('Mutate the state by dispatch', async () => {
     let store = getNewStore();
     expect(store.state.b).toEqual([1]);
     await store.dispatch('pushB', 2);
     expect(store.state.b).toEqual([1, 2]);
-    done();
+
   });
 
   it('Throw error if you try to dispatch an undefined action', () => {

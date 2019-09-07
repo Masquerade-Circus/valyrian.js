@@ -4,7 +4,7 @@ import nodePlugin from '../plugins/node';
 v.use(nodePlugin);
 
 describe('Mount and update', () => {
-  it('Mount and update with POJO component', (t) => {
+  it('Mount and update with POJO component', () => {
     let Component = {
       world: 'World',
       id: 'example',
@@ -25,7 +25,7 @@ describe('Mount and update', () => {
     });
   });
 
-  it('Mount and update with functional stateful component', (t) => {
+  it('Mount and update with functional stateful component', () => {
     let Component = function () {
       return <div id={this.id}>Hello {this.world}</div>;
     };

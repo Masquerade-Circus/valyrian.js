@@ -14,14 +14,18 @@
     "dev:server": "cross-env NODE_ENV=development node-dev --no-deps server.js",
     "dev:source": "cross-env NODE_ENV=development node rollupSource.js",
     "dev:app": "cross-env NODE_ENV=development node rollupApp.js",
-    "dev:test": "cross-env NODE_ENV=development node dev.js -w",
-    "dev:nyc:test": "cross-env NODE_ENV=development nodemon -w ./test -w ./lib -w ./plugins --exec 'nyc --reporter=text --reporter=lcov node dev.js'",
+
+    "dev:bench": "cross-env NODE_ENV=development node dev.js -w",
+
+    "dev:test": "cross-env NODE_ENV=development nodemon -w ./test -w ./lib -w ./plugins --exec 'mocha --timeout 10000 --require @babel/register --require esm \"test/**/*_test.js\"'",
+    "dev:test:nyc": "cross-env NODE_ENV=development nodemon -w ./test -w ./lib -w ./plugins --exec 'nyc --reporter=text --reporter=lcov mocha --timeout 10000 --require @babel/register --require esm \"test/**/*_test.js\"'",
+
     "build": "yarn build:assets && yarn build:source && yarn remark",
     "build:assets": "cross-env NODE_ENV=production node buildAssets.js",
     "build:source": "cross-env NODE_ENV=production node rollupSource.js",
     "build:app": "cross-env NODE_ENV=production node rollupApp.js",
-    "start": "cross-env NODE_ENV=production node server.js",
-    "test": "cross-env NODE_ENV=development nyc node dev.js",
+
+    "test": "cross-env NODE_ENV=development nyc mocha --timeout 10000 --require @babel/register --require esm \"test/**/*_test.js\"",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "remark": "remark . -o"
   },
@@ -51,6 +55,7 @@
     "expect": "^24.8.0",
     "micro": "^9.3.4",
     "micro-ex-router": "^1.7.1",
+    "mocha": "^6.2.0",
     "node-dev": "^4.0.0",
     "nyc": "^14.1.1",
     "remark-cli": "^7.0.0",

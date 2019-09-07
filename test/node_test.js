@@ -8,7 +8,7 @@ v.use(nodePlugin);
 describe('Node test', () => {
 
 
-  it('Get hyperscript string from html', async (done) => {
+  it('Get hyperscript string from html', async () => {
     let html = '<body><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</body>';
 
     let dom = await v.html2Hyper(html);
@@ -18,10 +18,10 @@ describe('Node test', () => {
   "Hello world"
 ])`);
 
-    done();
+
   });
 
-  it('Should create a service worker file', async (done) => {
+  it('Should create a service worker file', async () => {
     let file = '.tmp/sw.js';
     await v.sw(file, {
       name: 'Test',
@@ -30,11 +30,11 @@ describe('Node test', () => {
     });
 
     expect(fs.existsSync(file)).toBeTruthy();
-    done();
+
   });
 
   // NOTE: This test will take some time between 30 and 60 seconds
-  it('Should generate icons, manifest.json and a links component', async (done) => {
+  it('Should generate icons, manifest.json and a links component', async () => {
     let favicons = {
       iconsPath: '.tmp/', // Path to the generated icons
       linksViewPath: '.tmp/', // Path to the generated links file
@@ -70,7 +70,7 @@ describe('Node test', () => {
     expect(fs.existsSync('.tmp/favicon.ico')).toBeTruthy();
     expect(fs.existsSync('.tmp/links.js')).toBeTruthy();
     expect(fs.existsSync('.tmp/manifest.json')).toBeTruthy();
-    done();
+
   });
 
 });

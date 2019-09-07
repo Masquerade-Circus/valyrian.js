@@ -3,7 +3,7 @@ const argv = require('yargs').argv;
 let exam = require('exam');
 
 let options = {
-  paths: ['test'],
+  paths: ['test_benchmarks'],
   reporter: 'console',
   recursive: true,
   hideProgress: false,

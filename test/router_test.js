@@ -6,7 +6,7 @@ v.use(nodePlugin);
 v.use(router);
 
 describe('Router', () => {
-  it("Dev test", async (done) => {
+  it("Dev test", async () => {
     let Component = () => <div>Hello world</div>;
     let router = v.Router();
     router
@@ -37,10 +37,10 @@ describe('Router', () => {
     v.routes("body", router);
     expect(await v.routes.go('/ok/not/found/url?hello=world')).toEqual('Not ok');
     expect(await v.routes.go('/not/found/url?hello=world')).toEqual('Not found');
-    done();
+
   });
 
-  it("Mount and update with POJO component", async (done) => {
+  it("Mount and update with POJO component", async () => {
     let Component = {
       world: "World",
       id: "example",
@@ -65,10 +65,10 @@ describe('Router', () => {
       after: '<div id="example">Hello John Doe</div>',
       final: '<div id="example">Hello World</div>'
     });
-    done();
+
   });
 
-  it("Mount and update with functional stateful component", async (done) => {
+  it("Mount and update with functional stateful component", async () => {
     let Component = function () {
       return <div id={this.id}>Hello {this.world}</div>;
     };
@@ -96,10 +96,10 @@ describe('Router', () => {
       after: '<div id="example">Hello John Doe</div>',
       final: '<div id="example">Hello World</div>'
     });
-    done();
+
   });
 
-  it("Mount and update with functional stateless subcomponent", async (done) => {
+  it("Mount and update with functional stateless subcomponent", async () => {
     let SubComponent = props => <div id={props.id}>Hello {props.world}</div>;
     let state = {
       world: "World",
@@ -125,10 +125,10 @@ describe('Router', () => {
       after: '<div id="example">Hello John Doe</div>',
       final: '<div id="example">Hello World</div>'
     });
-    done();
+
   });
 
-  it("Antipattern: Mount and update with functional stateless component", async (done) => {
+  it("Antipattern: Mount and update with functional stateless component", async () => {
     let Component = props => <div id={props.id}>Hello {props.world}</div>;
     let props = {
       world: "World",
@@ -151,10 +151,10 @@ describe('Router', () => {
       after: '<div id="example">Hello John Doe</div>',
       final: '<div id="example">Hello World</div>'
     });
-    done();
+
   });
 
-  it("Test not found url", async (done) => {
+  it("Test not found url", async () => {
     let Hello = () => "Hello world";
     let NotFound = () => <div>Ups, no route was found.</div>;
 
@@ -172,10 +172,10 @@ describe('Router', () => {
       found: "Hello world",
       notFound: "<div>Ups, no route was found.</div>"
     });
-    done();
+
   });
 
-  it("Test params", async (done) => {
+  it("Test params", async () => {
     let Store = {
       world: "world",
       up: "up"
@@ -209,10 +209,10 @@ describe('Router', () => {
       before: "<div>Hello world, what's up</div>",
       after: "<div>Hello Mike, what's new</div>"
     });
-    done();
+
   });
 
-  it("Test mix single and array of middlewares", async (done) => {
+  it("Test mix single and array of middlewares", async () => {
     let Hello = () => <div>Hello World</div>;
     let middlewares = [];
 
@@ -249,10 +249,10 @@ describe('Router', () => {
       "Middleware 1.2.4",
       "Middleware 2"
     ]);
-    done();
+
   });
 
-  it("Test subrouter", async (done) => {
+  it("Test subrouter", async () => {
     let Component = function () {
       return (
         <div>
@@ -286,10 +286,10 @@ describe('Router', () => {
       before: "<div>Hello Mike, from USA</div>",
       after: "<div>Hello John, from Mexico</div>"
     });
-    done();
+
   });
 
-  it("Test with parent component", async (done) => {
+  it("Test with parent component", async () => {
     let Component = () => <div>Hello World</div>;
     // children are always the second argument
     let ParentComponent = (props, ...children) => (
@@ -305,10 +305,10 @@ describe('Router', () => {
     let result = await v.routes.go(ParentComponent, "/");
 
     expect(result).toEqual("<html><body><div>Hello World</div></body></html>");
-    done();
+
   });
 
-  it("Test show error when calling with a non url", async (done) => {
+  it("Test show error when calling with a non url", async () => {
     let Component = () => <div>Hello World</div>;
 
     let router = v.Router();
@@ -323,10 +323,10 @@ describe('Router', () => {
     }
 
     expect(err).toEqual("v.router.url.required");
-    done();
+
   });
 
-  it("Test show error when no component is returned", async (done) => {
+  it("Test show error when no component is returned", async () => {
     let router = v.Router();
     router.get("/", () => {});
     v.routes("body", router);
@@ -339,10 +339,10 @@ describe('Router', () => {
     }
 
     expect(err).toEqual("The url / requested wasn't found");
-    done();
+
   });
 
-  it("Test get routes", t => {
+  it("Test get routes", () => {
     let Component = () => "Hello world";
     let subrouter = v.Router();
     subrouter.get("/from/:country", () => Component).get("/", () => Component);

@@ -31,7 +31,7 @@ function flatten3dot2(a) {
   return isArray(a) ? [].concat.apply([], a.map(flatten3dot2)) : a;
 }
 
-const flatten5 = t => {
+const flatten5 = (t) => {
   const go = x => isArray(x) ? x.flatMap(go) : x;
   return go(t);
 };
@@ -81,7 +81,7 @@ function flatten6dot2(list) {
   return list;
 }
 
-const flatten7 = t => {
+const flatten7 = (t) => {
   if (!isArray(t)) {
     return [t];
   }

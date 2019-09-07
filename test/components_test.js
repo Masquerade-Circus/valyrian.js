@@ -60,7 +60,7 @@ describe('Components', () => {
     expect(<Component>World</Component>).toEqual(expected);
   });
 
-  it("Create POJO component", t => {
+  it("Create POJO component", () => {
     let Component = {
       world: "World",
       id: "example",
@@ -72,7 +72,7 @@ describe('Components', () => {
     expect(typeof Component.view).toEqual("function");
   });
 
-  it("Create Functional stateful component", t => {
+  it("Create Functional stateful component", () => {
     let Component = function () {
       return <div id={this.id}>Hello {this.world}</div>;
     };
@@ -89,7 +89,7 @@ describe('Components', () => {
     expect(Component.id).toEqual(state.id);
   });
 
-  it("Create Functional stateless component", t => {
+  it("Create Functional stateless component", () => {
     let Component = props => <div id={props.id}>Hello {props.world}</div>;
 
     // Should identify the function as a component
