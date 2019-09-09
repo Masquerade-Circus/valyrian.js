@@ -1,24 +1,20 @@
 {
   "name": "valyrian.js",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Lightweight steel to forge PWAs. (Minimal Frontend Framework with server side rendering and other capabilities)",
-
   "main": "lib/index.js",
   "module": "lib/index.js",
   "unpkg": "dist/valyrian.min.js",
   "browser": "dist/valyrian.min.js",
-
   "repository": "git@github.com:Masquerade-Circus/valyrian.js.git",
   "author": "Masquerade <christian@masquerade-circus.net>",
   "license": "Apache-2.0",
   "private": false,
-
   "files": [
     "dist",
     "lib",
     "plugins"
   ],
-
   "keywords": [
     "valyrian.js",
     "valyrianjs",
@@ -29,7 +25,6 @@
     "vdom",
     "hyperscript"
   ],
-
   "scripts": {
     "dev:source": "cross-env NODE_ENV=development node rollupSource.js",
     "dev:bench": "cross-env NODE_ENV=development node dev.js -w",
