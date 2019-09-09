@@ -7,23 +7,23 @@ module.exports = (v) => {
   };
 
   function deepFreeze(obj) {
-    if (!Object.isFrozen(obj)) {
-      Object.getOwnPropertyNames(obj).forEach(
-        prop => typeof obj[prop] === 'object' && obj[prop] !== null && deepFreeze(obj[prop])
-      );
+    if (typeof obj === 'object' && obj !== null && !Object.isFrozen(obj)) {
+      if (Array.isArray(obj)) {
+        for (let i = 0, l = obj.length; i < l; i++) {
+          deepFreeze(obj[i]);
+        }
+      } else {
+        for (let prop in obj) {
+          deepFreeze(obj[prop]);
+        }
+      }
       Object.freeze(obj);
     }
 
     return obj;
   };
 
-  v.Store = function (options) {
-    let { state, getters, actions, mutations } = Object.assign({
-      state: {},
-      getters: {},
-      actions: {},
-      mutations: {}
-    }, options);
+  v.Store = function ({ state = {}, getters = {}, actions = {}, mutations = {} } = {}) {
     let frozen = true;
 
     function isUnfrozen() {
@@ -52,7 +52,7 @@ module.exports = (v) => {
       get: (getters, getter) => {
         try {
           return getters[getter](this.state, this.getters);
-        } catch (error) {
+        } catch (e) {
         }
       }
     });
@@ -62,7 +62,7 @@ module.exports = (v) => {
       frozen = false;
       mutations[mutation](this.state, ...args);
       frozen = true;
-      v.update();
+      v.isMounted && v.update();
     };
 
     this.dispatch = (action, ...args) => {
@@ -70,4 +70,6 @@ module.exports = (v) => {
       return Promise.resolve(actions[action](this, ...args));
     };
   };
+
+  v.useStore = (store) => v.$store = store instanceof v.Store ? store : new Store(store);
 };

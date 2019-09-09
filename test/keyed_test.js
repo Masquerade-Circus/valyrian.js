@@ -13,25 +13,23 @@ describe('Keyed lists', () => {
     {name: 'Added at the start', set: [6, 1, 2, 3, 4, 5]}, // Added at the start
     {name: 'Added at the center', set: [1, 2, 6, 3, 4, 5]}, // Added at the center
     {name: 'Reversed', set: [5, 4, 3, 2, 1]}, // Reversed
-    {name: 'Switch positions', set: [1, 4, 3, 2, 5]} // Switch positions
+    {name: 'Switch positions', set: [1, 4, 3, 2, 5]}, // Switch positions,
+    {name: 'Mixed positions', set: [1,3,2,6,5,4]}
   ];
-
-  tests.forEach(test => {
-    it('Keyed list: ' + test.name, () => {
-      let keys = [...set];
-      let component = () => <ul>
-        {keys.map(key => <li key={key}>{key}</li>)}
-      </ul>;
-
-      let before = v.mount('body', component);
-      keys = [...test.set];
-      let after = v.update();
-
-      let beforeString = '<ul>';
+  let beforeString = '<ul>';
       for (let key of set) {
         beforeString += '<li>' + key + '</li>';
       }
       beforeString += '</ul>';
+
+  tests.forEach(test => {
+    it('Keyed list: ' + test.name, () => {
+      let keys = [...set];
+      let component = () => <ul>{keys.map(key => <li key={key}>{key}</li>)}</ul>;
+
+      let before = v.mount('body', component);
+      keys = [...test.set];
+      let after = v.update();
 
       let afterString = '<ul>';
       for (let key of test.set) {

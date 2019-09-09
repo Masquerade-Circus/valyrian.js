@@ -17,7 +17,7 @@ function getNewStore() {
         state.a = state.a + payload;
       },
       changeC(state, payload) {
-        state.c = Object.assign({}, state.c, { a: payload });
+        state.c = {...state.c, a: payload };
       },
       changeCDirectly(state, payload) {
         state.c.a = payload;
