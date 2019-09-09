@@ -2,25 +2,41 @@
   "name": "valyrian.js",
   "version": "3.0.1",
   "description": "Lightweight steel to forge PWAs. (Minimal Frontend Framework with server side rendering and other capabilities)",
-  "main": "dist/valyrian.min.js",
-  "jsnext:main": "lib/index.js",
+
+  "main": "lib/index.js",
   "module": "lib/index.js",
-  "minified:main": "dist/valyrian.min.js",
+  "unpkg": "dist/valyrian.min.js",
+  "browser": "dist/valyrian.min.js",
+
   "repository": "git@github.com:Masquerade-Circus/valyrian.js.git",
   "author": "Masquerade <christian@masquerade-circus.net>",
   "license": "Apache-2.0",
   "private": false,
+
+  "files": [
+    "dist",
+    "lib",
+    "plugins"
+  ],
+
+  "keywords": [
+    "valyrian.js",
+    "valyrianjs",
+    "valyrian",
+    "ui",
+    "framework",
+    "virtual dom",
+    "vdom",
+    "hyperscript"
+  ],
+
   "scripts": {
-    "dev:server": "cross-env NODE_ENV=development node-dev --no-deps server.js",
     "dev:source": "cross-env NODE_ENV=development node rollupSource.js",
-    "dev:app": "cross-env NODE_ENV=development node rollupApp.js",
     "dev:bench": "cross-env NODE_ENV=development node dev.js -w",
     "dev:test": "cross-env NODE_ENV=development nodemon -w ./test -w ./lib -w ./plugins --exec 'mocha --timeout 10000 --require @babel/register --require esm \"test/**/*_test.js\"'",
     "dev:test:nyc": "cross-env NODE_ENV=development nodemon -w ./test -w ./lib -w ./plugins --exec 'nyc --reporter=text --reporter=lcov mocha --timeout 10000 --require @babel/register --require esm \"test/**/*_test.js\"'",
-    "build": "yarn build:assets && yarn build:source && yarn remark",
-    "build:assets": "cross-env NODE_ENV=production node buildAssets.js",
+    "build": "yarn build:source && yarn remark",
     "build:source": "cross-env NODE_ENV=production node rollupSource.js",
-    "build:app": "cross-env NODE_ENV=production node rollupApp.js",
     "test": "cross-env NODE_ENV=development nyc mocha --timeout 10000 --require @babel/register --require esm \"test/**/*_test.js\"",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "remark": "remark . -o"
@@ -105,7 +121,7 @@
     "extends": "@istanbuljs/nyc-config-babel",
     "exclude": [
       "test",
-      "app",
+      "test_benchmarks",
       "dev.js"
     ]
   },

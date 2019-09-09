@@ -1,6 +1,6 @@
 <div style="text-align: center">
 
-<img src="dist/logo.png" style="width: 60%"/>
+<img src="assets/logo.png" style="width: 60%"/>
 
 [![npm version](https://img.shields.io/npm/v/valyrian.js.svg?style=flat)](https://npmjs.org/package/valyrian.js "View this project on npm")
 ![](https://img.shields.io/bundlephobia/min/valyrian.js.svg?style=flat)

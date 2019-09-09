@@ -66,7 +66,7 @@ describe('Node test', () => {
       }
     };
 
-    await v.icons('./dist/icon.png', favicons);
+    await v.icons('./assets/icon.png', favicons);
     expect(fs.existsSync('.tmp/favicon.ico')).toBeTruthy();
     expect(fs.existsSync('.tmp/links.js')).toBeTruthy();
     expect(fs.existsSync('.tmp/manifest.json')).toBeTruthy();
