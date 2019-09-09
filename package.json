@@ -1,6 +1,6 @@
 {
   "name": "valyrian.js",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Lightweight steel to forge PWAs. (Minimal Frontend Framework with server side rendering and other capabilities)",
   "main": "dist/valyrian.min.js",
   "jsnext:main": "lib/index.js",
