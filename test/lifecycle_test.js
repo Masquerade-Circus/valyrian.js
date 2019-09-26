@@ -1,7 +1,7 @@
 import expect from 'expect';
 import '../lib';
 import nodePlugin from '../plugins/node';
-v.use(nodePlugin);
+v.usePlugin(nodePlugin);
 
 describe('Lifecycle', () => {
   it('Mount and update with POJO component', () => {
@@ -12,15 +12,15 @@ describe('Lifecycle', () => {
         return (
           <div
             {...{
-              oncreate(vnode) {
+              'v-create'(vnode) {
                 // After dom element is created and attached to the document
                 Lifecycle.calls.push('component oncreate');
               },
-              onupdate(vnode) {
+              'v-update'(vnode) {
                 // after dom element is updated
                 Lifecycle.calls.push('component onupdate');
               },
-              onremove(vnode) {
+              'v-remove'(vnode) {
                 // after dom element is removed
                 Lifecycle.calls.push('component onremove');
               }
@@ -29,15 +29,15 @@ describe('Lifecycle', () => {
             {Lifecycle.s > 0 ? (
               <h1
                 {...{
-                  oncreate(vnode) {
+                  'v-create'(vnode) {
                     // After dom element is created and attached to the document
                     Lifecycle.calls.push('oncreate');
                   },
-                  onupdate(vnode) {
+                  'v-update'(vnode) {
                     // after dom element is updated
                     Lifecycle.calls.push('onupdate');
                   },
-                  onremove(vnode) {
+                  'v-remove'(vnode) {
                     // after dom element is removed
                     Lifecycle.calls.push('onremove');
                   }
@@ -57,7 +57,7 @@ describe('Lifecycle', () => {
                       elem.push(
                         <li>
                           <span
-                            onremove={(vnode) => {
+                            v-remove={(vnode) => {
                               Lifecycle.calls.push('onspanremove');
                             }}
                           >

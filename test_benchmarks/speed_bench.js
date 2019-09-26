@@ -1,6 +1,6 @@
 import '../lib';
 import nodePlugin from '../plugins/node';
-v.use(nodePlugin);
+v.usePlugin(nodePlugin);
 
 bench('Speed', () => {
 

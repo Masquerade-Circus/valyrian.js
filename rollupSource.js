@@ -27,7 +27,7 @@ let inputOptions = {
     string({
       include: '**/*.tpl.js'
     }),
-    buble({ jsx: 'v', target: { chrome: 71, firefox: 64, safari: 10, node: 8.7 } }),
+    buble({ jsx: 'v', transforms: {asyncAwait: false}, target: { chrome: 71, firefox: 64, safari: 10, node: 8.7 } }),
     commonjs({
       include: ['./node_modules/**'], // Default: undefined
       // if false then skip sourceMap generation for CommonJS modules

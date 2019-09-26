@@ -1,7 +1,7 @@
 import expect from 'expect';
 import '../lib';
 import StorePlugin from '../plugins/store';
-v.use(StorePlugin);
+v.usePlugin(StorePlugin);
 
 function getNewStore() {
   let mainModule = {

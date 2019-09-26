@@ -22,7 +22,7 @@
     "no-sequences": 2,
     "no-trailing-spaces": 2,
     "no-underscore-dangle": 2,
-    "no-use-before-define": 2,
+    "no-use-before-define": 1,
     "no-with": 2,
     "semi-spacing": 2,
     "space-before-blocks": 2,
@@ -62,7 +62,7 @@
       "warn",
       { "max": 300, "skipBlankLines": true, "skipComments": true }
     ],
-    "max-len": ["error", 120],
+    "max-len": ["error", 145],
     "max-statements-per-line": ["error", { "max": 3 }]
   },
   "env": {
@@ -78,5 +78,6 @@
       "jsx": true,
       "modules": true
     }
-  }
+  },
+  "parser": "babel-eslint"
 }

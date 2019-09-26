@@ -2,7 +2,7 @@
 import expect from 'expect';
 import '../lib';
 import nodePlugin from '../plugins/node';
-v.use(nodePlugin);
+v.usePlugin(nodePlugin);
 
 describe('Hyperscript', () => {
 
@@ -109,7 +109,7 @@ describe('Hyperscript', () => {
   it('should create a div element from string', () => {
     expect(v.trust('<div id="unique" class="unique"></div>')).toEqual([
       {
-        name: 'div',
+        name: 'DIV', // jsdom sets this to the uppercase form
         props: {
           id: 'unique',
           class: 'unique'

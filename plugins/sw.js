@@ -16,5 +16,4 @@ let plugin = function (v) {
   }
 };
 
-// module.exports = plugin;
 export default plugin;

@@ -1,7 +1,7 @@
 import expect from 'expect';
 import '../lib';
 import nodePlugin from '../plugins/node';
-v.use(nodePlugin);
+v.usePlugin(nodePlugin);
 
 describe('Keyed lists', () => {
   let set = [1, 2, 3, 4, 5];

@@ -1,7 +1,7 @@
 import expect from 'expect';
 import '../lib';
 import nodePlugin from '../plugins/node';
-v.use(nodePlugin);
+v.usePlugin(nodePlugin);
 
 describe('Mount and update', () => {
   it('Mount and update with POJO component', () => {

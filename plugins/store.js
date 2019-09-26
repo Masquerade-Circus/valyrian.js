@@ -1,4 +1,4 @@
-module.exports = (v) => {
+let plugin = (v) => {
 
   function keyExists(objectname, object, key) {
     if (!object[key]) {
@@ -73,3 +73,5 @@ module.exports = (v) => {
 
   v.useStore = (store) => v.$store = store instanceof v.Store ? store : new Store(store);
 };
+
+export default plugin;

@@ -1,3 +1,4 @@
+let requestPlugin = require('./request').default;
 let cssnano = require('cssnano');
 let CleanCSS = require('clean-css');
 let htmlparser = require('htmlparser2');
@@ -23,33 +24,39 @@ function fileMethodFactory() {
       return prop;
     }
 
-    if (/^https?:\/\//gi.test(file)) {
-      return v.request
-        .get(
-          file,
-          {},
-          {
-            headers: {
-              Accept: 'text/plain',
-              'Content-Type': 'text/plain'
+    if (typeof file === 'string') {
+      if (/^https?:\/\//gi.test(file)) {
+        return v.request
+          .get(
+            file,
+            {},
+            {
+              headers: {
+                Accept: 'text/plain',
+                'Content-Type': 'text/plain'
+              }
             }
+          )
+          .then((contents) => {
+            prop += contents;
+          });
+      }
+
+      return new Promise((resolve, reject) => {
+        fs.readFile(file, 'utf8', (err, contents) => {
+          if (err) {
+            return reject(err);
           }
-        )
-        .then((contents) => {
+
           prop += contents;
+          resolve(prop);
         });
+      });
     }
 
-    return new Promise((resolve, reject) => {
-      fs.readFile(file, 'utf8', (err, contents) => {
-        if (err) {
-          return reject(err);
-        }
-
-        prop += contents;
-        resolve(prop);
-      });
-    });
+    if (typeof file === 'object' && 'raw' in file) {
+      return prop += file.raw;
+    }
   };
 }
 
@@ -64,6 +71,9 @@ function inline(...args) {
 
   return Promise.all(promises);
 }
+
+inline.css = fileMethodFactory();
+inline.js = fileMethodFactory();
 
 inline.uncss = (function () {
   let prop = '';
@@ -288,6 +298,7 @@ icons.options = {
 };
 
 let plugin = function (v) {
+  v.usePlugin(requestPlugin);
   v.inline = inline;
   v.sw = sw;
   v.icons = icons;
@@ -295,3 +306,4 @@ let plugin = function (v) {
 };
 
 module.exports = plugin;
+module.exports.default = module.exports;

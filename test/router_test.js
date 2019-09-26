@@ -2,8 +2,8 @@ import expect from "expect";
 import '../lib';
 import nodePlugin from "../plugins/node";
 import router from "../plugins/router";
-v.use(nodePlugin);
-v.use(router);
+v.usePlugin(nodePlugin);
+v.usePlugin(router);
 
 describe('Router', () => {
   it("Dev test", async () => {

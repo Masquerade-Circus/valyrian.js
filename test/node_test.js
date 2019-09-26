@@ -3,7 +3,7 @@ import fs from 'fs';
 import '../lib';
 import nodePlugin from '../plugins/node';
 import packageJson from '../package.json';
-v.use(nodePlugin);
+v.usePlugin(nodePlugin);
 
 describe('Node test', () => {
 
@@ -71,6 +71,19 @@ describe('Node test', () => {
     expect(fs.existsSync('.tmp/links.js')).toBeTruthy();
     expect(fs.existsSync('.tmp/manifest.json')).toBeTruthy();
 
+  });
+
+  it('should remove unused css', async () => {
+    let html = '<body><span>Hello world</span></body>';
+    let css = `
+span{display:block;}
+span.hello{display: inline-block}
+    `;
+
+    await v.inline.css({raw: css});
+    let cleanCss = await v.inline.uncss([html]);
+
+    expect(cleanCss).toEqual('span{display:block}');
   });
 
 });
