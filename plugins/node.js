@@ -1,14 +1,18 @@
-let requestPlugin = require('./request').default;
+let fs = require('fs');
+let path = require('path');
+
 let cssnano = require('cssnano');
 let CleanCSS = require('clean-css');
 let htmlparser = require('htmlparser2');
+let Purgecss = require('purgecss');
+let fetch = require('node-fetch');
+let jsdom = require('jsdom');
 
-global.fetch = require('node-fetch');
-global.document = (new (require('jsdom')).JSDOM()).window.document;
+let requestPlugin = require('./request').default;
 
-let fs = require('fs');
-let path = require('path');
-let uncss = require('uncss');
+global.fetch = fetch;
+global.document = (new jsdom.JSDOM()).window.document;
+
 let errorHandler = (resolve, reject) => (err) => {
   if (err) {
     return reject(err);
@@ -77,56 +81,60 @@ inline.js = fileMethodFactory();
 
 inline.uncss = (function () {
   let prop = '';
-  return function (renderedHtml, options = {}) {
+  return async function (renderedHtml, options = {}) {
     if (!renderedHtml) {
       return prop;
     }
 
     let opt = Object.assign(
       {
-        minify: true
+        minify: true,
+        purgecssOptions: {},
+        cleanCssOptions: {}
       },
       options
     );
 
     opt.raw = inline.css();
-    return Promise.all(renderedHtml).then((html) => {
-      html.forEach((item, index) => {
-        html[index] = item.replace(/<script [^>]*><\/script>/gi, '');
-      });
 
-      return new Promise((resolve, reject) => {
-        uncss(html, opt, (err, output) => {
-          if (err) {
-            return reject(err);
-          }
+    let html = await Promise.all(renderedHtml);
 
-          if (!opt.minify) {
-            prop = output;
-            return resolve(output);
-          }
-
-          output = new CleanCSS({
-            level: {
-              1: {
-                // rounds pixel values to `N` decimal places; `false` disables rounding; defaults to `false`
-                roundingPrecision: 'all=3',
-                specialComments: 'none' // denotes a number of /*! ... */ comments preserved; defaults to `all`
-              },
-              2: {
-                restructureRules: true // controls rule restructuring; defaults to false
-              }
-            },
-            compatibility: 'ie11'
-          }).minify(output).styles;
-
-          cssnano.process(output).then((result) => {
-            prop = result.css;
-            resolve(prop);
-          });
-        });
-      });
+    let contents = html.map((item) => {
+      return {
+        raw: item.replace(/<script [^>]*><\/script>/gi, ''),
+        extension: 'html'
+      };
     });
+
+    let purgecss = new Purgecss({
+      content: contents,
+      css: [{raw: opt.raw}],
+      ...opt.purgecssOptions
+    });
+    let output = purgecss.purge();
+
+    prop = output[0].css;
+    if (!opt.minify) {
+      return prop;
+    }
+
+    prop = new CleanCSS({
+      level: {
+        1: {
+          // rounds pixel values to `N` decimal places; `false` disables rounding; defaults to `false`
+          roundingPrecision: 'all=3',
+          specialComments: 'none' // denotes a number of /*! ... */ comments preserved; defaults to `all`
+        },
+        2: {
+          restructureRules: true // controls rule restructuring; defaults to false
+        }
+      },
+      compatibility: 'ie11',
+      ...opt.cleanCssOptions
+    }).minify(prop).styles;
+
+    prop = (await cssnano.process(prop)).css;
+    return prop;
   };
 }());
 
