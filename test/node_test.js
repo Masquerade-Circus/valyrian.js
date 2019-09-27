@@ -8,10 +8,10 @@ v.usePlugin(nodePlugin);
 describe('Node test', () => {
 
 
-  it('Get hyperscript string from html', async () => {
+  it('Get hyperscript string from html', () => {
     let html = '<body><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</body>';
 
-    let dom = await v.html2Hyper(html);
+    let dom = v.html2Hyper(html);
 
     expect(dom).toEqual(`[
   v("body", {}, [

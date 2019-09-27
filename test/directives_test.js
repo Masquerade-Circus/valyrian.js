@@ -138,6 +138,19 @@ describe('Directives', () => {
       expect(result).toEqual(expected);
     });
 
+    it('should update oldnode', () => {
+      let value = true;
+      let expected1 = '<div><span>Hello world</span></div>';
+      let expected2 = '<div></div>';
+
+      let result1 = v.mount('div', () => <div><span v-if={value}>Hello world</span></div>);
+      expect(result1).toEqual(expected1);
+
+      value = false;
+      let result2 = v.update();
+      expect(result2).toEqual(expected2);
+    });
+
   });
 
   /**

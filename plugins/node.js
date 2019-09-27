@@ -5,9 +5,8 @@ let cssnano = require('cssnano');
 let CleanCSS = require('clean-css');
 let Purgecss = require('purgecss');
 let fetch = require('node-fetch');
-let parse5 = require('parse5');
 
-let {Document} = require('./utils/dom');
+let {Document, parseHtml} = require('./utils/dom');
 let treeAdapter = require('./utils/tree-adapter');
 let requestPlugin = require('./request').default;
 
@@ -201,28 +200,9 @@ function parseDom(childNodes, depth = 1) {
     .join(',');
 }
 
-function parseHtml(html) {
-  let result = parse5.parse(html, {treeAdapter: treeAdapter});
-  let childNodes = result.childNodes;
-
-  if (/^<!DOCTYPE html>/gm.test(html)) {
-    childNodes = result.childNodes;
-  } else if (/^<html(\s|>)/gm.test(html)) {
-    childNodes = result.childNodes;
-  } else if (/^<body(\s|>)/gm.test(html)) {
-    childNodes = result.childNodes[0].childNodes;
-    childNodes.shift();
-  } else if (/^<head(\s|>)/gm.test(html)) {
-    childNodes = result.childNodes[0].childNodes;
-    childNodes.pop();
-  } else {
-    childNodes = result.childNodes[0].childNodes[1].childNodes;
-  }
-  return childNodes;
-}
 
 function html2Hyper(html) {
-  return '[' + parseDom(parseHtml(html)) + '\n]';
+  return '[' + parseDom(parseHtml(html, {treeAdapter: treeAdapter})) + '\n]';
 }
 
 function icons(source, configuration = {}) {
@@ -336,8 +316,6 @@ let plugin = function (v) {
   v.sw = sw;
   v.icons = icons;
   v.html2Hyper = html2Hyper;
-
-  v.trust = (html) => [].map.call(parseHtml(html), (item) => v.dom2vnode(item));
 };
 
 module.exports = plugin;

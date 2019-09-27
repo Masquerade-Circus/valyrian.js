@@ -15,12 +15,16 @@ let plugin = function (v) {
         .map((p) => {
           let k = prefix ? prefix + '[' + p + ']' : p;
 
-          return typeof obj[p] === 'object' ? serialize(obj[p], k) : e(k) + '=' + e(obj[p]);
+          if (typeof obj[p] === 'object') {
+            return serialize(obj[p], k);
+          }
+
+          return e(k) + '=' + e(obj[p]);
         })
         .join('&');
     }
 
-    function request(method, url, data, options = {}) {
+    async function request(method, url, data, options = {}) {
       let opts = Object.assign(
           {
             method: method.toLowerCase(),
@@ -40,7 +44,7 @@ let plugin = function (v) {
 
       if (data !== undefined) {
         if (opts.method === 'get' && typeof data === 'object') {
-          url += data = serialize(data);
+          url += '?' + serialize(data);
         }
 
         if (opts.method !== 'get') {
@@ -48,23 +52,23 @@ let plugin = function (v) {
         }
       }
 
-      return fetch(parseUrl(url), opts).then((response) => {
-        if (!response.ok) {
-          let err = new Error(response.statusText);
-          err.response = response;
-          throw err;
-        }
+      let response = await fetch(parseUrl(url), opts);
 
-        if (/text/gi.test(type)) {
-          return response.text();
-        }
+      if (!response.ok) {
+        let err = new Error(response.statusText);
+        err.response = response;
+        throw err;
+      }
 
-        if (/json/gi.test(type)) {
-          return response.json();
-        }
+      if (/text/gi.test(type)) {
+        return response.text();
+      }
 
-        return response;
-      });
+      if (/json/gi.test(type)) {
+        return response.json();
+      }
+
+      return response;
     }
 
     parseUrl = function (url) {
@@ -75,7 +79,7 @@ let plugin = function (v) {
           .replace(/^\/\//gi, '/')
           .trim();
 
-      if (v.is.node && typeof request.urls.node === 'string') {
+      if (v.isNode && typeof request.urls.node === 'string') {
         request.urls.node = request.urls.node.replace(/\/$/gi, '').trim();
 
         if (typeof request.urls.api === 'string') {

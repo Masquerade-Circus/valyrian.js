@@ -275,6 +275,24 @@ let plugin = function (v) {
     e.preventDefault();
   };
 
+  v.directive('v-link', (url, vnode) => {
+    vnode.props.onclick = (e) => {
+      if (typeof url === 'string' && url.length > 0) {
+        if (url.charAt(0) !== '/') {
+          let current = v.routes.current
+            .split('?', 2)
+            .shift()
+            .split('/');
+          current.pop();
+          url = `${current.join('/')}/${url}`;
+        }
+
+        v.routes.go(url);
+      }
+      e.preventDefault();
+    };
+  });
+
 };
 
 export default plugin;

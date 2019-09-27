@@ -2,7 +2,7 @@
 
 const { DOCUMENT_MODE } = require('parse5/lib/common/html');
 
-const {Element, Text, Document} = require('./dom');
+const {Element, Text, Document, parseAttributes} = require('./dom');
 
 exports.createDocumentFragment = function () {
   return {
@@ -10,17 +10,6 @@ exports.createDocumentFragment = function () {
     childNodes: []
   };
 };
-
-function parseAttributes(attributes) {
-  let attrs = [];
-  for (let i = 0, l = attributes.length; i < l; i++) {
-    attrs.push({
-      nodeName: (attributes[i].prefix ? attributes[i].prefix + ':' : '') + attributes[i].name,
-      nodeValue: attributes[i].value
-    });
-  }
-  return attrs;
-}
 
 exports.createElement = function (tagName, namespaceURI, attributes) {
   let element = new Element(1, tagName);

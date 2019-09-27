@@ -1,3 +1,52 @@
+let parse5 = require('parse5');
+
+export function parseAttributes(attributes) {
+  let attrs = [];
+  for (let i = 0, l = attributes.length; i < l; i++) {
+    attrs.push({
+      nodeName: (attributes[i].prefix ? attributes[i].prefix + ':' : '') + attributes[i].name,
+      nodeValue: attributes[i].value
+    });
+  }
+  return attrs;
+}
+
+export function parseHtml(html, options = {}) {
+  let result = parse5.parse(html, options);
+  let childNodes = result.childNodes;
+
+  if (/^<!DOCTYPE html>/gm.test(html)) {
+    childNodes = result.childNodes;
+  } else if (/^<html(\s|>)/gm.test(html)) {
+    childNodes = result.childNodes;
+  } else if (/^<body(\s|>)/gm.test(html)) {
+    childNodes = result.childNodes[0].childNodes;
+    childNodes.shift();
+  } else if (/^<head(\s|>)/gm.test(html)) {
+    childNodes = result.childNodes[0].childNodes;
+    childNodes.pop();
+  } else {
+    childNodes = result.childNodes[0].childNodes[1].childNodes;
+  }
+  return childNodes;
+}
+
+function generateDom(tree) {
+  let childNodes = [];
+  for (let i = 0, l = tree.length; i < l; i++) {
+    let node = tree[i];
+    if (node.nodeName === '#text') {
+      childNodes.push(new Text(node.value));
+    } else {
+      let element = new Element(1, node.nodeName);
+      element.attributes = parseAttributes(node.attrs);
+      element.childNodes = generateDom(node.childNodes);
+      childNodes.push(element);
+    }
+  }
+  return childNodes;
+}
+
 function findWhere(arr, fn, returnIndex, byValue) {
   let i = arr.length;
   while (i--) {
@@ -108,27 +157,6 @@ class Node {
       this.parentNode.removeChild(this);
     }
   }
-  set textContent(text) {
-    this.nodeValue = String(text);
-    for (let i = 0, l = this.childNodes.length; i < l; i++) {
-      this.childNodes[i].remove();
-    }
-  }
-  get textContent() {
-    return this.nodeValue;
-  }
-
-  get innerHTML() {
-    let str = '';
-    for (let i = 0, l = this.childNodes.length; i < l; i++) {
-      str += serialize(this.childNodes[i]);
-    }
-    return str;
-  }
-
-  get outerHTML() {
-    return serialize(this);
-  }
 }
 
 export class Text extends Node {
@@ -219,6 +247,36 @@ export class Element extends Node {
       }
     } while (event.bubbles && !(c && event._stop) && (t = t.parentNode));
     return l != null;
+  }
+
+  set textContent(text) {
+    this.nodeValue = String(text);
+    for (let i = 0, l = this.childNodes.length; i < l; i++) {
+      this.childNodes[i].remove();
+    }
+  }
+  get textContent() {
+    return this.nodeValue;
+  }
+
+  get innerHTML() {
+    let str = '';
+    for (let i = 0, l = this.childNodes.length; i < l; i++) {
+      str += serialize(this.childNodes[i]);
+    }
+    return str;
+  }
+
+  set innerHTML(html) {
+    this.textContent = '';
+    let childNodes = generateDom(parseHtml(html));
+    for (let i = 0, l = childNodes.length; i < l; i++) {
+      this.appendChild(childNodes[i]);
+    }
+  }
+
+  get outerHTML() {
+    return serialize(this);
   }
 }
 
