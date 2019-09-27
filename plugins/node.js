@@ -3,15 +3,16 @@ let path = require('path');
 
 let cssnano = require('cssnano');
 let CleanCSS = require('clean-css');
-let htmlparser = require('htmlparser2');
 let Purgecss = require('purgecss');
 let fetch = require('node-fetch');
-let jsdom = require('jsdom');
+let parse5 = require('parse5');
 
+let {Document} = require('./utils/dom');
+let treeAdapter = require('./utils/tree-adapter');
 let requestPlugin = require('./request').default;
 
 global.fetch = fetch;
-global.document = (new jsdom.JSDOM()).window.document;
+global.document = new Document();
 
 let errorHandler = (resolve, reject) => (err) => {
   if (err) {
@@ -133,7 +134,7 @@ inline.uncss = (function () {
       ...opt.cleanCssOptions
     }).minify(prop).styles;
 
-    prop = (await cssnano.process(prop)).css;
+    prop = (await cssnano.process(prop, {from: undefined})).css;
     return prop;
   };
 }());
@@ -164,40 +165,64 @@ function sw(file, options = {}) {
   });
 }
 
-function parseDom(dom, depth = 0) {
+function parseDom(childNodes, depth = 1) {
   let spaces = '';
   for (let i = 0; i < depth; i++) {
     spaces += '  ';
   }
 
-  return dom
+  return childNodes
     .map((item) => {
-      if (item.type === 'text') {
-        return `\n${spaces}"${item.data}"`;
-      }
+      if (item.nodeType === 3) {
+        return `\n${spaces}"${item.nodeValue}"`;
+      } else {
+        let str = `\n${spaces}v("${item.nodeName}", `;
 
-      let str = `\n${spaces}v("${item.name}", ${JSON.stringify(item.attribs)}`;
-      if (item.children.length > 0) {
-        str += `, [${parseDom(item.children, depth + 1)}\n]`;
+        if (item.attributes) {
+          let attrs = {};
+          for (let i = 0, l = item.attributes.length; i < l; i++) {
+            let attr = item.attributes[i];
+            attrs[attr.nodeName] = attr.nodeValue;
+          }
+          str += JSON.stringify(attrs);
+        } else {
+          str += '{}';
+        }
+
+        str += ', [';
+        if (item.childNodes && item.childNodes.length > 0) {
+          str += `${parseDom(item.childNodes, depth + 1)}\n${spaces}`;
+        }
+
+        str += `])`;
+        return str;
       }
-      str += `)`;
-      return str;
     })
     .join(',');
 }
 
+function parseHtml(html) {
+  let result = parse5.parse(html, {treeAdapter: treeAdapter});
+  let childNodes = result.childNodes;
+
+  if (/^<!DOCTYPE html>/gm.test(html)) {
+    childNodes = result.childNodes;
+  } else if (/^<html(\s|>)/gm.test(html)) {
+    childNodes = result.childNodes;
+  } else if (/^<body(\s|>)/gm.test(html)) {
+    childNodes = result.childNodes[0].childNodes;
+    childNodes.shift();
+  } else if (/^<head(\s|>)/gm.test(html)) {
+    childNodes = result.childNodes[0].childNodes;
+    childNodes.pop();
+  } else {
+    childNodes = result.childNodes[0].childNodes[1].childNodes;
+  }
+  return childNodes;
+}
+
 function html2Hyper(html) {
-  return new Promise((resolve, reject) => {
-    let handler = new htmlparser.DomHandler(function (error, dom) {
-      if (error) {
-        return reject(error);
-      }
-      resolve(parseDom(dom).trim());
-    });
-    let parser = new htmlparser.Parser(handler);
-    parser.write(html);
-    parser.end();
-  });
+  return '[' + parseDom(parseHtml(html)) + '\n]';
 }
 
 function icons(source, configuration = {}) {
@@ -241,9 +266,9 @@ function icons(source, configuration = {}) {
     }
 
     if (options.linksViewPath) {
-      let html = 'export default { \n    view(){ \n        return [\n';
-      html += await html2Hyper(response.html.join(''));
-      html += '\n        ];\n    }\n};';
+      let html = 'export default function(){ \n    return ';
+      html += html2Hyper(response.html.join(''));
+      html += ';\n    \n};';
 
       promises.push(
         new Promise((resolve, reject) => {
@@ -311,6 +336,8 @@ let plugin = function (v) {
   v.sw = sw;
   v.icons = icons;
   v.html2Hyper = html2Hyper;
+
+  v.trust = (html) => [].map.call(parseHtml(html), (item) => v.dom2vnode(item));
 };
 
 module.exports = plugin;

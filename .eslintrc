@@ -21,7 +21,7 @@
     "no-multi-str": 2,
     "no-sequences": 2,
     "no-trailing-spaces": 2,
-    "no-underscore-dangle": 2,
+    "no-underscore-dangle": 1,
     "no-use-before-define": 1,
     "no-with": 2,
     "semi-spacing": 2,

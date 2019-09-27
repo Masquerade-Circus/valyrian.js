@@ -13,10 +13,12 @@ describe('Node test', () => {
 
     let dom = await v.html2Hyper(html);
 
-    expect(dom).toEqual(`v("body", {}, [
-  v("link", {"rel":"shortcult icon","href":"/icons/favicon.ico"}),
-  "Hello world"
-])`);
+    expect(dom).toEqual(`[
+  v("body", {}, [
+    v("link", {"rel":"shortcult icon","href":"/icons/favicon.ico"}, []),
+    "Hello world"
+  ])
+]`);
 
 
   });

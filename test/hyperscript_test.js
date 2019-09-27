@@ -107,14 +107,14 @@ describe('Hyperscript', () => {
   });
 
   it('should create a div element from string', () => {
-    expect(v.trust('<div id="unique" class="unique"></div>')).toEqual([
+    expect(v.trust('<div id="unique" class="unique">Hola mundo</div>')).toEqual([
       {
-        name: 'DIV', // jsdom sets this to the uppercase form
+        name: 'div',
         props: {
           id: 'unique',
           class: 'unique'
         },
-        children: [],
+        children: [{dom: expect.anything()}],
         dom: expect.anything(),
         isSVG: false
       }
