@@ -27,6 +27,5 @@ exclude_patterns:
   - 'dist'
   - 'test*'
   - 'rollup*'
-  - 'buildAssets.js'
   - 'plugins/node.js'
   - 'tmp'

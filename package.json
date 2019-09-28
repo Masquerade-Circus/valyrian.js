@@ -59,7 +59,6 @@
     "eslint": "^6.4.0",
     "eslint-plugin-sonarjs": "^0.4.0",
     "esm": "^3.2.25",
-    "exam": "^2.1.1",
     "expect": "^24.9.0",
     "faker": "^4.1.0",
     "micro": "^9.3.4",
@@ -76,7 +75,6 @@
     "rollup-plugin-filesize": "^6.2.0",
     "rollup-plugin-includepaths": "^0.2.3",
     "rollup-plugin-json": "^4.0.0",
-    "rollup-plugin-node-builtins": "^2.1.2",
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-progress": "^1.1.1",
@@ -118,8 +116,8 @@
     "extends": "@istanbuljs/nyc-config-babel",
     "exclude": [
       "test",
-      "test_benchmarks",
-      "dev.js"
+      "plugins/utils",
+      "dist"
     ]
   },
   "remarkConfig": {
