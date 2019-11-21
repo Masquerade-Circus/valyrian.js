@@ -33,8 +33,7 @@ describe('Directives', () => {
           'v-test2': true
         },
         dom: expect.any(Object),
-        children: [],
-        isSVG: false
+        children: []
       };
 
       let result;

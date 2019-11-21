@@ -12,8 +12,7 @@ describe('Hyperscript', () => {
     expect(v('div')).toEqual({
       name: 'div',
       props: {},
-      children: [],
-      isSVG: false
+      children: []
     });
   });
 
@@ -21,8 +20,7 @@ describe('Hyperscript', () => {
     expect(v('div', null, 'Hello')).toEqual({
       name: 'div',
       props: {},
-      children: ['Hello'],
-      isSVG: false
+      children: ['Hello']
     });
   });
 
@@ -34,11 +32,9 @@ describe('Hyperscript', () => {
         {
           name: 'span',
           props: {},
-          children: [],
-          isSVG: false
+          children: []
         }
-      ],
-      isSVG: false
+      ]
     });
   });
 
@@ -49,8 +45,7 @@ describe('Hyperscript', () => {
       children: [
         'Hello ',
         'world'
-      ],
-      isSVG: false
+      ]
     });
   });
 
@@ -61,8 +56,7 @@ describe('Hyperscript', () => {
       children: [
         ['Hello ',
           'world']
-      ],
-      isSVG: false
+      ]
     });
   });
 
@@ -75,11 +69,9 @@ describe('Hyperscript', () => {
         {
           name: 'span',
           props: {},
-          children: ['Whats up'],
-          isSVG: false
+          children: ['Whats up']
         }
-      ],
-      isSVG: false
+      ]
     });
   });
 
@@ -89,8 +81,7 @@ describe('Hyperscript', () => {
       props: {},
       children: [
         ['Hello ', 'world', ['Only', ['for', 'this', ['time']]]]
-      ],
-      isSVG: false
+      ]
     });
   });
 
@@ -101,8 +92,7 @@ describe('Hyperscript', () => {
         id: 'unique',
         class: 'unique'
       },
-      children: [],
-      isSVG: false
+      children: []
     });
   });
 
@@ -115,8 +105,7 @@ describe('Hyperscript', () => {
           class: 'unique'
         },
         children: [{dom: expect.anything()}],
-        dom: expect.anything(),
-        isSVG: false
+        dom: expect.anything()
       }
     ]);
   });
@@ -129,8 +118,7 @@ describe('Hyperscript', () => {
       props: {},
       children: [
         [null, 'Hello', undefined, 1, date, { hello: 'world' }, ['Hello']]
-      ],
-      isSVG: false
+      ]
     });
   });
 
