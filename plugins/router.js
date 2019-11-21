@@ -257,25 +257,8 @@ let plugin = function (v) {
     return routes;
   };
 
-  v.routes.link = function (e) {
-    let url = (e.target.getAttribute('href') || '').trim();
-    let current;
-    if (url.length > 0) {
-      if (url.charAt(0) !== '/') {
-        current = v.routes.current
-          .split('?', 2)
-          .shift()
-          .split('/');
-        current.pop();
-        url = `${current.join('/')}/${url}`;
-      }
-
-      v.routes.go(url);
-    }
-    e.preventDefault();
-  };
-
-  v.directive('v-link', (url, vnode) => {
+  v.directive('v-route', (url, vnode, oldnode, isSVG) => {
+    vnode.props.href = url;
     vnode.props.onclick = (e) => {
       if (typeof url === 'string' && url.length > 0) {
         if (url.charAt(0) !== '/') {
@@ -291,6 +274,9 @@ let plugin = function (v) {
       }
       e.preventDefault();
     };
+
+    v.updateProperty('href', vnode, oldnode, isSVG);
+    v.updateProperty('onclick', vnode, oldnode, isSVG);
   });
 
 };

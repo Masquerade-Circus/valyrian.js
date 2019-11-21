@@ -4,11 +4,12 @@ let nodeResolve = require('rollup-plugin-node-resolve');
 let includepaths = require('rollup-plugin-includepaths');
 let filesize = require('rollup-plugin-filesize');
 let progress = require('rollup-plugin-progress');
-let buble = require('rollup-plugin-buble');
 let { string } = require('rollup-plugin-string');
 let sourcemaps = require('rollup-plugin-sourcemaps');
 let { terser } = require('rollup-plugin-terser');
 let {sizeSnapshot } = require('rollup-plugin-size-snapshot');
+let babel = require('rollup-plugin-babel');
+let buble = require('@rollup/plugin-buble');
 
 const argv = require('yargs').argv;
 let file = argv.file || 'index';
@@ -28,6 +29,7 @@ let inputOptions = {
       include: '**/*.tpl.js'
     }),
     buble({ jsx: 'v', transforms: {asyncAwait: false}, target: { chrome: 71, firefox: 64, safari: 10, node: 8.7 } }),
+    // babel({ exclude: 'node_modules/**' }),
     commonjs({
       include: ['./node_modules/**'], // Default: undefined
       // if false then skip sourceMap generation for CommonJS modules
@@ -50,7 +52,13 @@ let outputOptions = {
 
 if (process.env.NODE_ENV === 'production') {
   outputOptions.sourcemap = false;
-  inputOptions.plugins.push(terser({ warnings: 'verbose', sourcemap: false }));
+  inputOptions.plugins.push(terser({
+    warnings: 'verbose',
+    sourcemap: false,
+    output: {
+      ecma: 6
+    }
+  }));
   rollup
     .rollup(inputOptions)
     .then((bundle) => bundle.write(outputOptions))

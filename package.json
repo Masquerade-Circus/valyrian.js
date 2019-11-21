@@ -41,40 +41,41 @@
     "cssnano": "^4.1.10",
     "favicons": "^5.4.1",
     "node-fetch": "^2.6.0",
-    "parse5": "^5.1.0",
-    "purgecss": "^1.4.0"
+    "parse5": "^5.1.1",
+    "purgecss": "^1.4.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.6.2",
-    "@babel/plugin-transform-react-jsx": "^7.3.0",
-    "@babel/preset-env": "^7.6.2",
-    "@babel/register": "^7.6.2",
+    "@babel/core": "^7.7.2",
+    "@babel/plugin-transform-react-jsx": "^7.7.0",
+    "@babel/preset-env": "^7.7.1",
+    "@babel/register": "^7.7.0",
     "@istanbuljs/nyc-config-babel": "^2.1.1",
+    "@rollup/plugin-buble": "^0.20.0",
+    "@rollup/plugin-json": "^4.0.0",
     "babel-eslint": "^10.0.3",
     "babel-plugin-istanbul": "^5.2.0",
     "compression": "^1.7.4",
-    "coveralls": "^3.0.6",
-    "cross-env": "^6.0.0",
-    "dayjs": "^1.8.16",
-    "eslint": "^6.4.0",
-    "eslint-plugin-sonarjs": "^0.4.0",
+    "coveralls": "^3.0.8",
+    "cross-env": "^6.0.3",
+    "dayjs": "^1.8.17",
+    "eslint": "^6.6.0",
+    "eslint-plugin-sonarjs": "^0.5.0",
     "esm": "^3.2.25",
     "expect": "^24.9.0",
     "faker": "^4.1.0",
     "micro": "^9.3.4",
-    "micro-ex-router": "^1.7.1",
-    "mocha": "^6.2.0",
+    "micro-ex-router": "^1.7.2",
+    "mocha": "^6.2.2",
     "node-dev": "^4.0.0",
     "nyc": "^14.1.1",
-    "remark-cli": "^7.0.0",
+    "remark-cli": "^7.0.1",
     "remark-toc": "^6.0.0",
-    "rollup": "^1.21.4",
+    "rollup": "^1.27.3",
     "rollup-plugin-async": "^1.2.0",
-    "rollup-plugin-buble": "^0.19.8",
+    "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-commonjs": "^10.1.0",
-    "rollup-plugin-filesize": "^6.2.0",
+    "rollup-plugin-filesize": "^6.2.1",
     "rollup-plugin-includepaths": "^0.2.3",
-    "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-globals": "^1.4.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-progress": "^1.1.1",
@@ -82,7 +83,7 @@
     "rollup-plugin-sourcemaps": "^0.4.2",
     "rollup-plugin-string": "^3.0.0",
     "rollup-plugin-terser": "^5.1.2",
-    "yargs": "^14.0.0"
+    "yargs": "^15.0.2"
   },
   "babel": {
     "presets": [
@@ -90,9 +91,13 @@
         "@babel/preset-env",
         {
           "targets": {
-            "esmodules": true,
-            "node": true
-          }
+            "chrome": 71,
+            "firefox": 64,
+            "safari": 10,
+            "node": "10.16.3"
+          },
+          "loose": true,
+          "shippedProposals": true
         }
       ]
     ],
