@@ -1,11 +1,10 @@
 import expect from 'expect';
 import '../lib';
 import nodePlugin from '../plugins/node';
-import hooksPlugin from '../plugins/hooks';
 v.usePlugin(nodePlugin);
-// v.usePlugin(hooksPlugin);
+v.useHooks();
 
-describe('Hooks like pattern', () => {
+describe.only('Hooks like pattern', () => {
 
   it('should create a simple counter', async () => {
     v.unmount();

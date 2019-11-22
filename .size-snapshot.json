@@ -1,8 +1,8 @@
 {
   "dist/valyrian.min.js": {
-    "bundled": 11255,
-    "minified": 4493,
-    "gzipped": 1927
+    "bundled": 13464,
+    "minified": 5171,
+    "gzipped": 2190
   },
   "dist/store.min.js": {
     "bundled": 11415,
