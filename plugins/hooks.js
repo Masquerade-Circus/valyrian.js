@@ -1,62 +1,69 @@
 let plugin = (v) => {
-  let currentComponentNode;
   let hookIndex = 0;
-  let currentParentNode;
-  let currentOldParentNode;
-  let currentComponentIndex;
+  let UND;
 
-  function cleanupVnode(vnode) {
-    if (vnode.hasComponents) {
-      for (let i = 0, l = vnode.onCleanup.length; i < l; i++) {
-        vnode.onCleanup[i] && vnode.onCleanup[i]();
+  function createHook(value) {
+    let method = function (value) {
+      if (value !== UND) {
+        hook.state = value;
       }
-    }
+      return hook.state;
+    };
+    method.setState = method.toJSON = method.toString = method.valueOf = method;
+
+    let hook = new Proxy(method, {
+      set(hook, prop, val) {
+        if (prop === 'state') {
+          hook.state = val;
+          return true;
+        }
+      },
+      get(hook, prop) {
+        if (prop === 'state') {
+          return typeof hook.state === 'function' ? hook.state() : hook.state;
+        }
+
+        return hook[prop];
+      }
+    });
+
+    hook(value);
+    return hook;
   }
 
   v.useState = function (initial) {
-    let hook;
-    let oldComponentNode = currentOldParentNode.components[currentComponentIndex];
-    let oldMethod = oldComponentNode && (oldComponentNode.name.view || oldComponentNode.name);
-    let currentMethod = currentComponentNode && (currentComponentNode.name.view || currentComponentNode.name);
+    let currentVnode = v.current.component;
 
-    if (oldMethod === currentMethod && oldComponentNode.hooks && oldComponentNode.hooks[hookIndex]) {
-      currentComponentNode.hooks = oldComponentNode.hooks;
-      hook = oldComponentNode.hooks[hookIndex];
-    } else {
-      hook = {
-        state: initial,
-        setState(value) {
-          hook.state = typeof value === 'function' ? value(hook.state) : value;
-          v.update();
-        }
-      };
-      currentComponentNode.hooks.push(hook);
+    if (v.current.parentVnode.components === UND) {
+      v.current.parentVnode.components = [];
     }
 
-    return [hook.state, hook.setState];
-  };
+    if (v.current.parentVnode.components.indexOf(currentVnode) === -1) {
+      v.current.parentVnode.components.push(currentVnode);
+    }
 
-  v.useCleanup = function (callback) {
-    currentParentNode.onCleanup.push(callback);
-  };
+    let hook;
+    let oldComponentNode = v.current.oldParentVnode.components &&
+      v.current.oldParentVnode.components[v.current.parentVnode.components.length - 1];
+    let oldMethod = oldComponentNode && ('view' in oldComponentNode.name ? oldComponentNode.name.view : oldComponentNode.name);
+    let currentMethod = 'view' in currentVnode.name ? currentVnode.name.view : currentVnode.name;
 
-  v.onEvent('onUpdate', cleanupVnode);
-  v.onEvent('onVnode', vnode => {
-    vnode.hooks = vnode.isComponent || [];
-    vnode.onCleanup = [];
-    cleanupVnode(vnode);
-  });
-  v.onEvent('onLifecycle', (vnode, methodName) => methodName === 'onremove' && cleanupVnode(vnode));
-  v.onEvent('onPatch', (parentNode, oldParentNode) => {
-    currentParentNode = parentNode;
-    currentOldParentNode = oldParentNode;
-    currentComponentIndex = 0;
-  });
-  v.onEvent('onComponent', (currentComponent) => {
-    hookIndex = 0;
-    currentComponentNode = currentComponent;
-  });
-  v.onEvent('afterComponent', () => currentComponentIndex++);
+    if (currentVnode.hooks === UND) {
+      currentVnode.hooks = [];
+      hookIndex = 0;
+    }
+
+    if (oldMethod === currentMethod && 'hooks' in oldComponentNode && oldComponentNode.hooks[hookIndex] !== UND) {
+      currentVnode.hooks = oldComponentNode.hooks;
+      hook = oldComponentNode.hooks[hookIndex];
+    } else {
+      hook = createHook(initial);
+      currentVnode.hooks.push(hook);
+    }
+
+    hookIndex++;
+    return hook;
+  };
 };
 
 export default plugin;
