@@ -1,8 +1,51 @@
 let plugin = (v) => {
-  let hookIndex = 0;
   let UND;
 
-  function createHook(value) {
+  v.createHook = function ({name, init, update, response}) {
+    name = `use${name.charAt(0).toUpperCase()}${name.slice(1).toLowerCase()}`;
+    if (!v[name]) {
+      v[name] = (...args) => {
+        let currentComponent = v.current.component;
+
+        if (v.current.parentVnode.components === UND) {
+          v.current.parentVnode.components = [];
+        }
+
+        if (v.current.parentVnode.components.indexOf(currentComponent) === -1) {
+          v.current.parentVnode.components.push(currentComponent);
+        }
+
+        let hook;
+        let oldComponentNode = v.current.oldParentVnode.components &&
+          v.current.oldParentVnode.components[v.current.parentVnode.components.length - 1];
+        let oldMethod = oldComponentNode && ('view' in oldComponentNode.name ? oldComponentNode.name.view : oldComponentNode.name);
+        let currentMethod = 'view' in currentComponent.name ? currentComponent.name.view : currentComponent.name;
+
+        if (currentComponent.hooks === UND) {
+          currentComponent.hooks = [];
+        }
+        let hookIndex = currentComponent.hooks.length;
+
+        if (oldMethod === currentMethod && 'hooks' in oldComponentNode && oldComponentNode.hooks[hookIndex] !== UND) {
+          currentComponent.hooks = oldComponentNode.hooks;
+          hook = oldComponentNode.hooks[hookIndex];
+          if (update) {
+            update(hook, ...args);
+          }
+        } else {
+          hook = init(...args);
+          currentComponent.hooks.push(hook);
+        }
+
+        if (response) {
+          return response(hook);
+        }
+      };
+    }
+  };
+
+  // State hook
+  function createStateHook(value) {
     let method = function (value) {
       if (value !== UND) {
         hook.state = value;
@@ -30,40 +73,44 @@ let plugin = (v) => {
     hook(value);
     return hook;
   }
+  v.createHook({
+    name: 'state',
+    init: (initial) => createStateHook(initial),
+    response: (hook) => [hook, hook.setState]
+  });
 
-  v.useState = function (initial) {
-    let currentVnode = v.current.component;
 
-    if (v.current.parentVnode.components === UND) {
-      v.current.parentVnode.components = [];
+  // Effect hook
+  function callHook(hook, changes) {
+    let {prev} = hook;
+    if (!changes) {
+      hook.onCleanup = hook.effect();
+    } else if (changes.length > 0) {
+      for (let i = 0, l = changes.length; i < l; i++) {
+        if (changes[i] !== prev[i]) {
+          hook.prev = changes;
+          hook.onCleanup = hook.effect();
+          break;
+        }
+      }
     }
 
-    if (v.current.parentVnode.components.indexOf(currentVnode) === -1) {
-      v.current.parentVnode.components.push(currentVnode);
+    if (hook.onCleanup) {
+      v.onCleanup(hook.onCleanup);
     }
-
-    let hook;
-    let oldComponentNode = v.current.oldParentVnode.components &&
-      v.current.oldParentVnode.components[v.current.parentVnode.components.length - 1];
-    let oldMethod = oldComponentNode && ('view' in oldComponentNode.name ? oldComponentNode.name.view : oldComponentNode.name);
-    let currentMethod = 'view' in currentVnode.name ? currentVnode.name.view : currentVnode.name;
-
-    if (currentVnode.hooks === UND) {
-      currentVnode.hooks = [];
-      hookIndex = 0;
+  }
+  v.createHook({
+    name: 'effect',
+    init: (effect, changes) => {
+      let hook = {effect, prev: changes};
+      callHook(hook);
+      return hook;
+    },
+    update: (hook, effect, changes) => {
+      callHook(hook, changes);
     }
+  });
 
-    if (oldMethod === currentMethod && 'hooks' in oldComponentNode && oldComponentNode.hooks[hookIndex] !== UND) {
-      currentVnode.hooks = oldComponentNode.hooks;
-      hook = oldComponentNode.hooks[hookIndex];
-    } else {
-      hook = createHook(initial);
-      currentVnode.hooks.push(hook);
-    }
-
-    hookIndex++;
-    return hook;
-  };
 };
 
 export default plugin;
