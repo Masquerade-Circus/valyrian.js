@@ -158,7 +158,7 @@ describe('Mount and update', () => {
     let svg = '<svg enable-background="new 0 0 320.523 320.523" version="1.1" viewBox="0 0 320.523 320.523" xml:space="preserve" xmlns="http://www.w3.org/2000/svg"><path d="m254.41 225.55l-69.147-69.148 65.289-65.29-91.113-91.113v130.58l-82.726-82.726-10.607 10.606 93.333 93.333v9.222l-93.333 93.333 10.606 10.606 82.726-82.726v138.3l94.972-94.972zm-79.971-189.34l54.9 54.9-54.683 54.683-0.218-0.217 1e-3 -109.37zm0 131.01l0.218-0.217 58.541 58.542-58.759 58.759v-117.08z"></path></svg>';
     let Component = () => v.trust(svg);
     // eslint-disable-next-line max-len
-    expect(v.mount('body', Component)).toEqual('<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 320.523 320.523" version="1.1" enable-background="new 0 0 320.523 320.523"><path d="m254.41 225.55l-69.147-69.148 65.289-65.29-91.113-91.113v130.58l-82.726-82.726-10.607 10.606 93.333 93.333v9.222l-93.333 93.333 10.606 10.606 82.726-82.726v138.3l94.972-94.972zm-79.971-189.34l54.9 54.9-54.683 54.683-0.218-0.217 1e-3 -109.37zm0 131.01l0.218-0.217 58.541 58.542-58.759 58.759v-117.08z"></path></svg>');
+    expect(v.mount('body', Component)).toEqual(svg);
   });
 
   it('should fail silently if try to update before mount', () => {
