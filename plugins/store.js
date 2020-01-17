@@ -1,7 +1,7 @@
 let plugin = (v) => {
 
   function keyExists(objectname, object, key) {
-    if (!object[key]) {
+    if (key in object === false) {
       throw new Error(`The ${objectname} "${key}" does not exists.`);
     }
   };

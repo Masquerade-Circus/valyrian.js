@@ -12,15 +12,15 @@ describe('Lifecycle', () => {
         return (
           <div
             {...{
-              'v-create'(vnode) {
+              'v-create'() {
                 // After dom element is created and attached to the document
                 Lifecycle.calls.push('component oncreate');
               },
-              'v-update'(vnode) {
+              'v-update'() {
                 // after dom element is updated
                 Lifecycle.calls.push('component onupdate');
               },
-              'v-remove'(vnode) {
+              'v-remove'() {
                 // after dom element is removed
                 Lifecycle.calls.push('component onremove');
               }
@@ -29,15 +29,15 @@ describe('Lifecycle', () => {
             {Lifecycle.s > 0 ? (
               <h1
                 {...{
-                  'v-create'(vnode) {
+                  'v-create'() {
                     // After dom element is created and attached to the document
                     Lifecycle.calls.push('oncreate');
                   },
-                  'v-update'(vnode) {
+                  'v-update'() {
                     // after dom element is updated
                     Lifecycle.calls.push('onupdate');
                   },
-                  'v-remove'(vnode) {
+                  'v-remove'() {
                     // after dom element is removed
                     Lifecycle.calls.push('onremove');
                   }
@@ -57,7 +57,7 @@ describe('Lifecycle', () => {
                       elem.push(
                         <li>
                           <span
-                            v-remove={(vnode) => {
+                            v-remove={() => {
                               Lifecycle.calls.push('onspanremove');
                             }}
                           >

@@ -66,7 +66,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 if (process.env.NODE_ENV !== 'production') {
-  // inputOptions.plugins.push(terser({ warnings: 'verbose' }));
+  inputOptions.plugins.push(terser({ warnings: 'verbose' }));
 
   inputOptions.output = outputOptions;
   inputOptions.watch = {

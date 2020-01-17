@@ -20,7 +20,7 @@ describe('Directives', () => {
 
     it('should not be able overwrite a directive', () => {
       let expected = 'Hello world';
-      v.directive('v-test', (value) => result = 'Something else');
+      v.directive('v-test', () => result = 'Something else');
       v.mount('div', () => <div v-test={'world'}></div>);
       expect(result).toEqual(expected);
     });

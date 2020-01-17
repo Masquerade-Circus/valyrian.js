@@ -45,7 +45,7 @@ describe('Signals', () => {
 
     await new Promise(resolve => setTimeout(() => resolve(), 3000));
     // effect.unsubscribe();
-    counter.cleanUp();
+    counter.cleanup();
     expect(counter.hello).toEqual('hello 2');
     expect(computed()).toEqual('hello 2');
     expect(computed.value).toEqual('hello 2');
@@ -79,12 +79,12 @@ describe('Signals', () => {
     await new Promise(resolve => setTimeout(() => resolve(), 2000));
     expect(count()).toEqual(4);
     expect(count.value).toEqual(4);
-    effectInterval.cleanUp();
+    effectInterval.cleanup();
     await new Promise(resolve => setTimeout(() => resolve(), 2000));
     expect(count()).toEqual(4);
     expect(count.value).toEqual(4);
-    delay.cleanUp();
-    count.cleanUp();
+    delay.cleanup();
+    count.cleanup();
   });
 
   it('should test deep state effect cleanup', async () => {
@@ -106,7 +106,7 @@ describe('Signals', () => {
     await new Promise(resolve => setTimeout(() => resolve(), 2000));
     expect(state()).toEqual({count: 4, delay: 500});
     expect(state.value).toEqual({count: 4, delay: 500});
-    effectInterval2.cleanUp();
+    effectInterval2.cleanup();
     await new Promise(resolve => setTimeout(() => resolve(), 2000));
     expect(state()).toEqual({count: 4, delay: 500});
     expect(state.value).toEqual({count: 4, delay: 500});
@@ -142,7 +142,7 @@ describe('Hooks like pattern', () => {
         }, delay);
         return () => clearInterval(interval);
       });
-      return () => <div v-remove={interval.cleanUp}>{count.value}</div>;
+      return () => <div v-remove={interval.cleanup}>{count.value}</div>;
     };
 
     let result = v.mount('div', Counter(1000));
@@ -165,7 +165,7 @@ describe('Hooks like pattern', () => {
         }, state.value.delay);
         return () => clearInterval(interval);
       });
-      return () => <div v-remove={interval.cleanUp}>{state.value.count}</div>;
+      return () => <div v-remove={interval.cleanup}>{state.value.count}</div>;
     };
 
     let result = v.mount('div', Counter(1000));

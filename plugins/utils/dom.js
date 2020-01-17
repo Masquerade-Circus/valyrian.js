@@ -251,9 +251,7 @@ export class Element extends Node {
 
   set textContent(text) {
     this.nodeValue = String(text);
-    for (let i = 0, l = this.childNodes.length; i < l; i++) {
-      this.childNodes[i].remove();
-    }
+    this.childNodes = [];
   }
   get textContent() {
     return this.nodeValue;

@@ -1,13 +1,13 @@
 let plugin = (v) => {
   let signals = new Map();
 
-  function makeUnsubscribe(subscriptions, computed, handler, cleanUp) {
-    if (typeof cleanUp === 'function') {
-      computed.cleanUp = cleanUp;
+  function makeUnsubscribe(subscriptions, computed, handler, cleanup) {
+    if (typeof cleanup === 'function') {
+      computed.cleanup = cleanup;
     }
     computed.unsubscribe = () => {
       subscriptions.delete(handler);
-      computed.cleanUp();
+      computed.cleanup();
     };
   }
 
@@ -15,8 +15,8 @@ let plugin = (v) => {
     if (typeof nameOrHandler === 'function') {
       if (subscriptions.has(nameOrHandler) === false) {
         let computed = v.Signal(() => nameOrHandler(signal.value));
-        let cleanUp = computed(); // Execute to register itself
-        makeUnsubscribe(subscriptions, computed, nameOrHandler, cleanUp);
+        let cleanup = computed(); // Execute to register itself
+        makeUnsubscribe(subscriptions, computed, nameOrHandler, cleanup);
         subscriptions.set(nameOrHandler, computed);
       }
 
@@ -34,7 +34,7 @@ let plugin = (v) => {
   v.Signal = function (value, key) {
     if (typeof key !== 'undefined' && signals.has(key)) {
       let signal = signals.get(key);
-      signal.cleanUp();
+      signal.cleanup();
       return signal;
     }
 
@@ -70,15 +70,15 @@ let plugin = (v) => {
       }
     }, {
       set(state, prop, val) {
-        if (prop === 'value' || prop === 'unsubscribe' || prop === 'cleanUp') {
+        if (prop === 'value' || prop === 'unsubscribe' || prop === 'cleanup') {
           let old = state[prop];
           state[prop] = val;
           if (prop === 'value' && (forceUpdate || val !== old)) {
             forceUpdate = false;
             for (let [handler, computed] of subscriptions) {
-              computed.cleanUp();
-              let cleanUp = handler(val);
-              makeUnsubscribe(subscriptions, computed, handler, cleanUp);
+              computed.cleanup();
+              let cleanup = handler(val);
+              makeUnsubscribe(subscriptions, computed, handler, cleanup);
             }
           }
           return true;
@@ -89,7 +89,7 @@ let plugin = (v) => {
           return typeof state.value === 'function' ? state.value() : state.value;
         }
 
-        if (prop === 'cleanUp' || prop === 'unsubscribe' || prop === 'getter') {
+        if (prop === 'cleanup' || prop === 'unsubscribe' || prop === 'getter') {
           return state[prop];
         }
 
@@ -101,7 +101,7 @@ let plugin = (v) => {
 
     Object.defineProperties(signal, {
       value: {value, writable: true, enumerable: true},
-      cleanUp: {
+      cleanup: {
         value() {
           for (let [handler, computed] of subscriptions) {
             computed.unsubscribe();

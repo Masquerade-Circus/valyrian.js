@@ -6,8 +6,6 @@ v.usePlugin(nodePlugin);
 
 describe('Hyperscript', () => {
 
-  let und;
-
   it('should create a div element', () => {
     expect(v('div')).toEqual({
       name: 'div',

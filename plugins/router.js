@@ -227,11 +227,10 @@ let plugin = function (v) {
     let url;
 
     if (args[0]) {
-      if (!args[0].view && typeof args[0] === 'function') {
-        args[0].view = args[0];
-      }
+      let arg = args[0];
+      let viewMethod = 'view' in Object(arg) ? arg.view : arg;
 
-      if (args[0].view) {
+      if (typeof viewMethod === 'function') {
         parentComponent = args.shift();
       }
     }

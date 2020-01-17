@@ -37,7 +37,7 @@ function getNewStore() {
       length(state, getters) {
         return getters.items.length;
       },
-      items(state, getters) {
+      items(state) {
         return state.b;
       }
     }

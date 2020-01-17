@@ -46,6 +46,7 @@
     "valid-jsdoc": 2,
     "no-var": "error",
     "no-undef": 0,
+    "no-unused-vars":"warn",
     "no-multi-spaces": "error",
     "no-multiple-empty-lines": "error",
     "one-var": "off",
