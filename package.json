@@ -38,7 +38,8 @@
     "build:source": "cross-env NODE_ENV=production node rollupSource.js",
     "test": "cross-env NODE_ENV=development nyc mocha --timeout 7000 --require @babel/register --require esm \"test/**/*_test.js\"",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
-    "remark": "remark . -o"
+    "remark": "remark . -o",
+    "commit": "git-cz"
   },
   "dependencies": {
     "clean-css": "^4.2.1",
@@ -61,6 +62,7 @@
     "compression": "^1.7.4",
     "coveralls": "^3.0.9",
     "cross-env": "^6.0.3",
+    "cz-conventional-changelog": "3.0.2",
     "dayjs": "^1.8.19",
     "eslint": "^6.8.0",
     "eslint-plugin-sonarjs": "^0.5.0",
@@ -133,5 +135,10 @@
     "plugins": [
       "toc"
     ]
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
