@@ -33,7 +33,8 @@ describe('Directives', () => {
           'v-test2': true
         },
         dom: expect.any(Object),
-        children: []
+        children: [],
+        isSVG: false
       };
 
       let result;
@@ -210,7 +211,6 @@ describe('Directives', () => {
    */
   describe('v-switch', () => {
     v.directive('v-switch', (value, vnode) => {
-      let useDefault = true;
       for (let i = 0, l = vnode.children.length; i < l; i++) {
         let [test, handler] = vnode.children[i];
         let result = false;
@@ -219,14 +219,12 @@ describe('Directives', () => {
           value === test;
 
         if (result) {
-          useDefault = false;
           vnode.children = typeof handler === 'function' ? handler(value) : handler;
-          break;
+          return;
         }
       }
-      if (useDefault) {
-        vnode.children = value;
-      }
+
+      vnode.children = value;
     });
 
     let name;

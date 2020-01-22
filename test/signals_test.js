@@ -72,7 +72,7 @@ describe('Signals', () => {
       return () => clearInterval(interval);
     });
 
-    await new Promise(resolve => setTimeout(() => resolve(), 2000));
+    await new Promise(resolve => setTimeout(() => resolve(), 1000));
     expect(count()).toEqual(1);
     expect(count.value).toEqual(1);
     delay(500);

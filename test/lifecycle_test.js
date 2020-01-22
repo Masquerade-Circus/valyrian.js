@@ -4,77 +4,76 @@ import nodePlugin from '../plugins/node';
 v.usePlugin(nodePlugin);
 
 describe('Lifecycle', () => {
-  it('Mount and update with POJO component', () => {
-    let Lifecycle = {
-      s: 1,
-      calls: [],
-      view() {
-        return (
-          <div
-            {...{
-              'v-create'() {
-                // After dom element is created and attached to the document
-                Lifecycle.calls.push('component oncreate');
-              },
-              'v-update'() {
-                // after dom element is updated
-                Lifecycle.calls.push('component onupdate');
-              },
-              'v-remove'() {
-                // after dom element is removed
-                Lifecycle.calls.push('component onremove');
-              }
-            }}
-          >
-            {Lifecycle.s > 0 ? (
-              <h1
-                {...{
-                  'v-create'() {
-                    // After dom element is created and attached to the document
-                    Lifecycle.calls.push('oncreate');
-                  },
-                  'v-update'() {
-                    // after dom element is updated
-                    Lifecycle.calls.push('onupdate');
-                  },
-                  'v-remove'() {
-                    // after dom element is removed
-                    Lifecycle.calls.push('onremove');
-                  }
-                }}
-              >
-                {Lifecycle.s}
-              </h1>
-            ) : (
-              <small />
-            )}
-            <ul>
-              {(function () {
-                let elem = [];
-                if (Lifecycle.s >= 0) {
-                  for (let l = Lifecycle.s; l--;) {
-                    if (l !== 4) {
-                      elem.push(
-                        <li>
-                          <span
-                            v-remove={() => {
-                              Lifecycle.calls.push('onspanremove');
-                            }}
-                          >
-                            {l + 1}
-                          </span>
-                        </li>
-                      );
-                    }
+  it('Mount and update', () => {
+    let s = 1;
+    let calls = [];
+
+    let Lifecycle = function () {
+      return (
+        <div
+          {...{
+            'v-create'() {
+              // After dom element is created and attached to the document
+              calls.push('component oncreate');
+            },
+            'v-update'() {
+              // after dom element is updated
+              calls.push('component onupdate');
+            },
+            'v-remove'() {
+              // after dom element is removed
+              calls.push('component onremove');
+            }
+          }}
+        >
+          {s > 0 ? (
+            <h1
+              {...{
+                'v-create'() {
+                  // After dom element is created and attached to the document
+                  calls.push('oncreate');
+                },
+                'v-update'() {
+                  // after dom element is updated
+                  calls.push('onupdate');
+                },
+                'v-remove'() {
+                  // after dom element is removed
+                  calls.push('onremove');
+                }
+              }}
+            >
+              {s}
+            </h1>
+          ) : (
+            <small />
+          )}
+          <ul>
+            {(function () {
+              let elem = [];
+              if (s >= 0) {
+                for (let l = s; l--;) {
+                  if (l !== 4) {
+                    elem.push(
+                      <li>
+                        <span
+                          v-remove={() => {
+                            calls.push('onspanremove');
+                          }}
+                        >
+                          {l + 1}
+                        </span>
+                      </li>
+                    );
                   }
                 }
+              }
 
-                return elem;
-              }())}
-            </ul>
-          </div>
-        );
-      }
+              return elem;
+            }())}
+          </ul>
+        </div>
+      );
     };
     let result = [];
     let expectedDom = [
@@ -110,21 +109,21 @@ describe('Lifecycle', () => {
 
 
     result.push(v.mount('body', Lifecycle));
-    Lifecycle.s = 0;
+    s = 0;
     result.push(v.update());
-    Lifecycle.s = 1;
+    s = 1;
     result.push(v.update());
-    Lifecycle.s = 2;
+    s = 2;
     result.push(v.update());
-    Lifecycle.s = 1;
+    s = 1;
     result.push(v.update());
-    Lifecycle.s = 3;
+    s = 3;
     result.push(v.update());
-    Lifecycle.s = 0;
+    s = 0;
     result.push(v.update());
 
     expect(result).toEqual(expectedDom);
-    expect(Lifecycle.calls).toEqual(expectedLifeCycleCalls);
+    expect(calls).toEqual(expectedLifeCycleCalls);
   });
 
 });

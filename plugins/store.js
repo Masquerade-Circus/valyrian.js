@@ -71,7 +71,7 @@ let plugin = (v) => {
     };
   };
 
-  v.useStore = (store) => v.$store = store instanceof v.Store ? store : new Store(store);
+  v.useStore = (store) => v.$store = store instanceof v.Store ? store : new v.Store(store);
 };
 
 export default plugin;

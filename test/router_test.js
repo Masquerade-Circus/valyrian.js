@@ -45,7 +45,7 @@ describe('Router', () => {
       world: "World",
       id: "example",
       view() {
-        return <div id={Component.id}>Hello {Component.world}</div>;
+        return <div id={this.id}>Hello {this.world}</div>;
       }
     };
 
@@ -72,13 +72,9 @@ describe('Router', () => {
     let Component = function () {
       return <div id={this.id}>Hello {this.world}</div>;
     };
-    let state = {
-      world: "World",
-      id: "example"
-    };
 
-    // Should identify the function as a component
-    v.addState(Component, state);
+    Component.world = 'World';
+    Component.id = 'example';
 
     let result = {};
     let router = v.Router();
@@ -189,13 +185,9 @@ describe('Router', () => {
     };
 
     let router = v.Router();
-    router.get("/hello", () => v.addState(Hello, Store), () => Hello);
+    router.get("/hello", () => Object.assign(Hello, Store), () => Hello);
     router.get("/hello/:world/whats/:up", [
-      ({params}) => {
-        Store.world = params.world;
-        Store.up = params.up;
-        v.addState(Hello, Store);
-      },
+      ({params}) => Object.assign(Hello, params),
       () => Hello
     ]);
 
