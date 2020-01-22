@@ -32,7 +32,7 @@
   "scripts": {
     "dev:source": "cross-env NODE_ENV=development node rollupSource.js",
     "dev:scratchpad": "cross-env NODE_ENV=development nodemon -w ./test -w ./lib -w ./plugins -w ./scratchpad.js --exec 'mocha --timeout 7000 --slow 0 --require @babel/register --require esm \"scratchpad.js\"'",
-    "dev:test": "cross-env NODE_ENV=development nodemon -w ./test -w ./lib -w ./plugins --exec 'mocha --timeout 7000 --slow 0 --require @babel/register --require esm \"test/**/*_test.js\"'",
+    "dev:test": "cross-env NODE_ENV=development nodemon -w ./test -w ./lib -w ./plugins --exec 'mocha --bail --timeout 7000 --slow 0 --require @babel/register --require esm \"test/**/*_test.js\"'",
     "dev:test:nyc": "cross-env NODE_ENV=development nodemon -w ./test -w ./lib -w ./plugins --exec 'nyc --reporter=text --reporter=lcov mocha --timeout 7000 --slow 0 --require @babel/register --require esm \"test/**/*_test.js\"'",
     "build": "yarn build:source && yarn remark",
     "build:source": "cross-env NODE_ENV=production node rollupSource.js",

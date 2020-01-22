@@ -75,7 +75,7 @@ let plugin = (v) => {
       }
     }
 
-    if (hook.onCleanup) {
+    if (typeof hook.onCleanup === 'function') {
       v.onCleanup(hook.onCleanup);
     }
   }
@@ -86,9 +86,7 @@ let plugin = (v) => {
       callHook(hook);
       return hook;
     },
-    update: (hook, effect, changes) => {
-      callHook(hook, changes);
-    }
+    update: (hook, effect, changes) => callHook(hook, changes)
   });
 
 };
