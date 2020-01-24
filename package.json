@@ -1,6 +1,6 @@
 {
   "name": "valyrian.js",
-  "version": "3.3.3",
+  "version": "3.3.4",
   "description": "Lightweight steel to forge PWAs. (Minimal Frontend Framework with server side rendering and other capabilities)",
   "main": "lib/index.js",
   "module": "lib/index.js",
@@ -146,9 +146,9 @@
     }
   },
   "release-it": {
-    "plugins":{
+    "plugins": {
       "@release-it/conventional-changelog": {
-        "preset": "atom",
+        "preset": "angular",
         "infile": "CHANGELOG.md"
       }
     },
@@ -159,8 +159,12 @@
       "publish": true
     },
     "hooks": {
-      "before:init": ["yarn test"],
-      "after:bump": ["yarn build"]
+      "before:init": [
+        "yarn test"
+      ],
+      "after:bump": [
+        "yarn build"
+      ]
     }
   }
 }
