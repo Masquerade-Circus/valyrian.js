@@ -39,7 +39,9 @@
     "test": "cross-env NODE_ENV=development nyc mocha --timeout 7000 --require @babel/register --require esm \"test/**/*_test.js\"",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "remark": "remark . -o",
-    "commit": "git-cz"
+    "commit": "git-cz",
+    "release": "release-it --verbose",
+    "release-test": "release-it --dry-run --verbose"
   },
   "dependencies": {
     "clean-css": "^4.2.1",
@@ -55,6 +57,7 @@
     "@babel/preset-env": "^7.8.3",
     "@babel/register": "^7.8.3",
     "@istanbuljs/nyc-config-babel": "^3.0.0",
+    "@release-it/conventional-changelog": "^1.1.0",
     "@rollup/plugin-buble": "^0.21.0",
     "@rollup/plugin-json": "^4.0.1",
     "babel-eslint": "^10.0.3",
@@ -74,6 +77,7 @@
     "mocha": "^7.0.0",
     "node-dev": "^4.0.0",
     "nyc": "^15.0.0",
+    "release-it": "^12.4.3",
     "remark-cli": "^7.0.1",
     "remark-toc": "^6.0.0",
     "rollup": "^1.29.0",
@@ -139,6 +143,23 @@
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "release-it": {
+    "plugins":{
+      "@release-it/conventional-changelog": {
+        "preset": "atom",
+        "infile": "CHANGELOG.md"
+      }
+    },
+    "github": {
+      "release": true
+    },
+    "npm": {
+      "publish": true
+    },
+    "hooks": {
+      "before:init": ["yarn build", "yarn test"]
     }
   }
 }
