@@ -159,7 +159,8 @@
       "publish": true
     },
     "hooks": {
-      "before:init": ["yarn build", "yarn test"]
+      "before:init": ["yarn test"],
+      "after:bump": ["yarn build"]
     }
   }
 }
