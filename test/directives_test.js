@@ -122,20 +122,42 @@ describe('Directives', () => {
    */
   describe('v-if', () => {
 
-    it('should render vnode if true', () => {
-      let value = true;
-      let expected = '<div><span>Hello world</span></div>';
-      let result = v.mount('div', () => <div><span v-if={value}>Hello world</span></div>);
+    it('should render vnode if thruthy values', () => {
+      let values = [
+        {},
+        1,
+        true,
+        [],
+        "string",
+        new Date(),
+        -1
+      ];
 
-      expect(result).toEqual(expected);
+      let expected = '<div><span>Hello world</span></div>';
+
+      values.forEach(value => {
+        v.unmount();
+        let result = v.mount('div', () => <div><span v-if={value}>Hello world</span></div>);
+        expect(result).toEqual(expected);
+      });
     });
 
-    it('should not render vnode if false', () => {
-      let value = false;
-      let expected = '<div></div>';
-      let result = v.mount('div', () => <div><span v-if={value}>Hello world</span></div>);
+    it('should not render vnode with falsy values', () => {
+      let values = [
+        false,
+        0,
+        '',
+        null,,
+        NaN
+      ];
 
-      expect(result).toEqual(expected);
+      let expected = '<div></div>';
+
+      values.forEach(value => {
+        v.unmount();
+        let result = v.mount('div', () => <div><span v-if={value}>Hello world</span></div>);
+        expect(result).toEqual(expected);
+      });
     });
 
     it('should update oldnode', () => {
@@ -154,28 +176,50 @@ describe('Directives', () => {
   });
 
   /**
-   * Valyrian isn't template bassed so we can't handle a v-else like directive
-   * Instead  of v-else we will have a v-unless directive
+   * Valyrian isn't template based so we can't handle a v-else like directive
+   * Instead of v-else we will have a v-unless directive
    *
    * Works as embers "unless" helper
    * It renders a vnode if the referenced value is false
    */
   describe('v-unless', () => {
 
-    it('should render vnode if false', () => {
-      let value = false;
-      let expected = '<div><span>Hello world</span></div>';
-      let result = v.mount('div', () => <div><span v-unless={value}>Hello world</span></div>);
+    it('should render vnode with falsy values', () => {
+      let values = [
+        false,
+        0,
+        '',
+        null,,
+        NaN
+      ];
 
-      expect(result).toEqual(expected);
+      let expected = '<div><span>Hello world</span></div>';
+
+      values.forEach(value => {
+        v.unmount();
+        let result = v.mount('div', () => <div><span v-unless={value}>Hello world</span></div>);
+        expect(result).toEqual(expected);
+      });
     });
 
-    it('should not render vnode if true', () => {
-      let value = true;
-      let expected = '<div></div>';
-      let result = v.mount('div', () => <div><span v-unless={value}>Hello world</span></div>);
+    it('should not render vnode if thruthy values', () => {
+      let values = [
+        {},
+        1,
+        true,
+        [],
+        "string",
+        new Date(),
+        -1
+      ];
 
-      expect(result).toEqual(expected);
+      let expected = '<div></div>';
+
+      values.forEach(value => {
+        v.unmount();
+        let result = v.mount('div', () => <div><span v-unless={value}>Hello world</span></div>);
+        expect(result).toEqual(expected);
+      });
     });
 
   });

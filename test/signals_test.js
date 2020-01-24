@@ -43,7 +43,7 @@ describe('Signals', () => {
     expect(unlinked()).toEqual('hello 0');
     expect(unlinked.value).toEqual('hello 0');
 
-    await new Promise(resolve => setTimeout(() => resolve(), 3000));
+    await new Promise(resolve => setTimeout(() => resolve(), 2500));
     // effect.unsubscribe();
     counter.cleanup();
     expect(counter.hello).toEqual('hello 2');
