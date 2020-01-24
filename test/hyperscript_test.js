@@ -102,7 +102,7 @@ describe('Hyperscript', () => {
           id: 'unique',
           class: 'unique'
         },
-        children: [{dom: expect.anything()}],
+        children: ['Hola mundo'],
         dom: expect.anything()
       }
     ]);
