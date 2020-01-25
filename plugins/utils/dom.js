@@ -205,12 +205,37 @@ export class Element extends Node {
       }
     });
 
+    this.classList = {
+      toggle: (item, force) => {
+        if (item) {
+          let classes = (this.getAttribute('class') || '').split(' ');
+          let itemIndex = classes.indexOf(item);
+          if (force && itemIndex === -1) {
+            classes.push(item);
+          }
+
+          if (!force && itemIndex !== -1) {
+            classes.splice(itemIndex, 1);
+          }
+
+          let final = classes.join(' ').trim();
+          if (final.length) {
+            this.setAttribute('class', classes.join(' ').trim());
+          } else {
+            this.removeAttribute('class');
+          }
+        }
+      }
+    };
+
   }
 
   setAttribute(name, value) {
     let attr = findWhere(this.attributes, createAttributeFilter(name), false, false);
     if (!attr) {
       this.attributes.push(attr = { nodeName: name, nodeValue: value });
+    } else {
+      attr.nodeValue = value;
     }
   }
 

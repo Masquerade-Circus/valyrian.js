@@ -249,6 +249,40 @@ describe('Directives', () => {
   });
 
   /**
+   * v-class directive receives a object with boolean attributes to toggle classes on the dom
+   */
+  describe('v-class', () => {
+
+    it('should toggle on a class', () => {
+      let classes = {
+        world: true
+      };
+
+      let result = v.mount('body', () => <div v-class={classes}></div>);
+      expect(result).toEqual('<div class="world"></div>');
+
+      classes.world = false;
+      let result2 = v.update();
+      expect(result2).toEqual('<div></div>');
+
+    });
+
+    it('should toggle on a class in an element with a class attribute', () => {
+      let classes = {
+        world: true
+      };
+
+      let result = v.mount('body', () => <div class="hello" v-class={classes}></div>);
+      expect(result).toEqual('<div class="hello world"></div>');
+
+      classes.world = false;
+      let result2 = v.update();
+      expect(result2).toEqual('<div class="hello"></div>');
+
+    });
+  });
+
+  /**
    * Works as a Switch statement
    * It needs a set of arrays as children of the form [{case}, vnodes]
    * This is not added to the base library but it shows the capabilities of valyrian directives
