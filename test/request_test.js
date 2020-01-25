@@ -24,6 +24,10 @@ describe('Request', () => {
       title: 'foo',
       body: 'bar',
       userId: 1
+    }, {
+      headers: {
+        "Content-Type": "application/json; charset=UTF-8"
+      }
     });
     expect(res).toEqual({
       userId: 1,
@@ -39,6 +43,10 @@ describe('Request', () => {
       title: 'foo',
       body: 'bar',
       userId: 1
+    }, {
+      headers: {
+        "Content-Type": "application/json; charset=UTF-8"
+      }
     });
 
     expect(res).toEqual({
@@ -52,12 +60,20 @@ describe('Request', () => {
   it('should patch', async () => {
     let res = await v.request.patch('https://jsonplaceholder.typicode.com/posts/1', {
       body: 'bar'
+    }, {
+      headers: {
+        "Content-Type": "application/json; charset=UTF-8"
+      }
     });
     expect(res).toEqual({
       userId: 1,
       id: 1,
       title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
       body: 'bar'
+    }, {
+      headers: {
+        "Content-Type": "application/json; charset=UTF-8"
+      }
     });
   });
 
@@ -72,5 +88,16 @@ describe('Request', () => {
     });
     expect(res).toEqual(expect.any(Array));
     expect(res.length).toEqual(10);
+  });
+
+  it('should resolve with full response', async () => {
+    let res = await v.request.get('https://jsonplaceholder.typicode.com/posts/1', null, {resolveWithFullResponse: true});
+    expect(res).toEqual(expect.objectContaining({
+      body: expect.any(Object),
+      url: 'https://jsonplaceholder.typicode.com/posts/1',
+      status: 200,
+      statusText: 'OK',
+      headers: expect.any(Object)
+    }));
   });
 });

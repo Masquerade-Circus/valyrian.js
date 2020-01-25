@@ -5,13 +5,16 @@ let cssnano = require('cssnano');
 let CleanCSS = require('clean-css');
 let Purgecss = require('purgecss');
 let fetch = require('node-fetch');
+let FormData = require('form-data');
 
 let {Document, parseHtml} = require('./utils/dom');
 let treeAdapter = require('./utils/tree-adapter');
 let requestPlugin = require('./request').default;
 
 global.fetch = fetch;
+global.FormData = FormData;
 global.document = new Document();
+
 
 let errorHandler = (resolve, reject) => (err) => {
   if (err) {

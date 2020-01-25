@@ -26,29 +26,46 @@ let plugin = function (v) {
 
     async function request(method, url, data, options = {}) {
       let opts = Object.assign(
-          {
-            method: method.toLowerCase(),
-            headers: {
-              Accept: 'application/json',
-              'Content-Type': 'application/json'
-            }
-          },
-          request.options,
-          options
-        ),
-        type = opts.headers.Accept;
+        {
+          method: method.toLowerCase(),
+          headers: {},
+          resolveWithFullResponse: false
+        },
+        request.options,
+        options
+      );
+
+      if (!opts.headers.Accept) {
+        opts.headers.Accept = 'application/json';
+      }
+
+      let acceptType = opts.headers.Accept;
+      let contentType = opts.headers['Content-Type'] || opts.headers['content-type'] || '';
 
       if (opts.methods.indexOf(method) === -1) {
         throw new Error('Method not allowed');
       }
 
-      if (data !== undefined) {
+      if (data) {
         if (opts.method === 'get' && typeof data === 'object') {
           url += '?' + serialize(data);
         }
 
         if (opts.method !== 'get') {
-          opts.body = JSON.stringify(data);
+          if (/json/gi.test(contentType)) {
+            opts.body = JSON.stringify(data);
+          } else {
+            let formData;
+            if (data instanceof FormData) {
+              formData = data;
+            } else {
+              formData = new FormData();
+              for (let i in data) {
+                formData.append(i, data[i]);
+              }
+            }
+            opts.body = formData;
+          }
         }
       }
 
@@ -60,11 +77,15 @@ let plugin = function (v) {
         throw err;
       }
 
-      if (/text/gi.test(type)) {
-        return response.text();
+      if (opts.resolveWithFullResponse) {
+        return response;
       }
 
-      if (/json/gi.test(type)) {
+      if (/text/gi.test(acceptType)) {
+        response.text();
+      }
+
+      if (/json/gi.test(acceptType)) {
         return response.json();
       }
 
