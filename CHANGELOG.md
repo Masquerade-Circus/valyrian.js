@@ -1,3 +1,10 @@
+## [4.0.1](https://github.com/Masquerade-Circus/valyrian.js/compare/4.0.0...4.0.1) (2020-01-26)
+
+
+### Bug Fixes
+
+* **main:** fix replace error when the old node has been deleted or moved ([ba7b5c5](https://github.com/Masquerade-Circus/valyrian.js/commit/ba7b5c5d4d6b567f991bc0ac8d3ac237f44bfe8b))
+
 # [4.0.0](https://github.com/Masquerade-Circus/valyrian.js/compare/3.3.4...4.0.0) (2020-01-26)
 
 ### Bug Fixes

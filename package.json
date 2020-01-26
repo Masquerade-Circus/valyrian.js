@@ -1,6 +1,6 @@
 {
   "name": "valyrian.js",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Lightweight steel to forge PWAs. (Minimal Frontend Framework with server side rendering and other capabilities)",
   "main": "lib/index.js",
   "module": "lib/index.js",
