@@ -121,7 +121,7 @@ describe('Hooks like pattern', () => {
       let interval = setInterval(() => {
         count.value = count.value + 1;
       }, ms);
-      return () => <div v-remove={() => clearInterval(interval)}>{count.value}</div>;
+      return () => <div onremove={() => clearInterval(interval)}>{count.value}</div>;
     };
 
     let result = v.mount('div', Counter(1000));
@@ -142,7 +142,7 @@ describe('Hooks like pattern', () => {
         }, delay);
         return () => clearInterval(interval);
       });
-      return () => <div v-remove={interval.cleanup}>{count.value}</div>;
+      return () => <div onremove={interval.cleanup}>{count.value}</div>;
     };
 
     let result = v.mount('div', Counter(1000));
@@ -165,7 +165,7 @@ describe('Hooks like pattern', () => {
         }, state.value.delay);
         return () => clearInterval(interval);
       });
-      return () => <div v-remove={interval.cleanup}>{state.value.count}</div>;
+      return () => <div onremove={interval.cleanup}>{state.value.count}</div>;
     };
 
     let result = v.mount('div', Counter(1000));
