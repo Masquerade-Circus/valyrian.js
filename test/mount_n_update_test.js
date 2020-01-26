@@ -160,7 +160,7 @@ describe('Mount and update', () => {
     v.update();
   });
 
-  it('should handle text vnode as new node', async () => {
+  it('should handle text vnode as new node', () => {
     let vnode = v.trust('<span>Some text</span>');
     let component = () => vnode;
     let result = v.mount('body', component);
@@ -170,6 +170,18 @@ describe('Mount and update', () => {
     vnode.children = ['Other text'];
     let result2 = v.update();
     expect(result2).toEqual('<span>Some text</span>');
+  });
+
+  it('should handle the passing of a model with the model property', () => {
+    let model = {foo: 'bar'};
+    let onupdate = (newNode, oldNode) => expect(newNode.props.model).toEqual(oldNode.props.model);
+    let component = () => <div model={model} onupdate={onupdate}></div>;
+
+    let result = v.mount('body', component);
+    expect(result).toEqual('<div></div>');
+
+    let result2 = v.update();
+    expect(result2).toEqual('<div></div>');
   });
 
 });
