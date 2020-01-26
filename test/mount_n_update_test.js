@@ -160,4 +160,16 @@ describe('Mount and update', () => {
     v.update();
   });
 
+  it('should handle text vnode as new node', async () => {
+    let vnode = v.trust('<span>Some text</span>');
+    let component = () => vnode;
+    let result = v.mount('body', component);
+
+    expect(result).toEqual('<span>Some text</span>');
+
+    vnode.children = ['Other text'];
+    let result2 = v.update();
+    expect(result2).toEqual('<span>Some text</span>');
+  });
+
 });
