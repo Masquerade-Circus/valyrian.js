@@ -15,7 +15,8 @@ describe('Keyed lists', () => {
     {name: 'Reversed', set: [5, 4, 3, 2, 1]}, // Reversed
     {name: 'Switch positions', set: [1, 4, 3, 2, 5]}, // Switch positions,
     {name: 'Mixed positions', set: [1, 3, 2, 6, 5, 4]},
-    {name: 'Replaced with undefined', set: [1, 3, 2, , 5, 4]}
+    {name: 'Replaced with undefined', set: [1, 3, 2, , 5, 4]},
+    {name: 'Added, remove and replaced with undefined', set: [6, 7, 8, 9,, 10]}
   ];
   let beforeString = '<ul>';
   for (let key of set) {
@@ -45,5 +46,38 @@ describe('Keyed lists', () => {
       expect(before).toEqual(beforeString);
       expect(after).toEqual(afterString);
     });
+  });
+
+  it('Keyed list: Replace with undefined and update with defined', () => {
+    let keys = [1, 2, 3, 4, 5];
+    let component = () => <ul v-list>{keys.map(key => {
+      if (key) {
+        return <li key={key}>{key}</li>;
+      };
+    })}</ul>;
+
+    let before = v.mount('body', component);
+
+    keys = [6, 7, 8, 9,, 10];
+    let after = v.update();
+
+    let afterString = '<ul>';
+    for (let key of keys) {
+      afterString += key ? `<li>${key}</li>` : '';
+    }
+    afterString += '</ul>';
+
+    keys = [1, 2, 3, 4, 5];
+    let afterUpdate = v.update();
+
+    let afterUpdateString = '<ul>';
+    for (let key of set) {
+      afterUpdateString += key ? `<li>${key}</li>` : '';
+    }
+    afterUpdateString += '</ul>';
+
+    expect(before).toEqual(beforeString);
+    expect(after).toEqual(afterString);
+    expect(afterUpdate).toEqual(afterUpdateString);
   });
 });
