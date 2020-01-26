@@ -287,56 +287,76 @@ describe('Directives', () => {
    * It needs a set of arrays as children of the form [{case}, vnodes]
    * This is not added to the base library but it shows the capabilities of valyrian directives
    */
-  describe('v-switch', () => {
-    v.directive('v-switch', (value, vnode) => {
-      for (let i = 0, l = vnode.children.length; i < l; i++) {
-        let [test, handler] = vnode.children[i];
-        let result = false;
-        result = typeof test === 'function' ?
-          test(value) :
-          value === test;
+  describe('v-switch example', () => {
+    it('v-switch', () => {
+      v.directive('v-switch', (value, vnode) => {
+        for (let i = 0, l = vnode.children.length; i < l; i++) {
+          let [test, handler] = vnode.children[i];
+          let result = false;
+          result = typeof test === 'function' ?
+            test(value) :
+            value === test;
 
-        if (result) {
-          vnode.children = typeof handler === 'function' ? handler(value) : handler;
-          return;
+          if (result) {
+            vnode.children = typeof handler === 'function' ? handler(value) : handler;
+            return;
+          }
         }
-      }
 
-      vnode.children = value;
+        vnode.children = value;
+      });
+
+      let name;
+      let component = () => <div v-switch={name}>
+        {['John', <span>Hello John</span>]}
+        {[(val) => val === 'John Doe', <span>Hello John Doe</span>]}
+        {['Jane', (val) => <span>Hello {val} Doe</span>]}
+      </div>;
+
+      let expected;
+      let result;
+
+      // Direct equality
+      expected = '<div><span>Hello John</span></div>';
+      name = 'John';
+      result = v.mount('div', component);
+      expect(result).toEqual(expected);
+
+      // Comparison method
+      expected = '<div><span>Hello John Doe</span></div>';
+      name = 'John Doe';
+      result = v.mount('div', component);
+      expect(result).toEqual(expected);
+
+      // Result method
+      expected = '<div><span>Hello Jane Doe</span></div>';
+      name = 'Jane';
+      result = v.mount('div', component);
+      expect(result).toEqual(expected);
+
+      // If no case return the value as children
+      expected = '<div>Hello Anonymous</div>';
+      name = 'Hello Anonymous';
+      result = v.mount('div', component);
+      expect(result).toEqual(expected);
     });
 
-    let name;
-    let component = () => <div v-switch={name}>
-      {['John', <span>Hello John</span>]}
-      {[(val) => val === 'John Doe', <span>Hello John Doe</span>]}
-      {['Jane', (val) => <span>Hello {val} Doe</span>]}
-    </div>;
+  });
 
-    let expected;
-    let result;
+  // if the v-if directive resolve to false, we should not execute any other directive or attribute update like v-for
+  describe('use v-if with v-for', () => {
+    it('should use v-if with v-for directives', () => {
+      let arr = [1, 2, 3, 4];
+      let show = true;
+      let component = () => <div v-if={show} v-for={arr}>{i => <span>{i}</span>}</div>;
 
-    // Direct equality
-    expected = '<div><span>Hello John</span></div>';
-    name = 'John';
-    result = v.mount('div', component);
-    expect(result).toEqual(expected);
+      let result = v.mount('body', component);
+      expect(result).toEqual('<div><span>1</span><span>2</span><span>3</span><span>4</span></div>');
 
-    // Comparison method
-    expected = '<div><span>Hello John Doe</span></div>';
-    name = 'John Doe';
-    result = v.mount('div', component);
-    expect(result).toEqual(expected);
-
-    // Result method
-    expected = '<div><span>Hello Jane Doe</span></div>';
-    name = 'Jane';
-    result = v.mount('div', component);
-    expect(result).toEqual(expected);
-
-    // If no case return the value as children
-    expected = '<div>Hello Anonymous</div>';
-    name = 'Hello Anonymous';
-    result = v.mount('div', component);
-    expect(result).toEqual(expected);
+      show = false;
+      let result2 = v.update();
+      expect(result2).toEqual('');
+    });
   });
 });
+
