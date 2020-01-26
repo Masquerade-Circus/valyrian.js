@@ -73,6 +73,14 @@ function createAttributeFilter(name) {
   return o => toLower(o.nodeName) === toLower(name);
 }
 
+function isChildNode(node, child) {
+  let index = node.childNodes ? findWhere(node.childNodes, child, true, true) : -1;
+  if (index === -1) {
+    throw new Error('The node is not child of this element');
+  }
+  return true;
+}
+
 let selfClosingTags = [
   'area',
   'base',
@@ -142,19 +150,22 @@ class Node {
     return child;
   }
   replaceChild(child, ref) {
-    if (ref.parentNode === this) {
+    if (isChildNode(this, ref)) {
       this.insertBefore(child, ref);
       ref.remove();
       return ref;
     }
   }
   removeChild(child) {
-    splice(this.childNodes, child, false, true);
-    return child;
+    if (isChildNode(this, child)) {
+      child.remove();
+      return child;
+    }
   }
   remove() {
     if (this.parentNode) {
-      this.parentNode.removeChild(this);
+      splice(this.parentNode.childNodes, this, false, true);
+      this.parentNode = null;
     }
   }
 }

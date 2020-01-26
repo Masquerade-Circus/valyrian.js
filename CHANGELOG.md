@@ -1,31 +1,26 @@
 # [4.0.0](https://github.com/Masquerade-Circus/valyrian.js/compare/3.3.4...4.0.0) (2020-01-26)
 
-
 ### Bug Fixes
 
-* **main:** handle TextVnode as newVnode ([f29cec3](https://github.com/Masquerade-Circus/valyrian.js/commit/f29cec3c47310c2f4aa8719f5fd0659f52f8388d))
-* **main (directives):** fix use of v-if with v-for trigger an error ([dec8522](https://github.com/Masquerade-Circus/valyrian.js/commit/dec8522ec4328c7321d526fa77fb6bd308081541))
-* **main (keyed lists):** fix error replaced vnode with undefined node and updating with defined node ([782dbe7](https://github.com/Masquerade-Circus/valyrian.js/commit/782dbe77856965df3f18602ff4dd713ac622d949))
-
+-   **main:** handle TextVnode as newVnode ([f29cec3](https://github.com/Masquerade-Circus/valyrian.js/commit/f29cec3c47310c2f4aa8719f5fd0659f52f8388d))
+-   **main (directives):** fix use of v-if with v-for trigger an error ([dec8522](https://github.com/Masquerade-Circus/valyrian.js/commit/dec8522ec4328c7321d526fa77fb6bd308081541))
+-   **main (keyed lists):** fix error replaced vnode with undefined node and updating with defined node ([782dbe7](https://github.com/Masquerade-Circus/valyrian.js/commit/782dbe77856965df3f18602ff4dd713ac622d949))
 
 ### Features
 
-* **main:** add a reserved model property to pass data to the vnodes ([496f3ce](https://github.com/Masquerade-Circus/valyrian.js/commit/496f3ce15d84b187cdaa897d415a77138120ae55))
-
+-   **main:** add a reserved model property to pass data to the vnodes ([496f3ce](https://github.com/Masquerade-Circus/valyrian.js/commit/496f3ce15d84b187cdaa897d415a77138120ae55))
 
 ### improvement
 
-* **main:** rename lifecycle methods to write more easily in object props ([25b1eba](https://github.com/Masquerade-Circus/valyrian.js/commit/25b1eba52a34a54bcfdbf1e8304c0e7ad0de65b7))
-
+-   **main:** rename lifecycle methods to write more easily in object props ([25b1eba](https://github.com/Masquerade-Circus/valyrian.js/commit/25b1eba52a34a54bcfdbf1e8304c0e7ad0de65b7))
 
 ### Performance Improvements
 
-* **main:** increase performance for all new changes ([b4b1a0d](https://github.com/Masquerade-Circus/valyrian.js/commit/b4b1a0d440ba8d699827b5a155a2d877c69d6c47))
-
+-   **main:** increase performance for all new changes ([b4b1a0d](https://github.com/Masquerade-Circus/valyrian.js/commit/b4b1a0d440ba8d699827b5a155a2d877c69d6c47))
 
 ### BREAKING CHANGES
 
-* **main:** Lifecycle methods renamed.
+-   **main:** Lifecycle methods renamed.
 
 ## [3.3.4](https://github.com/Masquerade-Circus/valyrian.js/compare/v3.3.3...v3.3.4) (2020-01-24)
 

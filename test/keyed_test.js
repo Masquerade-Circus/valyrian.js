@@ -18,11 +18,16 @@ describe('Keyed lists', () => {
     {name: 'Replaced with undefined', set: [1, 3, 2, , 5, 4]},
     {name: 'Added, remove and replaced with undefined', set: [6, 7, 8, 9,, 10]}
   ];
-  let beforeString = '<ul>';
-  for (let key of set) {
-    beforeString += '<li>' + key + '</li>';
+
+  function getString(set) {
+    let str = '<ul>';
+    for (let key of set) {
+      str += key ? `<li>${key}</li>` : '';
+    }
+    str += '</ul>';
+    return str;
   }
-  beforeString += '</ul>';
+  let beforeString = getString(set);
 
   tests.forEach(test => {
     it('Keyed list: ' + test.name, () => {
@@ -37,11 +42,7 @@ describe('Keyed lists', () => {
       keys = [...test.set];
       let after = v.update();
 
-      let afterString = '<ul>';
-      for (let key of test.set) {
-        afterString += key ? `<li>${key}</li>` : '';
-      }
-      afterString += '</ul>';
+      let afterString = getString(test.set);
 
       expect(before).toEqual(beforeString);
       expect(after).toEqual(afterString);
@@ -61,20 +62,12 @@ describe('Keyed lists', () => {
     keys = [6, 7, 8, 9,, 10];
     let after = v.update();
 
-    let afterString = '<ul>';
-    for (let key of keys) {
-      afterString += key ? `<li>${key}</li>` : '';
-    }
-    afterString += '</ul>';
+    let afterString = getString(keys);
 
     keys = [1, 2, 3, 4, 5];
     let afterUpdate = v.update();
 
-    let afterUpdateString = '<ul>';
-    for (let key of set) {
-      afterUpdateString += key ? `<li>${key}</li>` : '';
-    }
-    afterUpdateString += '</ul>';
+    let afterUpdateString = getString(keys);
 
     expect(before).toEqual(beforeString);
     expect(after).toEqual(afterString);
