@@ -12,15 +12,23 @@ describe('Lifecycle', () => {
       return (
         <div
           {...{
-            'v-create'() {
+            oncreate() {
               // After dom element is created and attached to the document
               calls.push('component oncreate');
             },
-            'v-update'() {
+
+            onbeforeupdate() {
+              // before dom element is updated
+              // if you return false the update step is skipped
+              calls.push('component onbeforeupdate');
+            },
+
+            onupdate() {
               // after dom element is updated
               calls.push('component onupdate');
             },
-            'v-remove'() {
+
+            onremove() {
               // after dom element is removed
               calls.push('component onremove');
             }
@@ -29,15 +37,15 @@ describe('Lifecycle', () => {
           {s > 0 ? (
             <h1
               {...{
-                'v-create'() {
+                oncreate() {
                   // After dom element is created and attached to the document
                   calls.push('oncreate');
                 },
-                'v-update'() {
+                onupdate() {
                   // after dom element is updated
                   calls.push('onupdate');
                 },
-                'v-remove'() {
+                onremove() {
                   // after dom element is removed
                   calls.push('onremove');
                 }
@@ -57,7 +65,7 @@ describe('Lifecycle', () => {
                     elem.push(
                       <li>
                         <span
-                          v-remove={() => {
+                          onremove={() => {
                             calls.push('onspanremove');
                           }}
                         >
@@ -88,18 +96,24 @@ describe('Lifecycle', () => {
     let expectedLifeCycleCalls = [
       'component oncreate',
       'oncreate',
+      'component onbeforeupdate',
       'component onupdate',
       'onremove',
       'onspanremove',
+      'component onbeforeupdate',
       'component onupdate',
       'oncreate',
+      'component onbeforeupdate',
       'component onupdate',
       'onupdate',
+      'component onbeforeupdate',
       'component onupdate',
       'onupdate',
       'onspanremove',
+      'component onbeforeupdate',
       'component onupdate',
       'onupdate',
+      'component onbeforeupdate',
       'component onupdate',
       'onremove',
       'onspanremove',
