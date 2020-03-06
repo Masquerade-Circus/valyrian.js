@@ -3,7 +3,7 @@ let path = require('path');
 
 let cssnano = require('cssnano');
 let CleanCSS = require('clean-css');
-let Purgecss = require('purgecss');
+let {PurgeCSS} = require('purgecss');
 let fetch = require('node-fetch');
 let FormData = require('form-data');
 
@@ -109,12 +109,12 @@ inline.uncss = (function () {
       };
     });
 
-    let purgecss = new Purgecss({
+    let purgecss = new PurgeCSS();
+    let output = await purgecss.purge({
       content: contents,
       css: [{raw: opt.raw}],
       ...opt.purgecssOptions
     });
-    let output = purgecss.purge();
 
     prop = output[0].css;
     if (!opt.minify) {

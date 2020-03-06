@@ -1,6 +1,6 @@
 let rollup = require('rollup');
-let commonjs = require('rollup-plugin-commonjs');
-let nodeResolve = require('rollup-plugin-node-resolve');
+let commonjs = require('@rollup/plugin-commonjs');
+let nodeResolve = require('@rollup/plugin-node-resolve');
 let includepaths = require('rollup-plugin-includepaths');
 let filesize = require('rollup-plugin-filesize');
 let progress = require('rollup-plugin-progress');
@@ -8,7 +8,6 @@ let { string } = require('rollup-plugin-string');
 let sourcemaps = require('rollup-plugin-sourcemaps');
 let { terser } = require('rollup-plugin-terser');
 let {sizeSnapshot } = require('rollup-plugin-size-snapshot');
-let babel = require('rollup-plugin-babel');
 let buble = require('@rollup/plugin-buble');
 
 const argv = require('yargs').argv;

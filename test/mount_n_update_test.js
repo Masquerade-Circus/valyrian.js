@@ -143,7 +143,7 @@ describe('Mount and update', () => {
     let date = new Date();
 
     let Component = () => v('div', null, [null, 'Hello', , 1, date, { hello: 'world' }, ['Hello']]);
-    expect(v.mount('body', Component)).toEqual(`<div>nullHelloundefined1${date}[object Object]Hello</div>`);
+    expect(v.mount('body', Component)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
   });
 
 

@@ -32,7 +32,7 @@ describe('Keyed lists', () => {
   tests.forEach(test => {
     it('Keyed list: ' + test.name, () => {
       let keys = [...set];
-      let component = () => <ul v-list>{keys.map(key => {
+      let component = () => <ul>{keys.map(key => {
         if (key) {
           return <li key={key}>{key}</li>;
         };
@@ -51,7 +51,7 @@ describe('Keyed lists', () => {
 
   it('Keyed list: Replace with undefined and update with defined', () => {
     let keys = [1, 2, 3, 4, 5];
-    let component = () => <ul v-list>{keys.map(key => {
+    let component = () => <ul>{keys.map(key => {
       if (key) {
         return <li key={key}>{key}</li>;
       };
