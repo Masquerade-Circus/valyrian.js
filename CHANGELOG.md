@@ -1,3 +1,10 @@
+# [4.1.0](https://github.com/Masquerade-Circus/valyrian.js/compare/4.0.2...4.1.0) (2020-03-20)
+
+
+### Features
+
+* **main lib:** add newInstance method to allow to handle multiple mounts ([d09a2a6](https://github.com/Masquerade-Circus/valyrian.js/commit/d09a2a6ae35926d4010830f46da583d784ddcbc2))
+
 ## [4.0.2](https://github.com/Masquerade-Circus/valyrian.js/compare/4.0.1...4.0.2) (2020-03-06)
 
 ## [4.0.1](https://github.com/Masquerade-Circus/valyrian.js/compare/4.0.0...4.0.1) (2020-01-26)

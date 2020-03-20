@@ -1,6 +1,6 @@
 {
   "name": "valyrian.js",
-  "version": "4.0.2",
+  "version": "4.1.0",
   "description": "Lightweight steel to forge PWAs. (Minimal Frontend Framework with server side rendering and other capabilities)",
   "main": "lib/index.js",
   "module": "lib/index.js",
@@ -150,6 +150,9 @@
         "preset": "angular",
         "infile": "CHANGELOG.md"
       }
+    },
+    "git": {
+      "requireCleanWorkingDir": false
     },
     "github": {
       "release": true
