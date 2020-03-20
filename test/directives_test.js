@@ -136,7 +136,7 @@ describe('Directives', () => {
       let expected = '<div><span>Hello world</span></div>';
 
       values.forEach(value => {
-        v.unmount();
+        v.unMount();
         let result = v.mount('div', () => <div><span v-if={value}>Hello world</span></div>);
         expect(result).toEqual(expected);
       });
@@ -154,7 +154,7 @@ describe('Directives', () => {
       let expected = '<div></div>';
 
       values.forEach(value => {
-        v.unmount();
+        v.unMount();
         let result = v.mount('div', () => <div><span v-if={value}>Hello world</span></div>);
         expect(result).toEqual(expected);
       });
@@ -196,7 +196,7 @@ describe('Directives', () => {
       let expected = '<div><span>Hello world</span></div>';
 
       values.forEach(value => {
-        v.unmount();
+        v.unMount();
         let result = v.mount('div', () => <div><span v-unless={value}>Hello world</span></div>);
         expect(result).toEqual(expected);
       });
@@ -216,7 +216,7 @@ describe('Directives', () => {
       let expected = '<div></div>';
 
       values.forEach(value => {
-        v.unmount();
+        v.unMount();
         let result = v.mount('div', () => <div><span v-unless={value}>Hello world</span></div>);
         expect(result).toEqual(expected);
       });

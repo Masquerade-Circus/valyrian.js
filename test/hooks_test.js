@@ -9,7 +9,7 @@ describe('Hooks', () => {
 
   describe('State hook', () => {
     it('should handle a component state', async () => {
-      v.unmount();
+      v.unMount();
 
       let Counter = () => {
         let [count, setCount] = v.useState(0);
@@ -23,11 +23,11 @@ describe('Hooks', () => {
       await new Promise(resolve => setTimeout(() => resolve(), 2050));
       result = v.update();
       expect(result).toEqual('<div>2</div>');
-      result = v.unmount();
+      result = v.unMount();
     });
 
     it('should handle subcomponents state and cleanup', async () => {
-      v.unmount();
+      v.unMount();
 
       let Ok = () => {
         let [ok, setOk] = v.useState('ok');
@@ -49,11 +49,11 @@ describe('Hooks', () => {
       await new Promise(resolve => setTimeout(() => resolve(), 2050));
       result = v.update();
       expect(result).toEqual('<div>2 <div>not ok</div></div>');
-      result = v.unmount();
+      result = v.unMount();
     });
 
     it('array getter-setter based state', async () => {
-      v.unmount();
+      v.unMount();
 
       let Counter = () => {
         let [count, setCount] = v.useState(0);
@@ -67,7 +67,7 @@ describe('Hooks', () => {
       await new Promise(resolve => setTimeout(() => resolve(), 2050));
       result = v.update();
       expect(result).toEqual('<div>2</div>');
-      result = v.unmount();
+      result = v.unMount();
     });
   });
 
@@ -157,7 +157,7 @@ describe('Hooks', () => {
       expect(response).toEqual('<div>5</div>');
     });
 
-    it('should handle cleanup on unmount', () => {
+    it('should handle cleanup on unMount', () => {
       let count = 0;
       let Component = function () {
         v.useEffect(() => {
@@ -175,7 +175,7 @@ describe('Hooks', () => {
       expect(response).toEqual('<div>0</div>');
       expect(count).toEqual(0);
 
-      response = v.unmount();
+      response = v.unMount();
       expect(response).toEqual('');
       expect(count).toEqual(-2);
 

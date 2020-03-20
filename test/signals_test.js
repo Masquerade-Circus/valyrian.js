@@ -129,7 +129,7 @@ describe('Hooks like pattern', () => {
     await new Promise(resolve => setTimeout(() => resolve(), 2050));
     result = v.update();
     expect(result).toEqual('<div>2</div>');
-    v.unmount();
+    v.unMount();
   });
 
   it('should create a counter with delay change', async () => {
@@ -150,7 +150,7 @@ describe('Hooks like pattern', () => {
     await new Promise(resolve => setTimeout(() => resolve(), 2050));
     result = v.update();
     expect(result).toEqual('<div>2</div>');
-    v.unmount();
+    v.unMount();
   });
 
   it('should create a counter with deep state', async () => {
@@ -173,6 +173,6 @@ describe('Hooks like pattern', () => {
     await new Promise(resolve => setTimeout(() => resolve(), 2050));
     result = v.update();
     expect(result).toEqual('<div>2</div>');
-    v.unmount();
+    v.unMount();
   });
 });

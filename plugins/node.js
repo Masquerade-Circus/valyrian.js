@@ -204,7 +204,7 @@ function parseDom(childNodes, depth = 1) {
 }
 
 
-function html2Hyper(html) {
+function htmlToHyperscript(html) {
   return '[' + parseDom(parseHtml(html, {treeAdapter: treeAdapter})) + '\n]';
 }
 
@@ -250,7 +250,7 @@ function icons(source, configuration = {}) {
 
     if (options.linksViewPath) {
       let html = 'export default function(){ \n    return ';
-      html += html2Hyper(response.html.join(''));
+      html += htmlToHyperscript(response.html.join(''));
       html += ';\n    \n};';
 
       promises.push(
@@ -318,7 +318,7 @@ let plugin = function (v) {
   v.inline = inline;
   v.sw = sw;
   v.icons = icons;
-  v.html2Hyper = html2Hyper;
+  v.htmlToHyperscript = htmlToHyperscript;
 };
 
 module.exports = plugin;

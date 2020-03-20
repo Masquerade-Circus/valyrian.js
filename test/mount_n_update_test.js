@@ -156,7 +156,7 @@ describe('Mount and update', () => {
   });
 
   it('should fail silently if try to update before mount', () => {
-    v.unmount();
+    v.unMount();
     v.update();
   });
 
@@ -182,6 +182,36 @@ describe('Mount and update', () => {
 
     let result2 = v.update();
     expect(result2).toEqual('<div></div>');
+  });
+
+  it('should create another v instance using the v.newInstance method', () => {
+    // We create a new instance
+    let v2 = v.newInstance();
+
+    let count = 0;
+    let component = () => `Hello world ${count}`;
+
+    // Get the first render
+    let result1 = v.mount('body', component);
+    let result2 = v2.mount('body', component);
+
+    // Bot updates must be equal
+    expect(result1).toEqual('Hello world 0');
+    expect(result2).toEqual('Hello world 0');
+
+    // We increment the counter and unMount the first instance
+    count++;
+    v.unMount();
+
+    // Get the second render
+    let result3 = v.update();
+    let result4 = v2.update();
+
+    // For the first instance should be '' because component has been unMounted;
+    expect(result3).toEqual('');
+
+    // For the second instance should be 'Hello world 1' because it is still mounted
+    expect(result4).toEqual('Hello world 1');
   });
 
 });

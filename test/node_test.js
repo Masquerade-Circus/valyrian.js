@@ -11,7 +11,7 @@ describe('Node test', () => {
   it('Get hyperscript string from html', () => {
     let html = '<body><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</body>';
 
-    let dom = v.html2Hyper(html);
+    let dom = v.htmlToHyperscript(html);
 
     expect(dom).toEqual(`[
   v("body", {}, [
