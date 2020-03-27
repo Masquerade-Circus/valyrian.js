@@ -398,10 +398,10 @@ describe('Directives', () => {
   });
 
   /**
-   * The v-pre directive is used to direct raw html render to increase performance
+   * The v-html directive is used to direct raw html render to increase performance
    * We can use this directive to replace the v.trust use like in this test
    */
-  describe('v-pre', () => {
+  describe('v-html', () => {
     it('should handle direct html render', () => {
       // Using v.trust example
       let Component = () => <div>{v.trust('<div>Hello world</div>')}</div>;
@@ -412,8 +412,8 @@ describe('Directives', () => {
       // Unmount to clean the instance
       v.unMount();
 
-      // Using v-pre directive
-      let Component2 = () => <div v-pre="<div>Hello world</div>"></div>;
+      // Using v-html directive
+      let Component2 = () => <div v-html="<div>Hello world</div>"></div>;
       let result2 = v.mount('body', Component2);
 
       expect(result2).toEqual('<div><div>Hello world</div></div>');
