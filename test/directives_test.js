@@ -360,8 +360,8 @@ describe('Directives', () => {
   });
 
   /**
-   * This directive is used just to pass data without creating an attribute on the node.
-   * This could be used in the lifecycle to validate properties or changes
+   * The data directive is used just to pass data without creating an attribute on the node.
+   * And its main use is in the lifecycle methods to validate properties or changes
    */
   describe('data', () => {
     it('should not render an attribute', () => {
@@ -375,6 +375,26 @@ describe('Directives', () => {
       expect(result).toEqual('<div></div>');
     });
 
+  });
+
+  /**
+   * The directive v-once is used to render just once and skip all subsequent render updates
+   * Similar to write the lifecycle onbeforeupdate={() => false}
+   */
+  describe('v-once', () => {
+    it('should not update the dom after first render', () => {
+      let Store = {hello: 'world'};
+      let Component = () => <div v-once>Hello {Store.hello}</div>;
+
+      let result = v.mount('body', Component);
+      expect(result).toEqual('<div>Hello world</div>');
+
+      // We update our store
+      Store.hello = 'John Doe';
+
+      let result2 = v.update();
+      expect(result2).toEqual('<div>Hello world</div>');
+    });
   });
 });
 
