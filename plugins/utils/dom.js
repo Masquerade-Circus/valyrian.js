@@ -287,7 +287,7 @@ export class Element extends Node {
 
   set textContent(text) {
     this.nodeValue = String(text);
-    this.childNodes = [];
+    this.childNodes = this.nodeValue.trim().length ? [new Text(this.nodeValue)] : [];
   }
   get textContent() {
     return this.nodeValue;

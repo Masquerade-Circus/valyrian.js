@@ -419,5 +419,16 @@ describe('Directives', () => {
       expect(result2).toEqual('<div><div>Hello world</div></div>');
     });
   });
+
+  /**
+   * The v-text is used to update the textContent of the element to increase performance
+   */
+  describe('v-text', () => {
+    it('should handle direct text render', () => {
+      let Component = () => <div v-text="Hello world"></div>;
+      let result = v.mount('body', Component);
+      expect(result).toEqual('<div>Hello world</div>');
+    });
+  });
 });
 
