@@ -172,10 +172,10 @@ describe('Mount and update', () => {
     expect(result2).toEqual('<span>Some text</span>');
   });
 
-  it('should handle the passing of a model with the model property', () => {
-    let model = {foo: 'bar'};
-    let onupdate = (newNode, oldNode) => expect(newNode.props.model).toEqual(oldNode.props.model);
-    let component = () => <div model={model} onupdate={onupdate}></div>;
+  it('should handle the passing of data with the data property', () => {
+    let data = {foo: 'bar'};
+    let onupdate = (newNode, oldNode) => expect(newNode.props.data).toEqual(oldNode.props.data);
+    let component = () => <div data={data} onupdate={onupdate}></div>;
 
     let result = v.mount('body', component);
     expect(result).toEqual('<div></div>');
