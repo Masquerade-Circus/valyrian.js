@@ -1,9 +1,16 @@
-# [4.1.0](https://github.com/Masquerade-Circus/valyrian.js/compare/4.0.2...4.1.0) (2020-03-20)
+# [4.2.0](https://github.com/Masquerade-Circus/valyrian.js/compare/4.1.0...4.2.0) (2020-03-27)
 
 
 ### Features
 
-* **main lib:** add newInstance method to allow to handle multiple mounts ([d09a2a6](https://github.com/Masquerade-Circus/valyrian.js/commit/d09a2a6ae35926d4010830f46da583d784ddcbc2))
+* **directives:** add v-pre directive to direct raw html render ([dc16e92](https://github.com/Masquerade-Circus/valyrian.js/commit/dc16e922bcefa1f84921b8f3cf6c07fe067d31e3))
+* **directives:** add v-text directive ([b6523ae](https://github.com/Masquerade-Circus/valyrian.js/commit/b6523ae211a3a1ee55ca82999645a19066418a67))
+
+# [4.1.0](https://github.com/Masquerade-Circus/valyrian.js/compare/4.0.2...4.1.0) (2020-03-20)
+
+### Features
+
+-   **main lib:** add newInstance method to allow to handle multiple mounts ([d09a2a6](https://github.com/Masquerade-Circus/valyrian.js/commit/d09a2a6ae35926d4010830f46da583d784ddcbc2))
 
 ## [4.0.2](https://github.com/Masquerade-Circus/valyrian.js/compare/4.0.1...4.0.2) (2020-03-06)
 
