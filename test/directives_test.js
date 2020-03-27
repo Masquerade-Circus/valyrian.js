@@ -358,5 +358,23 @@ describe('Directives', () => {
       expect(result2).toEqual('');
     });
   });
+
+  /**
+   * This directive is used just to pass data without creating an attribute on the node.
+   * This could be used in the lifecycle to validate properties or changes
+   */
+  describe('data', () => {
+    it('should not render an attribute', () => {
+      let data = {hello: 'world'};
+      let Component = () => <div
+        data={data}
+        onbeforeupdate={(oldVnode, newVnode) => oldVnode.props.data.hello !== newVnode.props.data.hello}
+      ></div>;
+
+      let result = v.mount('body', Component);
+      expect(result).toEqual('<div></div>');
+    });
+
+  });
 });
 
