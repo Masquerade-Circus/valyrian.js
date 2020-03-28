@@ -398,30 +398,6 @@ describe('Directives', () => {
   });
 
   /**
-   * The v-skip directive is used to prevent the patch of children vnodes but allow the patch of dom attributes
-   * Its main use will be along with other custom directives to prevent the children patch step
-   */
-  describe('v-skip', () => {
-    it('should prevent child patching step', () => {
-      let Store = {
-        id: 'example',
-        children: 'Hello world'
-      };
-
-      let Component = () => <div v-skip id={Store.id}>{Store.children}</div>;
-      let result = v.mount('body', Component);
-      expect(result).toEqual('<div id="example"></div>');
-
-      Store.id = 'example-updated';
-      Store.children = 'Hello John Doe';
-
-      let result2 = v.update();
-
-      expect(result2).toEqual('<div id="example-updated"></div>');
-    });
-  });
-
-  /**
    * The v-html directive is used to direct raw html render to increase performance
    * We can use this directive to replace the v.trust use like in this test
    */
@@ -441,17 +417,6 @@ describe('Directives', () => {
       let result2 = v.mount('body', Component2);
 
       expect(result2).toEqual('<div><div>Hello world</div></div>');
-    });
-  });
-
-  /**
-   * The v-text is used to update the textContent of the element to increase performance
-   */
-  describe('v-text', () => {
-    it('should handle direct text render', () => {
-      let Component = () => <div v-text="Hello world"></div>;
-      let result = v.mount('body', Component);
-      expect(result).toEqual('<div>Hello world</div>');
     });
   });
 
