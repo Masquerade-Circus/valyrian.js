@@ -1,9 +1,10 @@
-## [4.2.1](https://github.com/Masquerade-Circus/valyrian.js/compare/4.2.0...4.2.1) (2020-03-28)
+## [4.2.2](https://github.com/Masquerade-Circus/valyrian.js/compare/4.2.1...4.2.2) (2020-04-04)
 
+## [4.2.1](https://github.com/Masquerade-Circus/valyrian.js/compare/4.2.0...4.2.1) (2020-03-28)
 
 ### Bug Fixes
 
-* **main:** fix keyed lists not updating children ([56296fc](https://github.com/Masquerade-Circus/valyrian.js/commit/56296fc1365d2c96390f740af0c8942937e6f3e2))
+-   **main:** fix keyed lists not updating children ([56296fc](https://github.com/Masquerade-Circus/valyrian.js/commit/56296fc1365d2c96390f740af0c8942937e6f3e2))
 
 # [4.2.0](https://github.com/Masquerade-Circus/valyrian.js/compare/4.1.0...4.2.0) (2020-03-27)
 
