@@ -256,7 +256,7 @@ let plugin = function (v) {
     return routes;
   };
 
-  v.directive('v-route', (url, vnode, oldnode) => {
+  v.directive('route', (url, vnode, oldnode) => {
     vnode.props.href = url;
     vnode.props.onclick = (e) => {
       if (typeof url === 'string' && url.length > 0) {

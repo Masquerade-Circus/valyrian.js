@@ -53,10 +53,10 @@
     "purgecss": "2.1.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.8.7",
-    "@babel/plugin-transform-react-jsx": "^7.8.3",
-    "@babel/preset-env": "^7.8.7",
-    "@babel/register": "^7.8.6",
+    "@babel/core": "^7.9.0",
+    "@babel/plugin-transform-react-jsx": "^7.9.4",
+    "@babel/preset-env": "^7.9.0",
+    "@babel/register": "^7.9.0",
     "@istanbuljs/nyc-config-babel": "^3.0.0",
     "@release-it/conventional-changelog": "^1.1.0",
     "@rollup/plugin-buble": "^0.21.1",
@@ -72,17 +72,17 @@
     "eslint": "^6.8.0",
     "eslint-plugin-sonarjs": "^0.5.0",
     "esm": "^3.2.25",
-    "expect": "^25.1.0",
+    "expect": "^25.2.7",
     "faker": "^4.1.0",
     "micro": "^9.3.4",
     "micro-ex-router": "^1.7.2",
     "mocha": "^7.1.1",
     "node-dev": "^4.0.0",
-    "nyc": "^15.0.0",
-    "release-it": "^13.1.1",
-    "remark-cli": "^7.0.1",
+    "nyc": "^15.0.1",
+    "release-it": "^13.5.1",
+    "remark-cli": "^8.0.0",
     "remark-toc": "^7.0.0",
-    "rollup": "^2.1.0",
+    "rollup": "^2.3.2",
     "rollup-plugin-async": "^1.2.0",
     "rollup-plugin-filesize": "^6.2.1",
     "rollup-plugin-includepaths": "^0.2.3",
@@ -147,8 +147,22 @@
   "release-it": {
     "plugins": {
       "@release-it/conventional-changelog": {
-        "preset": "angular",
-        "infile": "CHANGELOG.md"
+        "preset": "conventionalcommits",
+        "infile": "CHANGELOG.md",
+        "types": [
+          { "type": "feat","section": "Features" },
+          { "type": "feature","section": "Features" },
+          { "type": "fix","section": "Bug Fixes" },
+          { "type": "perf","section": "Performance Improvements" },
+          { "type": "revert","section": "Reverts" },
+          { "type": "docs","section": "Documentation","hidden": false },
+          { "type": "style","section": "Styles","hidden": false },
+          { "type": "chore","section": "Miscellaneous Chores","hidden": false },
+          { "type": "refactor","section": "Code Refactoring","hidden": false },
+          { "type": "test","section": "Tests","hidden": false },
+          { "type": "build","section": "Build System","hidden": false },
+          { "type": "ci","section": "Continuous Integration","hidden": false }
+      ]
       }
     },
     "git": {
@@ -166,6 +180,9 @@
       ],
       "after:bump": [
         "yarn build"
+      ],
+      "after:@release-it/conventional-changelog": [
+        "yarn remark"
       ]
     }
   }
