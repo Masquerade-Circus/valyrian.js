@@ -1,6 +1,6 @@
 {
   "name": "valyrian.js",
-  "version": "4.2.2",
+  "version": "4.2.3",
   "description": "Lightweight steel to forge PWAs. (Minimal Frontend Framework with server side rendering and other capabilities)",
   "main": "lib/index.js",
   "module": "lib/index.js",
@@ -147,22 +147,8 @@
   "release-it": {
     "plugins": {
       "@release-it/conventional-changelog": {
-        "preset": "conventionalcommits",
         "infile": "CHANGELOG.md",
-        "types": [
-          { "type": "feat","section": "Features" },
-          { "type": "feature","section": "Features" },
-          { "type": "fix","section": "Bug Fixes" },
-          { "type": "perf","section": "Performance Improvements" },
-          { "type": "revert","section": "Reverts" },
-          { "type": "docs","section": "Documentation","hidden": false },
-          { "type": "style","section": "Styles","hidden": false },
-          { "type": "chore","section": "Miscellaneous Chores","hidden": false },
-          { "type": "refactor","section": "Code Refactoring","hidden": false },
-          { "type": "test","section": "Tests","hidden": false },
-          { "type": "build","section": "Build System","hidden": false },
-          { "type": "ci","section": "Continuous Integration","hidden": false }
-      ]
+        "preset": "conventionalcommits"
       }
     },
     "git": {
