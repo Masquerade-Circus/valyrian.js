@@ -256,7 +256,7 @@ let plugin = function (v) {
     return routes;
   };
 
-  v.directive('v-route', (url, vnode, oldnode, isSVG) => {
+  v.directive('v-route', (url, vnode, oldnode) => {
     vnode.props.href = url;
     vnode.props.onclick = (e) => {
       if (typeof url === 'string' && url.length > 0) {
@@ -274,8 +274,8 @@ let plugin = function (v) {
       e.preventDefault();
     };
 
-    v.updateProperty('href', vnode, oldnode, isSVG);
-    v.updateProperty('onclick', vnode, oldnode, isSVG);
+    v.updateProperty('href', vnode, oldnode);
+    v.updateProperty('onclick', vnode, oldnode);
   });
 
 };
