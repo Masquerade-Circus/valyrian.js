@@ -1,9 +1,15 @@
-## [4.3.0](https://github.com/Masquerade-Circus/valyrian.js/compare/4.2.3...4.3.0) (2020-04-06)
+### [4.3.1](https://github.com/Masquerade-Circus/valyrian.js/compare/4.3.0...4.3.1) (2020-04-10)
 
+
+### Code Refactoring
+
+* **directives:** identify create or update event on directives by undefined oldvnode ([594960f](https://github.com/Masquerade-Circus/valyrian.js/commit/594960f0226d494d61a7917b37ff038f94370f06))
+
+## [4.3.0](https://github.com/Masquerade-Circus/valyrian.js/compare/4.2.3...4.3.0) (2020-04-06)
 
 ### Features
 
-* **directives:** add v-model directive as plugin ([9f26926](https://github.com/Masquerade-Circus/valyrian.js/commit/9f269264ddcfba238571daefd5c2a08ed75f7fca))
+-   **directives:** add v-model directive as plugin ([9f26926](https://github.com/Masquerade-Circus/valyrian.js/commit/9f269264ddcfba238571daefd5c2a08ed75f7fca))
 
 ### [4.2.3](https://github.com/Masquerade-Circus/valyrian.js/compare/4.2.2...4.2.3) (2020-04-04)
 
