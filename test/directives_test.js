@@ -5,6 +5,7 @@ import '../lib';
 import nodePlugin from '../plugins/node';
 v.usePlugin(nodePlugin);
 
+// eslint-disable-next-line max-lines-per-function
 describe('Directives', () => {
 
   describe('Directive creation', () => {
@@ -56,6 +57,23 @@ describe('Directives', () => {
         children: [],
         isSVG: false
       });
+    });
+
+    it('should be able to identify if this is first render or update', () => {
+      v.directive('create', (placeholder, vnode, oldvnode) => {
+        if (!oldvnode) {
+          vnode.children = ['First render, vnode created'];
+        } else {
+          vnode.children = ['Second render, vnode updated'];
+        }
+      });
+      let component = () => <div v-create></div>;
+
+      let result = v.mount('body', component);
+      expect(result).toEqual('<div>First render, vnode created</div>');
+
+      let result2 = v.update();
+      expect(result2).toEqual('<div>Second render, vnode updated</div>');
     });
 
     it('should be able to modify the children of a vnode', () => {
