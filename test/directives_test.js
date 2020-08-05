@@ -402,12 +402,13 @@ describe('Directives', () => {
     });
 
     /**
-     * The v-html directive is used to direct raw html render to increase performance
+     * The v-html directive is used to direct raw html render. It is just a helper directive
+     * and it does not improve performance because Valyrian.js is already very fast with vnodes.
      * We can use this directive to replace the v.trust use like in this test
      */
     describe('v-html', () => {
       it('should handle direct html render', () => {
-      // Using v.trust example
+        // Using v.trust example
         let Component = () => <div>{v.trust('<div>Hello world</div>')}</div>;
         let result = v.mount('body', Component);
 

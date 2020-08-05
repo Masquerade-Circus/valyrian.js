@@ -1,6 +1,6 @@
 let rollup = require('rollup');
 let commonjs = require('@rollup/plugin-commonjs');
-let nodeResolve = require('@rollup/plugin-node-resolve');
+let {nodeResolve} = require('@rollup/plugin-node-resolve');
 let includepaths = require('rollup-plugin-includepaths');
 let filesize = require('rollup-plugin-filesize');
 let progress = require('rollup-plugin-progress');
@@ -53,7 +53,6 @@ if (process.env.NODE_ENV === 'production') {
   outputOptions.sourcemap = false;
   inputOptions.plugins.push(terser({
     warnings: 'verbose',
-    sourcemap: false,
     output: {
       ecma: 6
     }
@@ -61,7 +60,8 @@ if (process.env.NODE_ENV === 'production') {
   rollup
     .rollup(inputOptions)
     .then((bundle) => bundle.write(outputOptions))
-    .then(() => console.log('Bundle finished.'));
+    .then(() => console.log('Bundle finished.'))
+    .catch(console.log);
 }
 
 if (process.env.NODE_ENV !== 'production') {

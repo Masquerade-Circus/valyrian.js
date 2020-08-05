@@ -1,9 +1,8 @@
 ### [4.3.1](https://github.com/Masquerade-Circus/valyrian.js/compare/4.3.0...4.3.1) (2020-04-10)
 
-
 ### Code Refactoring
 
-* **directives:** identify create or update event on directives by undefined oldvnode ([594960f](https://github.com/Masquerade-Circus/valyrian.js/commit/594960f0226d494d61a7917b37ff038f94370f06))
+-   **directives:** identify create or update event on directives by undefined oldvnode ([594960f](https://github.com/Masquerade-Circus/valyrian.js/commit/594960f0226d494d61a7917b37ff038f94370f06))
 
 ## [4.3.0](https://github.com/Masquerade-Circus/valyrian.js/compare/4.2.3...4.3.0) (2020-04-06)
 

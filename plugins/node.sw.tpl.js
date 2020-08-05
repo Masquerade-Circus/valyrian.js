@@ -17,7 +17,8 @@ let fetchedFromNetwork = (event) => (response) => {
   caches
     .open(config.version + config.name)
     .then((cache) => cache.put(event.request, cacheCopy))
-    .then(() => Log('WORKER: fetch response stored in cache.', event.request.url));
+    .then(() => Log('WORKER: fetch response stored in cache.', event.request.url))
+    .catch((err) => Log('WORKER: fetch response could not be stored in cache.', err));
   return response;
 };
 
@@ -37,17 +38,15 @@ let unableToResolve = () => {
 self.addEventListener('fetch', (event) => {
   Log('WORKER: fetch event in progress.', event.request.url);
 
-  let url = new URL(event.request.url);
-
   // We only handle Get requests all others let them pass
   if (event.request.method !== 'GET') {
     return;
   }
 
-  // TODO: Make a callback available here to filter if this request must be catched or let it pass directly
+  // TODO: Make a callback available here to filter if this request must be cached or let it pass directly
   // This callback must return true or false
 
-  Log('WORKER: fetchevent for ' + url);
+  Log('WORKER: fetchevent for ' + event.request.url);
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
@@ -67,12 +66,9 @@ self.addEventListener('fetch', (event) => {
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    // We can't use cache.add() here, since we want OFFLINE_URL to be the cache key, but
-    // the actual URL we end up requesting might include a cache-busting parameter.
     caches
       .open(config.version + config.name)
       .then((cache) => cache.addAll(config.urls))
-      .catch((error) => console.error('WORKER: Failed to cache', error))
   );
 });
 
