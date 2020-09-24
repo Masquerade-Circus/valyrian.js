@@ -1,9 +1,8 @@
 ### [4.3.2](https://github.com/Masquerade-Circus/valyrian.js/compare/4.3.1...4.3.2) (2020-08-05)
 
-
 ### Bug Fixes
 
-* **lib:** upgrade dependencies ([cc87ccd](https://github.com/Masquerade-Circus/valyrian.js/commit/cc87ccd218f9850de8c4f9f7b9599931d1ce451b))
+-   **lib:** upgrade dependencies ([cc87ccd](https://github.com/Masquerade-Circus/valyrian.js/commit/cc87ccd218f9850de8c4f9f7b9599931d1ce451b))
 
 ### [4.3.1](https://github.com/Masquerade-Circus/valyrian.js/compare/4.3.0...4.3.1) (2020-04-10)
 

@@ -1,4 +1,4 @@
-let plugin = (v) => {
+let plugin = function (v) {
   let UND;
 
   v.createHook = function ({name, init, update, response}) {
@@ -91,4 +91,5 @@ let plugin = (v) => {
 
 };
 
-export default plugin;
+plugin.default = plugin;
+module.exports = plugin;

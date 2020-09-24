@@ -134,4 +134,5 @@ let plugin = function (v) {
   v.request = Request();
 };
 
-export default plugin;
+plugin.default = plugin;
+module.exports = plugin;

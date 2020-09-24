@@ -1,4 +1,4 @@
-let plugin = (v) => {
+let plugin = function (v) {
   let signals = new Map();
 
   function makeUnsubscribe(subscriptions, computed, handler, cleanup) {
@@ -127,4 +127,5 @@ let plugin = (v) => {
 
 };
 
-export default plugin;
+plugin.default = plugin;
+module.exports = plugin;

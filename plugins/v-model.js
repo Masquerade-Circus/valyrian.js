@@ -1,4 +1,4 @@
-let Plugin = v => {
+let plugin = function (v) {
   v.directive('model', ([model, property, event], vnode, oldvnode) => {
     if (vnode.name === 'input') {
       event = event || 'oninput';
@@ -93,4 +93,5 @@ let Plugin = v => {
   });
 };
 
-export default Plugin;
+plugin.default = plugin;
+module.exports = plugin;

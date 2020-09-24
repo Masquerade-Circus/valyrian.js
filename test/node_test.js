@@ -6,8 +6,6 @@ import packageJson from '../package.json';
 v.usePlugin(nodePlugin);
 
 describe('Node test', () => {
-
-
   it('Get hyperscript string from html', () => {
     let html = '<body><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</body>';
 
@@ -20,7 +18,20 @@ describe('Node test', () => {
   ])
 ]`);
 
+    html = '<html><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</html>';
 
+    dom = v.htmlToHyperscript(html);
+
+    expect(dom).toEqual(`[
+  v("html", {}, [
+    v("head", {}, [
+      v("link", {"rel":"shortcult icon","href":"/icons/favicon.ico"}, [])
+    ]),
+    v("body", {}, [
+      "Hello world"
+    ])
+  ])
+]`);
   });
 
   it('Should create a service worker file', async () => {

@@ -1,7 +1,6 @@
 let fs = require('fs');
 let path = require('path');
 
-let cssnano = require('cssnano');
 let CleanCSS = require('clean-css');
 let {PurgeCSS} = require('purgecss');
 let fetch = require('node-fetch');
@@ -9,7 +8,7 @@ let FormData = require('form-data');
 
 let {Document, parseHtml} = require('./utils/dom');
 let treeAdapter = require('./utils/tree-adapter');
-let requestPlugin = require('./request').default;
+let requestPlugin = require('./request');
 
 global.fetch = fetch;
 global.FormData = FormData;
@@ -31,52 +30,27 @@ function fileMethodFactory() {
       return prop;
     }
 
+    let contents = '';
     if (typeof file === 'string') {
-      if (/^https?:\/\//gi.test(file)) {
-        return v.request
-          .get(
-            file,
-            {},
-            {
-              headers: {
-                Accept: 'text/plain',
-                'Content-Type': 'text/plain'
-              }
-            }
-          )
-          .then((contents) => {
-            prop += contents;
-          });
-      }
-
-      return new Promise((resolve, reject) => {
-        fs.readFile(file, 'utf8', (err, contents) => {
-          if (err) {
-            return reject(err);
-          }
-
-          prop += contents;
-          resolve(prop);
-        });
-      });
+      contents = fs.readFileSync(file, 'utf8');
     }
 
     if (typeof file === 'object' && 'raw' in file) {
-      return prop += file.raw;
+      contents = file.raw;
     }
+
+    return prop += contents;
   };
 }
 
 function inline(...args) {
-  let promises = args.map((item) => {
+  return args.map((item) => {
     let ext = item.split('.').pop();
     if (!inline[ext]) {
       inline[ext] = fileMethodFactory();
     }
     return inline[ext](item);
   });
-
-  return Promise.all(promises);
 }
 
 inline.css = fileMethodFactory();
@@ -84,60 +58,66 @@ inline.js = fileMethodFactory();
 
 inline.uncss = (function () {
   let prop = '';
-  return async function (renderedHtml, options = {}) {
+  return function (renderedHtml, options = {}) {
     if (!renderedHtml) {
       return prop;
     }
 
-    let opt = Object.assign(
-      {
+    let asyncMethod = async () => {
+      let opt = {
         minify: true,
         purgecssOptions: {},
-        cleanCssOptions: {}
-      },
-      options
-    );
-
-    opt.raw = inline.css();
-
-    let html = await Promise.all(renderedHtml);
-
-    let contents = html.map((item) => {
-      return {
-        raw: item.replace(/<script [^>]*><\/script>/gi, ''),
-        extension: 'html'
+        cleanCssOptions: {},
+        ...options
       };
-    });
 
-    let purgecss = new PurgeCSS();
-    let output = await purgecss.purge({
-      content: contents,
-      css: [{raw: opt.raw}],
-      ...opt.purgecssOptions
-    });
+      opt.raw = inline.css();
 
-    prop = output[0].css;
-    if (!opt.minify) {
-      return prop;
-    }
+      let html = await Promise.all(renderedHtml);
 
-    prop = new CleanCSS({
-      level: {
-        1: {
-          // rounds pixel values to `N` decimal places; `false` disables rounding; defaults to `false`
-          roundingPrecision: 'all=3',
-          specialComments: 'none' // denotes a number of /*! ... */ comments preserved; defaults to `all`
+      let contents = html.map((item) => {
+        return {
+          raw: item,
+          extension: 'html'
+        };
+      });
+
+      let purgecss = new PurgeCSS();
+      let output = await purgecss.purge({
+        content: contents,
+        css: [{raw: opt.raw}],
+        fontFace: true,
+        keyframes: true,
+        variables: true,
+        whitelistPatterns: opt.ignore,
+        defaultExtractor: (content) => content.match(/[A-Za-z0-9-_/:@]*[A-Za-z0-9-_/]+/g) || [],
+        ...opt.purgecssOptions
+      });
+
+      prop = output[0].css;
+      if (!opt.minify) {
+        return prop;
+      }
+
+      prop = new CleanCSS({
+        level: {
+          1: {
+            // rounds pixel values to `N` decimal places; `false` disables rounding; defaults to `false`
+            roundingPrecision: 'all=3',
+            specialComments: 'none' // denotes a number of /*! ... */ comments preserved; defaults to `all`
+          },
+          2: {
+            restructureRules: true // controls rule restructuring; defaults to false
+          }
         },
-        2: {
-          restructureRules: true // controls rule restructuring; defaults to false
-        }
-      },
-      compatibility: 'ie11',
-      ...opt.cleanCssOptions
-    }).minify(prop).styles;
+        compatibility: 'ie11',
+        ...opt.cleanCssOptions
+      }).minify(prop).styles;
 
-    prop = (await cssnano.process(prop, {from: undefined})).css;
-    return prop;
+      return prop;
+    };
+
+    return asyncMethod();
   };
 }());
 
@@ -203,9 +183,8 @@ function parseDom(childNodes, depth = 1) {
     .join(',');
 }
 
-
 function htmlToHyperscript(html) {
-  return '[' + parseDom(parseHtml(html, {treeAdapter: treeAdapter})) + '\n]';
+  return `[${parseDom(parseHtml(html, {treeAdapter}))}\n]`;
 }
 
 function icons(source, configuration = {}) {
@@ -321,5 +300,5 @@ let plugin = function (v) {
   v.htmlToHyperscript = htmlToHyperscript;
 };
 
+plugin.default = plugin;
 module.exports = plugin;
-module.exports.default = module.exports;
