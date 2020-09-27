@@ -1,9 +1,10 @@
-### [5.0.1](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.0...5.0.1) (2020-09-27)
+### [5.0.2](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.1...5.0.2) (2020-09-27)
 
+### [5.0.1](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.0...5.0.1) (2020-09-27)
 
 ### Bug Fixes
 
-* **node:** fix icons generator. Improve sw. Improve htmlToHyperscript parser ([b38627b](https://github.com/Masquerade-Circus/valyrian.js/commit/b38627b922d9632f39d916ce97e1e355b7f23861))
+-   **node:** fix icons generator. Improve sw. Improve htmlToHyperscript parser ([b38627b](https://github.com/Masquerade-Circus/valyrian.js/commit/b38627b922d9632f39d916ce97e1e355b7f23861))
 
 ## [5.0.0](https://github.com/Masquerade-Circus/valyrian.js/compare/4.3.2...5.0.0) (2020-09-24)
 
