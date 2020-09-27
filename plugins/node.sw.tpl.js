@@ -1,78 +1,74 @@
 let Log = console.log;
 
 let config = {
-  version: 'v1::',
-  name: 'Valyrian.js',
-  urls: ['/']
+  version: "v1::",
+  name: "Valyrian.js",
+  urls: ["/"]
 };
 
-// Function to add the network response to the cache
-let fetchedFromNetwork = (event) => (response) => {
-  Log('WORKER: fetch response from network.', event.request.url);
-  if (!response || response.status !== 200 || response.type !== 'basic') {
+let cacheName = config.version + config.name;
+
+self.addEventListener("fetch", async (event) => {
+  // DevTools opening will trigger these o-i-c requests, which this SW can't handle.
+  // https://github.com/paulirish/caltrainschedule.io/issues/49
+  if (
+    event.request.cache === "only-if-cached" &&
+    event.request.mode !== "same-origin"
+  ) {
     return;
   }
 
-  let cacheCopy = response.clone();
-  caches
-    .open(config.version + config.name)
-    .then((cache) => cache.put(event.request, cacheCopy))
-    .then(() => Log('WORKER: fetch response stored in cache.', event.request.url))
-    .catch((err) => Log('WORKER: fetch response could not be stored in cache.', err));
-  return response;
-};
-
-// If the network or the cache response fail, response with Service Unavailable
-let unableToResolve = () => {
-  Log('WORKER: fetch request failed in both cache and network.');
-  return new Response('<h1>Service Unavailable</h1>', {
-    status: 503,
-    statusText: 'Service Unavailable',
-    headers: new Headers({
-      'Content-Type': 'text/html'
-    })
-  });
-};
-
-// Fetch listener
-self.addEventListener('fetch', (event) => {
-  Log('WORKER: fetch event in progress.', event.request.url);
+  Log("WORKER: fetch event in progress.", event.request.url);
 
   // We only handle Get requests all others let them pass
-  if (event.request.method !== 'GET') {
+  if (event.request.method !== "GET") {
     return;
   }
 
-  // TODO: Make a callback available here to filter if this request must be cached or let it pass directly
-  // This callback must return true or false
+  Log("WORKER: fetchevent for " + event.request.url);
 
-  Log('WORKER: fetchevent for ' + event.request.url);
+  let response = await fetch(event.request);
+  if (response && response.status < 300 && response.type === "basic") {
+    try {
+      let cache = await caches.open(cacheName);
+      cache.put(event.request, response);
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      Log('WORKER: fetch event', cached ? '(cached)' : '(network)', event.request.url);
+      Log("WORKER: fetch response stored in cache.", event.request.url);
+    } catch (err) {
+      Log("WORKER: fetch response could not be stored in cache.", err);
+    }
 
-      let network = fetch(event.request)
-        .then(fetchedFromNetwork(event), unableToResolve)
-        .catch((error) => {
-          console.log(error);
-          return caches.match('/');
-        });
+    return event.respondWith(response);
+  }
 
-      return network || cached;
-    })
+  let cachedResponse = await caches.match(event.request);
+  if (cachedResponse) {
+    Log("WORKER: fetch request failed, responding with cache.");
+    return event.respondWith(cachedResponse);
+  }
+
+  Log(
+    "WORKER: fetch request failed in both cache and network, responding with service unavailable."
+  );
+  return event.respondWith(
+    response ||
+      new Response("<h1>Service Unavailable</h1>", {
+        status: 503,
+        statusText: "Service Unavailable",
+        headers: new Headers({
+          "Content-Type": "text/html"
+        })
+      })
   );
 });
 
-self.addEventListener('install', (event) => {
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open(config.version + config.name)
-      .then((cache) => cache.addAll(config.urls))
+    caches.open(cacheName).then((cache) => cache.addAll(config.urls))
   );
 });
 
-self.addEventListener('activate', (event) => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
@@ -80,7 +76,7 @@ self.addEventListener('activate', (event) => {
         Promise.all(
           keys
             // Filter by keys that don't start with the latest version prefix.
-            .filter((key) => !key.startsWith(config.version))
+            .filter((key) => !key.startsWith(cacheName))
             // Return a promise that's fulfilled when each outdated cache is deleted.
             .map((key) => caches.delete(key))
         )

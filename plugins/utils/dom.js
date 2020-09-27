@@ -12,23 +12,27 @@ export function parseAttributes(attributes) {
 }
 
 export function parseHtml(html, options = {}) {
-  let result = parse5.parse(html, options);
-  let childNodes = result.childNodes;
+  let returnHtml = /^<!DOCTYPE/i.test(html) || /^<html(\s|>)/i.test(html);
+  let returnBody = /^<body(\s|>)/i.test(html);
+  let returnHead = /^<head(\s|>)/i.test(html);
 
-  if (/^<!DOCTYPE html>/gm.test(html)) {
-    childNodes = result.childNodes;
-  } else if (/^<html(\s|>)/gm.test(html)) {
-    childNodes = result.childNodes;
-  } else if (/^<body(\s|>)/gm.test(html)) {
-    childNodes = result.childNodes[0].childNodes;
-    childNodes.shift();
-  } else if (/^<head(\s|>)/gm.test(html)) {
-    childNodes = result.childNodes[0].childNodes;
-    childNodes.pop();
-  } else {
-    childNodes = result.childNodes[0].childNodes[1].childNodes;
+  if (returnHtml || returnBody || returnHead) {
+    let result = parse5.parse(html, options);
+
+    if (returnHtml) {
+      return result.childNodes;
+    }
+
+    if (returnHead) {
+      return [result.childNodes[0].childNodes[0]];
+    }
+
+    if (returnBody) {
+      return [result.childNodes[0].childNodes[1]];
+    }
   }
-  return childNodes;
+
+  return parse5.parseFragment(html, options).childNodes;
 }
 
 function generateDom(tree) {

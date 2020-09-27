@@ -39,7 +39,7 @@
     "test": "cross-env NODE_ENV=development nyc mocha --timeout 10000 --require @babel/register --require esm \"test/**/*_test.js\"",
     "coverage": "nyc report --reporter=text-lcov | coveralls",
     "remark": "remark . -o",
-    "commit": "git-cz",
+    "commit": "git add . && git-cz",
     "release": "release-it --verbose",
     "release-test": "release-it --dry-run --verbose"
   },

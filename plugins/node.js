@@ -155,7 +155,9 @@ function parseDom(childNodes, depth = 1) {
 
   return childNodes
     .map((item) => {
-      if (item.nodeType === 3) {
+      if (item.nodeType === 10) {
+        return `\n${spaces}"<!DOCTYPE html>"`;
+      } else if (item.nodeType === 3) {
         return `\n${spaces}"${item.nodeValue}"`;
       } else {
         let str = `\n${spaces}v("${item.nodeName}", `;
@@ -228,9 +230,14 @@ function icons(source, configuration = {}) {
     }
 
     if (options.linksViewPath) {
-      let html = 'export default function(){ \n    return ';
-      html += htmlToHyperscript(response.html.join(''));
-      html += ';\n    \n};';
+      let html = `
+function Links(){
+  return ${htmlToHyperscript(response.html.join(''))};
+}
+
+Links.default = Links;
+module.exports = Links;
+      `;
 
       promises.push(
         new Promise((resolve, reject) => {
