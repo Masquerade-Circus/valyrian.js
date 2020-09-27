@@ -1,6 +1,8 @@
-let parse5 = require('parse5');
+'use strict';
 
-export function parseAttributes(attributes) {
+const parse5 = require('parse5');
+
+const parseAttributes = exports.parseAttributes = function (attributes) {
   let attrs = [];
   for (let i = 0, l = attributes.length; i < l; i++) {
     attrs.push({
@@ -9,9 +11,9 @@ export function parseAttributes(attributes) {
     });
   }
   return attrs;
-}
+};
 
-export function parseHtml(html, options = {}) {
+const parseHtml = exports.parseHtml = function (html, options = {}) {
   let returnHtml = /^<!DOCTYPE/i.test(html) || /^<html(\s|>)/i.test(html);
   let returnBody = /^<body(\s|>)/i.test(html);
   let returnHead = /^<head(\s|>)/i.test(html);
@@ -33,7 +35,7 @@ export function parseHtml(html, options = {}) {
   }
 
   return parse5.parseFragment(html, options).childNodes;
-}
+};
 
 function generateDom(tree) {
   let childNodes = [];
@@ -173,8 +175,9 @@ class Node {
     }
   }
 }
+exports.Node = Node;
 
-export class Text extends Node {
+class Text extends Node {
   constructor(text) {
     super(3, '#text');
     this.textContent = text;
@@ -186,8 +189,9 @@ export class Text extends Node {
     return this.nodeValue;
   }
 }
+exports.Text = Text;
 
-export class Element extends Node {
+class Element extends Node {
   constructor(nodeType, nodeName) {
     super(nodeType || 1, nodeName);
     this.attributes = [];
@@ -317,8 +321,9 @@ export class Element extends Node {
     return serialize(this);
   }
 }
+exports.Element = Element;
 
-export class Document extends Element {
+class Document extends Element {
   constructor() {
     super(9, '#document');
   }
@@ -337,3 +342,4 @@ export class Document extends Element {
     return new Text(text);
   }
 }
+exports.Document = Document;
