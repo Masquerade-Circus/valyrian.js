@@ -21,7 +21,7 @@ jobs:
       with: 
         cmd: test  
     - if: github.event_name == 'push' && github.ref == 'refs/heads/master' && success()
-      name: 'Coverage'
-      uses: Borales/actions-yarn@v2.3.0
-      with: 
-        cmd: coverage 
+      name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
