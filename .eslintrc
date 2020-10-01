@@ -30,11 +30,11 @@
       2,
       { "anonymous": "always", "named": "never" }
     ],
-    "space-in-parens": 2,
+    "space-in-parens": 0,
     "space-infix-ops": 2,
     "space-unary-ops": 2,
     "vars-on-top": 2,
-    "wrap-iife": 2,
+    "wrap-iife": 0,
     "semi": [2, "always"],
     "indent": [
       2,
@@ -46,7 +46,7 @@
     "valid-jsdoc": 2,
     "no-var": "error",
     "no-undef": 0,
-    "no-unused-vars":"warn",
+    "no-unused-vars": "warn",
     "no-multi-spaces": "error",
     "no-multiple-empty-lines": "error",
     "one-var": "off",

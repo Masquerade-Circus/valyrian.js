@@ -1,19 +1,21 @@
-'use strict';
+"use strict";
 
-const parse5 = require('parse5');
+const parse5 = require("parse5");
 
-const parseAttributes = exports.parseAttributes = function (attributes) {
+const parseAttributes = (exports.parseAttributes = function (attributes) {
   let attrs = [];
   for (let i = 0, l = attributes.length; i < l; i++) {
     attrs.push({
-      nodeName: (attributes[i].prefix ? attributes[i].prefix + ':' : '') + attributes[i].name,
+      nodeName:
+        (attributes[i].prefix ? attributes[i].prefix + ":" : "") +
+        attributes[i].name,
       nodeValue: attributes[i].value
     });
   }
   return attrs;
-};
+});
 
-const parseHtml = exports.parseHtml = function (html, options = {}) {
+const parseHtml = (exports.parseHtml = function (html, options = {}) {
   let returnHtml = /^<!DOCTYPE/i.test(html) || /^<html(\s|>)/i.test(html);
   let returnBody = /^<body(\s|>)/i.test(html);
   let returnHead = /^<head(\s|>)/i.test(html);
@@ -35,13 +37,13 @@ const parseHtml = exports.parseHtml = function (html, options = {}) {
   }
 
   return parse5.parseFragment(html, options).childNodes;
-};
+});
 
 function generateDom(tree) {
   let childNodes = [];
   for (let i = 0, l = tree.length; i < l; i++) {
     let node = tree[i];
-    if (node.nodeName === '#text') {
+    if (node.nodeName === "#text") {
       childNodes.push(new Text(node.value));
     } else {
       let element = new Element(1, node.nodeName);
@@ -76,33 +78,35 @@ function splice(arr, item, add, byValue) {
 }
 
 function createAttributeFilter(name) {
-  return o => toLower(o.nodeName) === toLower(name);
+  return (o) => toLower(o.nodeName) === toLower(name);
 }
 
 function isChildNode(node, child) {
-  let index = node.childNodes ? findWhere(node.childNodes, child, true, true) : -1;
+  let index = node.childNodes
+    ? findWhere(node.childNodes, child, true, true)
+    : -1;
   if (index === -1) {
-    throw new Error('The node is not child of this element');
+    throw new Error("The node is not child of this element");
   }
   return true;
 }
 
 let selfClosingTags = [
-  'area',
-  'base',
-  'br',
-  'col',
-  'embed',
-  'hr',
-  'img',
-  'input',
-  'link',
-  'meta',
-  'param',
-  'source',
-  'track',
-  'wbr',
-  '!doctype'
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+  "!doctype"
 ];
 
 function serialize(dom) {
@@ -110,13 +114,18 @@ function serialize(dom) {
     return dom.textContent;
   } else if (dom.nodeType === 1) {
     let name = toLower(dom.nodeName);
-    let str = '<' + name;
+    let str = "<" + name;
     for (let i = 0, l = dom.attributes.length; i < l; i++) {
-      str += ' ' + dom.attributes[i].nodeName + '="' + dom.attributes[i].nodeValue + '"';
+      str +=
+        " " +
+        dom.attributes[i].nodeName +
+        '="' +
+        dom.attributes[i].nodeValue +
+        '"';
     }
 
     if (selfClosingTags.indexOf(name) === -1) {
-      str += '>';
+      str += ">";
       if (dom.childNodes && dom.childNodes.length > 0) {
         for (let i = 0, l = dom.childNodes.length; i < l; i++) {
           let child = serialize(dom.childNodes[i]);
@@ -125,9 +134,9 @@ function serialize(dom) {
           }
         }
       }
-      str += '</' + name + '>';
+      str += "</" + name + ">";
     } else {
-      str += '/>';
+      str += "/>";
     }
 
     return str;
@@ -139,7 +148,7 @@ class Node {
     this.nodeType = nodeType;
     this.nodeName = toLower(nodeName);
     this.childNodes = [];
-    this.nodeValue = '';
+    this.nodeValue = "";
   }
   appendChild(child) {
     this.insertBefore(child);
@@ -179,7 +188,7 @@ exports.Node = Node;
 
 class Text extends Node {
   constructor(text) {
-    super(3, '#text');
+    super(3, "#text");
     this.textContent = text;
   }
   set textContent(text) {
@@ -197,37 +206,44 @@ class Element extends Node {
     this.attributes = [];
     this.attachedListeners = {};
     let updateStyles = (state) => {
-      let str = '';
+      let str = "";
       for (let key in state) {
         let value = state[key];
-        if (typeof value !== 'undefined' && value !== null && String(value).length > 0) {
+        if (
+          typeof value !== "undefined" &&
+          value !== null &&
+          String(value).length > 0
+        ) {
           str += `${key}: ${state[key]};`;
         }
       }
       if (str.length === 0) {
-        this.removeAttribute('style');
+        this.removeAttribute("style");
       } else {
-        this.setAttribute('style', str);
+        this.setAttribute("style", str);
       }
     };
-    this.style = new Proxy({}, {
-      get: (state, prop) => state[prop],
-      set: (state, prop, value) => {
-        state[prop] = value;
-        updateStyles(state);
-        return true;
-      },
-      deleteProperty: (state, prop) => {
-        delete state[prop];
-        updateStyles(state);
-        return true;
+    this.style = new Proxy(
+      {},
+      {
+        get: (state, prop) => state[prop],
+        set: (state, prop, value) => {
+          state[prop] = value;
+          updateStyles(state);
+          return true;
+        },
+        deleteProperty: (state, prop) => {
+          delete state[prop];
+          updateStyles(state);
+          return true;
+        }
       }
-    });
+    );
 
     this.classList = {
       toggle: (item, force) => {
         if (item) {
-          let classes = (this.getAttribute('class') || '').split(' ');
+          let classes = (this.getAttribute("class") || "").split(" ");
           let itemIndex = classes.indexOf(item);
           if (force && itemIndex === -1) {
             classes.push(item);
@@ -237,29 +253,38 @@ class Element extends Node {
             classes.splice(itemIndex, 1);
           }
 
-          let final = classes.join(' ').trim();
+          let final = classes.join(" ").trim();
           if (final.length) {
-            this.setAttribute('class', classes.join(' ').trim());
+            this.setAttribute("class", classes.join(" ").trim());
           } else {
-            this.removeAttribute('class');
+            this.removeAttribute("class");
           }
         }
       }
     };
-
   }
 
   setAttribute(name, value) {
-    let attr = findWhere(this.attributes, createAttributeFilter(name), false, false);
+    let attr = findWhere(
+      this.attributes,
+      createAttributeFilter(name),
+      false,
+      false
+    );
     if (!attr) {
-      this.attributes.push(attr = { nodeName: name, nodeValue: value });
+      this.attributes.push((attr = { nodeName: name, nodeValue: value }));
     } else {
       attr.nodeValue = value;
     }
   }
 
   getAttribute(name) {
-    let attr = findWhere(this.attributes, createAttributeFilter(name), false, false);
+    let attr = findWhere(
+      this.attributes,
+      createAttributeFilter(name),
+      false,
+      false
+    );
     return attr && attr.nodeValue;
   }
 
@@ -268,7 +293,10 @@ class Element extends Node {
   }
 
   addEventListener(type, handler) {
-    (this.attachedListeners[toLower(type)] || (this.attachedListeners[toLower(type)] = [])).push(handler);
+    (
+      this.attachedListeners[toLower(type)] ||
+      (this.attachedListeners[toLower(type)] = [])
+    ).push(handler);
   }
 
   removeEventListener(type, handler) {
@@ -276,33 +304,36 @@ class Element extends Node {
   }
 
   dispatchEvent(event) {
-    let t = event.target = this,
+    let t = (event.target = this),
       c = event.cancelable,
-      l, i;
+      l,
+      i;
     do {
       event.currentTarget = t;
       l = t.attachedListeners && t.attachedListeners[toLower(event.type)];
       if (l) {
-        for (i = l.length; i--;) {
+        for (i = l.length; i--; ) {
           if ((l[i].call(t, event) === false || event._end) && c) {
             event.defaultPrevented = true;
           }
         }
       }
     } while (event.bubbles && !(c && event._stop) && (t = t.parentNode));
-    return l != null;
+    return l !== null;
   }
 
   set textContent(text) {
     this.nodeValue = String(text);
-    this.childNodes = this.nodeValue.trim().length ? [new Text(this.nodeValue)] : [];
+    this.childNodes = this.nodeValue.trim().length
+      ? [new Text(this.nodeValue)]
+      : [];
   }
   get textContent() {
     return this.nodeValue;
   }
 
   get innerHTML() {
-    let str = '';
+    let str = "";
     for (let i = 0, l = this.childNodes.length; i < l; i++) {
       str += serialize(this.childNodes[i]);
     }
@@ -310,7 +341,7 @@ class Element extends Node {
   }
 
   set innerHTML(html) {
-    this.textContent = '';
+    this.textContent = "";
     let childNodes = generateDom(parseHtml(html));
     for (let i = 0, l = childNodes.length; i < l; i++) {
       this.appendChild(childNodes[i]);
@@ -325,7 +356,7 @@ exports.Element = Element;
 
 class Document extends Element {
   constructor() {
-    super(9, '#document');
+    super(9, "#document");
   }
 
   createElement(type) {

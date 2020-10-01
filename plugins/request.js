@@ -1,9 +1,9 @@
 let plugin = function (v) {
-  let Request = function (baseUrl = '', options = {}) {
-    let url = baseUrl.replace(/\/$/gi, '').trim(),
+  let Request = function (baseUrl = "", options = {}) {
+    let url = baseUrl.replace(/\/$/gi, "").trim(),
       opts = Object.assign(
         {
-          methods: ['get', 'post', 'put', 'patch', 'delete']
+          methods: ["get", "post", "put", "patch", "delete"]
         },
         options
       ),
@@ -13,15 +13,15 @@ let plugin = function (v) {
       let e = encodeURIComponent;
       return Object.keys(obj)
         .map((p) => {
-          let k = prefix ? prefix + '[' + p + ']' : p;
+          let k = prefix ? prefix + "[" + p + "]" : p;
 
-          if (typeof obj[p] === 'object') {
+          if (typeof obj[p] === "object") {
             return serialize(obj[p], k);
           }
 
-          return e(k) + '=' + e(obj[p]);
+          return e(k) + "=" + e(obj[p]);
         })
-        .join('&');
+        .join("&");
     }
 
     async function request(method, url, data, options = {}) {
@@ -36,22 +36,23 @@ let plugin = function (v) {
       );
 
       if (!opts.headers.Accept) {
-        opts.headers.Accept = 'application/json';
+        opts.headers.Accept = "application/json";
       }
 
       let acceptType = opts.headers.Accept;
-      let contentType = opts.headers['Content-Type'] || opts.headers['content-type'] || '';
+      let contentType =
+        opts.headers["Content-Type"] || opts.headers["content-type"] || "";
 
       if (opts.methods.indexOf(method) === -1) {
-        throw new Error('Method not allowed');
+        throw new Error("Method not allowed");
       }
 
       if (data) {
-        if (opts.method === 'get' && typeof data === 'object') {
-          url += '?' + serialize(data);
+        if (opts.method === "get" && typeof data === "object") {
+          url += "?" + serialize(data);
         }
 
-        if (opts.method !== 'get') {
+        if (opts.method !== "get") {
           if (/json/gi.test(contentType)) {
             opts.body = JSON.stringify(data);
           } else {
@@ -95,16 +96,13 @@ let plugin = function (v) {
     parseUrl = function (url) {
       let u = /^https?/gi.test(url)
         ? url
-        : (request.urls.base + url)
-          .trim()
-          .replace(/^\/\//gi, '/')
-          .trim();
+        : (request.urls.base + url).trim().replace(/^\/\//gi, "/").trim();
 
-      if (v.isNode && typeof request.urls.node === 'string') {
-        request.urls.node = request.urls.node.replace(/\/$/gi, '').trim();
+      if (v.isNode && typeof request.urls.node === "string") {
+        request.urls.node = request.urls.node.replace(/\/$/gi, "").trim();
 
-        if (typeof request.urls.api === 'string') {
-          request.urls.api = request.urls.api.replace(/\/$/gi, '').trim();
+        if (typeof request.urls.api === "string") {
+          request.urls.api = request.urls.api.replace(/\/$/gi, "").trim();
           u = u.replace(request.urls.api, request.urls.node);
         }
 
@@ -126,7 +124,11 @@ let plugin = function (v) {
     request.urls.base = url;
     request.options = opts;
 
-    opts.methods.forEach((method) => (request[method] = (url, data, options) => request(method, url, data, options)));
+    opts.methods.forEach(
+      (method) =>
+        (request[method] = (url, data, options) =>
+          request(method, url, data, options))
+    );
 
     return request;
   };

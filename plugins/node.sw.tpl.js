@@ -47,9 +47,7 @@ async function fetchRequest(event) {
       return cachedResponse;
     }
   } catch (error) {
-    Log(
-      "WORKER: cache request failed.", error
-    );
+    Log("WORKER: cache request failed.", error);
   }
 
   Log(
@@ -90,7 +88,8 @@ self.addEventListener("fetch", (event) => {
 self.addEventListener("install", (event) => {
   Log("WORKER: Version install", cacheName);
   event.waitUntil(
-    caches.open(cacheName)
+    caches
+      .open(cacheName)
       .then((cache) => cache.addAll(config.urls))
       // IMPORTANT: `skipWaiting()` forces the waiting ServiceWorker to become the
       // active ServiceWorker, triggering the `onactivate` event.
@@ -104,12 +103,14 @@ self.addEventListener("install", (event) => {
 // got refreshed. Since we call `skipWaiting()` in `oninstall`, `onactivate` is
 // called immediately.
 self.addEventListener("activate", (event) => {
-  self.clients.matchAll({
-    includeUncontrolled: true
-  }).then((clientList) => {
-    urls = clientList.map(client => client.url);
-    Log('WORKER: Matching clients:', urls.join(', '));
-  });
+  self.clients
+    .matchAll({
+      includeUncontrolled: true
+    })
+    .then((clientList) => {
+      urls = clientList.map((client) => client.url);
+      Log("WORKER: Matching clients:", urls.join(", "));
+    });
 
   event.waitUntil(
     caches

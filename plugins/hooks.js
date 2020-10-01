@@ -1,11 +1,11 @@
 let plugin = function (v) {
   let UND;
 
-  v.createHook = function ({name, init, update, response}) {
+  v.createHook = function ({ name, init, update, response }) {
     name = `use${name.charAt(0).toUpperCase()}${name.slice(1).toLowerCase()}`;
     if (!v[name]) {
       v[name] = (...args) => {
-        let {component, parentVnode, oldParentVnode} = v.current;
+        let { component, parentVnode, oldParentVnode } = v.current;
 
         if (parentVnode.components === UND) {
           parentVnode.components = [];
@@ -16,16 +16,27 @@ let plugin = function (v) {
         }
 
         let hook;
-        let oldComponentNode = oldParentVnode.components && oldParentVnode.components[parentVnode.components.length - 1];
-        let oldMethod = oldComponentNode && ('view' in oldComponentNode.name ? oldComponentNode.name.view : oldComponentNode.name);
-        let currentMethod = 'view' in component.name ? component.name.view : component.name;
+        let oldComponentNode =
+          oldParentVnode.components &&
+          oldParentVnode.components[parentVnode.components.length - 1];
+        let oldMethod =
+          oldComponentNode &&
+          ("view" in oldComponentNode.name
+            ? oldComponentNode.name.view
+            : oldComponentNode.name);
+        let currentMethod =
+          "view" in component.name ? component.name.view : component.name;
 
         if (component.hooks === UND) {
           component.hooks = [];
         }
         let hookIndex = component.hooks.length;
 
-        if (oldMethod === currentMethod && 'hooks' in oldComponentNode && oldComponentNode.hooks[hookIndex] !== UND) {
+        if (
+          oldMethod === currentMethod &&
+          "hooks" in oldComponentNode &&
+          oldComponentNode.hooks[hookIndex] !== UND
+        ) {
           component.hooks = oldComponentNode.hooks;
           hook = oldComponentNode.hooks[hookIndex];
           if (update) {
@@ -45,24 +56,24 @@ let plugin = function (v) {
 
   function createStateHook(value) {
     let state = value;
-    let setState = value => state = value;
+    let setState = (value) => (state = value);
 
     let stateObj = Object.create(null);
-    stateObj.toJSON = stateObj.toString = stateObj.valueOf = () => typeof state === 'function' ? state() : state;
+    stateObj.toJSON = stateObj.toString = stateObj.valueOf = () =>
+      typeof state === "function" ? state() : state;
 
     return [stateObj, setState];
   }
 
   v.createHook({
-    name: 'state',
+    name: "state",
     init: (initial) => createStateHook(initial),
     response: (hook) => hook
   });
 
-
   // Effect hook
   function callHook(hook, changes) {
-    let {prev} = hook;
+    let { prev } = hook;
     if (!changes) {
       hook.onCleanup = hook.effect();
     } else if (changes.length > 0) {
@@ -75,20 +86,19 @@ let plugin = function (v) {
       }
     }
 
-    if (typeof hook.onCleanup === 'function') {
+    if (typeof hook.onCleanup === "function") {
       v.onCleanup(hook.onCleanup);
     }
   }
   v.createHook({
-    name: 'effect',
+    name: "effect",
     init: (effect, changes) => {
-      let hook = {effect, prev: changes};
+      let hook = { effect, prev: changes };
       callHook(hook);
       return hook;
     },
     update: (hook, effect, changes) => callHook(hook, changes)
   });
-
 };
 
 plugin.default = plugin;

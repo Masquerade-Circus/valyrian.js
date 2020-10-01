@@ -1,5 +1,3 @@
-
-
 let plugin = function (v) {
   function flat(array) {
     return Array.isArray(array) ? array.flat(Infinity) : [array];
@@ -10,7 +8,7 @@ let plugin = function (v) {
       return;
     }
 
-    let realpath = path.replace(/(\S)(\/+)$/, '$1');
+    let realpath = path.replace(/(\S)(\/+)$/, "$1");
 
     // Find the express like params
     let params = realpath.match(/:(\w+)?/gi) || [];
@@ -20,27 +18,25 @@ let plugin = function (v) {
       params[i] = params[i].slice(1);
     }
 
-    let regexpPath = '^' + realpath
-      .replace(/:(\w+)/gi, '([^\\/\\s]+)')
-      + '$';
+    let regexpPath = "^" + realpath.replace(/:(\w+)/gi, "([^\\/\\s]+)") + "$";
 
     router.paths.push({
       method,
       path: realpath,
       middlewares: flat(middlewares),
       params,
-      regexp: new RegExp(regexpPath, 'i')
+      regexp: new RegExp(regexpPath, "i")
     });
   };
 
   function parseQuery(queryParts) {
-    let parts = queryParts ? queryParts.split('&', 20) : [];
+    let parts = queryParts ? queryParts.split("&", 20) : [];
     let query = {};
     let i = 0;
     let nameValue;
 
     for (; i < parts.length; i++) {
-      nameValue = parts[i].split('=', 2);
+      nameValue = parts[i].split("=", 2);
       query[nameValue[0]] = nameValue[1];
     }
 
@@ -57,7 +53,7 @@ let plugin = function (v) {
     let params = {};
     let matches = [];
     router.params = {};
-    router.path = '';
+    router.path = "";
     router.matches = [];
 
     // Search for middlewares
@@ -80,7 +76,7 @@ let plugin = function (v) {
           matches.push(match.shift());
         }
 
-        if (item.method === 'get') {
+        if (item.method === "get") {
           router.path = item.path;
           break;
         }
@@ -109,7 +105,7 @@ let plugin = function (v) {
       response = await middlewares[i](req, response);
 
       if (response !== undefined) {
-        if (!response.view && typeof response === 'function') {
+        if (!response.view && typeof response === "function") {
           response.view = response;
         }
 
@@ -126,11 +122,11 @@ let plugin = function (v) {
     const router = {
       paths: [],
       get(path, ...args) {
-        addPath(router, 'get', path, args);
+        addPath(router, "get", path, args);
         return router;
       },
       use(...args) {
-        let path = typeof args[0] === 'string' ? args.shift() : '/';
+        let path = typeof args[0] === "string" ? args.shift() : "/";
         let i;
         let k;
         let subrouter;
@@ -139,12 +135,12 @@ let plugin = function (v) {
 
         for (i = 0; i < args.length; i++) {
           subrouter = args[i];
-          if (typeof subrouter === 'function') {
-            addPath(router, 'use', `${path}.*`, [subrouter]);
+          if (typeof subrouter === "function") {
+            addPath(router, "use", `${path}.*`, [subrouter]);
           } else if (subrouter.paths) {
             for (k = 0; k < subrouter.paths.length; k++) {
               item = subrouter.paths[k];
-              subpath = `${path}${item.path}`.replace(/^\/\//, '/');
+              subpath = `${path}${item.path}`.replace(/^\/\//, "/");
               addPath(router, item.method, subpath, item.middlewares);
             }
           }
@@ -153,7 +149,7 @@ let plugin = function (v) {
         return router;
       },
       async go(path) {
-        let parts = path.split('?', 2);
+        let parts = path.split("?", 2);
         let urlParts = parts[0];
         let queryParts = parts[1];
         router.url = path;
@@ -210,16 +206,16 @@ let plugin = function (v) {
         function onPopStateGoToRoute() {
           v.routes.go(document.location.pathname);
         }
-        window.addEventListener('popstate', onPopStateGoToRoute, false);
+        window.addEventListener("popstate", onPopStateGoToRoute, false);
         onPopStateGoToRoute();
       }
     }
   };
 
-  v.routes.url = '';
+  v.routes.url = "";
   v.routes.params = {};
   v.routes.query = {};
-  v.routes.path = '';
+  v.routes.path = "";
   v.routes.matches = [];
 
   v.routes.go = function (...args) {
@@ -228,19 +224,19 @@ let plugin = function (v) {
 
     if (args[0]) {
       let arg = args[0];
-      let viewMethod = 'view' in Object(arg) ? arg.view : arg;
+      let viewMethod = "view" in Object(arg) ? arg.view : arg;
 
-      if (typeof viewMethod === 'function') {
+      if (typeof viewMethod === "function") {
         parentComponent = args.shift();
       }
     }
 
-    if (typeof args[0] === 'string') {
+    if (typeof args[0] === "string") {
       url = args.shift();
     }
 
     if (!url) {
-      throw new Error('v.router.url.required');
+      throw new Error("v.router.url.required");
     }
 
     return runRoute(parentComponent, url, args);
@@ -249,24 +245,21 @@ let plugin = function (v) {
   v.routes.get = function () {
     let routes = [];
     mainRouter.paths.forEach((path) => {
-      if (path.method === 'get') {
+      if (path.method === "get") {
         routes.push(path.path);
       }
     });
     return routes;
   };
 
-  v.directive('route', (url, vnode, oldnode) => {
+  v.directive("route", (url, vnode, oldnode) => {
     vnode.props.href = url;
     vnode.props.onclick = (e) => {
-      if (typeof url === 'string' && url.length > 0) {
-        if (url.charAt(0) !== '/') {
-          let current = v.routes.current
-            .split('?', 2)
-            .shift()
-            .split('/');
+      if (typeof url === "string" && url.length > 0) {
+        if (url.charAt(0) !== "/") {
+          let current = v.routes.current.split("?", 2).shift().split("/");
           current.pop();
-          url = `${current.join('/')}/${url}`;
+          url = `${current.join("/")}/${url}`;
         }
 
         v.routes.go(url);
@@ -274,10 +267,9 @@ let plugin = function (v) {
       e.preventDefault();
     };
 
-    v.updateProperty('href', vnode, oldnode);
-    v.updateProperty('onclick', vnode, oldnode);
+    v.updateProperty("href", vnode, oldnode);
+    v.updateProperty("onclick", vnode, oldnode);
   });
-
 };
 
 plugin.default = plugin;

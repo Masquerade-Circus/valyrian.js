@@ -1,13 +1,14 @@
-import expect from 'expect';
-import fs from 'fs';
-import '../lib';
-import nodePlugin from '../plugins/node';
-import packageJson from '../package.json';
+import expect from "expect";
+import fs from "fs";
+import "../lib";
+import nodePlugin from "../plugins/node";
+import packageJson from "../package.json";
 v.usePlugin(nodePlugin);
 
-describe('Node test', () => {
-  it('Get hyperscript string from html', () => {
-    let html = '<body><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</body>';
+describe("Node test", () => {
+  it("Get hyperscript string from html", () => {
+    let html =
+      '<body><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</body>';
 
     let dom = v.htmlToHyperscript(html);
 
@@ -18,7 +19,8 @@ describe('Node test', () => {
   ])
 ]`);
 
-    html = '<html><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</html>';
+    html =
+      '<html><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</html>';
 
     dom = v.htmlToHyperscript(html);
 
@@ -33,7 +35,8 @@ describe('Node test', () => {
   ])
 ]`);
 
-    html = '<!DOCTYPE html><html><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</html>';
+    html =
+      '<!DOCTYPE html><html><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</html>';
 
     dom = v.htmlToHyperscript(html);
 
@@ -49,7 +52,8 @@ describe('Node test', () => {
   ])
 ]`);
 
-    html = '<head><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</head>';
+    html =
+      '<head><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</head>';
 
     dom = v.htmlToHyperscript(html);
 
@@ -59,7 +63,8 @@ describe('Node test', () => {
   ])
 ]`);
 
-    html = '<div><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</div>';
+    html =
+      '<div><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</div>';
 
     dom = v.htmlToHyperscript(html);
 
@@ -80,40 +85,39 @@ describe('Node test', () => {
 ]`);
   });
 
-  it('Should create a service worker file', async () => {
-    let file = '.tmp/sw.js';
+  it("Should create a service worker file", async () => {
+    let file = ".tmp/sw.js";
     await v.sw(file, {
-      name: 'Test',
+      name: "Test",
       version: packageJson.version,
-      urls: ['/', '/hello']
+      urls: ["/", "/hello"]
     });
 
     expect(fs.existsSync(file)).toBeTruthy();
-
   });
 
   // NOTE: This test will take some time between 30 and 60 seconds
-  it('Should generate icons, manifest.json and a links component', async () => {
+  it("Should generate icons, manifest.json and a links component", async () => {
     let favicons = {
-      iconsPath: '.tmp/', // Path to the generated icons
-      linksViewPath: '.tmp/', // Path to the generated links file
+      iconsPath: ".tmp/", // Path to the generated icons
+      linksViewPath: ".tmp/", // Path to the generated links file
 
       // favicons options
-      path: '/icons/', // Path for overriding default icons path. `string`
+      path: "/icons/", // Path for overriding default icons path. `string`
       appName: packageJson.name, // Your application's name. `string`
       appShortName: packageJson.name, // Your application's short_name. `string`. Optional. If not set, appName will be used. `string`
       appDescription: packageJson.description, // Your application's description. `string`
-      developerName: 'Christian César Robledo López (Masquerade Circus)', // Your (or your developer's) name. `string`
-      developerURL: 'http://masquerade-circus.net',
-      dir: 'auto',
-      lang: 'en-US',
-      background: '#fff', // Background colour for flattened icons. `string`
-      theme_color: '#fff', // Theme color user for example in Android's task switcher. `string`
+      developerName: "Christian César Robledo López (Masquerade Circus)", // Your (or your developer's) name. `string`
+      developerURL: "http://masquerade-circus.net",
+      dir: "auto",
+      lang: "en-US",
+      background: "#fff", // Background colour for flattened icons. `string`
+      theme_color: "#fff", // Theme color user for example in Android's task switcher. `string`
       appleStatusBarStyle: "black-translucent", // Style for Apple status bar: "black-translucent", "default", "black". `string`
-      display: 'standalone', // Android display: "browser" or "standalone". `string`
-      orientation: 'any', // Android orientation: "any" "portrait" or "landscape". `string`
-      scope: '/', // set of URLs that the browser considers within your app
-      start_url: '/', // Start URL when launching the application from a device. `string`
+      display: "standalone", // Android display: "browser" or "standalone". `string`
+      orientation: "any", // Android orientation: "any" "portrait" or "landscape". `string`
+      scope: "/", // set of URLs that the browser considers within your app
+      start_url: "/", // Start URL when launching the application from a device. `string`
       version: packageJson.version, // Your application's version number. `number`
       logging: false, // Print logs to console? `boolean`
       pixel_art: false, // Keeps pixels "sharp" when scaling up, for pixel art.  Only supported in offline mode.
@@ -140,24 +144,22 @@ describe('Node test', () => {
       }
     };
 
-    await v.icons('./assets/icon.png', favicons);
-    expect(fs.existsSync('.tmp/favicon.ico')).toBeTruthy();
-    expect(fs.existsSync('.tmp/links.js')).toBeTruthy();
-    expect(fs.existsSync('.tmp/manifest.json')).toBeTruthy();
-
+    await v.icons("./assets/icon.png", favicons);
+    expect(fs.existsSync(".tmp/favicon.ico")).toBeTruthy();
+    expect(fs.existsSync(".tmp/links.js")).toBeTruthy();
+    expect(fs.existsSync(".tmp/manifest.json")).toBeTruthy();
   });
 
-  it('should remove unused css', async () => {
-    let html = '<body><span>Hello world</span></body>';
+  it("should remove unused css", async () => {
+    let html = "<body><span>Hello world</span></body>";
     let css = `
 span{display:block;}
 span.hello{display: inline-block}
     `;
 
-    await v.inline.css({raw: css});
+    await v.inline.css({ raw: css });
     let cleanCss = await v.inline.uncss([html]);
 
-    expect(cleanCss).toEqual('span{display:block}');
+    expect(cleanCss).toEqual("span{display:block}");
   });
-
 });

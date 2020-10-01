@@ -1,6 +1,6 @@
-import expect from 'expect';
-import '../lib';
-import StorePlugin from '../plugins/store';
+import expect from "expect";
+import "../lib";
+import StorePlugin from "../plugins/store";
 v.usePlugin(StorePlugin);
 
 function getNewStore() {
@@ -17,7 +17,7 @@ function getNewStore() {
         state.a = state.a + payload;
       },
       changeC(state, payload) {
-        state.c = {...state.c, a: payload };
+        state.c = { ...state.c, a: payload };
       },
       changeCDirectly(state, payload) {
         state.c.a = payload;
@@ -27,7 +27,7 @@ function getNewStore() {
       pushB(context, payload) {
         return new Promise((resolve) => {
           setTimeout(() => {
-            context.commit('pushB', payload);
+            context.commit("pushB", payload);
             resolve();
           }, 1000);
         });
@@ -47,14 +47,13 @@ function getNewStore() {
 }
 
 // eslint-disable-next-line max-lines-per-function
-describe('Store slim', () => {
-
-  it('Create empty state if state is not passed', () => {
+describe("Store slim", () => {
+  it("Create empty state if state is not passed", () => {
     let store = new v.Store();
     expect(store.state).toBeDefined();
   });
 
-  it('Use deepFrozen to froze the state', () => {
+  it("Use deepFrozen to froze the state", () => {
     let store = new v.Store({
       state: {
         a: {
@@ -71,71 +70,82 @@ describe('Store slim', () => {
     expect(Object.isFrozen(store.state.a.b.c.d)).toBeTruthy();
   });
 
-  it('Throw error if you try to mutate the state directly', () => {
+  it("Throw error if you try to mutate the state directly", () => {
     let store = getNewStore();
-    expect(() => (store.state.b = 1)).toThrowError('You need to commit a mutation to change the state');
+    expect(() => (store.state.b = 1)).toThrowError(
+      "You need to commit a mutation to change the state"
+    );
   });
 
-  it('Throw error if you try to mutate a deeper property of the state directly', () => {
+  it("Throw error if you try to mutate a deeper property of the state directly", () => {
     let store = getNewStore();
-    expect(() => store.state.b.push(1)).toThrowError('Cannot add property 1, object is not extensible');
+    expect(() => store.state.b.push(1)).toThrowError(
+      "Cannot add property 1, object is not extensible"
+    );
   });
 
-  it('Throw error if you try to remove a property directly', () => {
+  it("Throw error if you try to remove a property directly", () => {
     let store = getNewStore();
-    expect(() => delete store.state.b).toThrowError('You need to commit a mutation to change the state');
+    expect(() => delete store.state.b).toThrowError(
+      "You need to commit a mutation to change the state"
+    );
   });
 
-  it('Throw error if you try to remove a deeper property directly', () => {
+  it("Throw error if you try to remove a deeper property directly", () => {
     let store = getNewStore();
-    expect(() => delete store.state.c.a).toThrowError("Cannot delete property 'a' of #<Object>");
+    expect(() => delete store.state.c.a).toThrowError(
+      "Cannot delete property 'a' of #<Object>"
+    );
   });
 
-  it('Mutate the state by commit', () => {
+  it("Mutate the state by commit", () => {
     let store = getNewStore();
     expect(store.state.a).toEqual(0);
-    store.commit('increment', 1);
+    store.commit("increment", 1);
     expect(store.state.a).toEqual(1);
 
     expect(store.state.b).toEqual([1]);
-    store.commit('deleteB');
+    store.commit("deleteB");
     expect(store.state.b).toBeUndefined();
   });
 
-  it('Throw error if you try to commit an undefined mutation', () => {
+  it("Throw error if you try to commit an undefined mutation", () => {
     let store = getNewStore();
-    expect(() => store.commit('hello')).toThrowError('The mutation "hello" does not exists.');
+    expect(() => store.commit("hello")).toThrowError(
+      'The mutation "hello" does not exists.'
+    );
   });
 
-  it('Mutate the state by dispatch', async () => {
+  it("Mutate the state by dispatch", async () => {
     let store = getNewStore();
     expect(store.state.b).toEqual([1]);
-    await store.dispatch('pushB', 2);
+    await store.dispatch("pushB", 2);
     expect(store.state.b).toEqual([1, 2]);
-
   });
 
-  it('Throw error if you try to dispatch an undefined action', () => {
+  it("Throw error if you try to dispatch an undefined action", () => {
     let store = getNewStore();
-    expect(() => store.dispatch('hello')).toThrowError('The action "hello" does not exists.');
+    expect(() => store.dispatch("hello")).toThrowError(
+      'The action "hello" does not exists.'
+    );
   });
 
-  it('Use a getter to obtain a property from the state', () => {
+  it("Use a getter to obtain a property from the state", () => {
     let store = getNewStore();
     expect(store.getters.items).toEqual([1]);
   });
 
-  it('Use a getter to obtain data using another getter', () => {
+  it("Use a getter to obtain data using another getter", () => {
     let store = getNewStore();
     expect(store.getters.length).toEqual(1);
   });
 
-  it('Fail silently if you try to get an undefined getter, getter must return undefined', () => {
+  it("Fail silently if you try to get an undefined getter, getter must return undefined", () => {
     let store = getNewStore();
     expect(store.getters.ok).toBeUndefined();
   });
 
-  it('Declare state as factory function', () => {
+  it("Declare state as factory function", () => {
     const myModule = {
       state() {
         return {
@@ -152,11 +162,10 @@ describe('Store slim', () => {
     const store1 = new v.Store(myModule);
     const store2 = new v.Store(myModule);
 
-    store1.commit('increment', 5);
-    store2.commit('increment', 3);
+    store1.commit("increment", 5);
+    store2.commit("increment", 3);
 
     expect(store1.state.count).toEqual(6);
     expect(store2.state.count).toEqual(4);
   });
-
 });

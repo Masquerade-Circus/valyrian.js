@@ -1,12 +1,12 @@
-'use strict';
+"use strict";
 
-const { DOCUMENT_MODE } = require('parse5/lib/common/html');
+const { DOCUMENT_MODE } = require("parse5/lib/common/html");
 
-const {Element, Text, Document, parseAttributes} = require('./dom');
+const { Element, Text, Document, parseAttributes } = require("./dom");
 
 exports.createDocumentFragment = function () {
   return {
-    nodeName: '#document-fragment',
+    nodeName: "#document-fragment",
     childNodes: []
   };
 };
@@ -22,8 +22,8 @@ exports.createElement = function (tagName, namespaceURI, attributes) {
 
 exports.createCommentNode = function (data) {
   return {
-    nodeName: '#comment',
-    data: data,
+    nodeName: "#comment",
+    data,
     parentNode: null
   };
 };
@@ -40,7 +40,11 @@ const appendChild = (exports.appendChild = function (parentNode, newNode) {
   newNode.parentNode = parentNode;
 });
 
-const insertBefore = (exports.insertBefore = function (parentNode, newNode, referenceNode) {
+const insertBefore = (exports.insertBefore = function (
+  parentNode,
+  newNode,
+  referenceNode
+) {
   const insertionIdx = parentNode.childNodes.indexOf(referenceNode);
 
   parentNode.childNodes.splice(insertionIdx, 0, newNode);
@@ -66,7 +70,7 @@ exports.setDocumentType = function (document, name, publicId, systemId) {
   let doctypeNode = null;
 
   for (let i = 0; i < document.childNodes.length; i++) {
-    if (document.childNodes[i].nodeName === '#documentType') {
+    if (document.childNodes[i].nodeName === "#documentType") {
       doctypeNode = document.childNodes[i];
       break;
     }
@@ -77,12 +81,12 @@ exports.setDocumentType = function (document, name, publicId, systemId) {
     doctypeNode.publicId = publicId;
     doctypeNode.systemId = systemId;
   } else {
-    let element = new Element(10, '!DOCTYPE');
-    element.nodeName = '!DOCTYPE';
+    let element = new Element(10, "!DOCTYPE");
+    element.nodeName = "!DOCTYPE";
     element.publicId = publicId;
     element.systemId = systemId;
     element.name = name;
-    element.attributes = [{nodeName: 'html', nodeValue: true}];
+    element.attributes = [{ nodeName: "html", nodeValue: true }];
 
     appendChild(document, element);
   }
@@ -109,7 +113,7 @@ exports.insertText = function (parentNode, text) {
   if (parentNode.childNodes.length) {
     const prevNode = parentNode.childNodes[parentNode.childNodes.length - 1];
 
-    if (prevNode.nodeName === '#text') {
+    if (prevNode.nodeName === "#text") {
       prevNode.value += text;
       prevNode.nodeValue += text;
       return;
@@ -120,9 +124,10 @@ exports.insertText = function (parentNode, text) {
 };
 
 exports.insertTextBefore = function (parentNode, text, referenceNode) {
-  const prevNode = parentNode.childNodes[parentNode.childNodes.indexOf(referenceNode) - 1];
+  const prevNode =
+    parentNode.childNodes[parentNode.childNodes.indexOf(referenceNode) - 1];
 
-  if (prevNode && prevNode.nodeName === '#text') {
+  if (prevNode && prevNode.nodeName === "#text") {
     prevNode.value += text;
     prevNode.nodeValue += text;
   } else {
@@ -192,15 +197,15 @@ exports.getDocumentTypeNodeSystemId = function (doctypeNode) {
 
 //Node types
 exports.isTextNode = function (node) {
-  return node.nodeName === '#text';
+  return node.nodeName === "#text";
 };
 
 exports.isCommentNode = function (node) {
-  return node.nodeName === '#comment';
+  return node.nodeName === "#comment";
 };
 
 exports.isDocumentTypeNode = function (node) {
-  return node.nodeName === '#documentType';
+  return node.nodeName === "#documentType";
 };
 
 exports.isElementNode = function (node) {

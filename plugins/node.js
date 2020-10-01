@@ -1,19 +1,18 @@
-let fs = require('fs');
-let path = require('path');
+let fs = require("fs");
+let path = require("path");
 
-let CleanCSS = require('clean-css');
-let {PurgeCSS} = require('purgecss');
-let fetch = require('node-fetch');
-let FormData = require('form-data');
+let CleanCSS = require("clean-css");
+let { PurgeCSS } = require("purgecss");
+let fetch = require("node-fetch");
+let FormData = require("form-data");
 
-let {Document, parseHtml} = require('./utils/dom');
-let treeAdapter = require('./utils/tree-adapter');
-let requestPlugin = require('./request');
+let { Document, parseHtml } = require("./utils/dom");
+let treeAdapter = require("./utils/tree-adapter");
+let requestPlugin = require("./request");
 
 global.fetch = fetch;
 global.FormData = FormData;
 global.document = new Document();
-
 
 let errorHandler = (resolve, reject) => (err) => {
   if (err) {
@@ -24,28 +23,29 @@ let errorHandler = (resolve, reject) => (err) => {
 };
 
 function fileMethodFactory() {
-  let prop = '';
+  let prop = "";
   return function (file) {
     if (!file) {
       return prop;
     }
 
-    let contents = '';
-    if (typeof file === 'string') {
-      contents = fs.readFileSync(file, 'utf8');
+    let contents = "";
+    if (typeof file === "string") {
+      contents = fs.readFileSync(file, "utf8");
     }
 
-    if (typeof file === 'object' && 'raw' in file) {
+    if (typeof file === "object" && "raw" in file) {
       contents = file.raw;
     }
 
-    return prop += contents;
+    prop += contents;
+    return prop;
   };
 }
 
 function inline(...args) {
   return args.map((item) => {
-    let ext = item.split('.').pop();
+    let ext = item.split(".").pop();
     if (!inline[ext]) {
       inline[ext] = fileMethodFactory();
     }
@@ -57,7 +57,7 @@ inline.css = fileMethodFactory();
 inline.js = fileMethodFactory();
 
 inline.uncss = (function () {
-  let prop = '';
+  let prop = "";
   return function (renderedHtml, options = {}) {
     if (!renderedHtml) {
       return prop;
@@ -78,19 +78,20 @@ inline.uncss = (function () {
       let contents = html.map((item) => {
         return {
           raw: item,
-          extension: 'html'
+          extension: "html"
         };
       });
 
       let purgecss = new PurgeCSS();
       let output = await purgecss.purge({
         content: contents,
-        css: [{raw: opt.raw}],
+        css: [{ raw: opt.raw }],
         fontFace: true,
         keyframes: true,
         variables: true,
         whitelistPatterns: opt.ignore,
-        defaultExtractor: (content) => content.match(/[A-Za-z0-9-_/:@]*[A-Za-z0-9-_/]+/g) || [],
+        defaultExtractor: (content) =>
+          content.match(/[A-Za-z0-9-_/:@]*[A-Za-z0-9-_/]+/g) || [],
         ...opt.purgecssOptions
       });
 
@@ -103,14 +104,14 @@ inline.uncss = (function () {
         level: {
           1: {
             // rounds pixel values to `N` decimal places; `false` disables rounding; defaults to `false`
-            roundingPrecision: 'all=3',
-            specialComments: 'none' // denotes a number of /*! ... */ comments preserved; defaults to `all`
+            roundingPrecision: "all=3",
+            specialComments: "none" // denotes a number of /*! ... */ comments preserved; defaults to `all`
           },
           2: {
             restructureRules: true // controls rule restructuring; defaults to false
           }
         },
-        compatibility: 'ie11',
+        compatibility: "ie11",
         ...opt.cleanCssOptions
       }).minify(prop).styles;
 
@@ -119,38 +120,38 @@ inline.uncss = (function () {
 
     return asyncMethod();
   };
-}());
+})();
 
 function sw(file, options = {}) {
-  let swfiletemplate = path.resolve(__dirname, './node.sw.tpl.js');
-  let swTpl = fs.readFileSync(swfiletemplate, 'utf8');
+  let swfiletemplate = path.resolve(__dirname, "./node.sw.tpl.js");
+  let swTpl = fs.readFileSync(swfiletemplate, "utf8");
   let opt = Object.assign(
     {
-      version: 'v1::',
-      name: 'Valyrian.js',
-      urls: ['/'],
+      version: "v1::",
+      name: "Valyrian.js",
+      urls: ["/"],
       debug: false
     },
     options
   );
   let contents = swTpl
-    .replace('v1::', 'v' + opt.version + '::')
-    .replace('Valyrian.js', opt.name)
+    .replace("v1::", "v" + opt.version + "::")
+    .replace("Valyrian.js", opt.name)
     .replace("['/']", '["' + opt.urls.join('","') + '"]');
 
   if (!opt.debug) {
-    contents = contents.replace('console.log', '() => {}');
+    contents = contents.replace("console.log", "() => {}");
   }
 
   return new Promise((resolve, reject) => {
-    fs.writeFile(file, contents, 'utf8', errorHandler(resolve, reject));
+    fs.writeFile(file, contents, "utf8", errorHandler(resolve, reject));
   });
 }
 
 function parseDom(childNodes, depth = 1) {
-  let spaces = '';
+  let spaces = "";
   for (let i = 0; i < depth; i++) {
-    spaces += '  ';
+    spaces += "  ";
   }
 
   return childNodes
@@ -170,10 +171,10 @@ function parseDom(childNodes, depth = 1) {
           }
           str += JSON.stringify(attrs);
         } else {
-          str += '{}';
+          str += "{}";
         }
 
-        str += ', [';
+        str += ", [";
         if (item.childNodes && item.childNodes.length > 0) {
           str += `${parseDom(item.childNodes, depth + 1)}\n${spaces}`;
         }
@@ -182,23 +183,23 @@ function parseDom(childNodes, depth = 1) {
         return str;
       }
     })
-    .join(',');
+    .join(",");
 }
 
 function htmlToHyperscript(html) {
-  return `[${parseDom(parseHtml(html, {treeAdapter}))}\n]`;
+  return `[${parseDom(parseHtml(html, { treeAdapter }))}\n]`;
 }
 
 function icons(source, configuration = {}) {
-  let favicons = require('favicons'),
+  let favicons = require("favicons"),
     options = Object.assign({}, icons.options, configuration);
 
   if (options.iconsPath) {
-    options.iconsPath = options.iconsPath.replace(/\/$/gi, '') + '/';
+    options.iconsPath = options.iconsPath.replace(/\/$/gi, "") + "/";
   }
 
   if (options.linksViewPath) {
-    options.linksViewPath = options.linksViewPath.replace(/\/$/gi, '') + '/';
+    options.linksViewPath = options.linksViewPath.replace(/\/$/gi, "") + "/";
   }
 
   async function processResponse(response, options) {
@@ -232,7 +233,7 @@ function icons(source, configuration = {}) {
     if (options.linksViewPath) {
       let html = `
 function Links(){
-  return ${htmlToHyperscript(response.html.join(''))};
+  return ${htmlToHyperscript(response.html.join(""))};
 }
 
 Links.default = Links;
@@ -241,7 +242,11 @@ module.exports = Links;
 
       promises.push(
         new Promise((resolve, reject) => {
-          fs.writeFile(`${options.linksViewPath}/links.js`, html, errorHandler(resolve, reject));
+          fs.writeFile(
+            `${options.linksViewPath}/links.js`,
+            html,
+            errorHandler(resolve, reject)
+          );
         })
       );
     }
@@ -252,9 +257,9 @@ module.exports = Links;
   return new Promise((resolve, reject) => {
     favicons(source, options, (err, response) => {
       if (err) {
-        process.stdout.write(err.status + '\n'); // HTTP error code (e.g. `200`) or `null`
-        process.stdout.write(err.name + '\n'); // Error name e.g. "API Error"
-        process.stdout.write(err.message + '\n'); // Error description e.g. "An unknown error has occurred"
+        process.stdout.write(err.status + "\n"); // HTTP error code (e.g. `200`) or `null`
+        process.stdout.write(err.name + "\n"); // Error name e.g. "API Error"
+        process.stdout.write(err.message + "\n"); // Error description e.g. "An unknown error has occurred"
 
         return reject(err);
       }
@@ -273,19 +278,19 @@ icons.options = {
   linksViewPath: null, // Path to the generated links file
 
   // favicons options
-  path: '', // Path for overriding default icons path. `string`
+  path: "", // Path for overriding default icons path. `string`
   appName: null, // Your application's name. `string`
   appDescription: null, // Your application's description. `string`
   developerName: null, // Your (or your developer's) name. `string`
   developerURL: null,
-  dir: 'auto',
-  lang: 'en-US',
-  background: '#fff', // Background colour for flattened icons. `string`
-  theme_color: '#fff',
-  display: 'standalone', // Android display: "browser" or "standalone". `string`
-  orientation: 'any', // Android orientation: "any" "portrait" or "landscape". `string`
-  start_url: '/', // Android start application's URL. `string`
-  version: '1.0', // Your application's version number. `number`
+  dir: "auto",
+  lang: "en-US",
+  background: "#fff", // Background colour for flattened icons. `string`
+  theme_color: "#fff",
+  display: "standalone", // Android display: "browser" or "standalone". `string`
+  orientation: "any", // Android orientation: "any" "portrait" or "landscape". `string`
+  start_url: "/", // Android start application's URL. `string`
+  version: "1.0", // Your application's version number. `number`
   logging: false, // Print logs to console? `boolean`
   icons: {
     android: true, // Create Android homescreen icon. `boolean`

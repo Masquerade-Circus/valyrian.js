@@ -31,7 +31,6 @@
   },
   "scripts": {
     "dev:source": "cross-env NODE_ENV=development node rollupSource.js",
-    "dev:scratchpad": "cross-env NODE_ENV=development nodemon -w ./test -w ./lib -w ./plugins -w ./scratchpad.js --exec 'mocha --timeout 10000 --slow 0 --require @babel/register --require esm \"scratchpad.js\"'",
     "dev:test": "cross-env NODE_ENV=development nodemon -w ./test -w ./lib -w ./plugins --exec 'mocha --bail --timeout 10000 --slow 0 --require @babel/register \"test/**/*_test.js\"'",
     "dev:test:nyc": "cross-env NODE_ENV=development nodemon -w ./test -w ./lib -w ./plugins --exec 'nyc --reporter=text --reporter=lcov mocha --timeout 10000 --slow 0 --require @babel/register \"test/**/*_test.js\"'",
     "build": "yarn build:source && yarn remark",
