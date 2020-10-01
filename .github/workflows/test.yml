@@ -1,4 +1,4 @@
-name: Master
+name: Test
 
 on:
   push:
@@ -20,7 +20,7 @@ jobs:
       name: 'Test'
       with: 
         cmd: test  
-    - if: github.event_name == 'push' && github.ref == 'master'
+    - if: github.event_name == 'push' && github.ref == 'refs/heads/master' && success()
       name: 'Coverage'
       uses: Borales/actions-yarn@v2.3.0
       with: 
