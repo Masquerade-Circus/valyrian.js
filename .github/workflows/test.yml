@@ -8,14 +8,19 @@ on:
 
 jobs:
   test:
+    name: 'Test'
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: Borales/actions-yarn@v2.3.0
-    - with: 
+      name: 'Install'
+      with: 
         cmd: install
-    - with: 
+    - uses: Borales/actions-yarn@v2.3.0
+      name: 'Test'
+      with: 
         cmd: test  
     - if: github.event_name == 'push' && github.ref == 'master' && success()
+      uses: Borales/actions-yarn@v2.3.0
       with: 
         cmd: coverage 
