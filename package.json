@@ -37,7 +37,7 @@
     "build": "yarn build:source && yarn remark",
     "build:source": "cross-env NODE_ENV=production node rollupSource.js",
     "test": "cross-env NODE_ENV=development nyc mocha --timeout 10000 --require @babel/register \"test/**/*_test.js\"",
-    "coverage": "nyc report --reporter=text-lcov",
+    "coverage": "nyc report --reporter=lcov",
     "remark": "remark . -o",
     "commit": "git add . && git-cz",
     "release": "release-it --verbose",
