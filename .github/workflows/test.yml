@@ -21,6 +21,11 @@ jobs:
       with: 
         cmd: test  
     - if: github.event_name == 'push' && github.ref == 'refs/heads/master' && success()
+      uses: Borales/actions-yarn@v2.3.0
+      name: 'Coverage report'
+      with: 
+        cmd: coverage
+    - if: github.event_name == 'push' && github.ref == 'refs/heads/master' && success()
       name: Coveralls
       uses: coverallsapp/github-action@master
       with:
