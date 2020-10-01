@@ -20,7 +20,8 @@ jobs:
       name: 'Test'
       with: 
         cmd: test  
-    - if: github.event_name == 'push' && github.ref == 'master' && success()
+    - if: github.event_name == 'push' && github.ref == 'master'
+      name: 'Coverage'
       uses: Borales/actions-yarn@v2.3.0
       with: 
         cmd: coverage 
