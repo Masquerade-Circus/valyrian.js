@@ -51,9 +51,7 @@ describe("Hyperscript", () => {
   });
 
   it("should create a div element with mixed array of children and comma separated children", () => {
-    expect(
-      v("div", null, ["Hello ", "world"], v("span", null, "Whats up"))
-    ).toEqual({
+    expect(v("div", null, ["Hello ", "world"], v("span", null, "Whats up"))).toEqual({
       name: "div",
       props: {},
       children: [
@@ -68,9 +66,7 @@ describe("Hyperscript", () => {
   });
 
   it("should create a div element with mixed nested arrays of children ", () => {
-    expect(
-      v("div", null, ["Hello ", "world", ["Only", ["for", "this", ["time"]]]])
-    ).toEqual({
+    expect(v("div", null, ["Hello ", "world", ["Only", ["for", "this", ["time"]]]])).toEqual({
       name: "div",
       props: {},
       children: [["Hello ", "world", ["Only", ["for", "this", ["time"]]]]]
@@ -89,32 +85,26 @@ describe("Hyperscript", () => {
   });
 
   it("should create a div element from string", () => {
-    expect(v.trust('<div id="unique" class="unique">Hola mundo</div>')).toEqual(
-      [
-        {
-          name: "div",
-          props: {
-            id: "unique",
-            class: "unique"
-          },
-          children: [{ dom: expect.anything() }],
-          dom: expect.anything()
-        }
-      ]
-    );
+    expect(v.trust('<div id="unique" class="unique">Hola mundo</div>')).toEqual([
+      {
+        name: "div",
+        props: {
+          id: "unique",
+          class: "unique"
+        },
+        children: [{ dom: expect.anything() }],
+        dom: expect.anything()
+      }
+    ]);
   });
 
   it("should handle different types of data", () => {
     let date = new Date();
 
-    expect(
-      v("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]])
-    ).toEqual({
+    expect(v("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]])).toEqual({
       name: "div",
       props: {},
-      children: [
-        [null, "Hello", undefined, 1, date, { hello: "world" }, ["Hello"]]
-      ]
+      children: [[null, "Hello", undefined, 1, date, { hello: "world" }, ["Hello"]]]
     });
   });
 });

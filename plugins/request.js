@@ -1,60 +1,84 @@
-let plugin = function (v) {
-  let Request = function (baseUrl = "", options = {}) {
-    let url = baseUrl.replace(/\/$/gi, "").trim(),
-      opts = Object.assign(
-        {
-          methods: ["get", "post", "put", "patch", "delete"]
-        },
-        options
-      ),
-      parseUrl;
+function serialize(obj, prefix) {
+  return Object.keys(obj)
+    .map((p) => {
+      let k = prefix ? `${prefix}[${p}]` : p;
+      return typeof obj[p] === "object" ? serialize(obj[p], k) : `${encodeURIComponent(k)}=${encodeURIComponent(obj[p])}`;
+    })
+    .join("&");
+}
 
-    function serialize(obj, prefix) {
-      let e = encodeURIComponent;
-      return Object.keys(obj)
-        .map((p) => {
-          let k = prefix ? prefix + "[" + p + "]" : p;
+function parseUrl(url, options = {}) {
+  let u = /^https?/gi.test(url) ? url : options.urls.base + url;
 
-          if (typeof obj[p] === "object") {
-            return serialize(obj[p], k);
-          }
+  let parts = u.split("?");
+  u = parts[0]
+    .trim()
+    .replace(/^\/\//, "/")
+    .replace(/\/$/, "")
+    .trim();
 
-          return e(k) + "=" + e(obj[p]);
-        })
-        .join("&");
+  if (parts[1]) {
+    u += `?${parts[1]}`;
+  }
+
+  if (v.isNode && typeof options.urls.node === "string") {
+    options.urls.node = options.urls.node;
+
+    if (typeof options.urls.api === "string") {
+      options.urls.api = options.urls.api.replace(/\/$/gi, "").trim();
+      u = u.replace(options.urls.api, options.urls.node);
     }
 
-    async function request(method, url, data, options = {}) {
-      let opts = Object.assign(
-        {
-          method: method.toLowerCase(),
-          headers: {},
-          resolveWithFullResponse: false
-        },
-        request.options,
-        options
-      );
+    if (!/^https?/gi.test(u)) {
+      u = options.urls.node + u;
+    }
+  }
 
-      if (!opts.headers.Accept) {
-        opts.headers.Accept = "application/json";
+  return u;
+}
+
+let plugin = function(v) {
+  function Request(baseUrl = "", options = {}) {
+    let url = baseUrl.replace(/\/$/gi, "").trim();
+    options.urls = options.urls || {};
+    let opts = {
+      methods: ["get", "post", "put", "patch", "delete"],
+      ...options,
+      urls: {
+        node: options.urls.node || null,
+        api: options.urls.api || null,
+        base: options.urls.base ? options.urls.base + url : url
+      }
+    };
+
+    async function request(method, url, data, options = {}) {
+      let innerOptions = {
+        method: method.toLowerCase(),
+        headers: {},
+        resolveWithFullResponse: false,
+        ...opts,
+        ...options
+      };
+
+      if (!innerOptions.headers.Accept) {
+        innerOptions.headers.Accept = "application/json";
       }
 
-      let acceptType = opts.headers.Accept;
-      let contentType =
-        opts.headers["Content-Type"] || opts.headers["content-type"] || "";
+      let acceptType = innerOptions.headers.Accept;
+      let contentType = innerOptions.headers["Content-Type"] || innerOptions.headers["content-type"] || "";
 
-      if (opts.methods.indexOf(method) === -1) {
+      if (innerOptions.methods.indexOf(method) === -1) {
         throw new Error("Method not allowed");
       }
 
       if (data) {
-        if (opts.method === "get" && typeof data === "object") {
-          url += "?" + serialize(data);
+        if (innerOptions.method === "get" && typeof data === "object") {
+          url += `?${serialize(data)}`;
         }
 
-        if (opts.method !== "get") {
+        if (innerOptions.method !== "get") {
           if (/json/gi.test(contentType)) {
-            opts.body = JSON.stringify(data);
+            innerOptions.body = JSON.stringify(data);
           } else {
             let formData;
             if (data instanceof FormData) {
@@ -65,12 +89,12 @@ let plugin = function (v) {
                 formData.append(i, data[i]);
               }
             }
-            opts.body = formData;
+            innerOptions.body = formData;
           }
         }
       }
 
-      let response = await fetch(parseUrl(url), opts);
+      let response = await fetch(parseUrl(url, opts), innerOptions);
 
       if (!response.ok) {
         let err = new Error(response.statusText);
@@ -78,12 +102,12 @@ let plugin = function (v) {
         throw err;
       }
 
-      if (opts.resolveWithFullResponse) {
+      if (innerOptions.resolveWithFullResponse) {
         return response;
       }
 
       if (/text/gi.test(acceptType)) {
-        response.text();
+        return response.text();
       }
 
       if (/json/gi.test(acceptType)) {
@@ -93,45 +117,46 @@ let plugin = function (v) {
       return response;
     }
 
-    parseUrl = function (url) {
-      let u = /^https?/gi.test(url)
-        ? url
-        : (request.urls.base + url).trim().replace(/^\/\//gi, "/").trim();
+    request.new = (baseUrl, options) => Request(baseUrl, { ...opts, ...options });
 
-      if (v.isNode && typeof request.urls.node === "string") {
-        request.urls.node = request.urls.node.replace(/\/$/gi, "").trim();
+    request.options = (key, value) => {
+      let result = opts;
 
-        if (typeof request.urls.api === "string") {
-          request.urls.api = request.urls.api.replace(/\/$/gi, "").trim();
-          u = u.replace(request.urls.api, request.urls.node);
-        }
-
-        if (!/^https?/gi.test(u)) {
-          u = request.urls.node + u;
-        }
+      if (typeof key === "undefined") {
+        return result;
       }
 
-      return u;
+      let parsed = key.split(".");
+      let next;
+
+      while (parsed.length) {
+        next = parsed.shift();
+
+        let nextIsArray = next.indexOf("[") > -1;
+        if (nextIsArray) {
+          let idx = next.replace(/\D/gi, "");
+          next = next.split("[")[0];
+          parsed.unshift(idx);
+        }
+
+        if (parsed.length > 0 && typeof result[next] !== "object") {
+          result[next] = nextIsArray ? [] : {};
+        }
+
+        if (parsed.length === 0 && typeof value !== "undefined") {
+          result[next] = value;
+        }
+
+        result = result[next];
+      }
+
+      return result;
     };
 
-    request.new = function (baseUrl, options) {
-      return Request(baseUrl, options);
-    };
-
-    request.urls = {};
-    request.urls.api = undefined;
-    request.urls.node = undefined;
-    request.urls.base = url;
-    request.options = opts;
-
-    opts.methods.forEach(
-      (method) =>
-        (request[method] = (url, data, options) =>
-          request(method, url, data, options))
-    );
+    opts.methods.forEach((method) => (request[method] = (url, data, options) => request(method, url, data, options)));
 
     return request;
-  };
+  }
 
   v.request = Request();
 };

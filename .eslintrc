@@ -26,10 +26,7 @@
     "no-with": 2,
     "semi-spacing": 2,
     "space-before-blocks": 2,
-    "space-before-function-paren": [
-      2,
-      { "anonymous": "always", "named": "never" }
-    ],
+    "space-before-function-paren": [0, { "anonymous": "always", "named": "always" }],
     "space-in-parens": 0,
     "space-infix-ops": 2,
     "space-unary-ops": 2,
@@ -59,11 +56,8 @@
     "sonarjs/no-duplicate-string": 0,
     "sonarjs/prefer-object-literal": 0,
     "sonarjs/no-identical-functions": 0,
-    "max-lines-per-function": [
-      "warn",
-      { "max": 300, "skipBlankLines": true, "skipComments": true }
-    ],
-    "max-len": ["error", 165],
+    "max-lines-per-function": ["warn", { "max": 300, "skipBlankLines": true, "skipComments": true }],
+    "max-len": ["error", 220],
     "max-statements-per-line": ["error", { "max": 3 }]
   },
   "env": {

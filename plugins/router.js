@@ -1,4 +1,4 @@
-let plugin = function (v) {
+let plugin = function(v) {
   function flat(array) {
     return Array.isArray(array) ? array.flat(Infinity) : [array];
   }
@@ -118,7 +118,7 @@ let plugin = function (v) {
     return item;
   }
 
-  v.Router = function () {
+  v.Router = function() {
     const router = {
       paths: [],
       get(path, ...args) {
@@ -197,7 +197,7 @@ let plugin = function (v) {
     return v.mount.apply(v, args);
   }
 
-  v.routes = function (elementContainer, router) {
+  v.routes = function(elementContainer, router) {
     if (elementContainer && router) {
       mainRouter = router;
       RoutesContainer = elementContainer;
@@ -218,7 +218,7 @@ let plugin = function (v) {
   v.routes.path = "";
   v.routes.matches = [];
 
-  v.routes.go = function (...args) {
+  v.routes.go = function(...args) {
     let parentComponent;
     let url;
 
@@ -242,7 +242,7 @@ let plugin = function (v) {
     return runRoute(parentComponent, url, args);
   };
 
-  v.routes.get = function () {
+  v.routes.get = function() {
     let routes = [];
     mainRouter.paths.forEach((path) => {
       if (path.method === "get") {
@@ -257,7 +257,10 @@ let plugin = function (v) {
     vnode.props.onclick = (e) => {
       if (typeof url === "string" && url.length > 0) {
         if (url.charAt(0) !== "/") {
-          let current = v.routes.current.split("?", 2).shift().split("/");
+          let current = v.routes.current
+            .split("?", 2)
+            .shift()
+            .split("/");
           current.pop();
           url = `${current.join("/")}/${url}`;
         }
