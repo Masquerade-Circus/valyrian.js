@@ -14,7 +14,8 @@
   "files": [
     "dist",
     "lib",
-    "plugins"
+    "plugins",
+    "register.js"
   ],
   "keywords": [
     "valyrian.js",
