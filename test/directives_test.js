@@ -1,8 +1,8 @@
-import expect from "expect";
-import faker from "faker";
-import dayjs from "dayjs";
-import "../lib";
-import nodePlugin from "../plugins/node";
+const expect = require("expect");
+const faker = require("faker");
+const dayjs = require("dayjs");
+require("../lib");
+const nodePlugin = require("../plugins/node");
 v.usePlugin(nodePlugin);
 
 // eslint-disable-next-line max-lines-per-function
@@ -13,14 +13,14 @@ describe("Directives", () => {
     it("should be able create a directive", () => {
       let expected = "Hello world";
       v.directive("test", (value) => (result = `Hello ${value}`));
-      v.mount("div", () => <div v-test="world"></div>);
+      v.mount("div", () => <div v-test="world" />);
       expect(result).toEqual(expected);
     });
 
     it("should not be able overwrite a directive", () => {
       let expected = "Hello world";
       v.directive("test", () => (result = "Something else"));
-      v.mount("div", () => <div v-test="world"></div>);
+      v.mount("div", () => <div v-test="world" />);
       expect(result).toEqual(expected);
     });
 
@@ -33,7 +33,7 @@ describe("Directives", () => {
         oldVnode = oldvnode;
       });
 
-      v.mount("div", () => <div v-test2></div>);
+      v.mount("div", () => <div v-test2 />);
       v.update();
 
       expect(newVnode).toEqual({
@@ -65,7 +65,7 @@ describe("Directives", () => {
           vnode.children = ["Second render, vnode updated"];
         }
       });
-      let component = () => <div v-create></div>;
+      let component = () => <div v-create />;
 
       let result = v.mount("body", component);
       expect(result).toEqual("<div>First render, vnode created</div>");
@@ -101,15 +101,13 @@ describe("Directives", () => {
         // Try to change x property
         vnode.props.x = "property changed";
       });
-      let result = v.mount("div", () => <div u="u" v-test4 x="x"></div>);
+      let result = v.mount("div", () => <div u="u" v-test4 x="x" />);
       expect(result).toEqual('<div u="u" x="property changed"></div>');
       v.unMount();
 
       update = true;
-      let result2 = v.mount("div", () => <div u="u" v-test4 x="x"></div>);
-      expect(result2).toEqual(
-        '<div u="property changed" x="property changed"></div>'
-      );
+      let result2 = v.mount("div", () => <div u="u" v-test4 x="x" />);
+      expect(result2).toEqual('<div u="property changed" x="property changed"></div>');
     });
 
     /**
@@ -121,17 +119,11 @@ describe("Directives", () => {
 
       let formatDate = (value) => dayjs(value).format("MMMM D, YYYY");
 
-      v.directive(
-        "date-inline",
-        (date, vnode) => (vnode.children = formatDate(date))
-      );
-      v.directive(
-        "date",
-        (v, vnode) => (vnode.children = formatDate(vnode.children[0]))
-      );
+      v.directive("date-inline", (date, vnode) => (vnode.children = formatDate(date)));
+      v.directive("date", (v, vnode) => (vnode.children = formatDate(vnode.children[0])));
 
       let date = "08-16-2018";
-      let result = v.mount("div", () => <div v-date-inline={date}></div>);
+      let result = v.mount("div", () => <div v-date-inline={date} />);
       expect(result).toEqual(expected);
 
       result = v.mount("div", () => <div v-date>{date}</div>);
@@ -151,8 +143,7 @@ describe("Directives", () => {
           result = typeof test === "function" ? test(value) : value === test;
 
           if (result) {
-            vnode.children =
-              typeof handler === "function" ? handler(value) : handler;
+            vnode.children = typeof handler === "function" ? handler(value) : handler;
             return;
           }
         }
@@ -208,13 +199,8 @@ describe("Directives", () => {
     describe("v-for", () => {
       it("should create 10 list items", () => {
         let items = faker.lorem.words(10).split(" ");
-        let expected =
-          "<ul>" +
-          items.reduce((str, word) => str + `<li>${word}</li>`, "") +
-          "</ul>";
-        let result = v.mount("body", () => (
-          <ul v-for={items}>{(word) => <li>{word}</li>}</ul>
-        ));
+        let expected = "<ul>" + items.reduce((str, word) => str + `<li>${word}</li>`, "") + "</ul>";
+        let result = v.mount("body", () => <ul v-for={items}>{(word) => <li>{word}</li>}</ul>);
 
         expect(result).toEqual(expected);
       });
@@ -222,10 +208,7 @@ describe("Directives", () => {
       it("should create 10 list items getting its index", () => {
         let items = faker.lorem.words(10).split(" ");
         let i = 0;
-        let expected =
-          "<ul>" +
-          items.reduce((str, word) => str + `<li>${i++} - ${word}</li>`, "") +
-          "</ul>";
+        let expected = "<ul>" + items.reduce((str, word) => str + `<li>${i++} - ${word}</li>`, "") + "</ul>";
         let result = v.mount("body", () => (
           <ul v-for={items}>
             {(word, i) => (
@@ -355,8 +338,7 @@ describe("Directives", () => {
 
       it("should hide a vnode if false", () => {
         let value = false;
-        let expected =
-          '<div><span style="display: none;">Hello world</span></div>';
+        let expected = '<div><span style="display: none;">Hello world</span></div>';
         let result = v.mount("div", () => (
           <div>
             <span v-show={value}>Hello world</span>
@@ -376,7 +358,7 @@ describe("Directives", () => {
           world: true
         };
 
-        let result = v.mount("body", () => <div v-class={classes}></div>);
+        let result = v.mount("body", () => <div v-class={classes} />);
         expect(result).toEqual('<div class="world"></div>');
 
         classes.world = false;
@@ -389,9 +371,7 @@ describe("Directives", () => {
           world: true
         };
 
-        let result = v.mount("body", () => (
-          <div class="hello" v-class={classes}></div>
-        ));
+        let result = v.mount("body", () => <div class="hello" v-class={classes} />);
         expect(result).toEqual('<div class="hello world"></div>');
 
         classes.world = false;
@@ -423,11 +403,11 @@ describe("Directives", () => {
     /**
      * The v-html directive is used to direct raw html render. It is just a helper directive
      * and it does not improve performance because Valyrian.js is already very fast with vnodes.
-     * We can use this directive to replace the v.trust use like in this test
+     * We can use this directive to replace the trust use like in this test
      */
     describe("v-html", () => {
       it("should handle direct html render", () => {
-        // Using v.trust example
+        // Using trust example
         let Component = () => <div>{v.trust("<div>Hello world</div>")}</div>;
         let result = v.mount("body", Component);
 
@@ -437,7 +417,7 @@ describe("Directives", () => {
         v.unMount();
 
         // Using v-html directive
-        let Component2 = () => <div v-html="<div>Hello world</div>"></div>;
+        let Component2 = () => <div v-html="<div>Hello world</div>" />;
         let result2 = v.mount("body", Component2);
 
         expect(result2).toEqual("<div><div>Hello world</div></div>");
@@ -457,9 +437,7 @@ describe("Directives", () => {
       );
 
       let result = v.mount("body", component);
-      expect(result).toEqual(
-        "<div><span>1</span><span>2</span><span>3</span><span>4</span></div>"
-      );
+      expect(result).toEqual("<div><span>1</span><span>2</span><span>3</span><span>4</span></div>");
 
       show = false;
       let result2 = v.update();
@@ -474,14 +452,7 @@ describe("Directives", () => {
   describe("reserved word data", () => {
     it("should not render an attribute", () => {
       let data = { hello: "world" };
-      let Component = () => (
-        <div
-          data={data}
-          onbeforeupdate={(oldVnode, newVnode) =>
-            oldVnode.props.data.hello !== newVnode.props.data.hello
-          }
-        ></div>
-      );
+      let Component = () => <div data={data} onbeforeupdate={(oldVnode, newVnode) => oldVnode.props.data.hello !== newVnode.props.data.hello} />;
 
       let result = v.mount("body", Component);
       expect(result).toEqual("<div></div>");

@@ -1,18 +1,25 @@
 let fs = require("fs");
 let path = require("path");
 
-let CleanCSS = require("clean-css");
 let { PurgeCSS } = require("purgecss");
 let fetch = require("node-fetch");
 let FormData = require("form-data");
-
-let { Document, parseHtml } = require("./utils/dom");
 let treeAdapter = require("./utils/tree-adapter");
 let requestPlugin = require("./request");
 
+let rollup = require("rollup");
+let commonjs = require("@rollup/plugin-commonjs");
+let { nodeResolve } = require("@rollup/plugin-node-resolve");
+let includepaths = require("rollup-plugin-includepaths");
+let buble = require("@rollup/plugin-buble");
+let json = require("@rollup/plugin-json");
+let { terser } = require("rollup-plugin-terser");
+let sourcemaps = require("rollup-plugin-sourcemaps");
+let csso = require("csso");
+
 global.fetch = fetch;
 global.FormData = FormData;
-global.document = new Document();
+global.document = treeAdapter.createDocument();
 
 let errorHandler = (resolve, reject) => (err) => {
   if (err) {
@@ -23,56 +30,116 @@ let errorHandler = (resolve, reject) => (err) => {
 };
 
 function fileMethodFactory() {
-  let prop = "";
-  return function (file) {
+  let prop = [];
+  return function(file) {
     if (!file) {
       return prop;
     }
 
-    let contents = "";
-    if (typeof file === "string") {
-      contents = fs.readFileSync(file, "utf8");
-    }
+    let asyncMethod = async () => {
+      let contents = "";
+      let useSourceMap = /(development|test)/gi.test(process.env.NODE_ENV || "");
+      if (typeof file === "string") {
+        let ext = file.split(".").pop();
+        if (/(js|jsx|mjs|ts|tsx)/.test(ext)) {
+          let inputOptions = {
+            input: file,
+            plugins: [
+              includepaths({ paths: [process.cwd()] }),
+              nodeResolve({
+                mainFields: ["browser", "jsnext", "module", "main"],
+                browser: true
+              }),
+              json(),
+              buble({
+                jsx: "v",
+                transforms: { asyncAwait: false },
+                objectAssign: "Object.assign",
+                target: { chrome: 70, firefox: 60, safari: 10, node: "8.10" }
+              }),
+              commonjs({
+                include: ["./node_modules/**", "./**"],
+                sourceMap: useSourceMap
+              }),
+              terser({ warnings: "verbose" })
+            ]
+          };
 
-    if (typeof file === "object" && "raw" in file) {
-      contents = file.raw;
-    }
+          if (useSourceMap) {
+            inputOptions.plugins.push(sourcemaps());
+          }
 
-    prop += contents;
-    return prop;
+          let outputOptions = {
+            format: "iife",
+            sourcemap: useSourceMap,
+            compact: true
+          };
+
+          const bundle = await rollup.rollup(inputOptions);
+
+          const { output } = await bundle.generate(outputOptions);
+
+          for (const chunkOrAsset of output) {
+            if (chunkOrAsset.type === "chunk") {
+              let mapBase64 = Buffer.from(chunkOrAsset.map.toString()).toString("base64");
+              let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
+              contents = { raw: chunkOrAsset.code, map: suffix, file };
+            }
+          }
+        } else if (/(css|scss|styl)/.test(ext)) {
+          let content = fs.readFileSync(file, "utf8");
+
+          let { css, map } = csso.minify(content, {
+            filename: file, // will be added to source map as reference to source file
+            sourceMap: true // generate source map
+          });
+
+          let suffix = "";
+          let inputMap = content.match(/\/\*# sourceMappingURL=(\S+)\s*\*\/\s*$/);
+          if (inputMap) {
+            map.applySourceMap(new SourceMapConsumer(inputMap[1]), inputFile);
+          }
+
+          let mapBase64 = Buffer.from(map.toString()).toString("base64");
+          suffix = `/*# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64} */`;
+
+          contents = { raw: css, map: suffix, file };
+        } else {
+          contents = { raw: fs.readFileSync(file, "utf8"), map: "", file };
+        }
+      } else if (typeof file === "object" && "raw" in file) {
+        contents = { map: "", ...file };
+      }
+
+      prop.push(contents);
+      return prop;
+    };
+
+    return asyncMethod();
   };
 }
 
-function inline(...args) {
-  return args.map((item) => {
+async function inline(...args) {
+  for (let item of args) {
     let ext = item.split(".").pop();
     if (!inline[ext]) {
       inline[ext] = fileMethodFactory();
     }
-    return inline[ext](item);
-  });
+    await inline[ext](item);
+  }
 }
 
 inline.css = fileMethodFactory();
 inline.js = fileMethodFactory();
 
-inline.uncss = (function () {
+inline.uncss = (function() {
   let prop = "";
-  return function (renderedHtml, options = {}) {
+  return function(renderedHtml, options = {}) {
     if (!renderedHtml) {
       return prop;
     }
 
     let asyncMethod = async () => {
-      let opt = {
-        minify: true,
-        purgecssOptions: {},
-        cleanCssOptions: {},
-        ...options
-      };
-
-      opt.raw = inline.css();
-
       let html = await Promise.all(renderedHtml);
 
       let contents = html.map((item) => {
@@ -83,37 +150,25 @@ inline.uncss = (function () {
       });
 
       let purgecss = new PurgeCSS();
+      let css = inline
+        .css()
+        .map((item) => item.raw)
+        .join("");
+
       let output = await purgecss.purge({
         content: contents,
-        css: [{ raw: opt.raw }],
+        css: [{ raw: css }],
         fontFace: true,
         keyframes: true,
         variables: true,
-        whitelistPatterns: opt.ignore,
-        defaultExtractor: (content) =>
-          content.match(/[A-Za-z0-9-_/:@]*[A-Za-z0-9-_/]+/g) || [],
-        ...opt.purgecssOptions
+        defaultExtractor: (content) => content.match(/[A-Za-z0-9-_/:@]*[A-Za-z0-9-_/:@/]+/g) || [],
+        ...options
       });
 
-      prop = output[0].css;
-      if (!opt.minify) {
-        return prop;
-      }
-
-      prop = new CleanCSS({
-        level: {
-          1: {
-            // rounds pixel values to `N` decimal places; `false` disables rounding; defaults to `false`
-            roundingPrecision: "all=3",
-            specialComments: "none" // denotes a number of /*! ... */ comments preserved; defaults to `all`
-          },
-          2: {
-            restructureRules: true // controls rule restructuring; defaults to false
-          }
-        },
-        compatibility: "ie11",
-        ...opt.cleanCssOptions
-      }).minify(prop).styles;
+      prop = csso.minify(output[0].css, {
+        sourceMap: false,
+        restructure: false
+      }).css;
 
       return prop;
     };
@@ -148,48 +203,6 @@ function sw(file, options = {}) {
   });
 }
 
-function parseDom(childNodes, depth = 1) {
-  let spaces = "";
-  for (let i = 0; i < depth; i++) {
-    spaces += "  ";
-  }
-
-  return childNodes
-    .map((item) => {
-      if (item.nodeType === 10) {
-        return `\n${spaces}"<!DOCTYPE html>"`;
-      } else if (item.nodeType === 3) {
-        return `\n${spaces}"${item.nodeValue}"`;
-      } else {
-        let str = `\n${spaces}v("${item.nodeName}", `;
-
-        if (item.attributes) {
-          let attrs = {};
-          for (let i = 0, l = item.attributes.length; i < l; i++) {
-            let attr = item.attributes[i];
-            attrs[attr.nodeName] = attr.nodeValue;
-          }
-          str += JSON.stringify(attrs);
-        } else {
-          str += "{}";
-        }
-
-        str += ", [";
-        if (item.childNodes && item.childNodes.length > 0) {
-          str += `${parseDom(item.childNodes, depth + 1)}\n${spaces}`;
-        }
-
-        str += `])`;
-        return str;
-      }
-    })
-    .join(",");
-}
-
-function htmlToHyperscript(html) {
-  return `[${parseDom(parseHtml(html, { treeAdapter }))}\n]`;
-}
-
 function icons(source, configuration = {}) {
   let favicons = require("favicons"),
     options = Object.assign({}, icons.options, configuration);
@@ -208,11 +221,7 @@ function icons(source, configuration = {}) {
       for (let i in response.images) {
         promises.push(
           new Promise((resolve, reject) => {
-            fs.writeFile(
-              options.iconsPath + response.images[i].name,
-              response.images[i].contents,
-              errorHandler(resolve, reject)
-            );
+            fs.writeFile(options.iconsPath + response.images[i].name, response.images[i].contents, errorHandler(resolve, reject));
           })
         );
       }
@@ -220,11 +229,7 @@ function icons(source, configuration = {}) {
       for (let i in response.files) {
         promises.push(
           new Promise((resolve, reject) => {
-            fs.writeFile(
-              options.iconsPath + response.files[i].name,
-              response.files[i].contents,
-              errorHandler(resolve, reject)
-            );
+            fs.writeFile(options.iconsPath + response.files[i].name, response.files[i].contents, errorHandler(resolve, reject));
           })
         );
       }
@@ -233,7 +238,7 @@ function icons(source, configuration = {}) {
     if (options.linksViewPath) {
       let html = `
 function Links(){
-  return ${htmlToHyperscript(response.html.join(""))};
+  return ${treeAdapter.htmlToHyperscript(response.html.join(""))};
 }
 
 Links.default = Links;
@@ -242,11 +247,7 @@ module.exports = Links;
 
       promises.push(
         new Promise((resolve, reject) => {
-          fs.writeFile(
-            `${options.linksViewPath}/links.js`,
-            html,
-            errorHandler(resolve, reject)
-          );
+          fs.writeFile(`${options.linksViewPath}/links.js`, html, errorHandler(resolve, reject));
         })
       );
     }
@@ -304,12 +305,15 @@ icons.options = {
   }
 };
 
-let plugin = function (v) {
+let plugin = function(v) {
   v.usePlugin(requestPlugin);
   v.inline = inline;
   v.sw = sw;
   v.icons = icons;
-  v.htmlToHyperscript = htmlToHyperscript;
+  v.htmlToDom = treeAdapter.htmlToDom;
+  v.domToHtml = treeAdapter.domToHtml;
+  v.domToHyperscript = treeAdapter.domToHyperscript;
+  v.htmlToHyperscript = treeAdapter.htmlToHyperscript;
 };
 
 plugin.default = plugin;

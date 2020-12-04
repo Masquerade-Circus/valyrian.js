@@ -7,8 +7,7 @@ v.usePlugin(nodePlugin);
 
 describe("Node test", () => {
   it("Get hyperscript string from html", () => {
-    let html =
-      '<body><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</body>';
+    let html = '<body><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</body>';
 
     let dom = v.htmlToHyperscript(html);
 
@@ -19,8 +18,7 @@ describe("Node test", () => {
   ])
 ]`);
 
-    html =
-      '<html><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</html>';
+    html = '<html><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</html>';
 
     dom = v.htmlToHyperscript(html);
 
@@ -35,8 +33,7 @@ describe("Node test", () => {
   ])
 ]`);
 
-    html =
-      '<!DOCTYPE html><html><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</html>';
+    html = '<!DOCTYPE html><html><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</html>';
 
     dom = v.htmlToHyperscript(html);
 
@@ -52,8 +49,7 @@ describe("Node test", () => {
   ])
 ]`);
 
-    html =
-      '<head><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</head>';
+    html = '<head><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</head>';
 
     dom = v.htmlToHyperscript(html);
 
@@ -63,8 +59,7 @@ describe("Node test", () => {
   ])
 ]`);
 
-    html =
-      '<div><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</div>';
+    html = '<div><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</div>';
 
     dom = v.htmlToHyperscript(html);
 

@@ -1,14 +1,9 @@
 let rollup = require("rollup");
-let commonjs = require("@rollup/plugin-commonjs");
-let { nodeResolve } = require("@rollup/plugin-node-resolve");
 let includepaths = require("rollup-plugin-includepaths");
 let filesize = require("rollup-plugin-filesize");
-let progress = require("rollup-plugin-progress");
-let { string } = require("rollup-plugin-string");
 let sourcemaps = require("rollup-plugin-sourcemaps");
 let { terser } = require("rollup-plugin-terser");
 let { sizeSnapshot } = require("rollup-plugin-size-snapshot");
-let buble = require("@rollup/plugin-buble");
 
 const argv = require("yargs").argv;
 let file = argv.file || "index";
@@ -16,32 +11,7 @@ let distFile = file === "index" ? "valyrian" : file;
 
 let inputOptions = {
   input: "./lib/" + file + ".js",
-  plugins: [
-    progress({ clearLine: false }),
-    includepaths({ paths: ["./lib", "./node_modules"] }),
-    nodeResolve({
-      jsnext: true,
-      main: true,
-      browser: true
-    }),
-    string({
-      include: "**/*.tpl.js"
-    }),
-    buble({
-      jsx: "v",
-      transforms: { asyncAwait: false },
-      target: { chrome: 71, firefox: 64, safari: 10, node: 8.7 }
-    }),
-    // babel({ exclude: 'node_modules/**' }),
-    commonjs({
-      include: ["./node_modules/**"], // Default: undefined
-      // if false then skip sourceMap generation for CommonJS modules
-      sourceMap: true // Default: true
-    }),
-    sourcemaps(),
-    filesize(),
-    sizeSnapshot()
-  ],
+  plugins: [includepaths({ paths: ["./lib"] }), sourcemaps(), filesize(), sizeSnapshot()],
   cache: undefined
 };
 
