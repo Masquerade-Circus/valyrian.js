@@ -10,7 +10,7 @@
 [![Dependencies](https://img.shields.io/david/masquerade-circus/valyrian.js.svg?style=flat)](https://david-dm.org/masquerade-circus/valyrian.js)
 ![](https://img.shields.io/github/issues/masquerade-circus/valyrian.js.svg)
 ![](https://img.shields.io/snyk/vulnerabilities/npm/valyrian.js.svg)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/521f72fc6d61426783692b62d64a3643)](https://www.codacy.com/app/Masquerade-Circus/valyrian.js?utm_source=github.com&utm_medium=referral&utm_content=Masquerade-Circus/valyrian.js&utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/521f72fc6d61426783692b62d64a3643)](https://www.codacy.com/app/Masquerade-Circus/valyrian.js?utm_source=github.com\&utm_medium=referral\&utm_content=Masquerade-Circus/valyrian.js\&utm_campaign=Badge_Grade)
 [![Maintainability](https://api.codeclimate.com/v1/badges/c1263dd7fb4f90194625/maintainability)](https://codeclimate.com/github/Masquerade-Circus/valyrian.js/maintainability)
 [![Coverage Status](https://coveralls.io/repos/github/Masquerade-Circus/valyrian.js/badge.svg?branch=master)](https://coveralls.io/github/Masquerade-Circus/valyrian.js?branch=master)
 [![License](https://img.shields.io/github/license/masquerade-circus/valyrian.js.svg)](https://github.com/masquerade-circus/valyrian.js/blob/master/LICENSE)
@@ -22,16 +22,14 @@
 Lightweight steel to forge PWAs. (Minimal Frontend Framework with server side rendering and other capabilities)
 
 ## Documentation
-[https://valyrianjs.dev/](https://valyrianjs.dev/) (In development)
+
+<https://valyrianjs.dev/> (In development)
 
 ## Table of Contents
 
-- [Valyrian.js](#valyrianjs)
-  - [Documentation](#documentation)
-  - [Table of Contents](#table-of-contents)
-  - [Tests](#tests)
-  - [Contributing](#contributing)
-  - [Legal](#legal)
+*   [Tests](#tests)
+*   [Contributing](#contributing)
+*   [Legal](#legal)
 
 ## Tests
 
@@ -41,9 +39,9 @@ For development use `yarn dev:test`
 
 ## Contributing
 
--   Use prettify and eslint to lint your code.
--   Add tests for any new or changed functionality.
--   Update the readme with an example if you add or change any functionality.
+*   Use prettify and eslint to lint your code.
+*   Add tests for any new or changed functionality.
+*   Update the readme with an example if you add or change any functionality.
 
 ## Legal
 
