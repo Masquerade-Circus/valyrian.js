@@ -1,9 +1,15 @@
-### [5.0.5](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.4...5.0.5) (2020-12-04)
+### [5.0.6](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.5...5.0.6) (2020-12-04)
 
+
+### Bug Fixes
+
+* **register.js:** add register.js to package.json files attribute ([d8f6674](https://github.com/Masquerade-Circus/valyrian.js/commit/d8f66746bfb37820a2fa90799aab0880837518b6))
+
+### [5.0.5](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.4...5.0.5) (2020-12-04)
 
 ### Code Refactoring
 
-* **lib:** add register and improve node plugin ([b4fce5e](https://github.com/Masquerade-Circus/valyrian.js/commit/b4fce5ecd5a3f0c0ba684d6defd89768272f1ca2))
+*   **lib:** add register and improve node plugin ([b4fce5e](https://github.com/Masquerade-Circus/valyrian.js/commit/b4fce5ecd5a3f0c0ba684d6defd89768272f1ca2))
 
 ### [5.0.4](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.3...5.0.4) (2020-10-03)
 
