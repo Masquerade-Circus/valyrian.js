@@ -1,6 +1,6 @@
 {
   "name": "valyrian.js",
-  "version": "5.0.6",
+  "version": "5.0.7",
   "description": "Lightweight steel to forge PWAs. (Minimal Frontend Framework with server side rendering and other capabilities)",
   "source": "lib/index.js",
   "main": "lib/index.js",
@@ -30,7 +30,8 @@
     "server side rendering",
     "ssr",
     "progressive web app",
-    "pwa"
+    "pwa",
+    "server side jsx"
   ],
   "engines": {
     "node": ">=10.16.0"
