@@ -1,11 +1,9 @@
 let fs = require("fs");
 let path = require("path");
 
-let { PurgeCSS } = require("purgecss");
 let fetch = require("node-fetch");
 let FormData = require("form-data");
 let treeAdapter = require("./utils/tree-adapter");
-let requestPlugin = require("./request");
 
 let rollup = require("rollup");
 let commonjs = require("@rollup/plugin-commonjs");
@@ -15,6 +13,7 @@ let buble = require("@rollup/plugin-buble");
 let json = require("@rollup/plugin-json");
 let { terser } = require("rollup-plugin-terser");
 let sourcemaps = require("rollup-plugin-sourcemaps");
+let { PurgeCSS } = require("purgecss");
 let csso = require("csso");
 
 global.fetch = fetch;
@@ -31,18 +30,18 @@ let errorHandler = (resolve, reject) => (err) => {
 
 function fileMethodFactory() {
   let prop = [];
-  return function(file) {
+  return function(file, options = {}) {
     if (!file) {
       return prop;
     }
 
     let asyncMethod = async () => {
       let contents = "";
-      let useSourceMap = /(development|test)/gi.test(process.env.NODE_ENV || "");
       if (typeof file === "string") {
         let ext = file.split(".").pop();
         if (/(js|jsx|mjs|ts|tsx)/.test(ext)) {
           let inputOptions = {
+            ...options.inputOptions,
             input: file,
             plugins: [
               includepaths({ paths: [process.cwd()] }),
@@ -59,20 +58,21 @@ function fileMethodFactory() {
               }),
               commonjs({
                 include: ["./node_modules/**", "./**"],
-                sourceMap: useSourceMap
+                sourceMap: true
               }),
-              terser({ warnings: "verbose" })
+              terser({ warnings: "verbose" }),
+              ...((options.inputOptions || {}).plugins || [])
             ]
           };
 
-          if (useSourceMap) {
-            inputOptions.plugins.push(sourcemaps());
-          }
+          inputOptions.plugins.push(sourcemaps());
 
           let outputOptions = {
+            compact: true,
             format: "iife",
-            sourcemap: useSourceMap,
-            compact: true
+            name: "v" + (0 | (Math.random() * 9e6)).toString(36),
+            ...options.outputOptions,
+            sourcemap: true
           };
 
           const bundle = await rollup.rollup(inputOptions);
@@ -90,6 +90,7 @@ function fileMethodFactory() {
           let content = fs.readFileSync(file, "utf8");
 
           let { css, map } = csso.minify(content, {
+            ...options,
             filename: file, // will be added to source map as reference to source file
             sourceMap: true // generate source map
           });
@@ -156,18 +157,18 @@ inline.uncss = (function() {
         .join("");
 
       let output = await purgecss.purge({
-        content: contents,
-        css: [{ raw: css }],
         fontFace: true,
         keyframes: true,
         variables: true,
         defaultExtractor: (content) => content.match(/[A-Za-z0-9-_/:@]*[A-Za-z0-9-_/:@/]+/g) || [],
-        ...options
+        ...options,
+        content: contents,
+        css: [{ raw: css }]
       });
 
       prop = csso.minify(output[0].css, {
         sourceMap: false,
-        restructure: false
+        restructure: true
       }).css;
 
       return prop;
@@ -306,7 +307,6 @@ icons.options = {
 };
 
 let plugin = function(v) {
-  v.usePlugin(requestPlugin);
   v.inline = inline;
   v.sw = sw;
   v.icons = icons;
@@ -314,7 +314,17 @@ let plugin = function(v) {
   v.domToHtml = treeAdapter.domToHtml;
   v.domToHyperscript = treeAdapter.domToHyperscript;
   v.htmlToHyperscript = treeAdapter.htmlToHyperscript;
+  v.hyperscriptToHtml = (...args) => v.mount("div", () => args);
 };
+
+plugin.inline = inline;
+plugin.sw = sw;
+plugin.icons = icons;
+plugin.htmlToDom = treeAdapter.htmlToDom;
+plugin.domToHtml = treeAdapter.domToHtml;
+plugin.domToHyperscript = treeAdapter.domToHyperscript;
+plugin.htmlToHyperscript = treeAdapter.htmlToHyperscript;
+plugin.hyperscriptToHtml = (...args) => v.mount("div", () => args);
 
 plugin.default = plugin;
 module.exports = plugin;
