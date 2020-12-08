@@ -150,7 +150,7 @@ let plugin = function(v) {
       },
       async go(path) {
         let parts = path.split("?", 2);
-        let urlParts = parts[0].replace(/\/$/, "");
+        let urlParts = parts[0].replace(/(.+)\/$/, "$1");
         let queryParts = parts[1];
         router.url = path;
 
