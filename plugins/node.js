@@ -14,7 +14,7 @@ let json = require("@rollup/plugin-json");
 let { terser } = require("rollup-plugin-terser");
 let sourcemaps = require("rollup-plugin-sourcemaps");
 let { PurgeCSS } = require("purgecss");
-let csso = require("csso");
+let CleanCSS = require("clean-css");
 
 global.fetch = fetch;
 global.FormData = FormData;
@@ -54,18 +54,17 @@ function fileMethodFactory() {
                 jsx: "v",
                 transforms: { asyncAwait: false },
                 objectAssign: "Object.assign",
-                target: { chrome: 70, firefox: 60, safari: 10, node: "8.10" }
+                target: { chrome: 70, firefox: 60, safari: 10 }
               }),
               commonjs({
-                include: ["./node_modules/**", "./**"],
-                sourceMap: true
+                sourceMap: true,
+                transformMixedEsModules: true
               }),
               terser({ warnings: "verbose" }),
+              sourcemaps(),
               ...((options.inputOptions || {}).plugins || [])
             ]
           };
-
-          inputOptions.plugins.push(sourcemaps());
 
           let outputOptions = {
             compact: true,
@@ -87,29 +86,24 @@ function fileMethodFactory() {
             }
           }
         } else if (/(css|scss|styl)/.test(ext)) {
-          let content = fs.readFileSync(file, "utf8");
+          let { styles } = new CleanCSS({
+            sourceMap: false,
+            level: {
+              1: {
+                roundingPrecision: "all=3"
+              },
+              2: {
+                restructureRules: true // controls rule restructuring; defaults to false
+              }
+            }
+          }).minify([file]);
 
-          let { css, map } = csso.minify(content, {
-            ...options,
-            filename: file, // will be added to source map as reference to source file
-            sourceMap: true // generate source map
-          });
-
-          let suffix = "";
-          let inputMap = content.match(/\/\*# sourceMappingURL=(\S+)\s*\*\/\s*$/);
-          if (inputMap) {
-            map.applySourceMap(new SourceMapConsumer(inputMap[1]), inputFile);
-          }
-
-          let mapBase64 = Buffer.from(map.toString()).toString("base64");
-          suffix = `/*# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64} */`;
-
-          contents = { raw: css, map: suffix, file };
+          contents = { raw: styles, map: null, file };
         } else {
-          contents = { raw: fs.readFileSync(file, "utf8"), map: "", file };
+          contents = { raw: fs.readFileSync(file, "utf8"), map: null, file };
         }
       } else if (typeof file === "object" && "raw" in file) {
-        contents = { map: "", ...file };
+        contents = { map: null, ...file };
       }
 
       prop.push(contents);
@@ -166,10 +160,17 @@ inline.uncss = (function() {
         css: [{ raw: css }]
       });
 
-      prop = csso.minify(output[0].css, {
+      prop = new CleanCSS({
         sourceMap: false,
-        restructure: true
-      }).css;
+        level: {
+          1: {
+            roundingPrecision: "all=3"
+          },
+          2: {
+            restructureRules: true // controls rule restructuring; defaults to false
+          }
+        }
+      }).minify(output[0].css).styles;
 
       return prop;
     };

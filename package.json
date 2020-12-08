@@ -34,7 +34,7 @@
     "server side jsx"
   ],
   "engines": {
-    "node": ">=10.16.0"
+    "node": ">=11.0.0"
   },
   "scripts": {
     "dev:source": "cross-env NODE_ENV=development node rollupSource.js",
@@ -54,7 +54,7 @@
     "@rollup/plugin-commonjs": "^17.0.0",
     "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-node-resolve": "^11.0.0",
-    "csso": "^4.2.0",
+    "clean-css": "^4.2.3",
     "favicons": "^6.2.0",
     "form-data": "^3.0.0",
     "node-fetch": "^2.6.1",
@@ -67,7 +67,6 @@
     "rollup-plugin-sourcemaps": "^0.6.3",
     "rollup-plugin-string": "^3.0.0",
     "rollup-plugin-terser": "^7.0.2",
-    "source-map": "^0.7.3",
     "sucrase": "^3.16.0"
   },
   "devDependencies": {
