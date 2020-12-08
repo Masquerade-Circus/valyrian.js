@@ -1,9 +1,16 @@
-### [5.0.7](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.6...5.0.7) (2020-12-07)
+### [5.0.8](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.7...5.0.8) (2020-12-08)
 
+
+### Bug Fixes
+
+* **router:** fix bug removing home unique slash ([9ae422f](https://github.com/Masquerade-Circus/valyrian.js/commit/9ae422feb70b0ba3097fcf64596d896638e7675a))
+* **router/node:** allow urls ending in slash as a valid route. v.inline.css now only minifies wo map ([3047229](https://github.com/Masquerade-Circus/valyrian.js/commit/3047229871aa615696b9b29998d8301381eb67da))
+
+### [5.0.7](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.6...5.0.7) (2020-12-07)
 
 ### Code Refactoring
 
-* **register:** update register hook. Update node plugin ([f62505c](https://github.com/Masquerade-Circus/valyrian.js/commit/f62505c6a6bb562e35f01b47ea62c8247cdbfe49))
+*   **register:** update register hook. Update node plugin ([f62505c](https://github.com/Masquerade-Circus/valyrian.js/commit/f62505c6a6bb562e35f01b47ea62c8247cdbfe49))
 
 ### [5.0.6](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.5...5.0.6) (2020-12-04)
 
