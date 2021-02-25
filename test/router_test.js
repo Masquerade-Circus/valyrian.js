@@ -1,7 +1,7 @@
 import expect from "expect";
-import "../lib";
 import nodePlugin from "../plugins/node";
 import router from "../plugins/router";
+import v from "../lib";
 v.usePlugin(nodePlugin);
 v.usePlugin(router);
 

@@ -1,8 +1,8 @@
 import expect from "expect";
 import fastify from "fastify";
-import "../lib";
 import nodePlugin from "../plugins/node";
 import requestPlugin from "../plugins/request";
+import v from "../lib";
 v.usePlugin(nodePlugin);
 v.usePlugin(requestPlugin);
 
@@ -42,7 +42,7 @@ let createServer = async () => {
     .delete("/posts/:id", (req, res) => res.send(JSON.stringify({})))
     .get("/hello", (req, res) => res.send("Hello world"));
 
-  await server.listen(3000);
+  server.baseUrl = await server.listen();
 
   return server;
 };
@@ -50,7 +50,7 @@ let createServer = async () => {
 describe("Request", () => {
   it("should get", async () => {
     let server = await createServer();
-    let res = await v.request.get("http://localhost:3000/posts/1");
+    let res = await v.request.get(`${server.baseUrl}/posts/1`);
     expect(res).toEqual({
       userId: 1,
       id: 1,
@@ -63,7 +63,7 @@ describe("Request", () => {
   it("should post", async () => {
     let server = await createServer();
     let res = await v.request.post(
-      "http://localhost:3000/posts",
+      `${server.baseUrl}/posts`,
       {
         title: "foo",
         body: "bar",
@@ -87,7 +87,7 @@ describe("Request", () => {
   it("should put", async () => {
     let server = await createServer();
     let res = await v.request.put(
-      "http://localhost:3000/posts/1",
+      `${server.baseUrl}/posts/1`,
       {
         id: 1,
         title: "foo",
@@ -113,7 +113,7 @@ describe("Request", () => {
   it("should patch", async () => {
     let server = await createServer();
     let res = await v.request.patch(
-      "http://localhost:3000/posts/1",
+      `${server.baseUrl}/posts/1`,
       {
         body: "bar"
       },
@@ -134,14 +134,14 @@ describe("Request", () => {
 
   it("should delete", async () => {
     let server = await createServer();
-    let res = await v.request.delete("http://localhost:3000/posts/1");
+    let res = await v.request.delete(`${server.baseUrl}/posts/1`);
     expect(res).toEqual({});
     await server.close();
   });
 
   it("should serialize data", async () => {
     let server = await createServer();
-    let res = await v.request.get("http://localhost:3000/posts/", {
+    let res = await v.request.get(`${server.baseUrl}/posts/`, {
       userId: 1
     });
     expect(res).toEqual(expect.any(Array));
@@ -151,11 +151,11 @@ describe("Request", () => {
 
   it("should resolve with full response", async () => {
     let server = await createServer();
-    let res = await v.request.get("http://localhost:3000/posts/1", null, { resolveWithFullResponse: true });
+    let res = await v.request.get(`${server.baseUrl}/posts/1`, null, { resolveWithFullResponse: true });
     expect(res).toEqual(
       expect.objectContaining({
         body: expect.any(Object),
-        url: "http://localhost:3000/posts/1",
+        url: `${server.baseUrl}/posts/1`,
         status: 200,
         statusText: "OK",
         headers: expect.any(Object)
@@ -166,7 +166,7 @@ describe("Request", () => {
 
   it("should create a scoped request", async () => {
     let server = await createServer();
-    let request = v.request.new("http://localhost:3000/");
+    let request = v.request.new(`${server.baseUrl}`);
     let res = await request.get("/posts", {
       userId: 1
     });
@@ -177,7 +177,7 @@ describe("Request", () => {
 
   it("should create a scoped request with allowed methods", async () => {
     let server = await createServer();
-    let request = v.request.new("http://localhost:3000/", { methods: ["get"] });
+    let request = v.request.new(`${server.baseUrl}`, { methods: ["get"] });
     let res = await request.get("/posts", {
       userId: 1
     });
@@ -190,7 +190,7 @@ describe("Request", () => {
 
   it("should create a child scoped request", async () => {
     let server = await createServer();
-    let request = v.request.new("http://localhost:3000/");
+    let request = v.request.new(`${server.baseUrl}/`);
     let requestChild = request.new("/posts");
     let res = await requestChild.get("/", {
       userId: 1
@@ -202,7 +202,7 @@ describe("Request", () => {
 
   it("should create a child scoped request with allowed methods", async () => {
     let server = await createServer();
-    let request = v.request.new("http://localhost:3000/", { methods: ["get"] });
+    let request = v.request.new(`${server.baseUrl}/`, { methods: ["get"] });
     let requestChild = request.new("/posts");
     let res = await requestChild.get("/", {
       userId: 1
@@ -216,7 +216,7 @@ describe("Request", () => {
 
   it("should work with server side rendering of local requests", async () => {
     let server = await createServer();
-    v.request.options("urls.node", "http://localhost:3000");
+    v.request.options("urls.node", `${server.baseUrl}`);
 
     let res = await v.request.get("/hello", null, { headers: { Accept: "text/html" } });
 
@@ -227,7 +227,7 @@ describe("Request", () => {
 
   it("should work with server side rendering of api requests", async () => {
     let server = await createServer();
-    v.request.options("urls.node", "http://localhost:3000");
+    v.request.options("urls.node", `${server.baseUrl}`);
     v.request.options("urls.api", "http://example.com/api");
 
     let res = await v.request.get("http://example.com/api/hello", null, { headers: { Accept: "text/html" } });
@@ -241,7 +241,7 @@ describe("Request", () => {
     let server = await createServer();
     let request = v.request.new("/", {
       urls: {
-        node: "http://localhost:3000"
+        node: `${server.baseUrl}`
       }
     });
 
@@ -256,7 +256,7 @@ describe("Request", () => {
     let server = await createServer();
     let request = v.request.new("/", {
       urls: {
-        node: "http://localhost:3000",
+        node: `${server.baseUrl}`,
         api: "http://example.com/api"
       }
     });
@@ -272,7 +272,7 @@ describe("Request", () => {
     let server = await createServer();
     let request = v.request.new("/", {
       urls: {
-        node: "http://localhost:3000"
+        node: `${server.baseUrl}`
       },
       methods: ["get"]
     });
@@ -292,7 +292,7 @@ describe("Request", () => {
     let server = await createServer();
     let request = v.request.new("/", {
       urls: {
-        node: "http://localhost:3000",
+        node: `${server.baseUrl}`,
         api: "http://example.com/api"
       },
       methods: ["get"]

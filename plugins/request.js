@@ -7,37 +7,37 @@ function serialize(obj, prefix) {
     .join("&");
 }
 
-function parseUrl(url, options = {}) {
-  let u = /^https?/gi.test(url) ? url : options.urls.base + url;
-
-  let parts = u.split("?");
-  u = parts[0]
-    .trim()
-    .replace(/^\/\//, "/")
-    .replace(/\/$/, "")
-    .trim();
-
-  if (parts[1]) {
-    u += `?${parts[1]}`;
-  }
-
-  if (v.isNode && typeof options.urls.node === "string") {
-    options.urls.node = options.urls.node;
-
-    if (typeof options.urls.api === "string") {
-      options.urls.api = options.urls.api.replace(/\/$/gi, "").trim();
-      u = u.replace(options.urls.api, options.urls.node);
-    }
-
-    if (!/^https?/gi.test(u)) {
-      u = options.urls.node + u;
-    }
-  }
-
-  return u;
-}
-
 let plugin = function(v) {
+  function parseUrl(url, options = {}) {
+    let u = /^https?/gi.test(url) ? url : options.urls.base + url;
+
+    let parts = u.split("?");
+    u = parts[0]
+      .trim()
+      .replace(/^\/\//, "/")
+      .replace(/\/$/, "")
+      .trim();
+
+    if (parts[1]) {
+      u += `?${parts[1]}`;
+    }
+
+    if (v.isNode && typeof options.urls.node === "string") {
+      options.urls.node = options.urls.node;
+
+      if (typeof options.urls.api === "string") {
+        options.urls.api = options.urls.api.replace(/\/$/gi, "").trim();
+        u = u.replace(options.urls.api, options.urls.node);
+      }
+
+      if (!/^https?/gi.test(u)) {
+        u = options.urls.node + u;
+      }
+    }
+
+    return u;
+  }
+
   function Request(baseUrl = "", options = {}) {
     let url = baseUrl.replace(/\/$/gi, "").trim();
     options.urls = options.urls || {};

@@ -1,6 +1,7 @@
 import expect from "expect";
-import "../lib";
 import nodePlugin from "../plugins/node";
+import v from "../lib";
+
 v.usePlugin(nodePlugin);
 
 describe("Mount and update", () => {
@@ -165,9 +166,6 @@ describe("Mount and update", () => {
     let vnode = v.trust("<span>Some text</span>");
     let component = () => vnode;
     let result = v.mount("body", component);
-    let div = document.createElement("div");
-    div.innerHTML = '<html><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</html>';
-
     expect(result).toEqual("<span>Some text</span>");
 
     vnode.children = ["Other text"];

@@ -1,7 +1,7 @@
 import expect from "expect";
-import "../lib";
-import nodePlugin from "../plugins/node";
 import hooksPlugin from "../plugins/hooks";
+import nodePlugin from "../plugins/node";
+import v from "../lib";
 v.usePlugin(nodePlugin);
 v.usePlugin(hooksPlugin);
 
@@ -76,7 +76,7 @@ describe("Hooks", () => {
   describe("Effect hook", () => {
     it("should call the effect at first render", () => {
       let count = 0;
-      let Component = function () {
+      let Component = function() {
         v.useEffect(() => count++);
         return <div>{count}</div>;
       };
@@ -87,7 +87,7 @@ describe("Hooks", () => {
 
     it("should call the effect at every update", () => {
       let count = 0;
-      let Component = function () {
+      let Component = function() {
         v.useEffect(() => count++);
         return <div>{count}</div>;
       };
@@ -100,7 +100,7 @@ describe("Hooks", () => {
 
     it("should handle cleanup", () => {
       let count = 0;
-      let Component = function () {
+      let Component = function() {
         v.useEffect(() => {
           count++;
           return () => (count -= 2);
@@ -116,7 +116,7 @@ describe("Hooks", () => {
 
     it("should not call the effect if the change array is passed and there are no changes", () => {
       let count = 0;
-      let Component = function () {
+      let Component = function() {
         v.useEffect(() => count++, [0]);
         return <div>{count}</div>;
       };
@@ -129,7 +129,7 @@ describe("Hooks", () => {
 
     it("should call the effect if the change array is passed and there are changes", () => {
       let count = 0;
-      let Component = function () {
+      let Component = function() {
         v.useEffect(() => count++, [count]);
         return <div>{count}</div>;
       };
@@ -142,7 +142,7 @@ describe("Hooks", () => {
 
     it("should call cleanup even if the changes array is passed and there are changes", () => {
       let count = 0;
-      let Component = function () {
+      let Component = function() {
         v.useEffect(() => {
           count++;
           return () => count++;
@@ -160,7 +160,7 @@ describe("Hooks", () => {
 
     it("should handle cleanup on unMount", () => {
       let count = 0;
-      let Component = function () {
+      let Component = function() {
         v.useEffect(() => {
           count++;
           return () => (count -= 2);

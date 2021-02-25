@@ -11,10 +11,17 @@ let { nodeResolve } = require("@rollup/plugin-node-resolve");
 let includepaths = require("rollup-plugin-includepaths");
 let buble = require("@rollup/plugin-buble");
 let json = require("@rollup/plugin-json");
-let { terser } = require("rollup-plugin-terser");
+let { terser: terserPlugin } = require("rollup-plugin-terser");
+let terser = require("terser");
 let sourcemaps = require("rollup-plugin-sourcemaps");
+let typescript = require("@rollup/plugin-typescript");
+let esbuild = require("esbuild");
+let esbuildRollup = require("rollup-plugin-esbuild");
 let { PurgeCSS } = require("purgecss");
 let CleanCSS = require("clean-css");
+let csso = require("csso");
+
+let sucrase = require("@rollup/plugin-sucrase");
 
 global.fetch = fetch;
 global.FormData = FormData;
@@ -40,30 +47,72 @@ function fileMethodFactory() {
       if (typeof file === "string") {
         let ext = file.split(".").pop();
         if (/(js|jsx|mjs|ts|tsx)/.test(ext)) {
-          let inputOptions = {
+          let inputOptions = options.inputOptions || {};
+          let minify = inputOptions.minify === false ? false : true;
+
+          let defaultPlugins = [
+            includepaths({ paths: [process.cwd(), process.cwd() + "/node_modules"] }),
+            nodeResolve({
+              mainFields: ["browser", "jsnext", "module", "main"],
+              browser: true,
+              extensions: [".js", ".ts", ".jsx", ".tsx", ".mjs"]
+            }),
+            json()
+          ];
+
+          if (/(ts|tsx)/.test(ext)) {
+            defaultPlugins.push(typescript());
+          }
+
+          defaultPlugins.push(
+            esbuildRollup({
+              // All options are optional
+              include: /\.(js|jsx|mjs|ts|tsx)$/,
+              exclude: [],
+              sourceMap: true,
+              minify,
+              target: "es2020",
+              jsxFactory: "v",
+              jsxFragment: "v",
+              // Add extra loaders
+              loaders: {
+                // Enable JSX in .js/.ts/.mjs files too
+                ".js": "jsx",
+                ".ts": "jsx",
+                ".mjs": "jsx"
+              }
+            })
+          );
+
+          defaultPlugins.push(
+            commonjs({
+              sourceMap: true,
+              transformMixedEsModules: true
+            })
+          );
+
+          if (minify) {
+            defaultPlugins.push(
+              terserPlugin({
+                warnings: "verbose",
+                compress: {
+                  booleans_as_integers: true,
+                  passes: 2
+                },
+                output: {
+                  wrap_func_args: false
+                },
+                ecma: 2020
+              })
+            );
+          }
+
+          defaultPlugins.push(...(inputOptions.plugins || []));
+
+          inputOptions = {
             ...options.inputOptions,
             input: file,
-            plugins: [
-              includepaths({ paths: [process.cwd()] }),
-              nodeResolve({
-                mainFields: ["browser", "jsnext", "module", "main"],
-                browser: true
-              }),
-              json(),
-              buble({
-                jsx: "v",
-                transforms: { asyncAwait: false },
-                objectAssign: "Object.assign",
-                target: { chrome: 70, firefox: 60, safari: 10 }
-              }),
-              commonjs({
-                sourceMap: true,
-                transformMixedEsModules: true
-              }),
-              terser({ warnings: "verbose" }),
-              sourcemaps(),
-              ...((options.inputOptions || {}).plugins || [])
-            ]
+            plugins: defaultPlugins
           };
 
           let outputOptions = {
@@ -78,6 +127,7 @@ function fileMethodFactory() {
 
           const { output } = await bundle.generate(outputOptions);
 
+          // console.log(output);
           for (const chunkOrAsset of output) {
             if (chunkOrAsset.type === "chunk") {
               let mapBase64 = Buffer.from(chunkOrAsset.map.toString()).toString("base64");
@@ -85,9 +135,38 @@ function fileMethodFactory() {
               contents = { raw: chunkOrAsset.code, map: suffix, file };
             }
           }
+
+          // let result = esbuild.buildSync({
+          //   entryPoints: [file],
+          //   bundle: true,
+          //   sourcemap: "external",
+          //   write: false,
+          //   minify: true,
+          //   outdir: "out",
+          //   target: ["es2020"],
+          //   jsxFactory: "v",
+          //   loader: { ".js": "jsx", ".ts": "tsx", ".mjs": "jsx" }
+          // });
+
+          // let result2 = await terser.minify(result.outputFiles[1].text, {
+          //   sourceMap: {
+          //     content: result.outputFiles[0].text.toString()
+          //   },
+          //   compress: {
+          //     booleans_as_integers: true
+          //   },
+          //   output: {
+          //     wrap_func_args: false
+          //   },
+          //   ecma: 2020
+          // });
+
+          // let mapBase64 = Buffer.from(result2.map.toString()).toString("base64");
+          // let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
+          // contents = { raw: result2.code, map: suffix, file };
         } else if (/(css|scss|styl)/.test(ext)) {
-          let { styles } = new CleanCSS({
-            sourceMap: false,
+          let result = new CleanCSS({
+            sourceMap: true,
             level: {
               1: {
                 roundingPrecision: "all=3"
@@ -98,7 +177,7 @@ function fileMethodFactory() {
             }
           }).minify([file]);
 
-          contents = { raw: styles, map: null, file };
+          contents = { raw: result.styles, map: null, file };
         } else {
           contents = { raw: fs.readFileSync(file, "utf8"), map: null, file };
         }
@@ -123,6 +202,14 @@ async function inline(...args) {
     await inline[ext](item);
   }
 }
+
+inline.extensions = (...extensions) => {
+  for (let ext of extensions) {
+    if (!inline[ext]) {
+      inline[ext] = fileMethodFactory();
+    }
+  }
+};
 
 inline.css = fileMethodFactory();
 inline.js = fileMethodFactory();
