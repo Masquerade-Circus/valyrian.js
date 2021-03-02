@@ -162,11 +162,14 @@ span.hello{display: inline-block}
   it("should inline js", async () => {
     v.inline.extensions("ts");
     await v.inline.ts("./lib/index.ts", { inputOptions: { minify: true } });
+    await v.inline.ts("./lib/index-lite.ts", { inputOptions: { minify: true } });
     await v.inline.js("./lib/index-old.js", { inputOptions: { minify: true } });
     console.log(v.inline.ts()[0].raw.length);
+    console.log(v.inline.ts()[1].raw.length);
     console.log(v.inline.js()[0].raw.length);
 
-    // console.log(v.inline.ts()[0].raw);
+    // console.log(v.inline.ts()[1].raw);
+    // fs.writeFileSync("./dist/valyrian.lite.js", v.inline.ts()[1].raw);
 
     // expect(v.inline.ts()[0].raw.length).toBeLessThan(5115);
 

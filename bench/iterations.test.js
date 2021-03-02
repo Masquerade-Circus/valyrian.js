@@ -2,7 +2,7 @@ let { compare, benchmark, before } = require("@masquerade-circus/bench-test/lib"
 
 import expect from "expect";
 
-compare("Set.has vs [].indexOf", () => {
+compare.skip("Set.has vs [].indexOf", () => {
   let set = new Set();
   set.add("hello");
   set.add("world");
@@ -32,7 +32,7 @@ compare("Set.has vs [].indexOf", () => {
   });
 });
 
-compare("Object.keys for loop vs Object.keys for of vs for in", () => {
+compare.skip("Object.keys for loop vs Object.keys for of vs for in", () => {
   let obj = {
     a: 1,
     b: 2,
@@ -66,7 +66,7 @@ compare("Object.keys for loop vs Object.keys for of vs for in", () => {
   });
 });
 
-compare("typeof function vs startsWith vs charAt vs string[0]", () => {
+compare.skip("typeof function vs startsWith vs charAt vs string[0]", () => {
   let obj = {
     oncreate() {},
     b: null,
@@ -100,7 +100,7 @@ compare("typeof function vs startsWith vs charAt vs string[0]", () => {
   });
 });
 
-compare("Array.isArray vs typeof object & Array.isArray", () => {
+compare.skip("Array.isArray vs typeof object & Array.isArray", () => {
   let a = [];
   let b = {};
   let c = null;
