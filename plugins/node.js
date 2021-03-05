@@ -48,7 +48,8 @@ function fileMethodFactory() {
         let ext = file.split(".").pop();
         if (/(js|jsx|mjs|ts|tsx)/.test(ext)) {
           let inputOptions = options.inputOptions || {};
-          let minify = inputOptions.minify === false ? false : true;
+          let outputOptions = options.outputOptions || {};
+          let minify = (options.outputOptions || {}).compact === false ? false : true;
 
           let defaultPlugins = [
             includepaths({ paths: [process.cwd(), process.cwd() + "/node_modules"] }),
@@ -110,16 +111,16 @@ function fileMethodFactory() {
           defaultPlugins.push(...(inputOptions.plugins || []));
 
           inputOptions = {
-            ...options.inputOptions,
+            ...inputOptions,
             input: file,
             plugins: defaultPlugins
           };
 
-          let outputOptions = {
-            compact: true,
+          outputOptions = {
+            compact: minify,
             format: "iife",
             name: "v" + (0 | (Math.random() * 9e6)).toString(36),
-            ...options.outputOptions,
+            ...outputOptions,
             sourcemap: true
           };
 

@@ -597,10 +597,10 @@
     core-js "^3.4.1"
     regenerator-runtime "^0.13.3"
 
-"@masquerade-circus/bench-test@^0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@masquerade-circus/bench-test/-/bench-test-0.0.1.tgz#4d1a1a6afa45d2a5ea1b8a910c47772adb4825e9"
-  integrity sha512-4dVWLXfV+cS1JPjeC42BDCwdPkHx4W/t6P5IjsBmjtca1hbYye9/XP3LGS2rgbzFSizaumhENboe68TOTC7yRA==
+"@masquerade-circus/bench-test@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@masquerade-circus/bench-test/-/bench-test-0.0.2.tgz#3afdbe2a12feefd60bb20019f29ec00e4d156db7"
+  integrity sha512-cqqx2f2z9/GbhKGhCa1/4zP/HBMCiP9SbzgVsJJiiflBDbreDqbZhDy3RMl45QVSTlZoqsG3p9sD3kUrkPituQ==
   dependencies:
     benchmark "^2.1.4"
     colors "^1.4.0"

@@ -159,11 +159,11 @@ span.hello{display: inline-block}
     expect(cleanCss).toEqual("span{display:block}");
   });
 
-  it("should inline js", async () => {
+  it.only("should inline js", async () => {
     v.inline.extensions("ts");
-    await v.inline.ts("./lib/index.ts", { inputOptions: { minify: true } });
-    await v.inline.ts("./lib/index-lite.ts", { inputOptions: { minify: true } });
-    await v.inline.js("./lib/index-old.js", { inputOptions: { minify: true } });
+    await v.inline.ts("./lib/index.ts", { outputOptions: { minify: true } });
+    await v.inline.ts("./lib/index-lite.ts", { outputOptions: { minify: true } });
+    await v.inline.js("./lib/index-old.js", { outputOptions: { minify: true } });
     console.log(v.inline.ts()[0].raw.length);
     console.log(v.inline.ts()[1].raw.length);
     console.log(v.inline.js()[0].raw.length);

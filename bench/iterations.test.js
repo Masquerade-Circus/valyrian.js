@@ -1,4 +1,4 @@
-let { compare, benchmark, before } = require("@masquerade-circus/bench-test/lib");
+let { compare, benchmark, before } = require("@masquerade-circus/bench-test");
 
 import expect from "expect";
 
