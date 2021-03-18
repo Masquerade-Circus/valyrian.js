@@ -37,7 +37,7 @@ let errorHandler = (resolve, reject) => (err) => {
 
 function fileMethodFactory() {
   let prop = [];
-  return function(file, options = {}) {
+  return function (file, options = {}) {
     if (!file) {
       return prop;
     }
@@ -215,9 +215,9 @@ inline.extensions = (...extensions) => {
 inline.css = fileMethodFactory();
 inline.js = fileMethodFactory();
 
-inline.uncss = (function() {
+inline.uncss = (function () {
   let prop = "";
-  return function(renderedHtml, options = {}) {
+  return function (renderedHtml, options = {}) {
     if (!renderedHtml) {
       return prop;
     }
@@ -395,7 +395,7 @@ icons.options = {
   }
 };
 
-let plugin = function(v) {
+let plugin = function (v) {
   v.inline = inline;
   v.sw = sw;
   v.icons = icons;
