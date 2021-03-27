@@ -70,9 +70,11 @@ function fileMethodFactory() {
                 strict: true,
                 moduleResolution: "node",
                 esModuleInterop: true,
-                inlineSourceMap: true,
+                inlineSourceMap: false,
+                sourceMap: true,
                 allowJs: true,
-                resolveJsonModule: true
+                resolveJsonModule: true,
+                removeComments: true
               })
             );
           }

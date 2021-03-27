@@ -15,16 +15,29 @@ type Props = { [propName in string | number]: unknown } & {
   onbeforeupdate?: { (vnode: Vnode, oldVnode: Vnode | TextVnode): undefined | boolean };
 };
 
-type Valyrian = {
-  (tagOrComponent: string | Component, props?: Props | null, children?: VnodeOrUnknown): VnodeOrUnknown;
-};
+interface Valyrian {
+  (tagOrComponent: string | Component, props?: Props | null, children?: VnodeOrUnknown): Vnode | Component;
+  isMounted: boolean;
+  isNode: boolean;
+  reservedWords: string[];
+  current: Current;
+  usePlugin: (plugin: Plugin, options: Record<string, unknown>) => void;
+  trust: (htmlString: string) => Vnode[];
+  onCleanup: (callback: typeof Function) => void;
+  updateProperty: (name: string, newNode: Vnode, oldNode?: Vnode) => void;
+  update: (props?: Props, ...children: VnodeOrUnknown[]) => void | string;
+  mount: (container: string, component: Component, props: Props, ...children: VnodeOrUnknown[]) => void | string;
+  unMount: () => string | void;
+  directive: (directive: string, handler: Directive) => void;
+  newInstance: () => Valyrian;
+}
 
 interface Directive {
   (value: any, vnode: Vnode, oldVnode?: Vnode | TextVnode): unknown;
 }
 
 interface Plugin {
-  (v: Valyrian, options: object): unknown;
+  (v: Valyrian, options: Record<string, unknown>): unknown;
 }
 
 type Current = { parentVnode: Vnode | undefined; oldParentVnode: Vnode | undefined; component: Component | undefined };
@@ -113,7 +126,7 @@ const trust = (htmlString: string) => {
   let div = createElement("div");
   div.innerHTML = htmlString.trim();
 
-  return [].map.call(div.childNodes, (item) => domToVnode(item));
+  return [].map.call(div.childNodes, (item) => domToVnode(item)) as Vnode[];
 };
 
 //eslint-disable-next-line max-lines-per-function
@@ -147,7 +160,7 @@ function valyrian(): Valyrian {
 
   // Plugin system
   const plugins = new Map();
-  v.usePlugin = (plugin: Plugin, options: object = {}) => !plugins.has(plugin) && plugins.set(plugin, true) && plugin(v, options);
+  v.usePlugin = (plugin: Plugin, options: Record<string, unknown> = {}) => !plugins.has(plugin) && plugins.set(plugin, true) && plugin(v as Valyrian, options);
 
   let attachedListeners: { [x: string]: boolean } = {};
   function eventListener(e: Event) {
