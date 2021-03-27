@@ -8,7 +8,6 @@
     "inlineSourceMap": true,
     "allowJs": true,
     "resolveJsonModule": true,
-    "sourceMap": true,
     "removeComments": true
   }
 }

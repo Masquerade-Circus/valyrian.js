@@ -160,7 +160,7 @@ span.hello{display: inline-block}
     expect(cleanCss).toEqual("span{display:block}");
   });
 
-  it("should inline js", async () => {
+  it.only("should inline js", async () => {
     v.inline.extensions("ts");
     // await v.inline.ts("./lib/index.ts.old", { outputOptions: { minify: true } });
     await v.inline.ts("./lib/index.ts", { outputOptions: { compact: true } });
