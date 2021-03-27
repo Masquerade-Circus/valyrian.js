@@ -65,7 +65,7 @@ function fileMethodFactory() {
           if (/(ts|tsx)/.test(ext)) {
             defaultPlugins.push(
               typescript({
-                target: "ESNext" /* For reference check: https://node.green/#ESNEXT */,
+                // target: "ESNext" /* For reference check: https://node.green/#ESNEXT */,
                 module: "ESNext",
                 strict: true,
                 moduleResolution: "node",
@@ -124,7 +124,7 @@ function fileMethodFactory() {
 
           outputOptions = {
             compact: minify,
-            format: "esm",
+            format: "iife",
             name: "v" + (0 | (Math.random() * 9e6)).toString(36),
             ...outputOptions,
             sourcemap: true
