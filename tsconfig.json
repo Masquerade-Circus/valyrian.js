@@ -1,13 +1,12 @@
 {
   "compilerOptions": {
-    "module": "ES2020",
-    "allowJs": true,
-    "importsNotUsedAsValues": "remove",
-    "removeComments": true,
-    "target": "ES2020",
+    "target": "ESNext" /* For reference check: https://node.green/#ES2020 */,
+    "module": "ESNext",
     "strict": true,
+    "moduleResolution": "node",
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "inlineSourceMap": true,
+    "allowJs": true,
+    "resolveJsonModule": true
   }
 }

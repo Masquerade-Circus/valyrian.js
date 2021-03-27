@@ -1,5 +1,6 @@
 let fs = require("fs");
 let path = require("path");
+require("ts-node/register");
 
 let fetch = require("node-fetch");
 let FormData = require("form-data");
@@ -52,17 +53,28 @@ function fileMethodFactory() {
           let minify = (options.outputOptions || {}).compact === false ? false : true;
 
           let defaultPlugins = [
-            includepaths({ paths: [process.cwd(), process.cwd() + "/node_modules"] }),
-            nodeResolve({
-              mainFields: ["browser", "jsnext", "module", "main"],
-              browser: true,
-              extensions: [".js", ".ts", ".jsx", ".tsx", ".mjs"]
-            }),
-            json()
+            // includepaths({ paths: [process.cwd(), process.cwd() + "/node_modules"] }),
+            // nodeResolve({
+            //   mainFields: ["browser", "jsnext", "module", "main"],
+            //   browser: true,
+            //   extensions: [".js", ".ts", ".jsx", ".tsx", ".mjs"]
+            // }),
+            // json()
           ];
 
           if (/(ts|tsx)/.test(ext)) {
-            defaultPlugins.push(typescript());
+            defaultPlugins.push(
+              typescript({
+                target: "ESNext" /* For reference check: https://node.green/#ESNEXT */,
+                module: "ESNext",
+                strict: true,
+                moduleResolution: "node",
+                esModuleInterop: true,
+                inlineSourceMap: true,
+                allowJs: true,
+                resolveJsonModule: true
+              })
+            );
           }
 
           defaultPlugins.push(
@@ -76,12 +88,7 @@ function fileMethodFactory() {
               jsxFactory: "v",
               jsxFragment: "v",
               // Add extra loaders
-              loaders: {
-                // Enable JSX in .js/.ts/.mjs files too
-                ".js": "jsx",
-                ".ts": "jsx",
-                ".mjs": "jsx"
-              }
+              loader: { ".js": "jsx", ".ts": "tsx", ".mjs": "jsx" }
             })
           );
 
@@ -97,8 +104,7 @@ function fileMethodFactory() {
               terserPlugin({
                 warnings: "verbose",
                 compress: {
-                  booleans_as_integers: true,
-                  passes: 2
+                  booleans_as_integers: true
                 },
                 output: {
                   wrap_func_args: false
@@ -118,7 +124,7 @@ function fileMethodFactory() {
 
           outputOptions = {
             compact: minify,
-            format: "iife",
+            format: "esm",
             name: "v" + (0 | (Math.random() * 9e6)).toString(36),
             ...outputOptions,
             sourcemap: true
@@ -128,7 +134,6 @@ function fileMethodFactory() {
 
           const { output } = await bundle.generate(outputOptions);
 
-          // console.log(output);
           for (const chunkOrAsset of output) {
             if (chunkOrAsset.type === "chunk") {
               let mapBase64 = Buffer.from(chunkOrAsset.map.toString()).toString("base64");
