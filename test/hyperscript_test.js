@@ -1,6 +1,7 @@
+import "../lib";
+
 import expect from "expect";
 import nodePlugin from "../plugins/node";
-import v from "../lib";
 v.usePlugin(nodePlugin);
 
 describe("Hyperscript", () => {

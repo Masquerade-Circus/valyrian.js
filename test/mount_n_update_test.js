@@ -1,6 +1,7 @@
+import "../lib";
+
 import expect from "expect";
 import nodePlugin from "../plugins/node";
-import v from "../lib";
 
 v.usePlugin(nodePlugin);
 
@@ -27,7 +28,7 @@ describe("Mount and update", () => {
   });
 
   it("Mount and update with functional stateful component", () => {
-    let Component = function() {
+    let Component = function () {
       return <div id={this.id}>Hello {this.world}</div>;
     };
     Component.world = "World";
@@ -51,7 +52,7 @@ describe("Mount and update", () => {
       world: "World",
       id: "example"
     };
-    let Component = function() {
+    let Component = function () {
       return <SubComponent {...state} />;
     };
 

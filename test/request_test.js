@@ -1,8 +1,9 @@
+import "../lib";
+
 import expect from "expect";
 import fastify from "fastify";
 import nodePlugin from "../plugins/node";
 import requestPlugin from "../plugins/request";
-import v from "../lib";
 v.usePlugin(nodePlugin);
 v.usePlugin(requestPlugin);
 
@@ -12,7 +13,11 @@ for (let i = 10; i--; ) {
     userId: 1,
     id: i,
     title: "sunt aut facere repellat provident occaecati excepturi optio reprehenderit",
-    body: "quia et suscipit\n" + "suscipit recusandae consequuntur expedita et cum\n" + "reprehenderit molestiae ut ut quas totam\n" + "nostrum rerum est autem sunt rem eveniet architecto"
+    body:
+      "quia et suscipit\n" +
+      "suscipit recusandae consequuntur expedita et cum\n" +
+      "reprehenderit molestiae ut ut quas totam\n" +
+      "nostrum rerum est autem sunt rem eveniet architecto"
   });
 }
 
@@ -55,7 +60,11 @@ describe("Request", () => {
       userId: 1,
       id: 1,
       title: "sunt aut facere repellat provident occaecati excepturi optio reprehenderit",
-      body: "quia et suscipit\n" + "suscipit recusandae consequuntur expedita et cum\n" + "reprehenderit molestiae ut ut quas totam\n" + "nostrum rerum est autem sunt rem eveniet architecto"
+      body:
+        "quia et suscipit\n" +
+        "suscipit recusandae consequuntur expedita et cum\n" +
+        "reprehenderit molestiae ut ut quas totam\n" +
+        "nostrum rerum est autem sunt rem eveniet architecto"
     });
     await server.close();
   });

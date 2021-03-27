@@ -1,8 +1,9 @@
+import "../lib";
+
 import expect from "expect";
 import fs from "fs";
 import nodePlugin from "../plugins/node";
 import packageJson from "../package.json";
-import v from "../lib";
 
 v.usePlugin(nodePlugin);
 
@@ -159,7 +160,7 @@ span.hello{display: inline-block}
     expect(cleanCss).toEqual("span{display:block}");
   });
 
-  it.only("should inline js", async () => {
+  it("should inline js", async () => {
     v.inline.extensions("ts");
     // await v.inline.ts("./lib/index.ts.old", { outputOptions: { minify: true } });
     await v.inline.ts("./lib/index.ts", { outputOptions: { compact: true } });

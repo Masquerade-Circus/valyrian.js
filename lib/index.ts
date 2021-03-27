@@ -25,9 +25,9 @@ interface Valyrian {
   trust: (htmlString: string) => Vnode[];
   onCleanup: (callback: typeof Function) => void;
   updateProperty: (name: string, newNode: Vnode, oldNode?: Vnode) => void;
-  update: (props?: Props, ...children: VnodeOrUnknown[]) => void | string;
-  mount: (container: string, component: Component, props: Props, ...children: VnodeOrUnknown[]) => void | string;
-  unMount: () => string | void;
+  update: (props?: Props, ...children: VnodeOrUnknown[]) => string | boolean | void;
+  mount: (container: string, component: Component, props: Props, ...children: VnodeOrUnknown[]) => string | boolean | void;
+  unMount: () => string | boolean | void;
   directive: (directive: string, handler: Directive) => void;
   newInstance: () => Valyrian;
 }
@@ -120,7 +120,7 @@ const callRemove = (vnode: Vnode) => {
   vnode.props.onremove && vnode.props.onremove(vnode);
 };
 
-const isNode = new Function("try {return this===global;}catch(e){return false;}")();
+const isNode = typeof window === "undefined" || typeof global !== "undefined";
 
 const trust = (htmlString: string) => {
   let div = createElement("div");
@@ -547,4 +547,4 @@ function valyrian(): Valyrian {
   return v;
 }
 
-export default valyrian();
+(((isNode ? global : window) as unknown) as { v: Valyrian }).v = valyrian();

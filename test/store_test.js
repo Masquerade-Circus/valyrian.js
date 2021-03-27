@@ -1,6 +1,7 @@
+import "../lib";
+
 import StorePlugin from "../plugins/store";
 import expect from "expect";
-import v from "../lib";
 v.usePlugin(StorePlugin);
 
 function getNewStore() {

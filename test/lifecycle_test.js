@@ -1,6 +1,7 @@
+import "../lib";
+
 import expect from "expect";
 import nodePlugin from "../plugins/node";
-import v from "../lib";
 v.usePlugin(nodePlugin);
 
 describe("Lifecycle", () => {
@@ -8,7 +9,7 @@ describe("Lifecycle", () => {
     let s = 1;
     let calls = [];
 
-    let Lifecycle = function() {
+    let Lifecycle = function () {
       return (
         <div
           {...{
@@ -57,7 +58,7 @@ describe("Lifecycle", () => {
             <small />
           )}
           <ul>
-            {(function() {
+            {(function () {
               let elem = [];
               if (s >= 0) {
                 for (let l = s; l--; ) {
