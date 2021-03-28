@@ -147,7 +147,7 @@ function fileMethodFactory() {
           //   }
           // }
 
-          if (/(ts|tsx)/.test(ext)) {
+          if (/(ts|tsx)/.test(ext) && !options.noValidate) {
             tsc.build({
               basePath: process.cwd(), // always required, used for relative paths
               configFilePath: "tsconfig.json", // config to inherit from (optional)
@@ -160,7 +160,8 @@ function fileMethodFactory() {
               },
               files: [file],
               include: ["**/*.ts", "**/*.js", "**/*.tsx", "**/*.jsx", "**/*.mjs"],
-              exclude: ["test*/**/*", "**/*.test.ts", "**/*.spec.ts"]
+              exclude: ["test*/**/*", "**/*.test.ts", "**/*.spec.ts"],
+              ...(options.tsc || {})
             });
           }
 
@@ -173,7 +174,8 @@ function fileMethodFactory() {
             outdir: "out",
             target: ["es2020"],
             jsxFactory: "v",
-            loader: { ".js": "jsx", ".ts": "tsx", ".mjs": "jsx" }
+            loader: { ".js": "jsx", ".ts": "tsx", ".mjs": "jsx" },
+            ...(options.esbuild || {})
           });
 
           let result2 = await terser.minify(result.outputFiles[1].text, {
@@ -186,7 +188,8 @@ function fileMethodFactory() {
             output: {
               wrap_func_args: false
             },
-            ecma: 2020
+            ecma: 2020,
+            ...(options.terser || {})
           });
 
           let mapBase64 = Buffer.from(result2.map.toString()).toString("base64");

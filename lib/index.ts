@@ -519,12 +519,12 @@ function valyrian(): Valyrian {
   let hideDirective = (test: boolean) => (bool: boolean, vnode: Vnode, oldnode?: Vnode | TextVnode) => {
     let value = test ? bool : !bool;
     if (value) {
-      let newdom = document.createTextNode("");
+      let newdom = createElement("i");
       if (oldnode && oldnode.dom && oldnode.dom.parentNode) {
         oldnode instanceof Vnode && callRemove(oldnode);
         oldnode.dom.parentNode.replaceChild(newdom, oldnode.dom);
       }
-      vnode.name = "";
+      vnode.name = "i";
       vnode.children = [];
       vnode.props = {};
       vnode.dom = (newdom as unknown) as DomElement;
