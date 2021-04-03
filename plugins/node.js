@@ -6,25 +6,11 @@ let fetch = require("node-fetch");
 let FormData = require("form-data");
 let treeAdapter = require("./utils/tree-adapter");
 
-let os = require("os");
-
-let rollup = require("rollup");
-let commonjs = require("@rollup/plugin-commonjs");
-let { nodeResolve } = require("@rollup/plugin-node-resolve");
-let includepaths = require("rollup-plugin-includepaths");
-let buble = require("@rollup/plugin-buble");
-let json = require("@rollup/plugin-json");
-let { terser: terserPlugin } = require("rollup-plugin-terser");
 let terser = require("terser");
-let sourcemaps = require("rollup-plugin-sourcemaps");
-let typescript = require("@rollup/plugin-typescript");
 let esbuild = require("esbuild");
-let esbuildRollup = require("rollup-plugin-esbuild");
 let { PurgeCSS } = require("purgecss");
 let CleanCSS = require("clean-css");
-let csso = require("csso");
 
-let sucrase = require("@rollup/plugin-sucrase");
 const tsc = require("tsc-prog");
 
 global.fetch = fetch;
@@ -51,102 +37,6 @@ function fileMethodFactory() {
       if (typeof file === "string") {
         let ext = file.split(".").pop();
         if (/(js|jsx|mjs|ts|tsx)/.test(ext)) {
-          // let inputOptions = options.inputOptions || {};
-          // let outputOptions = options.outputOptions || {};
-          // let minify = (options.outputOptions || {}).compact === false ? false : true;
-
-          // let defaultPlugins = [
-          //   // includepaths({ paths: [process.cwd(), process.cwd() + "/node_modules"] }),
-          //   // nodeResolve({
-          //   //   mainFields: ["browser", "jsnext", "module", "main"],
-          //   //   browser: true,
-          //   //   extensions: [".js", ".ts", ".jsx", ".tsx", ".mjs"]
-          //   // }),
-          //   // json()
-          // ];
-
-          // if (/(ts|tsx)/.test(ext)) {
-          //   defaultPlugins.push(
-          //     typescript({
-          //       // target: "ESNext" /* For reference check: https://node.green/#ESNEXT */,
-          //       module: "ESNext",
-          //       strict: true,
-          //       moduleResolution: "node",
-          //       esModuleInterop: true,
-          //       inlineSourceMap: false,
-          //       sourceMap: true,
-          //       allowJs: true,
-          //       resolveJsonModule: true,
-          //       removeComments: true
-          //     })
-          //   );
-          // }
-
-          // defaultPlugins.push(
-          //   esbuildRollup({
-          //     // All options are optional
-          //     include: /\.(js|jsx|mjs|ts|tsx)$/,
-          //     exclude: [],
-          //     sourceMap: true,
-          //     minify,
-          //     target: "es2020",
-          //     jsxFactory: "v",
-          //     jsxFragment: "v",
-          //     // Add extra loaders
-          //     loader: { ".js": "jsx", ".ts": "tsx", ".mjs": "jsx" }
-          //   })
-          // );
-
-          // defaultPlugins.push(
-          //   commonjs({
-          //     sourceMap: true,
-          //     transformMixedEsModules: true
-          //   })
-          // );
-
-          // if (minify) {
-          //   defaultPlugins.push(
-          //     terserPlugin({
-          //       warnings: "verbose",
-          //       compress: {
-          //         booleans_as_integers: true
-          //       },
-          //       output: {
-          //         wrap_func_args: false
-          //       },
-          //       ecma: 2020
-          //     })
-          //   );
-          // }
-
-          // defaultPlugins.push(...(inputOptions.plugins || []));
-
-          // inputOptions = {
-          //   ...inputOptions,
-          //   input: file,
-          //   plugins: defaultPlugins
-          // };
-
-          // outputOptions = {
-          //   compact: minify,
-          //   format: "iife",
-          //   name: "v" + (0 | (Math.random() * 9e6)).toString(36),
-          //   ...outputOptions,
-          //   sourcemap: true
-          // };
-
-          // const bundle = await rollup.rollup(inputOptions);
-
-          // const { output } = await bundle.generate(outputOptions);
-
-          // for (const chunkOrAsset of output) {
-          //   if (chunkOrAsset.type === "chunk") {
-          //     let mapBase64 = Buffer.from(chunkOrAsset.map.toString()).toString("base64");
-          //     let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
-          //     contents = { raw: chunkOrAsset.code, map: suffix, file };
-          //   }
-          // }
-
           if (/(ts|tsx)/.test(ext) && !options.noValidate) {
             tsc.build({
               basePath: process.cwd(), // always required, used for relative paths
@@ -183,7 +73,7 @@ function fileMethodFactory() {
               content: result.outputFiles[0].text.toString()
             },
             compress: {
-              booleans_as_integers: true
+              booleans_as_integers: false
             },
             output: {
               wrap_func_args: false

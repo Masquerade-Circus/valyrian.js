@@ -1,12 +1,12 @@
 /* eslint-disable no-use-before-define */
 /* eslint-disable no-unused-vars */
-type VnodeOrUnknown = unknown[] | Vnode | TextVnode | unknown | VnodeOrUnknown[];
+type VnodeOrUnknown = unknown[] | ComponentVnode | Vnode | TextVnode | unknown | VnodeOrUnknown[];
 
 type DomElement = (Element | SVGElement | HTMLElement) & Record<string, unknown>;
 
 type DomAttribute = { nodeName: string; nodeValue: string };
 
-type Props = { [propName in string | number]: unknown } & {
+export type Props = Record<string, unknown> & {
   key?: string | number;
   data?: string;
   oncreate?: { (vnode: Vnode): never };
@@ -15,8 +15,16 @@ type Props = { [propName in string | number]: unknown } & {
   onbeforeupdate?: { (vnode: Vnode, oldVnode: Vnode | TextVnode): undefined | boolean };
 };
 
-interface Valyrian {
-  (tagOrComponent: string | Component, props?: Props | null, children?: VnodeOrUnknown): Vnode | Component;
+type Component = (props?: Record<string, unknown> | null, children?: VnodeOrUnknown) => VnodeOrUnknown | VnodeOrUnknown[];
+
+export type ValyrianComponent =
+  | Component
+  | (Record<string, unknown> & {
+      view: Component;
+    });
+
+export interface Valyrian {
+  (tagOrComponent: string | ValyrianComponent, props?: Props | null, children?: VnodeOrUnknown): Vnode | ComponentVnode;
   isMounted: boolean;
   isNode: boolean;
   reservedWords: string[];
@@ -26,23 +34,23 @@ interface Valyrian {
   onCleanup: (callback: typeof Function) => void;
   updateProperty: (name: string, newNode: Vnode, oldNode?: Vnode) => void;
   update: (props?: Props, ...children: VnodeOrUnknown[]) => string | boolean | void;
-  mount: (container: string, component: Component, props: Props, ...children: VnodeOrUnknown[]) => string | boolean | void;
+  mount: (container: string, component: ValyrianComponent, props?: Props | null, ...children: VnodeOrUnknown[]) => string | boolean | void;
   unMount: () => string | boolean | void;
   directive: (directive: string, handler: Directive) => void;
   newInstance: () => Valyrian;
 }
 
-interface Directive {
+export interface Directive {
   (value: any, vnode: Vnode, oldVnode?: Vnode | TextVnode): unknown;
 }
 
-interface Plugin {
+export interface Plugin {
   (v: Valyrian, options: Record<string, unknown>): unknown;
 }
 
-type Current = { parentVnode: Vnode | undefined; oldParentVnode: Vnode | undefined; component: Component | undefined };
+export type Current = { parentVnode: Vnode | undefined; oldParentVnode: Vnode | undefined; component: ComponentVnode | undefined };
 
-class Vnode {
+export class Vnode {
   name: string;
   props: Props;
   children: VnodeOrUnknown[];
@@ -51,14 +59,14 @@ class Vnode {
   isSVG?: boolean;
   processed?: boolean;
 
-  constructor(name: string, props: Props | null, children: VnodeOrUnknown[]) {
+  constructor(name: string, props: Props | null = null, children: VnodeOrUnknown[]) {
     this.props = props || {};
     this.children = children;
     this.name = name;
   }
 }
 
-class TextVnode {
+export class TextVnode {
   dom?: DomElement;
 
   constructor(dom?: DomElement) {
@@ -66,12 +74,12 @@ class TextVnode {
   }
 }
 
-class Component {
-  component: Component;
+export class ComponentVnode {
+  component: ValyrianComponent;
   props: Props | null;
   children: VnodeOrUnknown;
 
-  constructor(component: Component, props: Props | null, children: VnodeOrUnknown) {
+  constructor(component: ValyrianComponent, props: Props | null = null, children: VnodeOrUnknown) {
     this.props = props;
     this.children = children;
     this.component = component;
@@ -131,12 +139,12 @@ const trust = (htmlString: string) => {
 
 //eslint-disable-next-line max-lines-per-function
 function valyrian(): Valyrian {
-  function v(tagOrComponent: string | Component, props: Props | null = NULL, ...children: VnodeOrUnknown[]) {
+  function v(tagOrComponent: string | ValyrianComponent, props: Props | null = null, ...children: VnodeOrUnknown[]) {
     if (typeof tagOrComponent === str) {
       return new Vnode(tagOrComponent as string, props, children);
     }
 
-    return new Component(tagOrComponent as Component, props, children);
+    return new ComponentVnode(tagOrComponent as ValyrianComponent, props, children);
   }
 
   v.isMounted = false;
@@ -146,7 +154,7 @@ function valyrian(): Valyrian {
   let mainContainer: DomElement | null = NULL;
   let mainNode: Vnode;
   let oldMainNode: Vnode;
-  let mountedComponent: Component;
+  let mountedComponent: ValyrianComponent;
 
   const reservedWords: string[] = [key, "data", once, "oncreate", "onupdate", "onremove", "onbeforeupdate"];
   v.reservedWords = reservedWords;
@@ -207,7 +215,9 @@ function valyrian(): Valyrian {
   const addProps = (newNode: Vnode) => {
     for (let name in newNode.props) {
       let value = newNode.props[name];
-      if (reservedWords.indexOf(name) !== -1) {
+      if (name in newNode.props === false) {
+        return;
+      } else if (reservedWords.indexOf(name) !== -1) {
         if (directives[name]) {
           directives[name](value, newNode);
         }
@@ -258,6 +268,9 @@ function valyrian(): Valyrian {
 
   let updateProps = (newNode: Vnode, oldNode?: Vnode) => {
     for (let name in newNode.props) {
+      if (name in newNode.props === false) {
+        return;
+      }
       updateProperty(name, newNode, oldNode);
     }
   };
@@ -323,12 +336,12 @@ function valyrian(): Valyrian {
         (childVnode as Vnode).isSVG = parentNode.isSVG || childVnode.name === svg;
       } else if (childVnode === NULL || childVnode === UND) {
         newTree.splice(i--, 1);
-      } else if (childVnode instanceof Component) {
+      } else if (childVnode instanceof ComponentVnode) {
         current.component = childVnode;
         newTree.splice(
           i--,
           1,
-          ("view" in (childVnode as Component).component ? ((childVnode.component as unknown) as { view: any }).view : childVnode.component).call(
+          ("view" in (childVnode as ComponentVnode).component ? ((childVnode.component as unknown) as { view: any }).view : childVnode.component).call(
             childVnode.component,
             childVnode.props,
             ...(childVnode.children as VnodeOrUnknown[])
@@ -474,7 +487,7 @@ function valyrian(): Valyrian {
     parentNode.children = newTree;
   };
 
-  v.update = (props?: Props, ...children: VnodeOrUnknown[]) => {
+  v.update = (props: Props | null = null, ...children: VnodeOrUnknown[]) => {
     if (mainNode) {
       if (mountedComponent) {
         cleanupVnodes();
@@ -490,7 +503,7 @@ function valyrian(): Valyrian {
     }
   };
 
-  v.mount = (container: string, component: Component, props: Props, ...children: VnodeOrUnknown[]) => {
+  v.mount = (container: string, component: ValyrianComponent, props: Props | null = null, ...children: VnodeOrUnknown[]) => {
     mainContainer = v.isNode ? createElement(container) : (document.querySelectorAll(container)[0] as DomElement);
     mainNode = domToVnode(mainContainer) as Vnode;
     mountedComponent = component;
@@ -500,7 +513,7 @@ function valyrian(): Valyrian {
 
   v.unMount = () => {
     mainContainer = NULL;
-    mountedComponent = ((() => "") as unknown) as Component;
+    mountedComponent = ((() => "") as unknown) as ValyrianComponent;
     let result = v.update();
     v.isMounted = false;
     return result;
@@ -519,12 +532,12 @@ function valyrian(): Valyrian {
   let hideDirective = (test: boolean) => (bool: boolean, vnode: Vnode, oldnode?: Vnode | TextVnode) => {
     let value = test ? bool : !bool;
     if (value) {
-      let newdom = createElement("i");
+      let newdom = document.createTextNode("");
       if (oldnode && oldnode.dom && oldnode.dom.parentNode) {
         oldnode instanceof Vnode && callRemove(oldnode);
         oldnode.dom.parentNode.replaceChild(newdom, oldnode.dom);
       }
-      vnode.name = "i";
+      vnode.name = "#text";
       vnode.children = [];
       vnode.props = {};
       vnode.dom = (newdom as unknown) as DomElement;
@@ -548,3 +561,10 @@ function valyrian(): Valyrian {
 }
 
 (((isNode ? global : window) as unknown) as { v: Valyrian }).v = valyrian();
+
+declare global {
+  let v: Valyrian;
+  interface Window {
+    v: Valyrian;
+  }
+}

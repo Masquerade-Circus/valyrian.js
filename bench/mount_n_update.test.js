@@ -1,10 +1,13 @@
 let { compare, benchmark, before } = require("@masquerade-circus/bench-test");
 
-import VLite from "../lib/index-lite";
-import VNext from "../lib/index";
+import "../lib/index";
+
 import expect from "expect";
 import nodePlugin from "../plugins/node";
 import v from "../lib/index-old";
+import vOld from "../lib/index-old";
+
+let VNext = v;
 
 let data = {
   before: [],
@@ -32,59 +35,46 @@ for (let i = 1000; i--; ) {
   data.update2.push(createNode({ className: "ok", i: 1000 - i }));
 }
 
-v.usePlugin(nodePlugin);
+vOld.usePlugin(nodePlugin);
 
 compare("Mount and update: Mount", () => {
   let date = new Date();
-  let Component = () => v("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]]);
+  let Component = () => vOld("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]]);
   let Component2 = () => VNext("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]]);
-  let Component3 = () => VLite("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]]);
 
   before(() => {
-    expect(v.mount("body", Component)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
+    expect(vOld.mount("body", Component)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
     expect(VNext.mount("body", Component2)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
-    expect(VLite.mount("body", Component3)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
   });
 
   benchmark("Valyrian 5.0.8", () => {
-    v.mount("body", Component);
+    vOld.mount("body", Component);
   });
 
   benchmark("Valyrian next", () => {
     VNext.mount("body", Component2);
   });
-  benchmark("Valyrian lite", () => {
-    VLite.mount("body", Component3);
-  });
 });
 
 compare("Mount and update: Update", () => {
   let date = new Date();
-  let Component = () => v("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]]);
+  let Component = () => vOld("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]]);
   let Component2 = () => VNext("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]]);
-  let Component3 = () => VLite("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]]);
 
   before(() => {
-    expect(v.mount("body", Component)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
-    expect(v.update()).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
+    expect(vOld.mount("body", Component)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
+    expect(vOld.update()).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
 
     expect(VNext.mount("body", Component2)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
     expect(VNext.update()).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
-
-    expect(VLite.mount("body", Component3)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
-    expect(VLite.update()).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
   });
 
   benchmark("Valyrian 5.0.8", () => {
-    v.update();
+    vOld.update();
   });
 
   benchmark("Valyrian next", () => {
     VNext.update();
-  });
-
-  benchmark("Valyrian lite", () => {
-    VLite.update();
   });
 });
 
@@ -120,20 +110,21 @@ compare("Mount and update: Render list", () => {
   tests.forEach((test) => {
     before(() => {
       let keys = [...set];
-      let component = () => (
-        <ul>
-          {keys.map((key) => {
+      let component = () =>
+        vOld(
+          "ul",
+          null,
+          keys.map((key) => {
             if (key) {
-              return <li>{key}</li>;
+              return vOld("li", null, key);
             }
-          })}
-        </ul>
-      );
+          })
+        );
 
-      let before = v.mount("body", component);
+      let before = vOld.mount("body", component);
       keys = [...test.set];
-      v.unMount();
-      let after = v.mount("body", component);
+      vOld.unMount();
+      let after = vOld.mount("body", component);
 
       let afterString = getString(test.set);
 
@@ -164,63 +155,38 @@ compare("Mount and update: Render list", () => {
       expect(before).toEqual(beforeString);
       expect(after).toEqual(afterString);
     });
-
-    before(() => {
-      let keys = [...set];
-      let component = () =>
-        VLite(
-          "ul",
-          null,
-          keys.map((key) => {
-            if (key) {
-              return VLite("li", null, key);
-            }
-          })
-        );
-
-      let before = VLite.mount("body", component);
-      keys = [...test.set];
-      VLite.unMount();
-      let after = VLite.mount("body", component);
-
-      let afterString = getString(test.set);
-
-      expect(before).toEqual(beforeString);
-      expect(after).toEqual(afterString);
-    });
   });
 
-  benchmark("v", () => {
+  benchmark("vOld", () => {
     let keys = data.before;
-    let component = () => v("ul", null, keys.map((props) => v("li", props, props.data)));
+    let component = () =>
+      vOld(
+        "ul",
+        null,
+        keys.map((props) => vOld("li", props, props.data))
+      );
 
-    v.mount("body", component);
+    vOld.mount("body", component);
     keys = data.update1;
-    v.update();
+    vOld.update();
     keys = data.update2;
-    v.update();
+    vOld.update();
   });
 
   benchmark("VNext", () => {
     let keys = data.before;
-    let component = () => VNext("ul", null, keys.map((props) => VNext("li", props, props.data)));
+    let component = () =>
+      VNext(
+        "ul",
+        null,
+        keys.map((props) => VNext("li", props, props.data))
+      );
 
     VNext.mount("body", component);
     keys = data.update1;
     VNext.update();
     keys = data.update2;
     VNext.update();
-  });
-
-  benchmark("VLite", () => {
-    let keys = data.before;
-    let component = () => VLite("ul", null, keys.map((props) => VLite("li", props, props.data)));
-
-    VLite.mount("body", component);
-    keys = data.update1;
-    VLite.update();
-    keys = data.update2;
-    VLite.update();
   });
 });
 
@@ -266,10 +232,10 @@ compare("Mount and update: Render keyed list", () => {
         </ul>
       );
 
-      let before = v.mount("body", component);
+      let before = vOld.mount("body", component);
       keys = [...test.set];
-      v.unMount();
-      let after = v.mount("body", component);
+      vOld.unMount();
+      let after = vOld.mount("body", component);
 
       let afterString = getString(test.set);
 
@@ -302,36 +268,35 @@ compare("Mount and update: Render keyed list", () => {
     });
   });
 
-  benchmark("v", () => {
+  benchmark("vOld", () => {
     let keys = data.before;
-    let component = () => v("ul", null, keys.map((props) => v("li", { ...props, key: props.data }, props.data)));
+    let component = () =>
+      vOld(
+        "ul",
+        null,
+        keys.map((props) => vOld("li", { ...props, key: props.data }, props.data))
+      );
 
-    v.mount("body", component);
+    vOld.mount("body", component);
     keys = data.update1;
-    v.update();
+    vOld.update();
     keys = data.update2;
-    v.update();
+    vOld.update();
   });
 
   benchmark("VNext", () => {
     let keys = data.before;
-    let component = () => VNext("ul", null, keys.map((props) => VNext("li", { ...props, key: props.data }, props.data)));
+    let component = () =>
+      VNext(
+        "ul",
+        null,
+        keys.map((props) => VNext("li", { ...props, key: props.data }, props.data))
+      );
 
     VNext.mount("body", component);
     keys = data.update1;
     VNext.update();
     keys = data.update2;
     VNext.update();
-  });
-
-  benchmark("VLite", () => {
-    let keys = data.before;
-    let component = () => VLite("ul", null, keys.map((props) => VLite("li", { ...props, key: props.data }, props.data)));
-
-    VLite.mount("body", component);
-    keys = data.update1;
-    VLite.update();
-    keys = data.update2;
-    VLite.update();
   });
 });
