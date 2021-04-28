@@ -248,7 +248,7 @@ describe("Directives", () => {
       it("should not render vnode with falsy values", () => {
         let values = [false, 0, "", null, , NaN];
 
-        let expected = "<div><i></i></div>";
+        let expected = "<div></div>";
 
         values.forEach((value) => {
           v.unMount();
@@ -264,7 +264,7 @@ describe("Directives", () => {
       it("should update oldnode", () => {
         let value = true;
         let expected1 = "<div><span>Hello world</span></div>";
-        let expected2 = "<div><i></i></div>";
+        let expected2 = "<div></div>";
 
         let result1 = v.mount("div", () => (
           <div>
@@ -306,7 +306,7 @@ describe("Directives", () => {
       it("should not render vnode if thruthy values", () => {
         let values = [{}, 1, true, [], "string", new Date(), -1];
 
-        let expected = "<div><i></i></div>";
+        let expected = "<div></div>";
 
         values.forEach((value) => {
           v.unMount();
@@ -442,7 +442,7 @@ describe("Directives", () => {
 
       show = false;
       let result2 = v.update();
-      expect(result2).toEqual("<i></i>");
+      expect(result2).toEqual("");
     });
   });
 

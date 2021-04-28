@@ -259,7 +259,11 @@ function valyrian(): Valyrian {
           (newNode.dom as DomElement)[name] = value;
         }
       } else if (!oldNode || value !== oldNode.props[name]) {
-        (newNode.dom as DomElement).setAttribute(name, value as string);
+        if (value === false) {
+          (newNode.dom as DomElement).removeAttribute(name);
+        } else {
+          (newNode.dom as DomElement).setAttribute(name, value as string);
+        }
       }
     }
   };

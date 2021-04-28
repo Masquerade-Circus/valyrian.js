@@ -141,6 +141,22 @@ describe("Mount and update", () => {
     });
   });
 
+  it("Should remove property if it is set to false", () => {
+    let disabled = true;
+    let Component = () => <div disabled={disabled}>Hello world</div>;
+
+    let result = {};
+
+    result.before = v.mount("body", Component);
+    disabled = false;
+    result.after = v.update();
+
+    expect(result).toEqual({
+      before: '<div disabled="true">Hello world</div>',
+      after: "<div>Hello world</div>"
+    });
+  });
+
   it("Should handle different types of data", () => {
     let date = new Date();
 

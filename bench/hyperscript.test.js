@@ -5,7 +5,7 @@ import "../lib/index";
 import expect from "expect";
 import fs from "fs";
 import nodePlugin from "../plugins/node";
-import vOld from "../lib/index-old";
+import vOld from "./index-old";
 
 let VNext = v;
 
@@ -16,14 +16,9 @@ compare("hyperscript", () => {
   before(async () => {
     vOld.inline.extensions("ts");
     await vOld.inline.ts("./lib/index.ts", { outputOptions: { compact: true } });
-    await vOld.inline.js("./lib/index-old.js", { outputOptions: { compact: true } });
+    await vOld.inline.js("./bench/index-old.js", { outputOptions: { compact: true } });
     console.log(vOld.inline.ts()[0].raw.length);
     console.log(vOld.inline.js()[0].raw.length);
-
-    // console.log(vOld.inline.ts()[1].raw);
-    // fs.writeFileSync("./dist/valyrian.lite.js", vOld.inline.ts()[1].raw);
-
-    // expect(vOld.inline.ts()[0].raw.length).toBeLessThan(5115);
 
     let compiled = fs.readFileSync("./dist/valyrian.min.js", "utf-8");
     console.log(compiled.length);

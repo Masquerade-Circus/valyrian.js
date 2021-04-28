@@ -164,7 +164,7 @@ span.hello{display: inline-block}
     v.inline.extensions("ts");
     // await v.inline.ts("./lib/index.ts.old", { outputOptions: { minify: true } });
     await v.inline.ts("./lib/index.ts", { outputOptions: { compact: true } });
-    await v.inline.js("./lib/index-old.js", { outputOptions: { compact: true } });
+    await v.inline.js("./bench/index-old.js", { outputOptions: { compact: true } });
     console.log(v.inline.ts()[0].raw.length);
     // console.log(v.inline.ts()[1].raw.length);
     console.log(v.inline.js()[0].raw.length);

@@ -4,8 +4,7 @@ import "../lib/index";
 
 import expect from "expect";
 import nodePlugin from "../plugins/node";
-import v from "../lib/index-old";
-import vOld from "../lib/index-old";
+import vOld from "./index-old";
 
 let VNext = v;
 
@@ -222,15 +221,16 @@ compare("Mount and update: Render keyed list", () => {
   tests.forEach((test) => {
     before(() => {
       let keys = [...set];
-      let component = () => (
-        <ul>
-          {keys.map((key) => {
+      let component = () =>
+        vOld(
+          "ul",
+          null,
+          keys.map((key) => {
             if (key) {
-              return <li key={key}>{key}</li>;
+              return vOld("li", { key }, key);
             }
-          })}
-        </ul>
-      );
+          })
+        );
 
       let before = vOld.mount("body", component);
       keys = [...test.set];
