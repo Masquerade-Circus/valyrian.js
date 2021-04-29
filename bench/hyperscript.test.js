@@ -20,7 +20,7 @@ compare("hyperscript", () => {
     console.log(vOld.inline.ts()[0].raw.length);
     console.log(vOld.inline.js()[0].raw.length);
 
-    let compiled = fs.readFileSync("./dist/valyrian.min.js", "utf-8");
+    let compiled = fs.readFileSync("./dist/valyrian.min.js", "utf8");
     console.log(compiled.length);
 
     expect(vOld("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]])).toEqual({

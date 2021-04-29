@@ -174,7 +174,7 @@ span.hello{display: inline-block}
 
     // expect(v.inline.ts()[0].raw.length).toBeLessThan(5115);
 
-    let compiled = fs.readFileSync("./dist/valyrian.min.js", "utf-8");
+    let compiled = fs.readFileSync("./dist/valyrian.min.js", "utf8");
     console.log(compiled.length);
   });
 });
