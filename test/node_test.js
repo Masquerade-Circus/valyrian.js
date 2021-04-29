@@ -1,8 +1,10 @@
+import "../lib";
+
 import expect from "expect";
 import fs from "fs";
-import "../lib";
 import nodePlugin from "../plugins/node";
 import packageJson from "../package.json";
+
 v.usePlugin(nodePlugin);
 
 describe("Node test", () => {
@@ -156,5 +158,23 @@ span.hello{display: inline-block}
     let cleanCss = await v.inline.uncss([html]);
 
     expect(cleanCss).toEqual("span{display:block}");
+  });
+
+  it("should inline js", async () => {
+    v.inline.extensions("ts");
+    // await v.inline.ts("./lib/index.ts.old", { outputOptions: { minify: true } });
+    await v.inline.ts("./lib/index.ts", { outputOptions: { compact: true } });
+    await v.inline.js("./bench/index-old.js", { outputOptions: { compact: true } });
+    console.log(v.inline.ts()[0].raw.length);
+    // console.log(v.inline.ts()[1].raw.length);
+    console.log(v.inline.js()[0].raw.length);
+
+    // console.log(v.inline.ts()[1].raw);
+    // fs.writeFileSync("./dist/valyrian.lite.js", v.inline.ts()[1].raw);
+
+    // expect(v.inline.ts()[0].raw.length).toBeLessThan(5115);
+
+    let compiled = fs.readFileSync("./dist/valyrian.min.js", "utf8");
+    console.log(compiled.length);
   });
 });

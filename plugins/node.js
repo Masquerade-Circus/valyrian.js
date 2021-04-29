@@ -1,20 +1,17 @@
 let fs = require("fs");
 let path = require("path");
+require("ts-node/register");
 
 let fetch = require("node-fetch");
 let FormData = require("form-data");
 let treeAdapter = require("./utils/tree-adapter");
 
-let rollup = require("rollup");
-let commonjs = require("@rollup/plugin-commonjs");
-let { nodeResolve } = require("@rollup/plugin-node-resolve");
-let includepaths = require("rollup-plugin-includepaths");
-let buble = require("@rollup/plugin-buble");
-let json = require("@rollup/plugin-json");
-let { terser } = require("rollup-plugin-terser");
-let sourcemaps = require("rollup-plugin-sourcemaps");
+let terser = require("terser");
+let esbuild = require("esbuild");
 let { PurgeCSS } = require("purgecss");
 let CleanCSS = require("clean-css");
+
+const tsc = require("tsc-prog");
 
 global.fetch = fetch;
 global.FormData = FormData;
@@ -30,7 +27,7 @@ let errorHandler = (resolve, reject) => (err) => {
 
 function fileMethodFactory() {
   let prop = [];
-  return function(file, options = {}) {
+  return function (file, options = {}) {
     if (!file) {
       return prop;
     }
@@ -40,54 +37,57 @@ function fileMethodFactory() {
       if (typeof file === "string") {
         let ext = file.split(".").pop();
         if (/(js|jsx|mjs|ts|tsx)/.test(ext)) {
-          let inputOptions = {
-            ...options.inputOptions,
-            input: file,
-            plugins: [
-              includepaths({ paths: [process.cwd()] }),
-              nodeResolve({
-                mainFields: ["browser", "jsnext", "module", "main"],
-                browser: true
-              }),
-              json(),
-              buble({
-                jsx: "v",
-                transforms: { asyncAwait: false },
-                objectAssign: "Object.assign",
-                target: { chrome: 70, firefox: 60, safari: 10 }
-              }),
-              commonjs({
-                sourceMap: true,
-                transformMixedEsModules: true
-              }),
-              terser({ warnings: "verbose" }),
-              sourcemaps(),
-              ...((options.inputOptions || {}).plugins || [])
-            ]
-          };
-
-          let outputOptions = {
-            compact: true,
-            format: "iife",
-            name: "v" + (0 | (Math.random() * 9e6)).toString(36),
-            ...options.outputOptions,
-            sourcemap: true
-          };
-
-          const bundle = await rollup.rollup(inputOptions);
-
-          const { output } = await bundle.generate(outputOptions);
-
-          for (const chunkOrAsset of output) {
-            if (chunkOrAsset.type === "chunk") {
-              let mapBase64 = Buffer.from(chunkOrAsset.map.toString()).toString("base64");
-              let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
-              contents = { raw: chunkOrAsset.code, map: suffix, file };
-            }
+          if (/(ts|tsx)/.test(ext) && !options.noValidate) {
+            tsc.build({
+              basePath: process.cwd(), // always required, used for relative paths
+              configFilePath: "tsconfig.json", // config to inherit from (optional)
+              compilerOptions: {
+                rootDir: "./",
+                outDir: "dist",
+                noEmitOnError: true,
+                noEmit: true,
+                declaration: false
+              },
+              files: [file],
+              include: ["**/*.ts", "**/*.js", "**/*.tsx", "**/*.jsx", "**/*.mjs"],
+              exclude: ["test*/**/*", "**/*.test.ts", "**/*.spec.ts"],
+              ...(options.tsc || {})
+            });
           }
+
+          let result = esbuild.buildSync({
+            entryPoints: [file],
+            bundle: true,
+            sourcemap: "external",
+            write: false,
+            minify: true,
+            outdir: "out",
+            target: ["es2020"],
+            jsxFactory: "v",
+            loader: { ".js": "jsx", ".ts": "tsx", ".mjs": "jsx" },
+            ...(options.esbuild || {})
+          });
+
+          let result2 = await terser.minify(result.outputFiles[1].text, {
+            sourceMap: {
+              content: result.outputFiles[0].text.toString()
+            },
+            compress: {
+              booleans_as_integers: false
+            },
+            output: {
+              wrap_func_args: false
+            },
+            ecma: 2020,
+            ...(options.terser || {})
+          });
+
+          let mapBase64 = Buffer.from(result2.map.toString()).toString("base64");
+          let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
+          contents = { raw: result2.code, map: suffix, file };
         } else if (/(css|scss|styl)/.test(ext)) {
-          let { styles } = new CleanCSS({
-            sourceMap: false,
+          let result = new CleanCSS({
+            sourceMap: true,
             level: {
               1: {
                 roundingPrecision: "all=3"
@@ -98,7 +98,7 @@ function fileMethodFactory() {
             }
           }).minify([file]);
 
-          contents = { raw: styles, map: null, file };
+          contents = { raw: result.styles, map: null, file };
         } else {
           contents = { raw: fs.readFileSync(file, "utf8"), map: null, file };
         }
@@ -124,12 +124,20 @@ async function inline(...args) {
   }
 }
 
+inline.extensions = (...extensions) => {
+  for (let ext of extensions) {
+    if (!inline[ext]) {
+      inline[ext] = fileMethodFactory();
+    }
+  }
+};
+
 inline.css = fileMethodFactory();
 inline.js = fileMethodFactory();
 
-inline.uncss = (function() {
+inline.uncss = (function () {
   let prop = "";
-  return function(renderedHtml, options = {}) {
+  return function (renderedHtml, options = {}) {
     if (!renderedHtml) {
       return prop;
     }
@@ -307,7 +315,7 @@ icons.options = {
   }
 };
 
-let plugin = function(v) {
+let plugin = function (v) {
   v.inline = inline;
   v.sw = sw;
   v.icons = icons;

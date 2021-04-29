@@ -1,6 +1,7 @@
-import expect from "expect";
 import "../lib";
+
 import StorePlugin from "../plugins/store";
+import expect from "expect";
 v.usePlugin(StorePlugin);
 
 function getNewStore() {
@@ -72,30 +73,22 @@ describe("Store slim", () => {
 
   it("Throw error if you try to mutate the state directly", () => {
     let store = getNewStore();
-    expect(() => (store.state.b = 1)).toThrowError(
-      "You need to commit a mutation to change the state"
-    );
+    expect(() => (store.state.b = 1)).toThrowError("You need to commit a mutation to change the state");
   });
 
   it("Throw error if you try to mutate a deeper property of the state directly", () => {
     let store = getNewStore();
-    expect(() => store.state.b.push(1)).toThrowError(
-      "Cannot add property 1, object is not extensible"
-    );
+    expect(() => store.state.b.push(1)).toThrowError("Cannot add property 1, object is not extensible");
   });
 
   it("Throw error if you try to remove a property directly", () => {
     let store = getNewStore();
-    expect(() => delete store.state.b).toThrowError(
-      "You need to commit a mutation to change the state"
-    );
+    expect(() => delete store.state.b).toThrowError("You need to commit a mutation to change the state");
   });
 
   it("Throw error if you try to remove a deeper property directly", () => {
     let store = getNewStore();
-    expect(() => delete store.state.c.a).toThrowError(
-      "Cannot delete property 'a' of #<Object>"
-    );
+    expect(() => delete store.state.c.a).toThrowError("Cannot delete property 'a' of #<Object>");
   });
 
   it("Mutate the state by commit", () => {
@@ -111,9 +104,7 @@ describe("Store slim", () => {
 
   it("Throw error if you try to commit an undefined mutation", () => {
     let store = getNewStore();
-    expect(() => store.commit("hello")).toThrowError(
-      'The mutation "hello" does not exists.'
-    );
+    expect(() => store.commit("hello")).toThrowError('The mutation "hello" does not exists.');
   });
 
   it("Mutate the state by dispatch", async () => {
@@ -125,9 +116,7 @@ describe("Store slim", () => {
 
   it("Throw error if you try to dispatch an undefined action", () => {
     let store = getNewStore();
-    expect(() => store.dispatch("hello")).toThrowError(
-      'The action "hello" does not exists.'
-    );
+    expect(() => store.dispatch("hello")).toThrowError('The action "hello" does not exists.');
   });
 
   it("Use a getter to obtain a property from the state", () => {

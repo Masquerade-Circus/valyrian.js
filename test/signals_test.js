@@ -1,5 +1,6 @@
-import expect from "expect";
 import "../lib";
+
+import expect from "expect";
 import nodePlugin from "../plugins/node";
 import signalsPlugin from "../plugins/signals";
 
@@ -118,9 +119,7 @@ describe("Hooks like pattern", () => {
       let interval = setInterval(() => {
         count.value = count.value + 1;
       }, ms);
-      return () => (
-        <div onremove={() => clearInterval(interval)}>{count.value}</div>
-      );
+      return () => <div onremove={() => clearInterval(interval)}>{count.value}</div>;
     };
 
     let result = v.mount("div", Counter(1000));

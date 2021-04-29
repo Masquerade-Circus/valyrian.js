@@ -1,7 +1,8 @@
 const expect = require("expect");
 const faker = require("faker");
 const dayjs = require("dayjs");
-require("../lib");
+
+import "../lib";
 const nodePlugin = require("../plugins/node");
 v.usePlugin(nodePlugin);
 

@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES6" /* For reference check: https://node.green/#ES2020 */,
+    "module": "ES6",
+    "strict": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "inlineSourceMap": true,
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "removeComments": true
+  }
+}

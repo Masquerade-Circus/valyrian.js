@@ -1,6 +1,8 @@
-import expect from "expect";
 import "../lib";
+
+import expect from "expect";
 import nodePlugin from "../plugins/node";
+
 v.usePlugin(nodePlugin);
 
 describe("Mount and update", () => {
@@ -26,7 +28,7 @@ describe("Mount and update", () => {
   });
 
   it("Mount and update with functional stateful component", () => {
-    let Component = function() {
+    let Component = function () {
       return <div id={this.id}>Hello {this.world}</div>;
     };
     Component.world = "World";
@@ -50,7 +52,7 @@ describe("Mount and update", () => {
       world: "World",
       id: "example"
     };
-    let Component = function() {
+    let Component = function () {
       return <SubComponent {...state} />;
     };
 
@@ -139,6 +141,22 @@ describe("Mount and update", () => {
     });
   });
 
+  it("Should remove property if it is set to false", () => {
+    let disabled = true;
+    let Component = () => <div disabled={disabled}>Hello world</div>;
+
+    let result = {};
+
+    result.before = v.mount("body", Component);
+    disabled = false;
+    result.after = v.update();
+
+    expect(result).toEqual({
+      before: '<div disabled="true">Hello world</div>',
+      after: "<div>Hello world</div>"
+    });
+  });
+
   it("Should handle different types of data", () => {
     let date = new Date();
 
@@ -165,9 +183,6 @@ describe("Mount and update", () => {
     let vnode = v.trust("<span>Some text</span>");
     let component = () => vnode;
     let result = v.mount("body", component);
-    let div = document.createElement("div");
-    div.innerHTML = '<html><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</html>';
-
     expect(result).toEqual("<span>Some text</span>");
 
     vnode.children = ["Other text"];

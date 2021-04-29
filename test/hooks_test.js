@@ -1,7 +1,8 @@
-import expect from "expect";
 import "../lib";
-import nodePlugin from "../plugins/node";
+
+import expect from "expect";
 import hooksPlugin from "../plugins/hooks";
+import nodePlugin from "../plugins/node";
 v.usePlugin(nodePlugin);
 v.usePlugin(hooksPlugin);
 

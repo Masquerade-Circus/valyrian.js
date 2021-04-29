@@ -1,5 +1,6 @@
-import expect from "expect";
 import "../lib";
+
+import expect from "expect";
 import nodePlugin from "../plugins/node";
 import router from "../plugins/router";
 v.usePlugin(nodePlugin);
@@ -11,23 +12,41 @@ describe("Router", () => {
     let Component = () => <div>Hello world</div>;
     let router = v.Router();
     router
-      .get("/", () => console.log("Hello 1"), () => Component)
+      .get(
+        "/",
+        () => console.log("Hello 1"),
+        () => Component
+      )
       .get("/hello", [() => console.log("Hello 2"), () => Component])
       .get("/hello/", [() => console.log("Hello 3"), () => Component])
       .get("/:hello", [() => console.log("Hello 4"), () => Component])
       .get("/hello/(.*)", [() => console.log("Hello 5"), () => Component])
-      .get("/:hello/world", () => console.log("Hello 6"), [() => console.log("Hello 6")], () => Component)
+      .get(
+        "/:hello/world",
+        () => console.log("Hello 6"),
+        [() => console.log("Hello 6")],
+        () => Component
+      )
       .get("/hello/:world", [() => console.log("Hello 7"), () => Component], () => console.log("Hello 7"));
 
     let subrouter = v.Router();
 
     subrouter
-      .get("/", () => console.log("Hello 1"), () => Component)
+      .get(
+        "/",
+        () => console.log("Hello 1"),
+        () => Component
+      )
       .get("/hello", [() => console.log("Hello 2"), () => Component])
       .get("/hello/", [() => console.log("Hello 3"), () => Component])
       .get("/:hello", [() => console.log("Hello 4"), () => Component])
       .get("/hello/(.*)", [() => console.log("Hello 5"), () => Component])
-      .get("/:hello/world", () => console.log("Hello 6"), [() => console.log("Hello 6")], () => Component)
+      .get(
+        "/:hello/world",
+        () => console.log("Hello 6"),
+        [() => console.log("Hello 6")],
+        () => Component
+      )
       .get("/hello/:world", [() => console.log("Hello 7"), () => Component], () => console.log("Hello 7"))
       .use(() => () => "Not ok");
 
@@ -67,7 +86,7 @@ describe("Router", () => {
   });
 
   it("Mount and update with functional stateful component", async () => {
-    let Component = function() {
+    let Component = function () {
       return <div id={this.id}>Hello {this.world}</div>;
     };
 
@@ -98,7 +117,7 @@ describe("Router", () => {
       world: "World",
       id: "example"
     };
-    let Component = function() {
+    let Component = function () {
       return <SubComponent {...state} />;
     };
 
@@ -170,7 +189,7 @@ describe("Router", () => {
       world: "world",
       up: "up"
     };
-    let Hello = function() {
+    let Hello = function () {
       return (
         <div>
           Hello {this.world}, what's {this.up}
@@ -179,7 +198,11 @@ describe("Router", () => {
     };
 
     let router = v.Router();
-    router.get("/hello", () => Object.assign(Hello, Store), () => Hello);
+    router.get(
+      "/hello",
+      () => Object.assign(Hello, Store),
+      () => Hello
+    );
     router.get("/hello/:world/whats/:up", [({ params }) => Object.assign(Hello, params), () => Hello]);
 
     v.routes("body", router);
@@ -205,7 +228,12 @@ describe("Router", () => {
       [
         () => middlewares.push("Middleware 1.1"),
         () => middlewares.push("Middleware 1.2"),
-        [() => middlewares.push("Middleware 1.2.1"), () => middlewares.push("Middleware 1.2.2"), () => middlewares.push("Middleware 1.2.3"), () => middlewares.push("Middleware 1.2.4")]
+        [
+          () => middlewares.push("Middleware 1.2.1"),
+          () => middlewares.push("Middleware 1.2.2"),
+          () => middlewares.push("Middleware 1.2.3"),
+          () => middlewares.push("Middleware 1.2.4")
+        ]
       ],
       () => middlewares.push("Middleware 2"),
       // This is the final response
@@ -216,11 +244,20 @@ describe("Router", () => {
     let result = await v.routes.go("/");
 
     expect(result).toEqual("<div>Hello World</div>");
-    expect(middlewares).toEqual(["Middleware 1", "Middleware 1.1", "Middleware 1.2", "Middleware 1.2.1", "Middleware 1.2.2", "Middleware 1.2.3", "Middleware 1.2.4", "Middleware 2"]);
+    expect(middlewares).toEqual([
+      "Middleware 1",
+      "Middleware 1.1",
+      "Middleware 1.2",
+      "Middleware 1.2.1",
+      "Middleware 1.2.2",
+      "Middleware 1.2.3",
+      "Middleware 1.2.4",
+      "Middleware 2"
+    ]);
   });
 
   it("Test subrouter", async () => {
-    let Component = function() {
+    let Component = function () {
       return (
         <div>
           Hello {this.world}, from {this.country}
