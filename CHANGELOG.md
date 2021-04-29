@@ -1,9 +1,8 @@
 ### [5.0.9](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.8...5.0.9) (2021-04-29)
 
-
 ### Miscellaneous Chores
 
-* **main:** remove unused minified file. Ignore .dccache ([d702115](https://github.com/Masquerade-Circus/valyrian.js/commit/d702115a13d65e74975433f1f49b13ea7f44fb33))
+*   **main:** remove unused minified file. Ignore .dccache ([d702115](https://github.com/Masquerade-Circus/valyrian.js/commit/d702115a13d65e74975433f1f49b13ea7f44fb33))
 
 ### [5.0.8](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.7...5.0.8) (2020-12-08)
 

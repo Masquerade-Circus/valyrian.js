@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/cognitive-complexity */
 let fs = require("fs");
 let path = require("path");
 require("ts-node/register");
@@ -60,7 +61,7 @@ function fileMethodFactory() {
             bundle: true,
             sourcemap: "external",
             write: false,
-            minify: true,
+            minify: options.compact,
             outdir: "out",
             target: ["es2020"],
             jsxFactory: "v",
@@ -68,23 +69,29 @@ function fileMethodFactory() {
             ...(options.esbuild || {})
           });
 
-          let result2 = await terser.minify(result.outputFiles[1].text, {
-            sourceMap: {
-              content: result.outputFiles[0].text.toString()
-            },
-            compress: {
-              booleans_as_integers: false
-            },
-            output: {
-              wrap_func_args: false
-            },
-            ecma: 2020,
-            ...(options.terser || {})
-          });
+          if (options.compact) {
+            let result2 = await terser.minify(result.outputFiles[1].text, {
+              sourceMap: {
+                content: result.outputFiles[0].text.toString()
+              },
+              compress: {
+                booleans_as_integers: false
+              },
+              output: {
+                wrap_func_args: false
+              },
+              ecma: 2020,
+              ...(options.terser || {})
+            });
 
-          let mapBase64 = Buffer.from(result2.map.toString()).toString("base64");
-          let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
-          contents = { raw: result2.code, map: suffix, file };
+            let mapBase64 = Buffer.from(result2.map.toString()).toString("base64");
+            let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
+            contents = { raw: result2.code, map: suffix, file };
+          } else {
+            let mapBase64 = Buffer.from(result.outputFiles[0].text.toString()).toString("base64");
+            let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
+            contents = { raw: result.outputFiles[1].text, map: suffix, file };
+          }
         } else if (/(css|scss|styl)/.test(ext)) {
           let result = new CleanCSS({
             sourceMap: true,

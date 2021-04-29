@@ -233,7 +233,7 @@ function valyrian(): Valyrian {
         if ((newNode.dom as DomElement)[name] != value) {
           (newNode.dom as DomElement)[name] = value;
         }
-      } else {
+      } else if (value !== false) {
         (newNode.dom as DomElement).setAttribute(name, value as string);
       }
     }
