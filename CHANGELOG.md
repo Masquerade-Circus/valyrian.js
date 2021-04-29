@@ -1,3 +1,10 @@
+### [5.0.10](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.9...5.0.10) (2021-04-29)
+
+
+### Bug Fixes
+
+* **lib:** fix don't add property if false at first render ([00e6842](https://github.com/Masquerade-Circus/valyrian.js/commit/00e6842a86788e2962efbc2a090bfa3d77c20bbb))
+
 ### [5.0.9](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.8...5.0.9) (2021-04-29)
 
 ### Miscellaneous Chores
