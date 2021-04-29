@@ -62,3 +62,4 @@ typings/
 !.tmp/favicon.ico
 
 .cache
+.dccache
