@@ -368,7 +368,7 @@ function valyrian(): Valyrian {
 
       // If the tree is keyed list and is not first render
     } else if (oldTree.length && newTree[0] instanceof Vnode && key in newTree[0].props) {
-      let oldKeys = oldTree.map((vnode) => (vnode as Vnode).props.key);
+      let oldKeys = key in ((oldTree[0] as Vnode).props || {}) ? oldTree.map((vnode) => (vnode as Vnode).props.key) : [];
       let newKeys = newTree.map((vnode) => vnode.props.key);
 
       for (let i = 0, l = newKeys.length; i < l; i++) {
@@ -400,7 +400,7 @@ function valyrian(): Valyrian {
       while (l--) {
         if (!(oldTree[l] as Vnode).processed) {
           let oldVnode = oldTree[l];
-          callRemove(oldVnode as Vnode);
+          oldVnode instanceof Vnode && callRemove(oldVnode);
           (oldVnode as Vnode).dom &&
             ((oldVnode as Vnode).dom as DomElement).parentNode &&
             (((oldVnode as Vnode).dom as DomElement).parentNode as DomElement).removeChild((oldVnode as Vnode).dom as DomElement);

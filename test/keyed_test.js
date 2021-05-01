@@ -2,6 +2,7 @@ import "../lib";
 
 import expect from "expect";
 import nodePlugin from "../plugins/node";
+
 v.usePlugin(nodePlugin);
 
 describe("Keyed lists", () => {
@@ -57,6 +58,35 @@ describe("Keyed lists", () => {
     });
   });
 
+  it("Keyed list: Replace with string and update with list", () => {
+    let keys = [1, 2, 3, 4, 5];
+    let useStrings = true;
+    let component = () => (
+      <ul>
+        {keys.map((key) => {
+          if (useStrings) {
+            return String(key);
+          }
+          return <li key={key}>{key}</li>;
+        })}
+      </ul>
+    );
+
+    let before = v.mount("body", component);
+
+    useStrings = false;
+    let after = v.update();
+
+    let afterString = getString(keys);
+
+    useStrings = true;
+    let afterUpdate = v.update();
+
+    expect(before).toEqual("<ul>12345</ul>");
+    expect(after).toEqual(afterString);
+    expect(afterUpdate).toEqual("<ul>12345</ul>");
+  });
+
   it("Keyed list: Replace with undefined and update with defined", () => {
     let keys = [1, 2, 3, 4, 5];
     let component = () => (
@@ -65,6 +95,7 @@ describe("Keyed lists", () => {
           if (key) {
             return <li key={key}>{key}</li>;
           }
+          return "Hello";
         })}
       </ul>
     );
