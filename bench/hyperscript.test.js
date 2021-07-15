@@ -1,6 +1,6 @@
 let { compare, benchmark, before } = require("@masquerade-circus/bench-test");
 
-import "../lib/index";
+import "../lib/index.ts";
 
 import expect from "expect";
 import fs from "fs";
@@ -9,16 +9,16 @@ import vOld from "./index-old";
 
 let VNext = v;
 
-vOld.usePlugin(nodePlugin);
+VNext.usePlugin(nodePlugin);
 
 compare("hyperscript", () => {
   let date = new Date();
   before(async () => {
-    vOld.inline.extensions("ts");
-    await vOld.inline.ts("./lib/index.ts", { outputOptions: { compact: true } });
-    await vOld.inline.js("./bench/index-old.js", { outputOptions: { compact: true } });
-    console.log(vOld.inline.ts()[0].raw.length);
-    console.log(vOld.inline.js()[0].raw.length);
+    VNext.inline.extensions("ts");
+    await VNext.inline.ts("./lib/index.ts", { compact: true });
+    await VNext.inline.js("./bench/index-old.js", { compact: true });
+    console.log(VNext.inline.ts()[0].raw.length);
+    console.log(VNext.inline.js()[0].raw.length);
 
     let compiled = fs.readFileSync("./dist/valyrian.min.js", "utf8");
     console.log(compiled.length);

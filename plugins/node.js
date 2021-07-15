@@ -39,21 +39,30 @@ function fileMethodFactory() {
         let ext = file.split(".").pop();
         if (/(js|jsx|mjs|ts|tsx)/.test(ext)) {
           if (/(ts|tsx)/.test(ext) && !options.noValidate) {
-            tsc.build({
+            let tscProgOptions = {
               basePath: process.cwd(), // always required, used for relative paths
               configFilePath: "tsconfig.json", // config to inherit from (optional)
+              files: [file],
+              include: ["**/*.ts", "**/*.js", "**/*.tsx", "**/*.jsx", "**/*.mjs"],
+              exclude: ["test*/**/*", "**/*.test.ts", "**/*.spec.ts", "dist/**"],
+              pretty: true,
+              copyOtherToOutDir: false,
+              clean: ["dist/d"],
+              ...(options.tsc || {}),
               compilerOptions: {
                 rootDir: "./",
                 outDir: "dist",
                 noEmitOnError: true,
                 noEmit: true,
-                declaration: false
-              },
-              files: [file],
-              include: ["**/*.ts", "**/*.js", "**/*.tsx", "**/*.jsx", "**/*.mjs"],
-              exclude: ["test*/**/*", "**/*.test.ts", "**/*.spec.ts"],
-              ...(options.tsc || {})
-            });
+                declaration: false,
+                declarationDir: "dist/d",
+                emitDeclarationOnly: true,
+                allowJs: true,
+                ...(options.tsc || {}).compilerOptions
+              }
+            };
+
+            tsc.build(tscProgOptions);
           }
 
           let result = esbuild.buildSync({

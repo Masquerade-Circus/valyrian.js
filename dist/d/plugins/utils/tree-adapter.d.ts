@@ -1,0 +1,1 @@
+export { TreeAdapter as default };

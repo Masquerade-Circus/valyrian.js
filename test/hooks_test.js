@@ -3,6 +3,7 @@ import "../lib";
 import expect from "expect";
 import hooksPlugin from "../plugins/hooks";
 import nodePlugin from "../plugins/node";
+
 v.usePlugin(nodePlugin);
 v.usePlugin(hooksPlugin);
 

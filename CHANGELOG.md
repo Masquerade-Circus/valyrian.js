@@ -1,9 +1,8 @@
 ### [5.0.11](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.10...5.0.11) (2021-05-01)
 
-
 ### Bug Fixes
 
-* **lib:** fix replace string with keyed list item ([4daac78](https://github.com/Masquerade-Circus/valyrian.js/commit/4daac78294aea7a862287afc00809d4630676fda))
+*   **lib:** fix replace string with keyed list item ([4daac78](https://github.com/Masquerade-Circus/valyrian.js/commit/4daac78294aea7a862287afc00809d4630676fda))
 
 ### [5.0.10](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.9...5.0.10) (2021-04-29)
 
