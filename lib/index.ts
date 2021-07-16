@@ -504,7 +504,7 @@ function valyrian(): Valyrian {
     if (isNode) {
       mainContainer = typeof container === "string" ? createElement(container, container === "svg") : container;
     } else {
-      mainContainer = typeof container === "string" ? document.querySelector(container) : container;
+      mainContainer = typeof container === "string" ? document.querySelectorAll(container)[0] as DomElement : container;
     }
 
     if (mainContainer !== null) {
