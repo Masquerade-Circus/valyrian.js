@@ -1,5 +1,183 @@
 [
   {
+    "tag": "b00f110d63f792bd09b5b2a27f893760e4459f5a",
+    "timestamp": "2021-07-16T00:06:37.102Z",
+    "suites": {
+      "hyperscript": {
+        "Valyrian 5.0.8": {
+          "hz": 897707086.8314165,
+          "cycles": 7,
+          "count": 46789164,
+          "times": {
+            "cycle": 0.052120747052525715,
+            "elapsed": 6.167,
+            "period": 1.1139490983964944e-9,
+            "timeStamp": 1626393590648
+          }
+        },
+        "Valyrian next": {
+          "hz": 903583060.0668136,
+          "cycles": 9,
+          "count": 46979419,
+          "times": {
+            "cycle": 0.05199236359801411,
+            "elapsed": 6.132,
+            "period": 1.1067051211939022e-9,
+            "timeStamp": 1626393918333
+          }
+        }
+      },
+      "Set.has vs [].indexOf": {},
+      "Object.keys for loop vs Object.keys for of vs for in": {},
+      "typeof function vs startsWith vs charAt vs string[0]": {},
+      "Array.isArray vs typeof object & Array.isArray": {},
+      "Mount and update: Mount multiple types": {
+        "Valyrian 5.0.8": {
+          "hz": 2908.4507182425623,
+          "cycles": 5,
+          "count": 153,
+          "times": {
+            "cycle": 0.05260532662298318,
+            "elapsed": 6.048,
+            "period": 0.00034382566420250443,
+            "timeStamp": 1626393602953
+          }
+        },
+        "Valyrian next": {
+          "hz": 1967.1196284189862,
+          "cycles": 6,
+          "count": 106,
+          "times": {
+            "cycle": 0.05388589411066695,
+            "elapsed": 6.095,
+            "period": 0.0005083574916100656,
+            "timeStamp": 1626393609011
+          }
+        }
+      },
+      "Mount and update: Mount single text": {
+        "Valyrian next": {
+          "hz": 659857.7370306654,
+          "cycles": 7,
+          "count": 36528,
+          "times": {
+            "cycle": 0.05535738682761318,
+            "elapsed": 5.996,
+            "period": 0.0000015154781764020253,
+            "timeStamp": 1626393942636
+          }
+        },
+        "Valyrian 5.0.8": {
+          "hz": 581762.38096833,
+          "cycles": 4,
+          "count": 31904,
+          "times": {
+            "cycle": 0.054840259603751856,
+            "elapsed": 5.919,
+            "period": 0.0000017189148571888119,
+            "timeStamp": 1626393936707
+          }
+        }
+      },
+      "Mount and update: Update multiple types": {
+        "Valyrian next": {
+          "hz": 843.0201761832509,
+          "cycles": 6,
+          "count": 52,
+          "times": {
+            "cycle": 0.06168298395351399,
+            "elapsed": 6.655,
+            "period": 0.001186211229875269,
+            "timeStamp": 1626393231999
+          }
+        },
+        "Valyrian 5.0.8": {
+          "hz": 191.7527756767184,
+          "cycles": 3,
+          "count": 11,
+          "times": {
+            "cycle": 0.057365532056470575,
+            "elapsed": 5.886,
+            "period": 0.005215048368770053,
+            "timeStamp": 1626393627378
+          }
+        }
+      },
+      "Mount and update: Update single text": {
+        "Valyrian next": {
+          "hz": 331224.2471884966,
+          "cycles": 6,
+          "count": 17600,
+          "times": {
+            "cycle": 0.053136206510823486,
+            "elapsed": 6.104,
+            "period": 0.0000030191026426604253,
+            "timeStamp": 1626393645268
+          }
+        },
+        "Valyrian 5.0.8": {
+          "hz": 308586.5883362587,
+          "cycles": 4,
+          "count": 16516,
+          "times": {
+            "cycle": 0.05352144462611236,
+            "elapsed": 6.019,
+            "period": 0.000003240581534639886,
+            "timeStamp": 1626393639243
+          }
+        }
+      },
+      "Mount and update: Render list": {
+        "VNext": {
+          "hz": 38493.998256924504,
+          "cycles": 7,
+          "count": 1995,
+          "times": {
+            "cycle": 0.05182626098449331,
+            "elapsed": 6.033,
+            "period": 0.00002597807568145028,
+            "timeStamp": 1626393978974
+          }
+        },
+        "vOld": {
+          "hz": 33667.99897872758,
+          "cycles": 5,
+          "count": 1803,
+          "times": {
+            "cycle": 0.05355233618544387,
+            "elapsed": 6.086,
+            "period": 0.00002970179488931995,
+            "timeStamp": 1626393651380
+          }
+        }
+      },
+      "Mount and update: Render keyed list": {
+        "VNext": {
+          "hz": 24864.487551982005,
+          "cycles": 7,
+          "count": 1424,
+          "times": {
+            "cycle": 0.057270434269878594,
+            "elapsed": 6.083,
+            "period": 0.00004021800159401587,
+            "timeStamp": 1626393269574
+          }
+        },
+        "vOld": {
+          "hz": 24346.162678889366,
+          "cycles": 8,
+          "count": 1297,
+          "times": {
+            "cycle": 0.053273282410317285,
+            "elapsed": 6.139,
+            "period": 0.00004107423470340577,
+            "timeStamp": 1626393663595
+          }
+        }
+      }
+    }
+  },
+  {
     "tag": "8b13ab6b7f731091c7f2b7b905fa4867625ac19e",
     "timestamp": "2021-07-15T19:19:57.242Z",
     "suites": {

@@ -8,8 +8,8 @@ async function run() {
   inline.extensions("ts");
   await inline.ts("./lib/index.ts", {
     compact: true,
+    declarationDir: "dist/@types",
     tsc: {
-      compilerOptions: { declaration: true, noEmitOnError: true, noEmit: false },
       include: files
     }
   });

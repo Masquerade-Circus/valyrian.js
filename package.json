@@ -7,7 +7,7 @@
   "module": "dist/valyrian.min.js",
   "unpkg": "dist/valyrian.min.js",
   "browser": "dist/valyrian.min.js",
-  "types": "dist/d/lib/index.d.ts",
+  "types": "dist/types/lib/index.d.ts",
   "repository": "git@github.com:Masquerade-Circus/valyrian.js.git",
   "author": "Masquerade <christian@masquerade-circus.net>",
   "license": "Apache-2.0",

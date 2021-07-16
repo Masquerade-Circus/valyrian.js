@@ -1,3 +1,4 @@
 {
-  "deepcode.uploadApproved": true
+  "deepcode.uploadApproved": true,
+  "cSpell.words": ["eqeqeq", "onbeforeupdate", "oncreate", "onremove"]
 }
