@@ -173,13 +173,14 @@ compare("Mount and update: Render list", () => {
     { name: "Added at the start", set: [6, 1, 2, 3, 4, 5] }, // Added at the start
     { name: "Added at the center", set: [1, 2, 6, 3, 4, 5] }, // Added at the center
     { name: "Reversed", set: [5, 4, 3, 2, 1] }, // Reversed
-    { name: "Switch positions", set: [1, 4, 3, 2, 5] }, // Switch positions,
+    { name: "Switch positions", set: [5, 2, 3, 4, 1] }, // Switch positions,
     { name: "Mixed positions", set: [1, 3, 2, 6, 5, 4] },
     { name: "Replaced with undefined", set: [1, 3, 2, , 5, 4] },
     {
       name: "Added, remove and replaced with undefined",
       set: [6, 7, 8, 9, , 10]
-    }
+    },
+    { name: "Removed all at the end", set: [1] } // Removed at the end
   ];
 
   function getString(set) {
@@ -292,13 +293,14 @@ compare("Mount and update: Render keyed list", () => {
     { name: "Added at the start", set: [6, 1, 2, 3, 4, 5] }, // Added at the start
     { name: "Added at the center", set: [1, 2, 6, 3, 4, 5] }, // Added at the center
     { name: "Reversed", set: [5, 4, 3, 2, 1] }, // Reversed
-    { name: "Switch positions", set: [1, 4, 3, 2, 5] }, // Switch positions,
+    { name: "Switch positions", set: [5, 2, 3, 4, 1] }, // Switch positions,
     { name: "Mixed positions", set: [1, 3, 2, 6, 5, 4] },
     { name: "Replaced with undefined", set: [1, 3, 2, , 5, 4] },
     {
       name: "Added, remove and replaced with undefined",
       set: [6, 7, 8, 9, , 10]
-    }
+    },
+    { name: "Removed all at the end", set: [1] } // Removed at the end
   ];
 
   function getString(set) {
@@ -348,6 +350,129 @@ compare("Mount and update: Render keyed list", () => {
           })
         );
 
+      console.log(test.name);
+      let before = VNext.mount("body", component);
+      keys = [...test.set];
+      let after = VNext.update();
+
+      let afterString = getString(test.set);
+
+      expect(before).toEqual(beforeString);
+      expect(after).toEqual(afterString);
+    });
+  });
+
+  benchmark(`vOld`, () => {
+    let keys = [...set];
+    let component = () =>
+      vOld(
+        "ul",
+        null,
+        keys.map((key) => {
+          if (key) {
+            return vOld("li", { key }, key);
+          }
+        })
+      );
+
+    vOld.unMount();
+    vOld.mount("body", component);
+    for (let test of tests) {
+      keys = [...test.set];
+      vOld.update();
+    }
+  });
+
+  benchmark(`VNext`, () => {
+    let keys = [...set];
+    let component = () =>
+      VNext(
+        "ul",
+        null,
+        keys.map((key) => {
+          if (key) {
+            return VNext("li", { key }, key);
+          }
+        })
+      );
+
+    VNext.mount("body", component);
+    for (let test of tests) {
+      keys = [...test.set];
+      VNext.update();
+    }
+  });
+});
+
+compare("Mount and update: Render keyed list -> stress", () => {
+  let set = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  let tests = [
+    { name: "Removed at the end", set: [1, 2, 3, 4, 5, 6, 7, 8, 9], movements: 1 }, // Removed at the end
+    { name: "Removed at the start", set: [2, 3, 4, 5, 6, 7, 8, 9, 10], movements: 1 }, // Remmoved at the start
+    { name: "Removed at the center", set: [1, 2, 3, 5, 6, 8, 9, 10], movements: 2 }, // Removed at the center
+    { name: "Added at the end", set: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], movements: 1 }, // Added at the end
+    { name: "Added at the start", set: [11, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], movements: 1 }, // Added at the start
+    { name: "Added at the center", set: [1, 2, 3, 4, 5, 11, 6, 7, 8, 9, 10], movements: 1 }, // Added at the center
+    { name: "Reversed", set: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1], movements: 9 }, // Reversed
+    { name: "Switch positions", set: [10, 2, 3, 4, 5, 6, 7, 8, 9, 1], movements: 9 }, // Switch positions,
+    { name: "Mixed positions", set: [1, 3, 2, 6, 5, 4, 7, 8, 9, 10], movements: 3 },
+    { name: "Replaced with undefined", set: [1, 3, 2, , 5, 4, 6, 7, 8, 9, 10], movements: 2 },
+    {
+      name: "Added, remove and replaced with undefined",
+      set: [11, 12, 13, 14, 15, 16, 17, , 18, 19, 20],
+      movements: 10
+    },
+    { name: "Removed all at the end", set: [1], movements: 9 } // Removed at the end
+  ];
+
+  function getString(set) {
+    let str = `<ul>`;
+    for (let key of set) {
+      str += key ? `<li>${key}</li>` : "";
+    }
+    str += "</ul>";
+    return str;
+  }
+  let beforeString = getString(set);
+
+  tests.forEach((test) => {
+    before(() => {
+      let keys = [...set];
+      let component = () =>
+        vOld(
+          "ul",
+          null,
+          keys.map((key) => {
+            if (key) {
+              return vOld("li", { key }, key);
+            }
+          })
+        );
+
+      let before = vOld.mount("body", component);
+      keys = [...test.set];
+      let after = vOld.update();
+
+      let afterString = getString(test.set);
+
+      expect(before).toEqual(beforeString);
+      expect(after).toEqual(afterString);
+    });
+
+    before(() => {
+      let keys = [...set];
+      let component = () =>
+        VNext(
+          "ul",
+          null,
+          keys.map((key) => {
+            if (key) {
+              return VNext("li", { key }, key);
+            }
+          })
+        );
+
+      console.log(test.name);
       let before = VNext.mount("body", component);
       keys = [...test.set];
       let after = VNext.update();

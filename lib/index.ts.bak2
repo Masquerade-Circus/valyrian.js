@@ -320,7 +320,7 @@ function valyrian(): Valyrian {
           newTree[i - 1].nodeValue += childVnode;
           newTree.splice(i--, 1);
         } else if (childVnode instanceof TextVnode === false) {
-          newTree[i] = new TextVnode(String(childVnode));
+          newTree[i] = new TextVnode(childVnode);
         }
       }
     }
@@ -354,27 +354,20 @@ function valyrian(): Valyrian {
         if (i >= newListLength) {
           // 3.1.1 Delete all the remaining elements
           for (let k = oldKeyedList.length - 1; k > newListLength - 1; k--) {
-            oldTree[k] instanceof Vnode && callRemove(oldTree[k]);
+            callRemove(oldTree[k]);
             newParentVnode.dom === oldTree[k].dom.parentNode && newParentVnode.dom.removeChild(oldTree[k].dom);
           }
           // 3.1.2. We delete the remaining elements so we finish the cycle
           break;
         }
 
-        // // 3.2. If the current index is greater than the length of the old list, then we must add the new element
+        // 3.2. If the current index is greater than the length of the old list, then we must add the new element
         if (i >= oldKeyedList.length) {
           let childVnode = newTree[i];
-          let currentOldVnode = oldTree[i];
           childVnode.dom = createElement(childVnode.name, childVnode.isSVG);
           updateProperties(childVnode as Vnode & { dom: DomElement });
           childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
-          // If there is a vnode or text vnode then we are creating a keyed list over an old dom without keys
-          if (currentOldVnode) {
-            currentOldVnode instanceof Vnode && callRemove(currentOldVnode);
-            newParentVnode.dom.replaceChild(childVnode.dom, currentOldVnode.dom);
-          } else {
-            newParentVnode.dom.appendChild(childVnode.dom);
-          }
+          newParentVnode.dom.appendChild(childVnode.dom);
           patch(childVnode as Vnode & { dom: DomElement });
           continue;
         }
@@ -405,7 +398,7 @@ function valyrian(): Valyrian {
 
           // 3.3.4. If the old element isn't in the new list, then we can delete it from the old list by replace with the new element
           if (oldKeyIndexInNewKeyedList === -1) {
-            currentOldVnode instanceof Vnode && callRemove(currentOldVnode);
+            callRemove(currentOldVnode);
             newParentVnode.dom.replaceChild(childVnode.dom, currentOldVnode.dom);
             oldTree.splice(i, 1, childVnode);
             oldKeyedList.splice(i, 1, newKey);
