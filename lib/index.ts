@@ -411,9 +411,21 @@ function valyrian(): Valyrian {
             oldKeyedList.splice(i, 1, newKey);
             // 3.3.5. If the old element is in the new list, we must move the new element before the old element
           } else {
-            newParentVnode.dom.insertBefore(childVnode.dom, currentOldVnode.dom);
-            oldTree.splice(i, 0, childVnode);
-            oldKeyedList.splice(i, 0, newKey);
+            // 3.3.5.1. if the old element is in the next position then we move the new element before the old element and continue
+            if (oldKeyIndexInNewKeyedList === i + 1) {
+              newParentVnode.dom.insertBefore(childVnode.dom, currentOldVnode.dom);
+              oldTree.splice(i, 0, childVnode);
+              oldKeyedList.splice(i, 0, newKey);
+              // 3.3.5.2. if the old element is in a future position then we replace the old element and move the old element to the next position
+            } else {
+              newParentVnode.dom.replaceChild(childVnode.dom, currentOldVnode.dom);
+              oldTree.splice(i, 1, childVnode);
+              oldKeyedList.splice(i, 1, newKey);
+
+              oldKeyedList.splice(oldKeyIndexInNewKeyedList, 0, oldKey);
+              oldTree.splice(oldKeyIndexInNewKeyedList, 0, currentOldVnode);
+              newParentVnode.dom.insertBefore(currentOldVnode.dom, newParentVnode.dom.childNodes[oldKeyIndexInNewKeyedList] || null);
+            }
           }
           // 3.4. If the elements are equal we don't need to move anything
         } else {

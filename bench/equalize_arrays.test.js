@@ -93,11 +93,12 @@ function matchKeyedList(oldKeyedList: Set, newKeyedList: Set): Movement[] {
       continue;
     }
 
-    // 3.3. Si el nuevo elemento es diferente al elemento de la lista anterior entonces tenemos una operación de movimiento
-    if (newKeyedList[i] !== oldKeyedList[i]) {
-      // 3.3.1. Debemos tomar el nuevo elemento de la lista nueva en la posición del indice actual
-      const newKey = newKeyedList[i];
+    let newKey = newKeyedList[i];
+    let oldKey = oldKeyedList[i];
 
+    // 3.3. Si el nuevo elemento es diferente al elemento de la lista anterior entonces tenemos una operación de movimiento
+    if (newKey !== oldKey) {
+      // 3.3.1. Debemos tomar el nuevo elemento de la lista nueva en la posición del indice actual
       // 3.3.2. Buscar el nuevo elemento en la lista anterior
       const oldIndex = oldKeyedList.indexOf(newKey);
 
@@ -129,62 +130,31 @@ function matchKeyedList(oldKeyedList: Set, newKeyedList: Set): Movement[] {
       // 3.3.6. Si el antiguo elemento está en la lista nueva, se debe mover el nuevo elemento antes del antiguo elemento
       movement.line = getCurrentLineInCode();
       movement.operation = "move";
-      oldKeyedList.splice(i, 0, newKey);
+      oldKeyedList.splice(i, oldKeyIndexInNewKeyedList !== i + 1 ? 1 : 0, newKey);
       movement.oldKeyedListAfterMovement = [...oldKeyedList];
       movements.push(movement);
+
+      // 3.3.7. if the old element is in the new list then move the old element to the new position
+      if (oldKeyIndexInNewKeyedList !== i + 1) {
+        movement = {
+          key: oldKey,
+          currentIndex: i,
+          indexInNewKeyedListArray: oldKeyIndexInNewKeyedList,
+          indexInOldKeyedListArray: i,
+          oldKeyedListBeforeMovement: [...oldKeyedList],
+          newKeyedList: newKeyedList,
+          line: getCurrentLineInCode(),
+          operation: "move"
+        };
+        oldKeyedList.splice(oldKeyIndexInNewKeyedList, 0, oldKey);
+        movement.oldKeyedListAfterMovement = [...oldKeyedList];
+        movements.push(movement);
+      }
     }
 
     // 3.4. Si los elementos son iguales no necesitamos hacer nada
   }
   return movements;
-}
-
-function matchKeyedListSimple(oldKeyedList: Set, newKeyedList: Set): Movement[] {
-  // 1. Se deben mover los elementos de la lista anterior para igualarla a la lista nueva
-  // 2. Se debe obtener el máximo de longitud de las listas
-  const oldListLength = oldKeyedList.length;
-  const newListLength = newKeyedList.length;
-  const maxListLength = Math.max(oldListLength, newListLength);
-
-  // 3. Ciclar sobre toda la lista de elementos hasta el máximo de longitud
-  for (let i = 0; i < maxListLength; i++) {
-    // 3.1. Si el indice actual es mayor a la longitud de la lista nueva todos los elementos restantes de la lista anterior se deben eliminar
-    if (i >= newListLength) {
-      // 3.1.1 Eliminar todos los elementos restantes de la lista anterior
-      for (let k = oldKeyedList.length; k > newListLength; --k) {
-        oldKeyedList.pop();
-      }
-
-      // 3.1.2. Como ya eliminamos todos los elementos restantes entonces ya no necesitamos proseguir más y terminamos el ciclo
-      break;
-    }
-
-    // 3.2. Si el nuevo elemento es diferente al elemento de la lista anterior entonces tenemos una operación de movimiento
-    if (newKeyedList[i] !== oldKeyedList[i]) {
-      // 3.2.1. Debemos tomar el nuevo elemento de la lista nueva en la posición del indice actual
-      const newKey = newKeyedList[i];
-
-      // 3.2.2. Buscar el nuevo elemento en la lista anterior
-      const oldIndex = oldKeyedList.indexOf(newKey);
-
-      // 3.2.3. Si el nuevo elemento está en la lista nueva, tomarlo (quitarlo) de su posición actual en la lista anterior
-      oldIndex !== -1 && oldKeyedList.splice(oldIndex, 1);
-
-      // 3.2.4. Buscar el antiguo elemento en la lista nueva para decidir si podemos reemplazarlo o insertar el nuevo elemento antes del antiguo elemento
-      const oldKeyIndexInNewKeyedList = newKeyedList.indexOf(oldKeyedList[i]);
-
-      // 3.2.5. Si el antiguo elemento no está en la lista nueva, eliminarlo de la lista anterior reemplazandolo con el nuevo elemento
-      if (oldKeyIndexInNewKeyedList === -1) {
-        oldKeyedList.splice(i, 1, newKey);
-        continue;
-      }
-
-      // 3.2.6. Si el antiguo elemento está en la lista nueva, se debe mover el nuevo elemento antes del antiguo elemento
-      oldKeyedList.splice(i, 0, newKey);
-    }
-
-    // 3.3. Si los elementos son iguales no necesitamos hacer nada
-  }
 }
 
 compare("Matching keyed list", () => {
@@ -197,7 +167,7 @@ compare("Matching keyed list", () => {
     { name: "Added at the start", set: [6, 1, 2, 3, 4, 5], movements: 1 }, // Added at the start
     { name: "Added at the center", set: [1, 2, 6, 3, 4, 5], movements: 1 }, // Added at the center
     { name: "Reversed", set: [5, 4, 3, 2, 1], movements: 4 }, // Reversed
-    { name: "Switch positions", set: [5, 2, 3, 4, 1], movements: 4 }, // Switch positions,
+    { name: "Switch positions", set: [5, 2, 3, 4, 1], movements: 2 }, // Switch positions,
     { name: "Mixed positions", set: [1, 3, 2, 6, 5, 4], movements: 3 },
     { name: "Replaced with undefined", set: [1, 3, 2, 5, 4], movements: 2 },
     {
@@ -249,7 +219,8 @@ compare("Matching keyed list -> stress", () => {
     { name: "Added at the start", set: [11, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], movements: 1 }, // Added at the start
     { name: "Added at the center", set: [1, 2, 3, 4, 5, 11, 6, 7, 8, 9, 10], movements: 1 }, // Added at the center
     { name: "Reversed", set: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1], movements: 9 }, // Reversed
-    { name: "Switch positions", set: [10, 2, 3, 4, 5, 6, 7, 8, 9, 1], movements: 9 }, // Switch positions,
+    { name: "Switch positions", set: [10, 2, 3, 4, 5, 6, 7, 8, 9, 1], movements: 2 }, // Switch positions,
+    { name: "Switch different positions", set: [10, 6, 3, 4, 2, 5, 7, 8, 9, 1], movements: 4 }, // Switch positions,
     { name: "Mixed positions", set: [1, 3, 2, 6, 5, 4, 7, 8, 9, 10], movements: 3 },
     { name: "Replaced with undefined", set: [1, 3, 2, 5, 4, 6, 7, 8, 9, 10], movements: 2 },
     {
