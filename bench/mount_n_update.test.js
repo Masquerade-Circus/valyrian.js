@@ -375,9 +375,9 @@ compare("Mount and update: Render keyed list", () => {
         })
       );
 
-    vOld.unMount();
-    vOld.mount("body", component);
     for (let test of tests) {
+      vOld.unMount();
+      vOld.mount("body", component);
       keys = [...test.set];
       vOld.update();
     }
@@ -396,8 +396,8 @@ compare("Mount and update: Render keyed list", () => {
         })
       );
 
-    VNext.mount("body", component);
     for (let test of tests) {
+      VNext.mount("body", component);
       keys = [...test.set];
       VNext.update();
     }
@@ -406,6 +406,7 @@ compare("Mount and update: Render keyed list", () => {
 
 compare("Mount and update: Render keyed list -> stress", () => {
   let set = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
   let tests = [
     { name: "Removed at the end", set: [1, 2, 3, 4, 5, 6, 7, 8, 9], movements: 1 }, // Removed at the end
     { name: "Removed at the start", set: [2, 3, 4, 5, 6, 7, 8, 9, 10], movements: 1 }, // Remmoved at the start
@@ -423,7 +424,8 @@ compare("Mount and update: Render keyed list -> stress", () => {
       set: [11, 12, 13, 14, 15, 16, 17, , 18, 19, 20],
       movements: 10
     },
-    { name: "Removed all at the end", set: [1], movements: 9 } // Removed at the end
+    { name: "Removed all at the end", set: [1], movements: 9 }, // Removed at the end
+    { name: "Switch positions in large list", set: [10, 2, 3, 4, 5, 6, 7, 8, 9, 1], movements: 2 } // Switch positions
   ];
 
   function getString(set) {
@@ -498,9 +500,9 @@ compare("Mount and update: Render keyed list -> stress", () => {
         })
       );
 
-    vOld.unMount();
-    vOld.mount("body", component);
     for (let test of tests) {
+      vOld.unMount();
+      vOld.mount("body", component);
       keys = [...test.set];
       vOld.update();
     }
@@ -519,10 +521,110 @@ compare("Mount and update: Render keyed list -> stress", () => {
         })
       );
 
-    VNext.mount("body", component);
     for (let test of tests) {
+      VNext.mount("body", component);
       keys = [...test.set];
       VNext.update();
     }
+  });
+});
+
+compare("Mount and update: Render keyed list -> swap keys on large set", () => {
+  let set = [...Array(1000).keys()];
+  let updatedLargeSet = [...set];
+  updatedLargeSet[1] = 998;
+  updatedLargeSet[998] = 1;
+
+  function getString(set) {
+    let str = `<ul>`;
+    for (let key of set) {
+      str += key !== undefined ? `<li>${key}</li>` : "";
+    }
+    str += "</ul>";
+    return str;
+  }
+  let beforeString = getString(set);
+
+  before(() => {
+    let keys = [...set];
+    let component = () =>
+      vOld(
+        "ul",
+        null,
+        keys.map((key) => {
+          if (key !== undefined) {
+            return vOld("li", { key }, key);
+          }
+        })
+      );
+
+    let before = vOld.mount("body", component);
+    keys = [...updatedLargeSet];
+    let after = vOld.update();
+
+    let afterString = getString(updatedLargeSet);
+
+    expect(before).toEqual(beforeString);
+    expect(after).toEqual(afterString);
+  });
+
+  before(() => {
+    let keys = [...set];
+    let component = () =>
+      VNext(
+        "ul",
+        null,
+        keys.map((key) => {
+          if (key !== undefined) {
+            return VNext("li", { key }, key);
+          }
+        })
+      );
+
+    let before = VNext.mount("body", component);
+    keys = [...updatedLargeSet];
+    let after = VNext.update();
+
+    let afterString = getString(updatedLargeSet);
+
+    expect(before).toEqual(beforeString);
+    expect(after).toEqual(afterString);
+  });
+
+  benchmark(`vOld`, () => {
+    let keys = [...set];
+    let component = () =>
+      vOld(
+        "ul",
+        null,
+        keys.map((key) => {
+          if (key !== undefined) {
+            return vOld("li", { key }, key);
+          }
+        })
+      );
+
+    vOld.unMount();
+    vOld.mount("body", component);
+    keys = [...updatedLargeSet];
+    vOld.update();
+  });
+
+  benchmark(`VNext`, () => {
+    let keys = [...set];
+    let component = () =>
+      VNext(
+        "ul",
+        null,
+        keys.map((key) => {
+          if (key !== undefined) {
+            return VNext("li", { key }, key);
+          }
+        })
+      );
+
+    VNext.mount("body", component);
+    keys = [...updatedLargeSet];
+    VNext.update();
   });
 });

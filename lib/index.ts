@@ -343,21 +343,34 @@ function valyrian(): Valyrian {
       // If the tree is keyed list and is not first render
     } else if (oldTreeLength && newTree[0] instanceof Vnode && "key" in newTree[0].props) {
       // 1. Mutate the old key list to match the new key list
+      let oldKeyedList;
+
+      // if the oldTree does not have a keyed list fast remove all nodes
+      if (oldTree[0] instanceof Vnode === false || "key" in oldTree[0].props === false) {
+        for (let i = oldTreeLength; i--; ) {
+          oldTree[i] instanceof Vnode && callRemove(oldTree[i]);
+        }
+        // Fast node remove by setting textContent
+        newParentVnode.dom.textContent = "";
+        oldKeyedList = [];
+      } else {
+        oldKeyedList = oldTree.map((vnode) => vnode.props.key);
+      }
 
       // 2. Obtain the max length of both lists
-      let oldKeyedList = oldTree[0] instanceof Vnode && "key" in oldTree[0].props ? oldTree.map((vnode) => vnode.props.key) : [];
       let newKeyedList = newTree.map((vnode) => vnode.props.key);
-      const maxListLength = Math.max(newTreeLength, oldTreeLength);
+      const maxListLength = Math.max(newTreeLength, oldKeyedList.length);
 
       // 3. Cycle over all the elements of the list until the max length
       for (let i = 0; i < maxListLength; i++) {
         if (i < newTreeLength) {
           let childVnode = newTree[i];
-          let oldChildVnode = oldTree[oldKeyedList.indexOf(childVnode.props.key)];
+          let oldChildVnode = oldKeyedList[i] === newKeyedList[i] ? oldTree[i] : oldTree[oldKeyedList.indexOf(childVnode.props.key)];
           let shouldPatch = true;
 
           if (oldChildVnode) {
             childVnode.dom = oldChildVnode.dom;
+            oldChildVnode.processed = true;
             if ("v-once" in childVnode.props || (childVnode.props.onbeforeupdate && childVnode.props.onbeforeupdate(childVnode, oldChildVnode) === false)) {
               // skip this patch
               childVnode.children = oldChildVnode.children;
@@ -380,14 +393,16 @@ function valyrian(): Valyrian {
           if (newParentVnode.dom.childNodes[i] === undefined) {
             newParentVnode.dom.appendChild(childVnode.dom);
           } else if (newParentVnode.dom.childNodes[i] !== childVnode.dom) {
-            oldTree[i] instanceof Vnode && newKeyedList.indexOf(oldTree[i].props.key) === -1 && callRemove(oldTree[i]);
+            oldTree[i] instanceof Vnode && !oldTree[i].processed && newKeyedList.indexOf(oldTree[i].props.key) === -1 && callRemove(oldTree[i]);
             newParentVnode.dom.replaceChild(childVnode.dom, newParentVnode.dom.childNodes[i]);
           }
 
           shouldPatch && patch(childVnode as Vnode & { dom: DomElement }, oldChildVnode);
         } else {
-          oldTree[i] instanceof Vnode && callRemove(oldTree[i]);
-          oldTree[i].dom.parentNode && newParentVnode.dom.removeChild(oldTree[i].dom);
+          if (!oldTree[i].processed) {
+            oldTree[i] instanceof Vnode && callRemove(oldTree[i]);
+            oldTree[i].dom.parentNode && newParentVnode.dom.removeChild(oldTree[i].dom);
+          }
         }
       }
     } else {
