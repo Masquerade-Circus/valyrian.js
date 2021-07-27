@@ -35,6 +35,9 @@ interface Plugin {
 interface Directive {
     (value: any, vnode: Vnode, oldVnode?: Vnode | TextVnode): void | boolean;
 }
+interface ValyrianEventHandler {
+    (a: Event, dom: DomElement): void;
+}
 interface Vnode {
     name: string;
     props: Props;

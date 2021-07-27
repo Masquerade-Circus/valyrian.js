@@ -36,10 +36,6 @@ interface Directive {
   (value: any, vnode: Vnode, oldVnode?: Vnode | TextVnode): void | boolean;
 }
 
-interface ValyrianEventHandler {
-  (a: Event, dom: DomElement): void
-}
-
 interface Vnode {
   name: string;
   props: Props;
@@ -175,8 +171,7 @@ function valyrian(): Valyrian {
 
   v.isMounted = false;
   v.isNode = isNode;
-  const reservedWords = ["key", "data", "v-once", "oncreate", "onupdate", "onremove", "onbeforeupdate"];
-  v.reservedWords = reservedWords;
+  v.reservedWords = ["key", "data", "v-once", "oncreate", "onupdate", "onremove", "onbeforeupdate"];
   v.trust = trust;
 
   const current: Current = {
@@ -224,7 +219,7 @@ function valyrian(): Valyrian {
     let name = `v-on${e.type}`;
     while (dom) {
       if (dom[name]) {
-        (dom[name] as ValyrianEventHandler)(e, dom);
+        (dom[name] as (a: Event, dom: DomElement) => void)(e, dom);
         if (!e.defaultPrevented) {
           v.update();
         }
@@ -235,8 +230,8 @@ function valyrian(): Valyrian {
   }
 
   function updateProperty(prop: string, newVnode: Vnode & { dom: DomElement }, oldVnode?: Vnode): void | boolean {
-    if (reservedWords.indexOf(prop) !== -1) {
-      if (prop in directives) {
+    if (v.reservedWords.indexOf(prop) !== -1) {
+      if (directives[prop]) {
         return directives[prop](newVnode.props[prop], newVnode, oldVnode);
       }
     } else if (typeof newVnode.props[prop] === "function" && newVnode.dom[`v-${prop}`] === undefined) {
@@ -272,7 +267,7 @@ function valyrian(): Valyrian {
 
   function removeProperties(newVnode: Vnode & { dom: DomElement }, oldVnode: Vnode) {
     for (let name in oldVnode.props) {
-      if (reservedWords.indexOf(name) === -1 && name in newVnode.props === false && typeof oldVnode.props[name] !== "function") {
+      if (v.reservedWords.indexOf(name) === -1 && name in newVnode.props === false && typeof oldVnode.props[name] !== "function") {
         if (name in newVnode.dom) {
           newVnode.dom[name] = null;
         } else {
@@ -347,11 +342,14 @@ function valyrian(): Valyrian {
       // 2. Obtain the max length of both lists
       let oldKeyedList = oldTree[0] instanceof Vnode && "key" in oldTree[0].props ? oldTree.map((vnode) => vnode.props.key) : [];
       let newKeyedList = newTree.map((vnode) => vnode.props.key);
-      const maxListLength = Math.max(newTreeLength, oldTreeLength);
+
+      const oldListLength = oldKeyedList.length;
+      const newListLength = newKeyedList.length;
+      const maxListLength = Math.max(oldListLength, newListLength);
 
       // 3. Cycle over all the elements of the list until the max length
       for (let i = 0; i < maxListLength; i++) {
-        if (i < newTreeLength) {
+        if (i < newListLength) {
           let childVnode = newTree[i];
           let oldChildVnode = oldTree[oldKeyedList.indexOf(childVnode.props.key)];
           let shouldPatch = true;
@@ -377,7 +375,7 @@ function valyrian(): Valyrian {
             childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
           }
 
-          if (newParentVnode.dom.childNodes[i] === undefined) {
+          if (!newParentVnode.dom.childNodes[i]) {
             newParentVnode.dom.appendChild(childVnode.dom);
           } else if (newParentVnode.dom.childNodes[i] !== childVnode.dom) {
             oldTree[i] instanceof Vnode && newKeyedList.indexOf(oldTree[i].props.key) === -1 && callRemove(oldTree[i]);
@@ -385,12 +383,12 @@ function valyrian(): Valyrian {
           }
 
           shouldPatch && patch(childVnode as Vnode & { dom: DomElement }, oldChildVnode);
+
         } else {
           oldTree[i] instanceof Vnode && callRemove(oldTree[i]);
-          oldTree[i].dom.parentNode && newParentVnode.dom.removeChild(oldTree[i].dom);
+          newParentVnode.dom === oldTree[i].dom.parentNode && newParentVnode.dom.removeChild(oldTree[i].dom);
         }
       }
-
     } else {
       for (let i = 0; i < newTreeLength; i++) {
         let childVnode = newTree[i];
@@ -443,7 +441,7 @@ function valyrian(): Valyrian {
             } else {
               childVnode.dom = oldChildVnode.dom;
               // eslint-disable-next-line eqeqeq
-              if (childVnode.nodeValue != childVnode.dom.nodeValue) {
+              if (childVnode.nodeValue != oldChildVnode.nodeValue) {
                 childVnode.dom.nodeValue = childVnode.nodeValue;
               }
             }
@@ -454,7 +452,7 @@ function valyrian(): Valyrian {
       // For remaining old children: remove from DOM, garbage collect
       for (let i = oldTreeLength - 1; i >= newTreeLength; --i) {
         oldTree[i] instanceof Vnode && callRemove(oldTree[i]);
-        oldTree[i].dom.parentNode && newParentVnode.dom.removeChild(oldTree[i].dom);
+        newParentVnode.dom === oldTree[i].dom.parentNode && newParentVnode.dom.removeChild(oldTree[i].dom);
       }
     }
 
@@ -512,8 +510,8 @@ function valyrian(): Valyrian {
 
   v.directive = (name: string, directive: Directive) => {
     let fullName = `v-${name}`;
-    if (reservedWords.indexOf(fullName) === -1) {
-      reservedWords.push(fullName);
+    if (v.reservedWords.indexOf(fullName) === -1) {
+      v.reservedWords.push(fullName);
       directives[fullName] = directive;
     }
   };
