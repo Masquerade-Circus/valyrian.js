@@ -63,7 +63,6 @@ function fileMethodFactory() {
                 allowJs: true,
                 esModuleInterop: true,
                 inlineSourceMap: true,
-                allowJs: true,
                 resolveJsonModule: true,
                 removeComments: true,
                 ...(options.tsc || {}).compilerOptions
