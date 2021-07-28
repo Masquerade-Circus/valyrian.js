@@ -3,6 +3,7 @@ import "../lib";
 import expect from "expect";
 import nodePlugin from "../plugins/node";
 import router from "../plugins/router";
+
 v.usePlugin(nodePlugin);
 v.usePlugin(router);
 

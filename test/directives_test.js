@@ -3,6 +3,7 @@ const faker = require("faker");
 const dayjs = require("dayjs");
 
 import "../lib";
+
 const nodePlugin = require("../plugins/node");
 v.usePlugin(nodePlugin);
 
@@ -77,7 +78,7 @@ describe("Directives", () => {
 
     it("should be able to modify the children of a vnode", () => {
       let expected = "<div>Hello world</div>";
-      v.directive("test3", (v, vnode) => (vnode.children = "Hello world"));
+      v.directive("test3", (v, vnode) => (vnode.children = ["Hello world"]));
       let result = v.mount("div", () => (
         <div v-test3>
           <span>Hello John Doe</span>
@@ -96,7 +97,11 @@ describe("Directives", () => {
         // Try to change u property
         vnode.props.u = "property changed";
         if (update) {
-          v.updateProperty("u", vnode, oldVnode);
+          if (oldVnode || v.addProperty === undefined) {
+            v.updateProperty("u", vnode, oldVnode);
+          } else {
+            v.addProperty("u", vnode);
+          }
         }
 
         // Try to change x property
@@ -120,8 +125,8 @@ describe("Directives", () => {
 
       let formatDate = (value) => dayjs(value).format("MMMM D, YYYY");
 
-      v.directive("date-inline", (date, vnode) => (vnode.children = formatDate(date)));
-      v.directive("date", (v, vnode) => (vnode.children = formatDate(vnode.children[0])));
+      v.directive("date-inline", (date, vnode) => (vnode.children = [formatDate(date)]));
+      v.directive("date", (v, vnode) => (vnode.children = [formatDate(vnode.children[0])]));
 
       let date = "08-16-2018";
       let result = v.mount("div", () => <div v-date-inline={date} />);
@@ -144,12 +149,12 @@ describe("Directives", () => {
           result = typeof test === "function" ? test(value) : value === test;
 
           if (result) {
-            vnode.children = typeof handler === "function" ? handler(value) : handler;
+            vnode.children = [typeof handler === "function" ? handler(value) : handler];
             return;
           }
         }
 
-        vnode.children = value;
+        vnode.children = [value];
       });
 
       let name;

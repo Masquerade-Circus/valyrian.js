@@ -6,8 +6,10 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "inlineSourceMap": true,
-    "allowJs": true,
+    "allowJs": false,
     "resolveJsonModule": true,
     "removeComments": true
-  }
+  },
+  "include": ["./lib", "./plugins"],
+  "exclude": ["test*/**/*", "**/*.test.ts", "**/*.spec.ts"]
 }

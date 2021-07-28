@@ -1,3 +1,4 @@
+/* eslint-disable eqeqeq */
 let { compare, benchmark, before } = require("@masquerade-circus/bench-test");
 
 import expect from "expect";

@@ -1,7 +1,7 @@
-let plugin = function(v) {
+let plugin = function (v) {
   let UND;
 
-  v.createHook = function({ name, init, update, response }) {
+  v.createHook = function ({ name, init, update, response }) {
     name = `use${name.charAt(0).toUpperCase()}${name.slice(1).toLowerCase()}`;
     if (!v[name]) {
       v[name] = (...args) => {
@@ -16,7 +16,7 @@ let plugin = function(v) {
         }
 
         let hook;
-        let oldComponentNode = oldParentVnode.components && oldParentVnode.components[parentVnode.components.length - 1];
+        let oldComponentNode = oldParentVnode && oldParentVnode.components && oldParentVnode.components[parentVnode.components.length - 1];
         let oldMethod = oldComponentNode && ("view" in oldComponentNode.component ? oldComponentNode.component.view : oldComponentNode.component);
         let currentMethod = "view" in component.component ? component.component.view : component.component;
 
@@ -43,19 +43,17 @@ let plugin = function(v) {
     }
   };
 
-  function createStateHook(value) {
-    let state = value;
-    let setState = (value) => (state = value);
-
-    let stateObj = Object.create(null);
-    stateObj.toJSON = stateObj.toString = stateObj.valueOf = () => (typeof state === "function" ? state() : state);
-
-    return [stateObj, setState];
-  }
-
   v.createHook({
     name: "state",
-    init: (initial) => createStateHook(initial),
+    init: (value) => {
+      let state = value;
+      let setState = (value) => (state = value);
+
+      let stateObj = Object.create(null);
+      stateObj.toJSON = stateObj.toString = stateObj.valueOf = () => (typeof state === "function" ? state() : state);
+
+      return [stateObj, setState];
+    },
     response: (hook) => hook
   });
 

@@ -2,6 +2,7 @@ import "../lib";
 
 import expect from "expect";
 import nodePlugin from "../plugins/node";
+
 v.usePlugin(nodePlugin);
 
 describe("Hyperscript", () => {
@@ -93,7 +94,7 @@ describe("Hyperscript", () => {
           id: "unique",
           class: "unique"
         },
-        children: [{ dom: expect.anything() }],
+        children: [{ nodeValue: "Hola mundo", dom: expect.anything() }],
         dom: expect.anything()
       }
     ]);

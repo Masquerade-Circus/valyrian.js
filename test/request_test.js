@@ -4,6 +4,7 @@ import expect from "expect";
 import fastify from "fastify";
 import nodePlugin from "../plugins/node";
 import requestPlugin from "../plugins/request";
+
 v.usePlugin(nodePlugin);
 v.usePlugin(requestPlugin);
 

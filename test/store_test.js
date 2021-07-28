@@ -2,6 +2,7 @@ import "../lib";
 
 import StorePlugin from "../plugins/store";
 import expect from "expect";
+
 v.usePlugin(StorePlugin);
 
 function getNewStore() {
