@@ -1,3 +1,10 @@
+### [5.0.12](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.11...5.0.12) (2021-07-28)
+
+
+### Code Refactoring
+
+* Refactor 2021 06 14 ([#20](https://github.com/Masquerade-Circus/valyrian.js/issues/20)) ([ceda5ea](https://github.com/Masquerade-Circus/valyrian.js/commit/ceda5ea1f8561983dd3e680a4d9a00e56f3b5292))
+
 ### [5.0.11](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.10...5.0.11) (2021-05-01)
 
 ### Bug Fixes
