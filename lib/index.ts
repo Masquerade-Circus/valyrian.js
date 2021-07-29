@@ -124,36 +124,23 @@ function createElement(tagName: string, isSVG: boolean = false): DomElement {
 }
 
 // Transforms a DOM node to a VNode
-function domToVnode(dom: DomElement): Vnode & { dom: DomElement } {
-  const el = dom;
-  const nodeName = el.nodeName.toLowerCase();
-  const props: Props = {};
-  const children: VnodeOrUnknown[] = [];
-  let i: number;
-  let childNode;
-  let attr: Attr;
+function domToVnode(dom: DomElement): Vnode {
+  let props: Props = {};
+  [].forEach.call(dom.attributes, (prop: Attr) => (props[prop.nodeName] = prop.nodeValue));
 
-  // attributes
-  for (i = 0; i < el.attributes.length; i++) {
-    attr = el.attributes[i];
-    props[attr.nodeName] = attr.nodeValue;
-  }
+  let vnode: Vnode = new Vnode(dom.nodeName.toLowerCase(), props, []);
+  vnode.dom = dom;
 
-  // children
-  for (i = 0; i < el.childNodes.length; i++) {
-    childNode = el.childNodes[i];
-    if (childNode.nodeType === 1) {
-      children.push(domToVnode(childNode as DomElement));
-    } else if (childNode.nodeType === 3) {
-      let textVnode = new TextVnode(childNode.nodeValue || "");
-      textVnode.dom = childNode as Text;
-      children.push(textVnode);
+  for (let i = 0, l = dom.childNodes.length; i < l; i++) {
+    if (dom.childNodes[i].nodeType === 1) {
+      vnode.children.push(domToVnode(dom.childNodes[i] as DomElement));
+    } else if (dom.childNodes[i].nodeType === 3) {
+      let textVnode = new TextVnode(dom.childNodes[i].nodeValue || "");
+      textVnode.dom = dom.childNodes[i] as unknown as Text;
+      vnode.children.push(textVnode);
     }
   }
-
-  let newNode = new Vnode(nodeName, props, children);
-  newNode.dom = dom;
-  return newNode as Vnode & { dom: DomElement };
+  return vnode;
 }
 
 const trust = (htmlString: string) => {
@@ -447,7 +434,7 @@ function valyrian(): Valyrian {
               childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
               oldChildVnode instanceof Vnode && callRemove(oldChildVnode);
               newParentVnode.dom.replaceChild(childVnode.dom, oldChildVnode.dom);
-              patch(childVnode as Vnode & { dom: DomElement }, oldChildVnode);
+              patch(childVnode as Vnode & { dom: DomElement });
             }
           } else {
             if (oldChildVnode instanceof Vnode) {

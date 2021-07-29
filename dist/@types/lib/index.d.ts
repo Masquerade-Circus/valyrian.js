@@ -100,8 +100,6 @@ interface Valyrian {
 }
 declare let isNode: boolean;
 declare function createElement(tagName: string, isSVG?: boolean): DomElement;
-declare function domToVnode(dom: DomElement): Vnode & {
-    dom: DomElement;
-};
+declare function domToVnode(dom: DomElement): Vnode;
 declare const trust: (htmlString: string) => Vnode[];
 declare function valyrian(): Valyrian;
