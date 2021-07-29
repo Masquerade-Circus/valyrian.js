@@ -1,3 +1,10 @@
+### [5.0.13](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.12...5.0.13) (2021-07-29)
+
+
+### Bug Fixes
+
+* **lib:** fix error patching children of an already replaced element ([3ce399d](https://github.com/Masquerade-Circus/valyrian.js/commit/3ce399d58f7371553ec254cd33c2b525be91c1b5))
+
 ### [5.0.12](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.11...5.0.12) (2021-07-28)
 
 ### Code Refactoring
