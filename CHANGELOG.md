@@ -1,9 +1,15 @@
-### [5.0.13](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.12...5.0.13) (2021-07-29)
+### [5.0.14](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.13...5.0.14) (2021-07-30)
 
 
 ### Bug Fixes
 
-* **lib:** fix error patching children of an already replaced element ([3ce399d](https://github.com/Masquerade-Circus/valyrian.js/commit/3ce399d58f7371553ec254cd33c2b525be91c1b5))
+* **lib:** fix valyrian adding v- event handlers and direct dom handlers ([6a89654](https://github.com/Masquerade-Circus/valyrian.js/commit/6a89654314aa0396c4e2cf1fcb7aa212a44a1dcb))
+
+### [5.0.13](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.12...5.0.13) (2021-07-29)
+
+### Bug Fixes
+
+*   **lib:** fix error patching children of an already replaced element ([3ce399d](https://github.com/Masquerade-Circus/valyrian.js/commit/3ce399d58f7371553ec254cd33c2b525be91c1b5))
 
 ### [5.0.12](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.11...5.0.12) (2021-07-28)
 
