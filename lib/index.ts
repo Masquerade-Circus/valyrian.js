@@ -227,14 +227,11 @@ function valyrian(): Valyrian {
         return directives[prop](newVnode.props[prop], newVnode, oldVnode);
       }
     } else if (typeof newVnode.props[prop] === "function") {
-      if (newVnode.dom[`v-${prop}`] === undefined) {
-        if (attachedListeners.indexOf(prop) === -1) {
-          (mainContainer as DomElement).addEventListener(prop.slice(2), eventListener);
-          attachedListeners.push(prop);
-        }
-
-        newVnode.dom[`v-${prop}`] = newVnode.props[prop];
+      if (newVnode.dom[`v-${prop}`] === undefined && attachedListeners.indexOf(prop) === -1) {
+        (mainContainer as DomElement).addEventListener(prop.slice(2), eventListener);
+        attachedListeners.push(prop);
       }
+      newVnode.dom[`v-${prop}`] = newVnode.props[prop];
     } else if (prop in newVnode.dom && !newVnode.isSVG) {
       // eslint-disable-next-line eqeqeq
       if (newVnode.dom[prop] != newVnode.props[prop]) {
