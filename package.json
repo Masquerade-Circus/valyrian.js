@@ -58,6 +58,7 @@
     "form-data": "^4.0.0",
     "node-fetch": "^2.6.1",
     "parse5": "^6.0.1",
+    "pirates": "^4.0.1",
     "purgecss": "4.0.3",
     "terser": "^5.7.1",
     "ts-node": "^10.1.0",
