@@ -35,6 +35,7 @@ addHook(
         }
       },
       loader,
+      minify: false,
       format: "cjs",
       target: "esnext",
       logLevel: "warning",
@@ -75,6 +76,9 @@ addHook(
   },
   {
     exts: [".js", ".jsx", ".ts", ".tsx", ".mjs", ".css", ".json", ".text", ".jpeg", ".jpg", ".png", ".gif", ".webp", ".svg", ".html"],
-    ignoreNodeModules: false
+    ignoreNodeModules: false,
+    matcher(fileName) {
+      return !/node_modules/.test(fileName) || /\.tsx?$/.test(fileName);
+    }
   }
 );
