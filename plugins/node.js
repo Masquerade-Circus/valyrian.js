@@ -66,7 +66,9 @@ function fileMethodFactory() {
                 resolveJsonModule: true,
                 removeComments: true,
                 ...(options.tsc || {}).compilerOptions
-              }
+              },
+              jsxFactory: "v",
+              jsxFragment: "v.fragment"
             };
 
             tsc.build(tscProgOptions);
@@ -79,8 +81,9 @@ function fileMethodFactory() {
             write: false,
             minify: options.compact,
             outdir: "out",
-            target: ["es2020"],
+            target: "esnext",
             jsxFactory: "v",
+            jsxFragment: "v.fragment",
             loader: { ".js": "jsx", ".ts": "tsx", ".mjs": "jsx" },
             ...(options.esbuild || {})
           });

@@ -247,6 +247,18 @@ describe("Mount and update", () => {
     // For the second instance should be 'Hello world 1' because it is still mounted
     expect(result4).toEqual("Hello world 1");
   });
+
+  it("should allow to use fragments", () => {
+    let component = () => (
+      <>
+        <span>Hello</span>
+        <span>World</span>
+      </>
+    );
+
+    let result = v.mount("body", component);
+    expect(result).toEqual("<span>Hello</span><span>World</span>");
+  });
 });
 
 describe.skip("performance test", () => {

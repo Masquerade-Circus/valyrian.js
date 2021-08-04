@@ -79,6 +79,7 @@ declare class VnodeComponent implements VnodeComponent {
 }
 interface Valyrian {
     (tagOrComponent: string | ValyrianComponent, props?: Props | null, children?: VnodeOrUnknown): Vnode | VnodeComponent;
+    fragment: (props: Props, children: VnodeOrUnknown[]) => VnodeOrUnknown[];
     isMounted: boolean;
     isNode: boolean;
     reservedWords: string[];

@@ -22,12 +22,7 @@ let plugin = function (v) {
     return obj;
   }
 
-  v.Store = function ({
-    state = {},
-    getters = {},
-    actions = {},
-    mutations = {}
-  } = {}) {
+  v.Store = function ({ state = {}, getters = {}, actions = {}, mutations = {} } = {}) {
     let frozen = true;
 
     function isUnfrozen() {
@@ -76,8 +71,7 @@ let plugin = function (v) {
     };
   };
 
-  v.useStore = (store) =>
-    (v.$store = store instanceof v.Store ? store : new v.Store(store));
+  v.useStore = (store) => (v.$store = store instanceof v.Store ? store : new v.Store(store));
 };
 
 plugin.default = plugin;

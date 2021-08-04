@@ -1,9 +1,8 @@
 ### [5.0.15](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.14...5.0.15) (2021-07-30)
 
-
 ### Bug Fixes
 
-* **lib:** fix valyrian.js not updating the v- handlers ([1a52654](https://github.com/Masquerade-Circus/valyrian.js/commit/1a526540d3030cd198d33b1772c4d32e8aaf3bae))
+*   **lib:** fix valyrian.js not updating the v- handlers ([1a52654](https://github.com/Masquerade-Circus/valyrian.js/commit/1a526540d3030cd198d33b1772c4d32e8aaf3bae))
 
 ### [5.0.14](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.13...5.0.14) (2021-07-30)
 

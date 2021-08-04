@@ -59,7 +59,6 @@
     "node-fetch": "^2.6.1",
     "parse5": "^6.0.1",
     "purgecss": "4.0.3",
-    "sucrase": "^3.20.0",
     "terser": "^5.7.1",
     "ts-node": "^10.1.0",
     "tsc-prog": "^2.2.1",
