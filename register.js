@@ -75,6 +75,6 @@ addHook(
   },
   {
     exts: [".js", ".jsx", ".ts", ".tsx", ".mjs", ".css", ".json", ".text", ".jpeg", ".jpg", ".png", ".gif", ".webp", ".svg", ".html"],
-    ignoreNodeModules: true
+    ignoreNodeModules: false
   }
 );
