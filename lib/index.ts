@@ -232,7 +232,7 @@ function valyrian(): Valyrian {
         return directives[prop](newVnode.props[prop], newVnode, oldVnode);
       }
     } else if (typeof newVnode.props[prop] === "function") {
-      if (newVnode.dom[`v-${prop}`] === undefined && attachedListeners.indexOf(prop) === -1) {
+      if (attachedListeners.indexOf(prop) === -1) {
         (mainContainer as DomElement).addEventListener(prop.slice(2), eventListener);
         attachedListeners.push(prop);
       }
@@ -263,7 +263,7 @@ function valyrian(): Valyrian {
 
   function removeProperties(newVnode: Vnode & { dom: DomElement }, oldVnode: Vnode) {
     for (let name in oldVnode.props) {
-      if (reservedWords.indexOf(name) === -1 && name in newVnode.props === false && typeof oldVnode.props[name] !== "function") {
+      if (name in newVnode.props === false && typeof oldVnode.props[name] !== "function" && reservedWords.indexOf(name) === -1) {
         if (name in newVnode.dom) {
           newVnode.dom[name] = null;
         } else {

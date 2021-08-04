@@ -1,16 +1,14 @@
 ### [5.0.16](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.15...5.0.16) (2021-08-04)
 
-
 ### Bug Fixes
 
-* **dependencies:** add pirates dependency ([2b32f9c](https://github.com/Masquerade-Circus/valyrian.js/commit/2b32f9c16fe578baddac17213bb435f2a2c51b7d))
-
+*   **dependencies:** add pirates dependency ([2b32f9c](https://github.com/Masquerade-Circus/valyrian.js/commit/2b32f9c16fe578baddac17213bb435f2a2c51b7d))
 
 ### Code Refactoring
 
-* **lib, register:** use esbuild for register. Implement fragments ([b220a8e](https://github.com/Masquerade-Circus/valyrian.js/commit/b220a8e05f7769a63a16a1ac4b06b39ddd1a1f4e))
-* **register:** do not ignore node modules to import ([1660021](https://github.com/Masquerade-Circus/valyrian.js/commit/1660021f4199ee87cc7b247c422c905a40176225))
-* **register:** only compile ts and tsx files from node_modules ([e1c3f01](https://github.com/Masquerade-Circus/valyrian.js/commit/e1c3f01095ac4967ff0e44605df6b2f5147859e1))
+*   **lib, register:** use esbuild for register. Implement fragments ([b220a8e](https://github.com/Masquerade-Circus/valyrian.js/commit/b220a8e05f7769a63a16a1ac4b06b39ddd1a1f4e))
+*   **register:** do not ignore node modules to import ([1660021](https://github.com/Masquerade-Circus/valyrian.js/commit/1660021f4199ee87cc7b247c422c905a40176225))
+*   **register:** only compile ts and tsx files from node_modules ([e1c3f01](https://github.com/Masquerade-Circus/valyrian.js/commit/e1c3f01095ac4967ff0e44605df6b2f5147859e1))
 
 ### [5.0.15](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.14...5.0.15) (2021-07-30)
 
