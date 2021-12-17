@@ -1,10 +1,11 @@
 require("./register");
 let { inline } = require("./plugins/node");
 let { writeFileSync } = require("fs");
-const gzipSize = require("gzip-size");
+const GzipSize = import("gzip-size");
 let { files } = require("./package.json");
 
 async function run() {
+  const gzipSizeSync = (await GzipSize).gzipSizeSync;
   inline.extensions("ts");
   await inline.ts("./lib/index.ts", {
     compact: true,
@@ -18,7 +19,7 @@ async function run() {
   writeFileSync("./dist/valyrian.min.js.map", inline.ts()[0].map);
 
   console.log("Size:", contents.length);
-  console.log("Gzip:", gzipSize.sync(contents));
+  console.log("Gzip:", gzipSizeSync(contents));
 }
 
 run();
