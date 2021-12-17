@@ -1,4 +1,4 @@
-let { compare, benchmark, before } = require("@masquerade-circus/bench-test");
+let { compare, benchmark, before } = require("buffalo-test");
 
 import "../lib/index.ts";
 

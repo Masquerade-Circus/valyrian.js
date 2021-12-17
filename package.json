@@ -49,7 +49,7 @@
     "commit": "git add . && git-cz",
     "release": "release-it --verbose",
     "release-test": "release-it --dry-run --verbose",
-    "bench": " nodemon -e js,ts,json,css -w ./bench -w ./lib -w ./plugins --exec 'bench-test --require ./register'"
+    "bench": " nodemon -e js,ts,json,css -w ./bench -w ./lib -w ./plugins --exec 'buffalo-test --require ./register'"
   },
   "dependencies": {
     "clean-css": "^5.1.3",
@@ -67,11 +67,11 @@
     "typescript": "^4.3.5"
   },
   "devDependencies": {
-    "@masquerade-circus/bench-test": "^0.0.2",
     "@release-it/conventional-changelog": "^3.0.1",
     "@types/node": "^16.4.5",
     "@typescript-eslint/eslint-plugin": "^4.28.5",
     "@typescript-eslint/parser": "^4.28.5",
+    "buffalo-test": "^2.0.0",
     "compression": "^1.7.4",
     "cross-env": "^7.0.3",
     "cz-conventional-changelog": "3.3.0",

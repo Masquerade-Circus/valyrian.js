@@ -9,9 +9,7 @@ addHook(
 
     let loader = "default";
     if (["js", "jsx", "ts", "tsx", "css", "json", "txt"].includes(extension)) {
-      if (["js", "jsx", "mjs"].includes(extension)) {
-        loader = "jsx";
-      } else if (["ts", "tsx"].includes(extension)) {
+      if (["js", "jsx", "mjs", "ts", "tsx"].includes(extension)) {
         loader = "tsx";
       } else if (extension === "txt") {
         loader = "text";
@@ -69,7 +67,7 @@ addHook(
 
     let { code: transformed } = transformSync(code, options);
     if (/"use strict"\;/gi.test(code) === false) {
-      transformed = '"use strict";\n' + transformed;
+      transformed = '"use strict";' + transformed;
     }
 
     return transformed;

@@ -1,5 +1,5 @@
 /* eslint-disable eqeqeq */
-let { compare, benchmark, before } = require("@masquerade-circus/bench-test");
+let { compare, benchmark, before } = require("buffalo-test");
 let expect = require("expect");
 
 type Set = number[];

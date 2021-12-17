@@ -1,5 +1,5 @@
 /* eslint-disable eqeqeq */
-let { compare, benchmark, before } = require("@masquerade-circus/bench-test");
+let { compare, benchmark, before } = require("buffalo-test");
 
 import expect from "expect";
 
@@ -84,6 +84,7 @@ compare.skip("typeof function vs startsWith vs charAt vs string[0]", () => {
 
   benchmark("startsWith", () => {
     for (let key in obj) {
+      // eslint-disable-next-line sonarjs/no-ignored-return
       key.startsWith("on");
     }
   });
