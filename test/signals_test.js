@@ -1,16 +1,15 @@
 import "../lib";
+import "../plugins/node";
 
+import { mount, update } from "../lib";
+
+import Signal from "../plugins/signals";
 import expect from "expect";
-import nodePlugin from "../plugins/node";
-import signalsPlugin from "../plugins/signals";
-
-v.usePlugin(nodePlugin);
-v.usePlugin(signalsPlugin);
 
 describe("Signals", () => {
   it("should create a signal", async () => {
     // Create signal
-    let counter = v.Signal(0);
+    let counter = Signal(0);
 
     // Read value
     counter();
@@ -34,7 +33,7 @@ describe("Signals", () => {
     let computed = counter((val) => "hello " + val);
 
     // Unlinked Pure computed
-    let unlinked = v.Signal(() => "hello " + counter.value);
+    let unlinked = Signal(() => "hello " + counter.value);
 
     let interval = setInterval(() => (counter.value += 1), 1000);
     expect(counter.hello).toEqual("hello 0");
@@ -62,8 +61,8 @@ describe("Signals", () => {
   });
 
   it("should test effect cleanup", async () => {
-    let delay = v.Signal(1000);
-    let count = v.Signal(0);
+    let delay = Signal(1000);
+    let count = Signal(0);
     let effectInterval = delay((delay) => {
       let interval = setInterval(() => {
         count.value = count.value + 1;
@@ -87,7 +86,7 @@ describe("Signals", () => {
   });
 
   it("should test deep state effect cleanup", async () => {
-    let state = v.Signal({
+    let state = Signal({
       count: 0,
       delay: 1000
     });
@@ -115,25 +114,26 @@ describe("Signals", () => {
 describe("Hooks like pattern", () => {
   it("should create a simple counter", async () => {
     let Counter = (ms) => {
-      let count = v.Signal(0);
+      let count = Signal(0);
       let interval = setInterval(() => {
         count.value = count.value + 1;
       }, ms);
       return () => <div onremove={() => clearInterval(interval)}>{count.value}</div>;
     };
 
-    let result = v.mount("div", Counter(1000));
+    let Component = Counter(1000);
+
+    let result = mount("div", Component);
     expect(result).toEqual("<div>0</div>");
     await new Promise((resolve) => setTimeout(() => resolve(), 2050));
-    result = v.update();
+    result = update(Component);
     expect(result).toEqual("<div>2</div>");
-    v.unMount();
   });
 
   it("should create a counter with delay change", async () => {
     let Counter = (ms) => {
-      let delay = v.Signal(ms);
-      let count = v.Signal(0);
+      let delay = Signal(ms);
+      let count = Signal(0);
       let interval = delay((delay) => {
         let interval = setInterval(() => {
           count.value = count.value + 1;
@@ -143,17 +143,18 @@ describe("Hooks like pattern", () => {
       return () => <div onremove={interval.cleanup}>{count.value}</div>;
     };
 
-    let result = v.mount("div", Counter(1000));
+    let Component = Counter(1000);
+
+    let result = mount("div", Component);
     expect(result).toEqual("<div>0</div>");
     await new Promise((resolve) => setTimeout(() => resolve(), 2050));
-    result = v.update();
+    result = update(Component);
     expect(result).toEqual("<div>2</div>");
-    v.unMount();
   });
 
   it("should create a counter with deep state", async () => {
     let Counter = (ms) => {
-      let state = v.Signal({
+      let state = Signal({
         count: 0,
         delay: ms
       });
@@ -166,11 +167,12 @@ describe("Hooks like pattern", () => {
       return () => <div onremove={interval.cleanup}>{state.value.count}</div>;
     };
 
-    let result = v.mount("div", Counter(1000));
+    let Component = Counter(1000);
+
+    let result = mount("div", Component);
     expect(result).toEqual("<div>0</div>");
     await new Promise((resolve) => setTimeout(() => resolve(), 2050));
-    result = v.update();
+    result = update(Component);
     expect(result).toEqual("<div>2</div>");
-    v.unMount();
   });
 });

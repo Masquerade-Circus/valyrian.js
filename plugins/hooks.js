@@ -1,8 +1,8 @@
 let plugin = function (v) {
   let UND;
 
-  v.createHook = function ({ name, init, update, response }) {
-    name = `use${name.charAt(0).toUpperCase()}${name.slice(1).toLowerCase()}`;
+  function createHook ({ name, init, update, response }) {
+
     if (!v[name]) {
       v[name] = (...args) => {
         let { component, parentVnode, oldParentVnode } = v.current;
@@ -43,7 +43,7 @@ let plugin = function (v) {
     }
   };
 
-  v.createHook({
+  createHook({
     name: "state",
     init: (value) => {
       let state = value;
@@ -76,7 +76,7 @@ let plugin = function (v) {
       v.onCleanup(hook.onCleanup);
     }
   }
-  v.createHook({
+  createHook({
     name: "effect",
     init: (effect, changes) => {
       let hook = { effect, prev: changes };

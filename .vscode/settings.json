@@ -1,5 +1,5 @@
 {
   "deepcode.uploadApproved": true,
-  "cSpell.words": ["eqeqeq", "onbeforeupdate", "oncreate", "onremove"],
+  "cSpell.words": ["eqeqeq", "onbeforeupdate", "oncleanup", "oncreate", "onremove"],
   "prettier.trailingComma": "none"
 }

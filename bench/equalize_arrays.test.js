@@ -157,7 +157,7 @@ function matchKeyedList(oldKeyedList: Set, newKeyedList: Set): Movement[] {
   return movements;
 }
 
-compare("Matching keyed list", () => {
+compare.skip("Matching keyed list", () => {
   let set = [1, 2, 3, 4, 5];
   let tests = [
     { name: "Removed at the end", set: [1, 2, 3, 4], movements: 1 }, // Removed at the end
@@ -209,7 +209,7 @@ compare("Matching keyed list", () => {
   });
 });
 
-compare("Matching keyed list -> stress", () => {
+compare.skip("Matching keyed list -> stress", () => {
   let set = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
   let tests = [
     { name: "Removed at the end", set: [1, 2, 3, 4, 5, 6, 7, 8, 9], movements: 1 }, // Removed at the end

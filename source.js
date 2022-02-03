@@ -1,4 +1,4 @@
-require("./register");
+require("./register.js");
 let { inline } = require("./plugins/node");
 let { writeFileSync } = require("fs");
 const GzipSize = import("gzip-size");
@@ -8,7 +8,7 @@ async function run() {
   const gzipSizeSync = (await GzipSize).gzipSizeSync;
   inline.extensions("ts");
   await inline.ts("./lib/index.ts", {
-    compact: true,
+    compact: false,
     declarationDir: "dist/@types",
     tsc: {
       include: files

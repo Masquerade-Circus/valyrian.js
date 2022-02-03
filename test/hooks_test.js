@@ -1,10 +1,9 @@
 import "../lib";
+import "../plugins/node";
 
 import expect from "expect";
 import hooksPlugin from "../plugins/hooks";
-import nodePlugin from "../plugins/node";
 
-v.usePlugin(nodePlugin);
 v.usePlugin(hooksPlugin);
 
 describe("Hooks", () => {

@@ -1,17 +1,16 @@
 import "../lib";
 
+import { htmlToHyperscript, hyperscriptToHtml, icons, inline, sw } from "../plugins/node";
+
 import expect from "expect";
 import fs from "fs";
-import nodePlugin from "../plugins/node";
 import packageJson from "../package.json";
-
-v.usePlugin(nodePlugin);
 
 describe("Node test", () => {
   it("Get hyperscript string from html", () => {
     let html = '<body><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</body>';
 
-    let dom = v.htmlToHyperscript(html);
+    let dom = htmlToHyperscript(html);
 
     expect(dom).toEqual(`[
   v("body", {}, [
@@ -22,7 +21,7 @@ describe("Node test", () => {
 
     html = '<html><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</html>';
 
-    dom = v.htmlToHyperscript(html);
+    dom = htmlToHyperscript(html);
 
     expect(dom).toEqual(`[
   v("html", {}, [
@@ -37,7 +36,7 @@ describe("Node test", () => {
 
     html = '<!DOCTYPE html><html><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</html>';
 
-    dom = v.htmlToHyperscript(html);
+    dom = htmlToHyperscript(html);
 
     expect(dom).toEqual(`[
   "<!DOCTYPE html>",
@@ -53,7 +52,7 @@ describe("Node test", () => {
 
     html = '<head><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</head>';
 
-    dom = v.htmlToHyperscript(html);
+    dom = htmlToHyperscript(html);
 
     expect(dom).toEqual(`[
   v("head", {}, [
@@ -63,7 +62,7 @@ describe("Node test", () => {
 
     html = '<div><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</div>';
 
-    dom = v.htmlToHyperscript(html);
+    dom = htmlToHyperscript(html);
 
     expect(dom).toEqual(`[
   v("div", {}, [
@@ -74,7 +73,7 @@ describe("Node test", () => {
 
     html = '<link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world';
 
-    dom = v.htmlToHyperscript(html);
+    dom = htmlToHyperscript(html);
 
     expect(dom).toEqual(`[
   v("link", {"rel":"shortcult icon","href":"/icons/favicon.ico"}, []),
@@ -82,9 +81,15 @@ describe("Node test", () => {
 ]`);
   });
 
+  it("Get html from hyperscript", () => {
+    let Component = () => <div>Hello world</div>;
+
+    expect(hyperscriptToHtml(<Component />)).toEqual("<div>Hello world</div>");
+  });
+
   it("Should create a service worker file", async () => {
     let file = ".tmp/sw.js";
-    await v.sw(file, {
+    await sw(file, {
       name: "Test",
       version: packageJson.version,
       urls: ["/", "/hello"]
@@ -141,7 +146,7 @@ describe("Node test", () => {
       }
     };
 
-    await v.icons("./assets/icon.png", favicons);
+    await icons("./assets/icon.png", favicons);
     expect(fs.existsSync(".tmp/favicon.ico")).toBeTruthy();
     expect(fs.existsSync(".tmp/links.js")).toBeTruthy();
     expect(fs.existsSync(".tmp/manifest.json")).toBeTruthy();
@@ -154,25 +159,25 @@ span{display:block;}
 span.hello{display: inline-block}
     `;
 
-    await v.inline.css({ raw: css });
-    let cleanCss = await v.inline.uncss([html]);
+    await inline.css({ raw: css });
+    let cleanCss = await inline.uncss([html]);
 
     expect(cleanCss).toEqual("span{display:block}");
   });
 
   it("should inline js", async () => {
-    v.inline.extensions("ts");
-    // await v.inline.ts("./lib/index.ts.old", { outputOptions: { minify: true } });
-    await v.inline.ts("./lib/index.ts", { outputOptions: { compact: true } });
-    await v.inline.js("./bench/index-old.js", { outputOptions: { compact: true } });
-    console.log(v.inline.ts()[0].raw.length);
-    // console.log(v.inline.ts()[1].raw.length);
-    console.log(v.inline.js()[0].raw.length);
+    inline.extensions("ts");
+    // await inline.ts("./lib/index.ts.old", { outputOptions: { minify: true } });
+    await inline.ts("./lib/index.ts", { compact: true });
+    await inline.js("./bench/index-old.js", { compact: true });
+    console.log(inline.ts()[0].raw.length);
+    // console.log(inline.ts()[1].raw.length);
+    console.log(inline.js()[0].raw.length);
 
-    // console.log(v.inline.ts()[1].raw);
-    // fs.writeFileSync("./dist/valyrian.lite.js", v.inline.ts()[1].raw);
+    // console.log(inline.ts()[1].raw);
+    // fs.writeFileSync("./dist/valyrian.lite.js", inline.ts()[1].raw);
 
-    // expect(v.inline.ts()[0].raw.length).toBeLessThan(5115);
+    // expect(inline.ts()[0].raw.length).toBeLessThan(5115);
 
     let compiled = fs.readFileSync("./dist/valyrian.min.js", "utf8");
     console.log(compiled.length);

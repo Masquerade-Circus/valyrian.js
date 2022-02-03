@@ -1,7 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
+import { mount } from "../lib";
 let fs = require("fs");
 let path = require("path");
-require("ts-node/register");
 
 let fetch = require("node-fetch");
 let FormData = require("form-data");
@@ -71,10 +71,12 @@ function fileMethodFactory() {
               jsxFragment: "v.fragment"
             };
 
+            console.log("tsc", tscProgOptions);
+
             tsc.build(tscProgOptions);
           }
 
-          let result = esbuild.buildSync({
+          let esbuildOptions = {
             entryPoints: [file],
             bundle: true,
             sourcemap: "external",
@@ -86,7 +88,11 @@ function fileMethodFactory() {
             jsxFragment: "v.fragment",
             loader: { ".js": "jsx", ".ts": "tsx", ".mjs": "jsx" },
             ...(options.esbuild || {})
-          });
+          };
+
+          console.log(esbuildOptions);
+
+          let result = esbuild.buildSync(esbuildOptions);
 
           if (options.compact) {
             let result2 = await terser.minify(result.outputFiles[1].text, {
@@ -341,25 +347,16 @@ icons.options = {
   }
 };
 
-let plugin = function (v) {
-  v.inline = inline;
-  v.sw = sw;
-  v.icons = icons;
-  v.htmlToDom = treeAdapter.htmlToDom;
-  v.domToHtml = treeAdapter.domToHtml;
-  v.domToHyperscript = treeAdapter.domToHyperscript;
-  v.htmlToHyperscript = treeAdapter.htmlToHyperscript;
-  v.hyperscriptToHtml = (...args) => v.mount("div", () => args);
+let plugin = {
+  inline,
+  sw,
+  icons,
+  htmlTDom: treeAdapter.htmlToDom,
+  domToHtml: treeAdapter.domToHtml,
+  domToHyperscript: treeAdapter.domToHyperscript,
+  htmlToHyperscript: treeAdapter.htmlToHyperscript,
+  hyperscriptToHtml: (...args) => mount("div", () => args)
 };
-
-plugin.inline = inline;
-plugin.sw = sw;
-plugin.icons = icons;
-plugin.htmlToDom = treeAdapter.htmlToDom;
-plugin.domToHtml = treeAdapter.domToHtml;
-plugin.domToHyperscript = treeAdapter.domToHyperscript;
-plugin.htmlToHyperscript = treeAdapter.htmlToHyperscript;
-plugin.hyperscriptToHtml = (...args) => v.mount("div", () => args);
 
 plugin.default = plugin;
 module.exports = plugin;

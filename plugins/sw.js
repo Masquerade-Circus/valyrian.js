@@ -1,19 +1,31 @@
-let plugin = function (v) {
-  if (!v.isNode) {
-    v.sw = async function (file = v.sw.file, options = v.sw.options) {
-      await navigator.serviceWorker.register(file, options);
+const { isNodeJs } = require("../lib");
 
-      v.sw.ready = true;
-      v.sw.file = file;
-      v.sw.options = options;
-      return navigator.serviceWorker;
-    };
+class Sw {
+  file = "/sw.js";
+  options = { scope: "/" };
+  ready = false;
+  sw = null;
 
-    v.sw.ready = false;
-    v.sw.file = "/sw.js";
-    v.sw.options = { scope: "/" };
+  constructor(file, options) {
+    if (isNodeJs) {
+      throw new Error("Not supported in Node.js");
+    }
+
+    if (file) {
+      this.file = file;
+    }
+    if (options) {
+      this.options = options;
+    }
   }
-};
 
-plugin.default = plugin;
-module.exports = plugin;
+  async register() {
+    await navigator.serviceWorker.register(this.file, this.options);
+    this.ready = true;
+    this.sw = navigator.serviceWorker;
+    return this.sw;
+  }
+}
+
+Sw.default = Sw;
+module.exports = Sw;

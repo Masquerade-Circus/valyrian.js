@@ -1,5 +1,8 @@
-let plugin = function (v) {
-  v.directive("model", ([model, property, event], vnode, oldvnode) => {
+const { directive, updateProperty } = require("../lib");
+
+let plugin = function () {
+  // eslint-disable-next-line sonarjs/cognitive-complexity
+  directive("model", ([model, property, event], vnode, oldVnode) => {
     if (vnode.name === "input") {
       event = event || "oninput";
       switch (vnode.props.type) {
@@ -14,8 +17,7 @@ let plugin = function (v) {
                 model[property].splice(idx, 1);
               }
             };
-            vnode.props.checked =
-              model[property].indexOf(vnode.dom.value) !== -1;
+            vnode.props.checked = model[property].indexOf(vnode.dom.value) !== -1;
           } else if ("value" in vnode.props) {
             vnode.props[event] = () => {
               if (model[property] === vnode.props.value) {
@@ -62,20 +64,14 @@ let plugin = function (v) {
         };
         vnode.children.forEach((child) => {
           if (child.name === "option") {
-            let value =
-              "value" in child.props
-                ? child.props.value
-                : child.children.join("").trim();
+            let value = "value" in child.props ? child.props.value : child.children.join("").trim();
             child.props.selected = model[property].indexOf(value) !== -1;
           }
         });
       } else {
         vnode.children.forEach((child) => {
           if (child.name === "option") {
-            let value =
-              "value" in child.props
-                ? child.props.value
-                : child.children.join("").trim();
+            let value = "value" in child.props ? child.props.value : child.children.join("").trim();
             child.props.selected = value === model[property];
           }
         });
@@ -86,10 +82,8 @@ let plugin = function (v) {
     }
 
     if (!vnode.props[event]) {
-      vnode.props[event] = (e) => (model[property] = e.target.value);
+      updateProperty(event, (e) => (model[property] = e.target.value), vnode, oldVnode, valyrianApp);
     }
-
-    v.updateProperty(event, vnode, oldvnode);
   });
 };
 
