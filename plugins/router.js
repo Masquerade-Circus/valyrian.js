@@ -1,4 +1,4 @@
-import { isComponent, isNodeJs, isVnode, isVnodeComponent, mount, updateProperty, v } from "../lib";
+import { isComponent, isNodeJs, isVnodeComponent, mount, updateProperty, v } from "../lib";
 
 function flat(array) {
   return Array.isArray(array) ? array.flat(Infinity) : [array];

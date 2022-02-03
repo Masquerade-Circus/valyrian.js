@@ -191,8 +191,6 @@ const reservedProps: ReservedProps = {
   "v-html": true
 };
 
-const plugins = new Set<Plugin>();
-
 export const isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
 
 function createDomElement(tag: string, isSVG: boolean = false) {
@@ -290,9 +288,6 @@ export function mount(container: DomElement | string, component: ValyrianCompone
       }
     }
     component[ValyrianSymbol].eventListener = eventListener;
-    for (let plugin of plugins) {
-      plugin(v, component);
-    }
   }
 
   component[ValyrianSymbol].component = vnodeComponent;
@@ -345,6 +340,9 @@ export function unmount(component?: ValyrianComponent | Vnode) {
     patch(valyrianApp.mainVnode, oldVnode, valyrianApp);
     oldVnode = null;
     valyrianApp.isMounted = false;
+    if (isNodeJs) {
+      return valyrianApp.mainVnode.dom.innerHTML;
+    }
   }
 }
 
@@ -619,10 +617,10 @@ function patchNormalTree(
 
 // eslint-disable-next-line complexity
 function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom = emptyVnode as VnodeWithDom, valyrianApp?: MountedValyrianApp) {
-  flatTree(newVnode);
-
   v.current.vnode = newVnode;
   v.current.oldVnode = oldVnode;
+
+  flatTree(newVnode);
 
   let newTree = newVnode.children;
   let oldTree = oldVnode.children;
@@ -658,9 +656,9 @@ export function directive(name: string, directive: Directive) {
   reservedProps[fullName] = true;
 }
 
-export function plugin(plugin: Plugin) {
-  if (!plugins.has(plugin)) {
-    plugins.add(plugin);
+export function cleanup(callback: Function) {
+  if (v.current.app?.cleanup.indexOf(callback) === -1) {
+    v.current.app?.cleanup.push(callback);
   }
 }
 
