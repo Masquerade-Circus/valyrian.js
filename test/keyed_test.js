@@ -1,4 +1,4 @@
-import { mount, update } from "../lib";
+import { mount, update } from "../lib/index";
 
 import expect from "expect";
 

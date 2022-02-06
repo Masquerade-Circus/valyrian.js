@@ -1,5 +1,3 @@
-const { isNodeJs } = require("../lib");
-
 class Sw {
   file = "/sw.js";
   options = { scope: "/" };
@@ -7,7 +5,7 @@ class Sw {
   sw = null;
 
   constructor(file, options) {
-    if (isNodeJs) {
+    if (Boolean(typeof process !== "undefined" && process.versions && process.versions.node)) {
       throw new Error("Not supported in Node.js");
     }
 

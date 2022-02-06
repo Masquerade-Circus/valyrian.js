@@ -106,6 +106,7 @@ function Signal(value, key) {
     value: { value, writable: true, enumerable: true },
     cleanup: {
       value() {
+        // eslint-disable-next-line no-unused-vars
         for (let [handler, computed] of subscriptions) {
           computed.unsubscribe();
         }

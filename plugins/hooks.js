@@ -1,54 +1,54 @@
-const UND = undefined;
-
-function createHook({ init, update, response, cleanup }) {
+function createHook({ create, update, response, cleanup }) {
   return (...args) => {
     let { component, vnode, oldVnode, app } = v.current;
 
-    // Init the components array for the current vnode
-    if (vnode.components === UND) {
-      vnode.components = [];
-    }
-
-    // Add the component to the components array if it's not already there
-    if (vnode.components.indexOf(component) === -1) {
-      vnode.components.push(component);
-    }
-
-    // Init the component hooks array
-    if (component.hooks === UND) {
-      component.hooks = [];
-    }
-
-    let componentIndex = vnode.components.length - 1;
-    let oldComponent = ((oldVnode || {}).components || [])[componentIndex];
-    let hook;
-    let hookIndex = component.hooks.length - 1;
-
-    if (oldComponent === component) {
-      component.hooks = oldComponent.hooks;
-      hook = oldComponent.hooks[hookIndex];
-      if (update) {
-        update(hook, ...args);
+    if (vnode && component && app) {
+      // Init the components array for the current vnode
+      if (vnode.components === undefined) {
+        vnode.components = [];
       }
-    } else {
-      hook = init(...args);
-      component.hooks.push(hook);
-    }
 
-    if (cleanup) {
-      app.cleanup.push(() => cleanup(hook));
-    }
+      // Add the component to the components array if it's not already there
+      if (vnode.components.indexOf(component) === -1) {
+        vnode.components.push(component);
+      }
 
-    if (response) {
-      return response(hook);
-    } else {
-      return hook;
+      // Init the component hooks array
+      if (component.hooks === undefined) {
+        component.hooks = [];
+      }
+
+      let componentIndex = vnode.components.length - 1;
+      let oldComponent = oldVnode && oldVnode.components && oldVnode.components[componentIndex];
+      let hook;
+      let hookIndex = component.hooks.length - 1;
+
+      if (oldComponent === component) {
+        component.hooks = oldComponent.hooks;
+        hook = oldComponent.hooks[hookIndex];
+        if (update) {
+          update(hook, ...args);
+        }
+      } else {
+        hook = create(...args);
+        component.hooks.push(hook);
+      }
+
+      if (cleanup) {
+        app.cleanup.push(() => cleanup(hook));
+      }
+
+      if (response) {
+        return response(hook);
+      } else {
+        return hook;
+      }
     }
   };
 }
 
 const useState = createHook({
-  init: (value) => {
+  create: (value) => {
     let state = value;
     let setState = (value) => (state = value);
 
@@ -76,7 +76,7 @@ function callEffectHook(hook, changes) {
   }
 }
 const useEffect = createHook({
-  init: (effect, changes) => {
+  create: (effect, changes) => {
     let hook = { effect, prev: changes };
     callEffectHook(hook);
     return hook;
@@ -89,11 +89,6 @@ const useEffect = createHook({
   }
 });
 
-let exports = {
-  createHook,
-  useState,
-  useEffect
-};
-
-exports.default = exports;
-module.exports = exports;
+const plugin = { useState, useEffect, createHook };
+plugin.default = plugin;
+module.exports = plugin;

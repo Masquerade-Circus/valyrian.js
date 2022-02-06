@@ -1,6 +1,6 @@
-import "../lib";
+import "../lib/index";
 
-import { htmlToHyperscript, hyperscriptToHtml, icons, inline, sw } from "../plugins/node";
+import { htmlToHyperscript, icons, inline, render, sw } from "../plugins/node";
 
 import expect from "expect";
 import fs from "fs";
@@ -84,7 +84,7 @@ describe("Node test", () => {
   it("Get html from hyperscript", () => {
     let Component = () => <div>Hello world</div>;
 
-    expect(hyperscriptToHtml(<Component />)).toEqual("<div>Hello world</div>");
+    expect(render(<Component />)).toEqual("<div>Hello world</div>");
   });
 
   it("Should create a service worker file", async () => {
@@ -158,28 +158,21 @@ describe("Node test", () => {
 span{display:block;}
 span.hello{display: inline-block}
     `;
-
-    await inline.css({ raw: css });
-    let cleanCss = await inline.uncss([html]);
+    let cleanCss = await inline.uncss([html], css);
 
     expect(cleanCss).toEqual("span{display:block}");
   });
 
   it("should inline js", async () => {
-    inline.extensions("ts");
-    // await inline.ts("./lib/index.ts.old", { outputOptions: { minify: true } });
-    await inline.ts("./lib/index.ts", { compact: true });
-    await inline.js("./bench/index-old.js", { compact: true });
-    console.log(inline.ts()[0].raw.length);
+    let { raw: indexTs } = await inline("./lib/index.ts", { compact: true });
+    let { raw: indexOld } = await inline("./bench/index-old.js", { compact: true });
+    console.log(indexTs.length);
     // console.log(inline.ts()[1].raw.length);
-    console.log(inline.js()[0].raw.length);
+    console.log(indexOld.length);
 
     // console.log(inline.ts()[1].raw);
     // fs.writeFileSync("./dist/valyrian.lite.js", inline.ts()[1].raw);
 
     // expect(inline.ts()[0].raw.length).toBeLessThan(5115);
-
-    let compiled = fs.readFileSync("./dist/valyrian.min.js", "utf8");
-    console.log(compiled.length);
   });
 });

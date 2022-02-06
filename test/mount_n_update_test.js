@@ -1,4 +1,4 @@
-import { Valyrian, mount, trust, update } from "../lib";
+import { mount, trust, update } from "../lib/index";
 
 import expect from "expect";
 

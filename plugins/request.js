@@ -1,4 +1,4 @@
-const { isNodeJs } = require("../lib");
+const isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
 
 function serialize(obj, prefix) {
   return Object.keys(obj)
@@ -35,6 +35,7 @@ function parseUrl(url, options = {}) {
   return u;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function Request(baseUrl = "", options = {}) {
   let url = baseUrl.replace(/\/$/gi, "").trim();
   options.urls = options.urls || {};

@@ -1,4 +1,4 @@
-import "../lib";
+import "../lib/index";
 import "../plugins/node";
 
 import expect from "expect";

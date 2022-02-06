@@ -26,6 +26,7 @@ describe("Directives", () => {
       let app = () => <div v-test2 />;
 
       directive("test2", (v, vnode, old) => {
+        console.log("here");
         newVnode = vnode;
         oldVnode = old;
       });
@@ -92,7 +93,7 @@ describe("Directives", () => {
 
     /**
      * Modify properties is not guaranteed because the properties are processed by place
-     * If the directive needs to update previous properties you need to update the property using the v.updateProperty method
+     * If the directive needs to update previous properties you need to update the property using the updateProperty method
      */
     it("Modify properties is not guaranteed", () => {
       let update = false;

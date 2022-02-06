@@ -1,4 +1,4 @@
-import "../lib";
+import "../lib/index";
 
 import Store from "../plugins/store";
 import expect from "expect";

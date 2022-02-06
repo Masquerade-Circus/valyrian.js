@@ -1,4 +1,4 @@
-import { isComponent, isNodeJs, isVnodeComponent, mount, updateProperty, v } from "../lib";
+const { mount, updateProperty, directive, isNodeJs, isComponent, isVnodeComponent } = require("../lib/index");
 
 function flat(array) {
   return Array.isArray(array) ? array.flat(Infinity) : [array];
@@ -195,32 +195,9 @@ class Router {
     return mount(this.container, component);
   }
 
-  mount(elementContainer, options = {}) {
+  mount(elementContainer) {
     if (elementContainer) {
       this.container = elementContainer;
-      this.options = { ...options };
-      this.options.directives = {
-        ...(this.options.directives || {}),
-        route: (url, vnode, oldnode) => {
-          vnode.props.href = url;
-          vnode.props.onclick = (e) => {
-            if (typeof url === "string" && url.length > 0) {
-              if (url.charAt(0) !== "/") {
-                let current = this.current.split("?", 2).shift().split("/");
-                current.pop();
-                url = `${current.join("/")}/${url}`;
-              }
-
-              this.go(url);
-            }
-            e.preventDefault();
-          };
-
-          updateProperty("href", vnode, oldnode);
-          updateProperty("onclick", vnode, oldnode);
-        }
-      };
-
       // Activate the use of the router
       if (!isNodeJs) {
         function onPopStateGoToRoute() {
@@ -229,6 +206,25 @@ class Router {
         window.addEventListener("popstate", onPopStateGoToRoute.bind(this), false);
         onPopStateGoToRoute();
       }
+
+      directive("route", (url, vnode, oldnode) => {
+        vnode.props.href = url;
+        vnode.props.onclick = (e) => {
+          if (typeof url === "string" && url.length > 0) {
+            if (url.charAt(0) !== "/") {
+              let current = this.current.split("?", 2).shift().split("/");
+              current.pop();
+              url = `${current.join("/")}/${url}`;
+            }
+
+            this.go(url);
+          }
+          e.preventDefault();
+        };
+
+        updateProperty("href", vnode, oldnode);
+        updateProperty("onclick", vnode, oldnode);
+      });
     }
   }
 }

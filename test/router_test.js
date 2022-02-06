@@ -1,9 +1,9 @@
-import "../lib";
+import "../lib/index";
 import "../plugins/node";
 
 import Router from "../plugins/router";
 import expect from "expect";
-import { update } from "../lib";
+import { update } from "../lib/index";
 
 // eslint-disable-next-line max-lines-per-function
 describe("Router", () => {

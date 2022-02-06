@@ -1,6 +1,6 @@
 let { compare, benchmark, before } = require("buffalo-test");
 
-const { mount, update, v } = require("../lib/index.ts");
+const { mount, update, v } = require("../lib/index");
 
 const expect = require("expect");
 require("../plugins/node");

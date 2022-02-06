@@ -1,7 +1,7 @@
 import "../lib";
 import "../plugins/node";
 
-import { cleanup, mount, unmount, update } from "../lib";
+import { cleanup, mount, unmount, update } from "../lib/index";
 import { useEffect, useState } from "../plugins/hooks";
 
 import expect from "expect";

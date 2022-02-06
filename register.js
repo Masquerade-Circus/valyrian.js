@@ -1,6 +1,5 @@
 const { addHook } = require("pirates");
 const { transformSync } = require("esbuild");
-const fs = require("fs");
 
 addHook(
   (code, filePath) => {
@@ -8,10 +7,8 @@ addHook(
     let extension = fileName.split(".").pop();
 
     let loader = "default";
-    if (["js", "jsx", "ts", "tsx", "css", "json", "txt"].includes(extension)) {
-      if (["js", "jsx", "mjs"].includes(extension)) {
-        loader = "tsx";
-      } else if (["ts", "tsx"].includes(extension)) {
+    if (["js", "cjs", "jsx", "ts", "tsx", "css", "json", "txt"].includes(extension)) {
+      if (["js", "cjs", "jsx", "mjs", "ts", "tsx"].includes(extension)) {
         loader = "tsx";
       } else if (extension === "txt") {
         loader = "text";
@@ -23,7 +20,7 @@ addHook(
     }
 
     let options = {
-      sourcefile: fileName,
+      sourcefile: filePath,
       sourcemap: "inline",
       minify: false,
       target: "esnext",

@@ -2,21 +2,16 @@ const { before, benchmark, compare } = require("buffalo-test");
 
 const { v: VNext } = require("../lib/index.ts");
 const expect = require("expect");
-const fs = require("fs");
 const nodePlugin = require("../plugins/node");
 const vOld = require("./index-old");
 
 compare("hyperscript", () => {
   let date = new Date();
   before(async () => {
-    nodePlugin.inline.extensions("ts");
-    // await nodePlugin.inline.ts("./lib/index.ts", { compact: true });
-    await nodePlugin.inline.js("./bench/index-old.js", { compact: true });
-    // console.log(nodePlugin.inline.ts()[0].raw.length);
-    console.log(nodePlugin.inline.js()[0].raw.length);
-
-    let compiled = fs.readFileSync("./dist/valyrian.min.js", "utf8");
-    console.log(compiled.length);
+    let { raw: newTs } = await nodePlugin.inline("./lib/index.ts", { compact: true });
+    let { raw: oldjs } = await nodePlugin.inline("./bench/index-old.js", { compact: true });
+    console.log(oldjs.length);
+    console.log(newTs.length);
 
     expect(vOld("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]])).toEqual({
       name: "div",

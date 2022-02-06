@@ -1,7 +1,7 @@
-import "../lib";
+import "../lib/index";
 import "../plugins/node";
 
-import { mount, update } from "../lib";
+import { mount, update } from "../lib/index";
 
 import Signal from "../plugins/signals";
 import expect from "expect";
