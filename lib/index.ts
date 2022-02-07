@@ -198,7 +198,7 @@ export function update(component?: ValyrianComponent | IVnode) {
   if (component && component[ValyrianSymbol]) {
     let valyrianApp = component[ValyrianSymbol];
     v.current.app = valyrianApp;
-    callCleanup(valyrianApp);
+    valyrianApp.onCleanup.length && callCleanup(valyrianApp);
     let oldVnode: VnodeWithDom | null = valyrianApp.mainVnode as VnodeWithDom;
     valyrianApp.mainVnode = new Vnode(valyrianApp.mainVnode.tag, valyrianApp.mainVnode.props, [valyrianApp.component]) as VnodeWithDom;
     valyrianApp.mainVnode.dom = oldVnode.dom;
@@ -206,10 +206,10 @@ export function update(component?: ValyrianComponent | IVnode) {
     patch(valyrianApp.mainVnode, oldVnode, valyrianApp);
     oldVnode = null;
     if (valyrianApp.isMounted === false) {
-      callMount(valyrianApp);
+      valyrianApp.onMount.length && callMount(valyrianApp);
       valyrianApp.isMounted = true;
     } else {
-      callUpdate(valyrianApp);
+      valyrianApp.onUpdate.length && callUpdate(valyrianApp);
     }
 
     if (isNodeJs) {
@@ -226,8 +226,8 @@ export function unmount(component?: ValyrianComponent | IVnode) {
   let valyrianApp = component[ValyrianSymbol] as MountedValyrianApp;
 
   if (valyrianApp.isMounted) {
-    callCleanup(valyrianApp);
-    callUnmount(valyrianApp);
+    valyrianApp.onCleanup.length && callCleanup(valyrianApp);
+    valyrianApp.onUnmount.length && callUnmount(valyrianApp);
     let oldVnode: VnodeWithDom | null = valyrianApp.mainVnode as VnodeWithDom;
     valyrianApp.mainVnode = new Vnode(valyrianApp.mainVnode.tag, valyrianApp.mainVnode.props, []) as VnodeWithDom;
     valyrianApp.mainVnode.dom = oldVnode.dom;
@@ -235,6 +235,7 @@ export function unmount(component?: ValyrianComponent | IVnode) {
     patch(valyrianApp.mainVnode, oldVnode, valyrianApp);
     oldVnode = null;
     valyrianApp.isMounted = false;
+
     if (isNodeJs) {
       return valyrianApp.mainVnode.dom.innerHTML;
     }

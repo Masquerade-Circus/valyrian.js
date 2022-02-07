@@ -98,4 +98,5 @@ export interface Valyrian {
   current: Current;
   directives: Directives;
   reservedProps: ReservedProps;
+  [key: string | number | symbol]: any;
 }

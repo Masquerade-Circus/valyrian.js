@@ -1,4 +1,4 @@
-let { compare, benchmark, before } = require("buffalo-test");
+let { compare, benchmark, before, afterCycle } = require("buffalo-test");
 
 const { mount, update, unmount, v } = require("../lib/index");
 
@@ -60,11 +60,17 @@ compare("Mount and update: Mount multiple types", () => {
   before(() => {
     expect(vOld.mount("body", Component)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
     expect(mount("body", Component2)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
+    vOld.unMount();
+    unmount(Component2);
     useData = true;
   });
 
-  benchmark("Valyrian 5.0.8", () => {
+  afterCycle(() => {
     vOld.unMount();
+    unmount(Component2);
+  });
+
+  benchmark("Valyrian 5.0.8", () => {
     vOld.mount("body", Component);
   });
 
@@ -79,11 +85,17 @@ compare("Mount and update: Mount single text", () => {
 
   before(() => {
     expect(vOld.mount("body", Component)).toEqual(`hello world`);
+    vOld.unMount();
     expect(mount("body", Component2)).toEqual(`hello world`);
+    unmount(Component2);
+  });
+
+  afterCycle(() => {
+    vOld.unMount();
+    unmount(Component2);
   });
 
   benchmark("Valyrian 5.0.8", () => {
-    vOld.unMount();
     vOld.mount("body", Component);
   });
 
@@ -99,10 +111,16 @@ compare("Mount and update: Mount single text in div", () => {
   before(() => {
     expect(vOld.mount("body", Component)).toEqual(`<div>hello world</div>`);
     expect(mount("body", Component2)).toEqual(`<div>hello world</div>`);
+    vOld.unMount();
+    unmount(Component2);
+  });
+
+  afterCycle(() => {
+    vOld.unMount();
+    unmount(Component2);
   });
 
   benchmark("Valyrian 5.0.8", () => {
-    vOld.unMount();
     vOld.mount("body", Component);
   });
 
