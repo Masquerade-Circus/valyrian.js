@@ -1,10 +1,11 @@
 let { compare, benchmark, before } = require("buffalo-test");
 
-const { mount, update, v } = require("../lib/index");
+const { mount, update, unmount, v } = require("../lib/index");
 
 const expect = require("expect");
 require("../plugins/node");
 const vOld = require("./index-old");
+const { useEffect } = require("../plugins/hooks");
 
 let VNext = v;
 
@@ -661,5 +662,56 @@ compare("Mount and update: Render keyed list -> swap keys on large set", () => {
     mount("body", component);
     keys = [...updatedLargeSet];
     update(component);
+  });
+});
+
+compare("Lifecycle vs hooks", () => {
+  let lifecycleCount = 0;
+  let plusLifeCycle = () => (lifecycleCount += 1);
+
+  let hooksCount = 0;
+  let plusHooks = () => (hooksCount += 1);
+
+  let LifecycleComponent = () => {
+    return (
+      <div oncreate={plusLifeCycle} onupdate={plusLifeCycle} onremove={plusLifeCycle}>
+        Hello world
+      </div>
+    );
+  };
+
+  let HooksComponent = () => {
+    // useEffect(plusHooks, []); // Only create replaced by the next line
+    useEffect(plusHooks); // Create & Update
+    useEffect(plusHooks, null); // Remove
+    return <div>Hello world</div>;
+  };
+
+  before(() => {
+    mount("body", LifecycleComponent);
+    expect(lifecycleCount).toEqual(1);
+    update(LifecycleComponent);
+    expect(lifecycleCount).toEqual(2);
+    unmount(LifecycleComponent);
+    expect(lifecycleCount).toEqual(3);
+
+    mount("body", HooksComponent);
+    expect(hooksCount).toEqual(1);
+    update(HooksComponent);
+    expect(hooksCount).toEqual(2);
+    unmount(HooksComponent);
+    expect(hooksCount).toEqual(3);
+  });
+
+  benchmark(`Hooks`, () => {
+    mount("body", HooksComponent);
+    update(HooksComponent);
+    unmount(HooksComponent);
+  });
+
+  benchmark(`Lifecycle`, () => {
+    mount("body", LifecycleComponent);
+    update(LifecycleComponent);
+    unmount(LifecycleComponent);
   });
 });

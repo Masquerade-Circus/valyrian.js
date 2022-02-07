@@ -1,104 +1,19 @@
-/*** Interfaces ***/
-
-export interface DomElement extends Element {
-  [key: string]: any;
-}
-
-export interface Props {
-  key?: string | number;
-  data?: string;
-  oncreate?: { (vnode: IVnode): never };
-  onupdate?: { (vnode: IVnode, oldVnode: IVnode): never };
-  onremove?: { (oldVnode: IVnode): never };
-  shouldupdate?: { (vnode: IVnode, oldVnode: IVnode): undefined | boolean };
-  "v-cleanup"?: Function;
-  [key: string | number | symbol]: any;
-}
-
-export interface Children extends Array<IVnode | any> {}
-
-export interface IVnode {
-  new (tag: string, props: Props, children: IVnode[]): IVnode;
-  tag: string;
-  props: Props;
-  children: Children;
-  dom?: DomElement;
-  isSVG?: boolean;
-  processed?: boolean;
-  component?: Component | POJOComponent;
-  nodeValue?: string;
-  [key: string | number | symbol]: any;
-}
-
-export interface Component {
-  (props?: Record<string, any> | null, children?: Children): IVnode | Children;
-  [key: string | number | symbol]: any;
-}
-
-export interface POJOComponent {
-  view: Component;
-  [key: string | number | symbol]: any;
-}
-
-export type ValyrianComponent = Component | POJOComponent;
-
-export interface VnodeComponent extends IVnode {
-  tag: "__component__";
-  component: ValyrianComponent;
-}
-
-export interface VnodeWithDom extends IVnode {
-  dom: DomElement;
-}
-
-export interface Directive {
-  (value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
-}
-
-export interface ValyrianApp {
-  isMounted: boolean;
-  eventListenerNames: Record<string, true>;
-  cleanup: Function[];
-
-  eventListener?: EventListener;
-  mainVnode?: VnodeWithDom;
-  component?: VnodeComponent;
-  container?: DomElement;
-
-  [key: string | number | symbol]: any;
-}
-
-export interface MountedValyrianApp extends ValyrianApp {
-  eventListener: EventListener;
-  mainVnode: VnodeWithDom;
-  container: DomElement;
-  component: VnodeComponent;
-}
-
-export interface Current {
-  app?: ValyrianApp;
-  component?: ValyrianComponent;
-  vnode?: VnodeWithDom;
-  oldVnode?: VnodeWithDom;
-}
-
-export interface Directives {
-  [key: string]: Directive;
-}
-
-export interface ReservedProps {
-  [key: string]: true;
-}
-
-export interface Valyrian {
-  (tagOrComponent: string | ValyrianComponent, props: Props, ...children: Children): IVnode | VnodeComponent;
-  fragment: (props: Props, ...children: Children) => Children;
-  current: Current;
-  directives: Directives;
-  reservedProps: ReservedProps;
-}
-
 /*** Vnode ***/
+
+import {
+  Children,
+  Current,
+  Directive,
+  DomElement,
+  IVnode,
+  MountedValyrianApp,
+  Props,
+  Valyrian,
+  ValyrianApp,
+  ValyrianComponent,
+  VnodeComponent,
+  VnodeWithDom
+} from "./interfaces";
 
 export const Vnode = function Vnode(this: IVnode, tag: string, props: Props, children: Children) {
   this.props = props;
@@ -159,9 +74,27 @@ export const trust = (htmlString: string) => {
 
 const ValyrianSymbol = Symbol("Valyrian");
 
-export function cleanup(callback: Function) {
-  if (v.current.app?.cleanup.indexOf(callback) === -1) {
-    v.current.app?.cleanup.push(callback);
+export function onCleanup(callback: Function) {
+  if (v.current.app?.onCleanup.indexOf(callback) === -1) {
+    v.current.app?.onCleanup.push(callback);
+  }
+}
+
+export function onUnmount(callback: Function) {
+  if (v.current.app?.onUnmount.indexOf(callback) === -1) {
+    v.current.app?.onUnmount.push(callback);
+  }
+}
+
+export function onMount(callback: Function) {
+  if (v.current.app?.onMount.indexOf(callback) === -1) {
+    v.current.app?.onMount.push(callback);
+  }
+}
+
+export function onUpdate(callback: Function) {
+  if (v.current.app?.onUpdate.indexOf(callback) === -1) {
+    v.current.app?.onUpdate.push(callback);
   }
 }
 
@@ -203,7 +136,10 @@ export function mount(container: DomElement | string, component: ValyrianCompone
       isMounted: false,
       eventListenerNames: {},
       isNodeJs,
-      cleanup: []
+      onCleanup: [],
+      onMount: [],
+      onUpdate: [],
+      onUnmount: []
     };
     function eventListener(e: Event) {
       let dom = e.target as DomElement & Record<string, any>;
@@ -230,25 +166,51 @@ export function mount(container: DomElement | string, component: ValyrianCompone
   return update(component);
 }
 
-function cleanupVnodes(valyrianApp: ValyrianApp) {
-  for (let i = 0; i < valyrianApp.cleanup.length; i++) {
-    valyrianApp.cleanup[i]();
+function callCleanup(valyrianApp: ValyrianApp) {
+  for (let i = 0; i < valyrianApp.onCleanup.length; i++) {
+    valyrianApp.onCleanup[i]();
   }
-  valyrianApp.cleanup = [];
+  valyrianApp.onCleanup = [];
+}
+
+function callUnmount(valyrianApp: ValyrianApp) {
+  for (let i = 0; i < valyrianApp.onUnmount.length; i++) {
+    valyrianApp.onUnmount[i]();
+  }
+  valyrianApp.onUnmount = [];
+}
+
+function callMount(valyrianApp: ValyrianApp) {
+  for (let i = 0; i < valyrianApp.onMount.length; i++) {
+    valyrianApp.onMount[i]();
+  }
+  valyrianApp.onMount = [];
+}
+
+function callUpdate(valyrianApp: ValyrianApp) {
+  for (let i = 0; i < valyrianApp.onUpdate.length; i++) {
+    valyrianApp.onUpdate[i]();
+  }
+  valyrianApp.onUpdate = [];
 }
 
 export function update(component?: ValyrianComponent | IVnode) {
   if (component && component[ValyrianSymbol]) {
     let valyrianApp = component[ValyrianSymbol];
     v.current.app = valyrianApp;
-    cleanupVnodes(valyrianApp);
+    callCleanup(valyrianApp);
     let oldVnode: VnodeWithDom | null = valyrianApp.mainVnode as VnodeWithDom;
     valyrianApp.mainVnode = new Vnode(valyrianApp.mainVnode.tag, valyrianApp.mainVnode.props, [valyrianApp.component]) as VnodeWithDom;
     valyrianApp.mainVnode.dom = oldVnode.dom;
     valyrianApp.mainVnode.isSVG = oldVnode.isSVG;
     patch(valyrianApp.mainVnode, oldVnode, valyrianApp);
     oldVnode = null;
-    valyrianApp.isMounted = true;
+    if (valyrianApp.isMounted === false) {
+      callMount(valyrianApp);
+      valyrianApp.isMounted = true;
+    } else {
+      callUpdate(valyrianApp);
+    }
 
     if (isNodeJs) {
       return valyrianApp.mainVnode.dom.innerHTML;
@@ -264,7 +226,8 @@ export function unmount(component?: ValyrianComponent | IVnode) {
   let valyrianApp = component[ValyrianSymbol] as MountedValyrianApp;
 
   if (valyrianApp.isMounted) {
-    cleanupVnodes(valyrianApp);
+    callCleanup(valyrianApp);
+    callUnmount(valyrianApp);
     let oldVnode: VnodeWithDom | null = valyrianApp.mainVnode as VnodeWithDom;
     valyrianApp.mainVnode = new Vnode(valyrianApp.mainVnode.tag, valyrianApp.mainVnode.props, []) as VnodeWithDom;
     valyrianApp.mainVnode.dom = oldVnode.dom;
@@ -280,7 +243,7 @@ export function unmount(component?: ValyrianComponent | IVnode) {
 
 let emptyVnode = new Vnode("__empty__", {}, []);
 
-export function onremove(vnode: IVnode) {
+function onremove(vnode: IVnode) {
   for (let i = 0; i < vnode.children.length; i++) {
     vnode.children[i].tag !== "#text" && onremove(vnode.children[i]);
   }
