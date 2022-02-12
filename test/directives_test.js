@@ -2,7 +2,7 @@ const expect = require("expect");
 const faker = require("faker");
 const dayjs = require("dayjs");
 
-import { directive, mount, trust, update, updateProperty } from "../lib/index";
+import { directive, mount, setProperty, trust, update } from "../lib/index";
 
 require("../plugins/node");
 
@@ -93,7 +93,7 @@ describe("Directives", () => {
 
     /**
      * Modify properties is not guaranteed because the properties are processed by place
-     * If the directive needs to update previous properties you need to update the property using the updateProperty method
+     * If the directive needs to update previous properties you need to update the property using the setProperty method
      */
     it("Modify properties is not guaranteed", () => {
       let update = false;
@@ -103,7 +103,7 @@ describe("Directives", () => {
         // Try to change u property
         vnode.props.u = "property changed";
         if (update) {
-          updateProperty("u", "property changed", vnode, oldVnode);
+          setProperty("u", "property changed", vnode, oldVnode);
         }
 
         // Try to change x property

@@ -135,7 +135,6 @@ export function mount(container: DomElement | string, component: ValyrianCompone
     component[ValyrianSymbol] = {
       isMounted: false,
       eventListenerNames: {},
-      isNodeJs,
       onCleanup: [],
       onMount: [],
       onUpdate: [],
@@ -161,6 +160,7 @@ export function mount(container: DomElement | string, component: ValyrianCompone
   component[ValyrianSymbol].component = vnodeComponent;
   component[ValyrianSymbol].container = appContainer;
   component[ValyrianSymbol].mainVnode = domToVnode(appContainer);
+  component[ValyrianSymbol].mainVnode.isSVG = component[ValyrianSymbol].tag === "svg";
 
   // update
   return update(component);
@@ -234,11 +234,13 @@ export function unmount(component?: ValyrianComponent | IVnode) {
     valyrianApp.mainVnode.isSVG = oldVnode.isSVG;
     patch(valyrianApp.mainVnode, oldVnode, valyrianApp);
     oldVnode = null;
-    valyrianApp.isMounted = false;
 
     if (isNodeJs) {
       return valyrianApp.mainVnode.dom.innerHTML;
     }
+
+    (valyrianApp as any) = null;
+    Reflect.deleteProperty(component, ValyrianSymbol);
   }
 }
 
@@ -291,7 +293,7 @@ function sharedUpdateProperty(prop: string, value: any, vnode: VnodeWithDom, old
   }
 }
 
-export function updateProperty(name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
+export function setProperty(name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
   if (name in vnode.props === false) {
     vnode.props[name] = value;
   }
@@ -616,15 +618,15 @@ const builtInDirectives = {
             handler = () => (model[property] = !model[property]);
             value = model[property];
           }
-          updateProperty("checked", value, vnode, oldVnode);
+          setProperty("checked", value, vnode, oldVnode);
           break;
         }
         case "radio": {
-          updateProperty("checked", model[property] === vnode.dom.value, vnode, oldVnode);
+          setProperty("checked", model[property] === vnode.dom.value, vnode, oldVnode);
           break;
         }
         default: {
-          updateProperty("value", model[property], vnode, oldVnode);
+          setProperty("value", model[property], vnode, oldVnode);
         }
       }
     } else if (vnode.name === "select") {
@@ -667,7 +669,7 @@ const builtInDirectives = {
       if (!handler) {
         handler = (e: Event) => (model[property] = (e.target as DomElement & Record<string, any>).value);
       }
-      updateProperty(event, handler, vnode, oldVnode);
+      setProperty(event, handler, vnode, oldVnode);
     }
   }
 };

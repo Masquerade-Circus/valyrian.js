@@ -25,19 +25,21 @@ var __toCommonJS = /* @__PURE__ */ ((cache) => {
 var lib_exports = {};
 __export(lib_exports, {
   Vnode: () => Vnode,
-  cleanup: () => cleanup,
   directive: () => directive,
   isComponent: () => isComponent,
   isNodeJs: () => isNodeJs,
   isVnode: () => isVnode,
   isVnodeComponent: () => isVnodeComponent,
   mount: () => mount,
-  onremove: () => onremove,
+  onCleanup: () => onCleanup,
+  onMount: () => onMount,
+  onUnmount: () => onUnmount,
+  onUpdate: () => onUpdate,
+  setProperty: () => setProperty,
   trust: () => trust,
   unmount: () => unmount,
   update: () => update,
-  updateProperty: () => updateProperty,
-  valyrian: () => valyrian
+  v: () => v
 });
 var Vnode = function Vnode2(tag, props, children) {
   this.props = props;
@@ -77,9 +79,24 @@ var trust = (htmlString) => {
   return [].map.call(div.childNodes, (item) => domToVnode(item));
 };
 var ValyrianSymbol = Symbol("Valyrian");
-function cleanup(callback) {
-  if (v.current.app?.cleanup.indexOf(callback) === -1) {
-    v.current.app?.cleanup.push(callback);
+function onCleanup(callback) {
+  if (v.current.app?.onCleanup.indexOf(callback) === -1) {
+    v.current.app?.onCleanup.push(callback);
+  }
+}
+function onUnmount(callback) {
+  if (v.current.app?.onUnmount.indexOf(callback) === -1) {
+    v.current.app?.onUnmount.push(callback);
+  }
+}
+function onMount(callback) {
+  if (v.current.app?.onMount.indexOf(callback) === -1) {
+    v.current.app?.onMount.push(callback);
+  }
+}
+function onUpdate(callback) {
+  if (v.current.app?.onUpdate.indexOf(callback) === -1) {
+    v.current.app?.onUpdate.push(callback);
   }
 }
 function mount(container, component) {
@@ -120,34 +137,60 @@ function mount(container, component) {
     component[ValyrianSymbol] = {
       isMounted: false,
       eventListenerNames: {},
-      isNodeJs,
-      cleanup: []
+      onCleanup: [],
+      onMount: [],
+      onUpdate: [],
+      onUnmount: []
     };
     component[ValyrianSymbol].eventListener = eventListener;
   }
   component[ValyrianSymbol].component = vnodeComponent;
   component[ValyrianSymbol].container = appContainer;
   component[ValyrianSymbol].mainVnode = domToVnode(appContainer);
+  component[ValyrianSymbol].mainVnode.isSVG = component[ValyrianSymbol].tag === "svg";
   return update(component);
 }
-function cleanupVnodes(valyrianApp) {
-  for (let i = 0; i < valyrianApp.cleanup.length; i++) {
-    valyrianApp.cleanup[i]();
+function callCleanup(valyrianApp) {
+  for (let i = 0; i < valyrianApp.onCleanup.length; i++) {
+    valyrianApp.onCleanup[i]();
   }
-  valyrianApp.cleanup = [];
+  valyrianApp.onCleanup = [];
+}
+function callUnmount(valyrianApp) {
+  for (let i = 0; i < valyrianApp.onUnmount.length; i++) {
+    valyrianApp.onUnmount[i]();
+  }
+  valyrianApp.onUnmount = [];
+}
+function callMount(valyrianApp) {
+  for (let i = 0; i < valyrianApp.onMount.length; i++) {
+    valyrianApp.onMount[i]();
+  }
+  valyrianApp.onMount = [];
+}
+function callUpdate(valyrianApp) {
+  for (let i = 0; i < valyrianApp.onUpdate.length; i++) {
+    valyrianApp.onUpdate[i]();
+  }
+  valyrianApp.onUpdate = [];
 }
 function update(component) {
   if (component && component[ValyrianSymbol]) {
     let valyrianApp = component[ValyrianSymbol];
     v.current.app = valyrianApp;
-    cleanupVnodes(valyrianApp);
+    valyrianApp.onCleanup.length && callCleanup(valyrianApp);
     let oldVnode = valyrianApp.mainVnode;
     valyrianApp.mainVnode = new Vnode(valyrianApp.mainVnode.tag, valyrianApp.mainVnode.props, [valyrianApp.component]);
     valyrianApp.mainVnode.dom = oldVnode.dom;
     valyrianApp.mainVnode.isSVG = oldVnode.isSVG;
     patch(valyrianApp.mainVnode, oldVnode, valyrianApp);
     oldVnode = null;
-    valyrianApp.isMounted = true;
+    if (valyrianApp.isMounted === false) {
+      valyrianApp.onMount.length && callMount(valyrianApp);
+      valyrianApp.isMounted = true;
+    } else {
+      valyrianApp.onUpdate.length && callUpdate(valyrianApp);
+    }
     if (isNodeJs) {
       return valyrianApp.mainVnode.dom.innerHTML;
     }
@@ -159,17 +202,19 @@ function unmount(component) {
   }
   let valyrianApp = component[ValyrianSymbol];
   if (valyrianApp.isMounted) {
-    cleanupVnodes(valyrianApp);
+    valyrianApp.onCleanup.length && callCleanup(valyrianApp);
+    valyrianApp.onUnmount.length && callUnmount(valyrianApp);
     let oldVnode = valyrianApp.mainVnode;
     valyrianApp.mainVnode = new Vnode(valyrianApp.mainVnode.tag, valyrianApp.mainVnode.props, []);
     valyrianApp.mainVnode.dom = oldVnode.dom;
     valyrianApp.mainVnode.isSVG = oldVnode.isSVG;
     patch(valyrianApp.mainVnode, oldVnode, valyrianApp);
     oldVnode = null;
-    valyrianApp.isMounted = false;
     if (isNodeJs) {
       return valyrianApp.mainVnode.dom.innerHTML;
     }
+    valyrianApp = null;
+    Reflect.deleteProperty(component, ValyrianSymbol);
   }
 }
 var emptyVnode = new Vnode("__empty__", {}, []);
@@ -209,7 +254,7 @@ function sharedUpdateProperty(prop, value, vnode, oldVnode) {
     }
   }
 }
-function updateProperty(name, value, vnode, oldVnode) {
+function setProperty(name, value, vnode, oldVnode) {
   if (name in vnode.props === false) {
     vnode.props[name] = value;
   }
@@ -463,15 +508,15 @@ var builtInDirectives = {
             handler = () => model[property] = !model[property];
             value = model[property];
           }
-          updateProperty("checked", value, vnode, oldVnode);
+          setProperty("checked", value, vnode, oldVnode);
           break;
         }
         case "radio": {
-          updateProperty("checked", model[property] === vnode.dom.value, vnode, oldVnode);
+          setProperty("checked", model[property] === vnode.dom.value, vnode, oldVnode);
           break;
         }
         default: {
-          updateProperty("value", model[property], vnode, oldVnode);
+          setProperty("value", model[property], vnode, oldVnode);
         }
       }
     } else if (vnode.name === "select") {
@@ -513,11 +558,11 @@ var builtInDirectives = {
       if (!handler) {
         handler = (e) => model[property] = e.target.value;
       }
-      updateProperty(event, handler, vnode, oldVnode);
+      setProperty(event, handler, vnode, oldVnode);
     }
   }
 };
-var valyrian = function v2(tagOrComponent, props, ...children) {
+var v = function v2(tagOrComponent, props, ...children) {
   if (typeof tagOrComponent === "string") {
     return new Vnode(tagOrComponent, props || {}, children);
   }
@@ -525,12 +570,12 @@ var valyrian = function v2(tagOrComponent, props, ...children) {
   vnode.component = tagOrComponent;
   return vnode;
 };
-valyrian.fragment = (props, ...children) => {
+v.fragment = (props, ...children) => {
   return children;
 };
-valyrian.current = {};
-valyrian.directives = { ...builtInDirectives };
-valyrian.reservedProps = {
+v.current = {};
+v.directives = { ...builtInDirectives };
+v.reservedProps = {
   key: true,
   state: true,
   oncreate: true,
@@ -546,5 +591,5 @@ valyrian.reservedProps = {
   "v-class": true,
   "v-html": true
 };
-(isNodeJs ? global : window).v = valyrian;
+(isNodeJs ? global : window).v = v;
 module.exports = __toCommonJS(lib_exports);

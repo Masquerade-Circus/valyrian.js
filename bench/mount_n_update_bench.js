@@ -4,8 +4,10 @@ const { mount, update, unmount, v } = require("../lib/index");
 
 const expect = require("expect");
 require("../plugins/node");
-const vOld = require("./index-old");
+const { v: vOld } = require("./index-old.ts");
 const { useEffect } = require("../plugins/hooks");
+
+console.log(vOld);
 
 let VNext = v;
 

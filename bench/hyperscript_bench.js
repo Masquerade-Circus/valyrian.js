@@ -3,13 +3,13 @@ const { before, benchmark, compare } = require("buffalo-test");
 const { v: VNext } = require("../lib/index.ts");
 const expect = require("expect");
 const nodePlugin = require("../plugins/node");
-const vOld = require("./index-old");
+const { v: vOld } = require("./index-old.ts");
 
 compare("hyperscript", () => {
   let date = new Date();
   before(async () => {
-    let { raw: newTs } = await nodePlugin.inline("./lib/index.ts", { compact: true });
-    let { raw: oldjs } = await nodePlugin.inline("./bench/index-old.js", { compact: true });
+    let { raw: newTs } = await nodePlugin.inline("./lib/index.ts", { compact: true, bundle: false });
+    let { raw: oldjs } = await nodePlugin.inline("./bench/index-old.ts", { compact: true, bundle: false });
     console.log(oldjs.length);
     console.log(newTs.length);
 

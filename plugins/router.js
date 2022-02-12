@@ -1,4 +1,4 @@
-const { mount, updateProperty, directive, isNodeJs, isComponent, isVnodeComponent } = require("../lib/index");
+const { mount, updateProperty, directive, isNodeJs, isComponent, isVnodeComponent } = require("../lib");
 
 function flat(array) {
   return Array.isArray(array) ? array.flat(Infinity) : [array];

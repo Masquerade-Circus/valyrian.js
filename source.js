@@ -33,11 +33,11 @@ async function build({ globalName, entryPoint, outfileName, clean = false, minif
       files: [entryPoint],
       pretty: true,
       copyOtherToOutDir: false,
-      clean: clean ? ["types", "dist"] : [],
+      clean: clean ? ["dist"] : [],
       compilerOptions: {
         rootDir: "./",
         declaration: true,
-        declarationDir: "./types",
+        declarationDir: "./dist/@types",
         emitDeclarationOnly: true
       }
     };

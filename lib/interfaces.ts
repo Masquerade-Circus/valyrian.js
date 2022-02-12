@@ -64,7 +64,6 @@ export interface ValyrianApp {
 
   eventListener?: EventListener;
   mainVnode?: VnodeWithDom;
-  component?: VnodeComponent;
   container?: DomElement;
 
   [key: string | number | symbol]: any;
@@ -74,7 +73,6 @@ export interface MountedValyrianApp extends ValyrianApp {
   eventListener: EventListener;
   mainVnode: VnodeWithDom;
   container: DomElement;
-  component: VnodeComponent;
 }
 
 export interface Current {

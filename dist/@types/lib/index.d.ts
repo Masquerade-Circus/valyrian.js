@@ -1,0 +1,17 @@
+import { Directive, DomElement, IVnode, Valyrian, ValyrianComponent, VnodeComponent, VnodeWithDom } from "./interfaces";
+export declare const Vnode: IVnode;
+export declare function isVnode(component?: unknown): component is IVnode;
+export declare function isComponent(component?: unknown | ValyrianComponent): component is ValyrianComponent;
+export declare function isVnodeComponent(vnode?: unknown): vnode is VnodeComponent;
+export declare const isNodeJs: boolean;
+export declare const trust: (htmlString: string) => IVnode[];
+export declare function onCleanup(callback: Function): void;
+export declare function onUnmount(callback: Function): void;
+export declare function onMount(callback: Function): void;
+export declare function onUpdate(callback: Function): void;
+export declare function mount(container: DomElement | string, component: ValyrianComponent | IVnode): any;
+export declare function update(component?: ValyrianComponent | IVnode): any;
+export declare function unmount(component?: ValyrianComponent | IVnode): string | undefined;
+export declare function setProperty(name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+export declare function directive(name: string, directive: Directive): void;
+export declare const v: Valyrian;

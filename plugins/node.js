@@ -71,7 +71,7 @@ async function inline(file, options = {}) {
 
       let esbuildOptions = {
         entryPoints: [file],
-        bundle: true,
+        bundle: "bundle" in options ? options.bundle : true,
         sourcemap: "external",
         write: false,
         minify: options.compact,
