@@ -18,6 +18,15 @@ import {
   VnodeWithDom
 } from "./interfaces";
 
+/*** Constants ***/
+const ComponentString = "__component__";
+const TextString = "#text";
+export const isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
+const ValyrianSymbol = Symbol("Valyrian");
+const Und = undefined;
+
+/*** Vnode ***/
+
 export const Vnode = function Vnode(this: IVnode, tag: string, props: Props, children: Children) {
   this.props = props;
   this.children = children;
@@ -33,12 +42,10 @@ export function isComponent(component?: unknown | ValyrianComponent): component 
 }
 
 export function isVnodeComponent(vnode?: unknown | VnodeComponent): vnode is VnodeComponent {
-  return vnode instanceof Vnode && vnode.tag === "__component__";
+  return vnode instanceof Vnode && vnode.tag === ComponentString;
 }
 
 /*** Util ***/
-
-export const isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
 
 function createDomElement(tag: string, isSVG: boolean = false) {
   return isSVG ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag);
@@ -55,7 +62,7 @@ function domToVnode(dom: DomElement): VnodeWithDom {
           return domToVnode(child as DomElement);
         }
 
-        let text = new Vnode("#text", {}, []);
+        let text = new Vnode(TextString, {}, []);
         text.nodeValue = String((child as DomElement).nodeValue);
         text.dom = child as DomElement;
         return text;
@@ -80,7 +87,6 @@ const reservedProps: ReservedProps = {
   onupdate: true,
   onremove: true,
   shouldupdate: true,
-  "v-cleanup": true,
   "v-once": true,
 
   // Built in directives
@@ -94,29 +100,29 @@ const reservedProps: ReservedProps = {
 
 /*** Mount ***/
 
-const ValyrianSymbol = Symbol("Valyrian");
+const current: Current = {};
 
 export function onCleanup(callback: Function) {
-  if (v.current.app?.onCleanup.indexOf(callback) === -1) {
-    v.current.app?.onCleanup.push(callback);
+  if (current.app?.onCleanup.indexOf(callback) === -1) {
+    current.app?.onCleanup.push(callback);
   }
 }
 
 export function onUnmount(callback: Function) {
-  if (v.current.app?.onUnmount.indexOf(callback) === -1) {
-    v.current.app?.onUnmount.push(callback);
+  if (current.app?.onUnmount.indexOf(callback) === -1) {
+    current.app?.onUnmount.push(callback);
   }
 }
 
 export function onMount(callback: Function) {
-  if (v.current.app?.onMount.indexOf(callback) === -1) {
-    v.current.app?.onMount.push(callback);
+  if (current.app?.onMount.indexOf(callback) === -1) {
+    current.app?.onMount.push(callback);
   }
 }
 
 export function onUpdate(callback: Function) {
-  if (v.current.app?.onUpdate.indexOf(callback) === -1) {
-    v.current.app?.onUpdate.push(callback);
+  if (current.app?.onUpdate.indexOf(callback) === -1) {
+    current.app?.onUpdate.push(callback);
   }
 }
 
@@ -182,7 +188,6 @@ export function mount(container: DomElement | string, component: ValyrianCompone
   component[ValyrianSymbol].component = vnodeComponent;
   component[ValyrianSymbol].container = appContainer;
   component[ValyrianSymbol].mainVnode = domToVnode(appContainer);
-  component[ValyrianSymbol].mainVnode.isSVG = component[ValyrianSymbol].tag === "svg";
 
   // update
   return update(component);
@@ -219,12 +224,11 @@ function callUpdate(valyrianApp: ValyrianApp) {
 export function update(component?: ValyrianComponent | IVnode): void | string {
   if (component && component[ValyrianSymbol]) {
     let valyrianApp = component[ValyrianSymbol];
-    v.current.app = valyrianApp;
+    current.app = valyrianApp;
     valyrianApp.onCleanup.length && callCleanup(valyrianApp);
     let oldVnode: VnodeWithDom | null = valyrianApp.mainVnode as VnodeWithDom;
     valyrianApp.mainVnode = new Vnode(valyrianApp.mainVnode.tag, valyrianApp.mainVnode.props, [valyrianApp.component]) as VnodeWithDom;
     valyrianApp.mainVnode.dom = oldVnode.dom;
-    valyrianApp.mainVnode.isSVG = oldVnode.isSVG;
     patch(valyrianApp.mainVnode, oldVnode, valyrianApp);
     oldVnode = null;
     if (valyrianApp.isMounted === false) {
@@ -270,26 +274,27 @@ let emptyVnode = new Vnode("__empty__", {}, []);
 
 function onremove(vnode: IVnode) {
   for (let i = 0; i < vnode.children.length; i++) {
-    vnode.children[i].tag !== "#text" && onremove(vnode.children[i]);
+    vnode.children[i].tag !== TextString && onremove(vnode.children[i]);
   }
 
   vnode.props.onremove && vnode.props.onremove(vnode);
 }
 
-function sharedSetAttribute(prop: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
+function sharedSetAttribute(prop: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void | boolean {
   // It is a reserved prop
   if (reservedProps[prop]) {
     // If it is a directive name call the directive
     if (directives[prop]) {
-      directives[prop](vnode.props[prop], vnode, oldVnode);
+      return directives[prop](vnode.props[prop], vnode, oldVnode);
     }
+
     return;
   }
 
   // It is not a reserved prop so we add it to the dom
   if (typeof value === "function") {
-    let valyrianApp = v.current.app as MountedValyrianApp;
-    if (!valyrianApp.eventListenerNames[prop]) {
+    let valyrianApp = current.app as MountedValyrianApp;
+    if (prop in valyrianApp.eventListenerNames === false) {
       valyrianApp.eventListenerNames[prop] = true;
       valyrianApp.container.addEventListener(prop.slice(2), valyrianApp.eventListener);
     }
@@ -316,50 +321,45 @@ function sharedSetAttribute(prop: string, value: any, vnode: VnodeWithDom, oldVn
 }
 
 export function setAttribute(name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
-  if (name in vnode.props === false) {
-    vnode.props[name] = value;
-  }
+  vnode.props[name] = value;
 
   sharedSetAttribute(name, value, vnode, oldVnode);
 }
 
 function setAttributes(vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
   for (let prop in vnode.props) {
-    // We asume that we clean the props in some directive
-    if (prop in vnode.props === false) {
+    if (sharedSetAttribute(prop, vnode.props[prop], vnode, oldVnode) === false) {
       return;
     }
-
-    sharedSetAttribute(prop, vnode.props[prop], vnode, oldVnode);
   }
-}
 
-function removeAttributes(vnode: VnodeWithDom, oldVnode: VnodeWithDom) {
-  for (let prop in oldVnode.props) {
-    if (prop in vnode.props === false && typeof oldVnode.props[prop] !== "function" && prop in v.reservedProps === false) {
-      if (prop in oldVnode.dom && vnode.isSVG === false) {
-        oldVnode.dom[prop] = null;
-      } else {
-        oldVnode.dom.removeAttribute(prop);
+  if (oldVnode) {
+    for (let prop in oldVnode.props) {
+      if (prop in vnode.props === false && typeof oldVnode.props[prop] !== "function" && prop in reservedProps === false) {
+        if (prop in oldVnode.dom && vnode.isSVG === false) {
+          oldVnode.dom[prop] = null;
+        } else {
+          oldVnode.dom.removeAttribute(prop);
+        }
       }
     }
   }
 }
 
 // eslint-disable-next-line complexity
-function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom = emptyVnode as VnodeWithDom, valyrianApp: MountedValyrianApp) {
-  v.current.vnode = newVnode;
-  v.current.oldVnode = oldVnode;
+function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | IVnode = emptyVnode, valyrianApp: MountedValyrianApp) {
+  current.vnode = newVnode;
+  current.oldVnode = oldVnode === emptyVnode ? Und : (oldVnode as VnodeWithDom);
   let newTree = newVnode.children;
   let oldTree = oldVnode.children;
 
   for (let i = 0; i < newTree.length; i++) {
     let childVnode = newTree[i];
     if (childVnode instanceof Vnode) {
-      if (childVnode.tag !== "#text") {
-        if (childVnode.tag === "__component__") {
+      if (childVnode.tag !== TextString) {
+        if (childVnode.tag === ComponentString) {
           let component = childVnode.component as ValyrianComponent;
-          v.current.component = component;
+          current.component = component;
           let result = ("view" in component ? component.view : component).call(component, childVnode.props, ...childVnode.children);
 
           newTree.splice(i--, 1, result);
@@ -367,13 +367,13 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom = emptyVnode as Vn
         }
         childVnode.isSVG = newVnode.isSVG || childVnode.tag === "svg";
       }
-    } else if (childVnode === null || childVnode === undefined) {
-      newTree.splice(i--, 1);
     } else if (Array.isArray(childVnode)) {
       newTree.splice(i--, 1, ...childVnode);
+    } else if (childVnode === null || childVnode === Und) {
+      newTree.splice(i--, 1);
     } else {
-      newTree[i] = new Vnode("#text", {}, []);
-      newTree[i].nodeValue = String(childVnode);
+      newTree[i] = new Vnode(TextString, {}, []);
+      newTree[i].nodeValue = childVnode;
     }
   }
 
@@ -414,7 +414,6 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom = emptyVnode as Vn
           shouldPatch = false;
         } else {
           setAttributes(childVnode, oldChildVnode);
-          removeAttributes(childVnode, oldChildVnode);
           if (valyrianApp.isMounted) {
             childVnode.props.onupdate && childVnode.props.onupdate(childVnode, oldChildVnode);
           } else {
@@ -427,10 +426,10 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom = emptyVnode as Vn
         childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
       }
 
-      if (newVnode.dom.childNodes[i] === undefined) {
+      if (newVnode.dom.childNodes[i] === Und) {
         newVnode.dom.appendChild(childVnode.dom);
       } else if (newVnode.dom.childNodes[i] !== childVnode.dom) {
-        oldTree[i] && newKeyedList[oldTree[i].props.key] === undefined && onremove(oldTree[i]);
+        oldTree[i] && newKeyedList[oldTree[i].props.key] === Und && onremove(oldTree[i]);
         newVnode.dom.replaceChild(childVnode.dom, newVnode.dom.childNodes[i]);
       }
 
@@ -439,7 +438,7 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom = emptyVnode as Vn
 
     // For the rest of the children, we should remove them
     for (let i = newTreeLength; i < oldTreeLength; i++) {
-      if (newKeyedList[oldTree[i].props.key] === undefined) {
+      if (newKeyedList[oldTree[i].props.key] === Und) {
         let oldChildVnode = oldTree[i];
         onremove(oldChildVnode);
         oldChildVnode.dom.parentNode && oldChildVnode.dom.parentNode.removeChild(oldChildVnode.dom);
@@ -451,15 +450,15 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom = emptyVnode as Vn
 
   // If new tree and old tree have more than one child, we should update the dom
   for (let i = 0; i < newTreeLength; i++) {
-    let oldChildVnode = oldTree[i];
     let newChildVnode = newTree[i];
 
     // Old child exists
-    if (oldChildVnode) {
+    if (i < oldTreeLength) {
+      let oldChildVnode = oldTree[i];
       // New child is a text node
-      if (newChildVnode.tag === "#text") {
+      if (newChildVnode.tag === TextString) {
         // Old child is a text node
-        if (oldChildVnode.tag === "#text") {
+        if (oldChildVnode.tag === TextString) {
           newChildVnode.dom = oldChildVnode.dom;
           // eslint-disable-next-line eqeqeq
           if (newChildVnode.dom.nodeValue != newChildVnode.nodeValue) {
@@ -488,32 +487,29 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom = emptyVnode as Vn
 
         // We update the dom element
         setAttributes(newChildVnode, oldChildVnode);
-        removeAttributes(newChildVnode, oldChildVnode);
         if (valyrianApp.isMounted) {
           newChildVnode.props.onupdate && newChildVnode.props.onupdate(newChildVnode, oldChildVnode);
         } else {
           newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
         }
-        patch(newChildVnode, oldChildVnode, valyrianApp);
 
+        patch(newChildVnode, oldChildVnode, valyrianApp);
         continue;
       }
 
       // Old child is of a different type than new child
       newChildVnode.dom = createDomElement(newChildVnode.tag, newChildVnode.isSVG);
       setAttributes(newChildVnode);
-      if (oldChildVnode.tag !== "#text") {
-        onremove(oldChildVnode);
-      }
+      oldChildVnode.tag !== TextString && onremove(oldChildVnode);
       newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
       newVnode.dom.replaceChild(newChildVnode.dom, oldChildVnode.dom);
-      patch(newChildVnode, undefined, valyrianApp);
+      patch(newChildVnode, emptyVnode, valyrianApp);
       continue;
     }
 
     // Old child does not exists
     // New child is a text node
-    if (newChildVnode.tag === "#text") {
+    if (newChildVnode.tag === TextString) {
       newChildVnode.dom = document.createTextNode(newChildVnode.nodeValue as string) as unknown as DomElement;
       newVnode.dom.appendChild(newChildVnode.dom);
       continue;
@@ -524,16 +520,13 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom = emptyVnode as Vn
     setAttributes(newChildVnode);
     newVnode.dom.appendChild(newChildVnode.dom);
     newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
-    patch(newChildVnode, undefined, valyrianApp);
-
+    patch(newChildVnode, emptyVnode, valyrianApp);
   }
 
   // For the rest of the children, we should remove them
   for (let i = newTreeLength; i < oldTreeLength; i++) {
     let oldChildVnode = oldTree[i];
-    if (oldChildVnode.tag !== "#text") {
-      onremove(oldChildVnode);
-    }
+    oldChildVnode.tag !== TextString && onremove(oldChildVnode);
     oldChildVnode.dom.parentNode && oldChildVnode.dom.parentNode.removeChild(oldChildVnode.dom);
   }
 }
@@ -542,8 +535,8 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom = emptyVnode as Vn
 
 export function directive(name: string, directive: Directive) {
   let fullName = `v-${name}`;
-  v.directives[fullName] = directive;
-  v.reservedProps[fullName] = true;
+  directives[fullName] = directive;
+  reservedProps[fullName] = true;
 }
 
 function hideDirective(test: boolean): Directive {
@@ -552,13 +545,14 @@ function hideDirective(test: boolean): Directive {
     if (value) {
       let newdom = document.createTextNode("");
       if (oldVnode && oldVnode.dom && oldVnode.dom.parentNode) {
-        oldVnode.tag !== "#text" && onremove(oldVnode);
+        oldVnode.tag !== TextString && onremove(oldVnode);
         oldVnode.dom.parentNode.replaceChild(newdom, oldVnode.dom);
       }
-      vnode.tag = "#text";
+      vnode.tag = TextString;
       vnode.children = [];
       vnode.props = {};
       vnode.dom = newdom as unknown as DomElement;
+      return false;
     }
   };
 }
@@ -698,7 +692,7 @@ v.fragment = (props: Props, ...children: Children): Children => {
 
 /*** V properties and methods ***/
 // This is intended to make the properties and methods available for plugins
-v.current = {} as Current;
+v.current = current;
 
 v.directives = directives;
 

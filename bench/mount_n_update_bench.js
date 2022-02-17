@@ -11,6 +11,7 @@ use(plugin);
 const useEffect = plugin.useEffect;
 
 console.log(vOld);
+console.log(v);
 
 let VNext = v;
 
@@ -685,6 +686,75 @@ compare("Mount and update: Render keyed list -> swap keys on large set", () => {
     mount("body", component);
     keys = [...updatedLargeSet];
     update(component);
+  });
+});
+
+compare("Mount and update: Update class", () => {
+  // Init with 1000 words
+  let words = [...Array(1000).keys()].map((key) => `word ${key}`);
+  let useData = false;
+  let updateClass = false;
+  let updateClass2 = false;
+  let Component = () =>
+    vOld(
+      "div",
+      {},
+      useData
+        ? words.map((word) =>
+            vOld(
+              "span",
+              { class: updateClass === word ? "selected" : false, onbeforeupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class },
+              word
+            )
+          )
+        : vOld(
+            "div",
+            { class: updateClass === "test" ? "test" : false, onbeforeupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class },
+            "test"
+          )
+    );
+  let Component2 = () => (
+    <div>
+      {useData ? (
+        words.map((word) => (
+          <span class={updateClass2 === word ? "selected" : false} onbeforeupdate={(vnode, oldVnode) => vnode.props.class !== oldVnode.props.class}>
+            {word}
+          </span>
+        ))
+      ) : (
+        <div class={updateClass2 === "test" ? "test" : false} onbeforeupdate={(vnode, oldVnode) => vnode.props.class !== oldVnode.props.class}>
+          test
+        </div>
+      )}
+    </div>
+  );
+
+  before(() => {
+    let before = vOld.mount("body", Component);
+    expect(before).toEqual("<div><div>test</div></div>");
+    let before2 = mount("body", Component2);
+    expect(before2).toEqual("<div><div>test</div></div>");
+
+    updateClass = "test";
+    updateClass2 = "test";
+
+    let after = vOld.update();
+    expect(after).toEqual('<div><div class="test">test</div></div>');
+    let after2 = update(Component2);
+    expect(after2).toEqual('<div><div class="test">test</div></div>');
+    useData = true;
+    updateClass = false;
+    updateClass2 = false;
+  });
+
+  benchmark("vOld update", () => {
+    vOld.update();
+    updateClass = updateClass === "word 10" ? "word 100" : "word 10";
+  });
+
+  benchmark("VNext update", () => {
+    update(Component2);
+    updateClass2 = updateClass2 === "word 10" ? "word 100" : "word 10";
   });
 });
 

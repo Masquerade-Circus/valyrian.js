@@ -42,6 +42,11 @@ __export(lib_exports, {
   use: () => use,
   v: () => v
 });
+var ComponentString = "__component__";
+var TextString = "#text";
+var isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
+var ValyrianSymbol = Symbol("Valyrian");
+var Und = void 0;
 var Vnode = function Vnode2(tag, props, children) {
   this.props = props;
   this.children = children;
@@ -54,9 +59,8 @@ function isComponent(component) {
   return typeof component === "function" || typeof component === "object" && component !== null && "view" in component;
 }
 function isVnodeComponent(vnode) {
-  return vnode instanceof Vnode && vnode.tag === "__component__";
+  return vnode instanceof Vnode && vnode.tag === ComponentString;
 }
-var isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
 function createDomElement(tag, isSVG = false) {
   return isSVG ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag);
 }
@@ -65,7 +69,7 @@ function domToVnode(dom) {
     if (child.nodeType === 1) {
       return domToVnode(child);
     }
-    let text = new Vnode("#text", {}, []);
+    let text = new Vnode(TextString, {}, []);
     text.nodeValue = String(child.nodeValue);
     text.dom = child;
     return text;
@@ -79,25 +83,40 @@ var trust = (htmlString) => {
   div.innerHTML = htmlString.trim();
   return [].map.call(div.childNodes, (item) => domToVnode(item));
 };
-var ValyrianSymbol = Symbol("Valyrian");
+var reservedProps = {
+  key: true,
+  state: true,
+  oncreate: true,
+  onupdate: true,
+  onremove: true,
+  shouldupdate: true,
+  "v-once": true,
+  "v-if": true,
+  "v-unless": true,
+  "v-for": true,
+  "v-show": true,
+  "v-class": true,
+  "v-html": true
+};
+var current = {};
 function onCleanup(callback) {
-  if (v.current.app?.onCleanup.indexOf(callback) === -1) {
-    v.current.app?.onCleanup.push(callback);
+  if (current.app?.onCleanup.indexOf(callback) === -1) {
+    current.app?.onCleanup.push(callback);
   }
 }
 function onUnmount(callback) {
-  if (v.current.app?.onUnmount.indexOf(callback) === -1) {
-    v.current.app?.onUnmount.push(callback);
+  if (current.app?.onUnmount.indexOf(callback) === -1) {
+    current.app?.onUnmount.push(callback);
   }
 }
 function onMount(callback) {
-  if (v.current.app?.onMount.indexOf(callback) === -1) {
-    v.current.app?.onMount.push(callback);
+  if (current.app?.onMount.indexOf(callback) === -1) {
+    current.app?.onMount.push(callback);
   }
 }
 function onUpdate(callback) {
-  if (v.current.app?.onUpdate.indexOf(callback) === -1) {
-    v.current.app?.onUpdate.push(callback);
+  if (current.app?.onUpdate.indexOf(callback) === -1) {
+    current.app?.onUpdate.push(callback);
   }
 }
 function mount(container, component) {
@@ -148,7 +167,6 @@ function mount(container, component) {
   component[ValyrianSymbol].component = vnodeComponent;
   component[ValyrianSymbol].container = appContainer;
   component[ValyrianSymbol].mainVnode = domToVnode(appContainer);
-  component[ValyrianSymbol].mainVnode.isSVG = component[ValyrianSymbol].tag === "svg";
   return update(component);
 }
 function callCleanup(valyrianApp) {
@@ -178,12 +196,11 @@ function callUpdate(valyrianApp) {
 function update(component) {
   if (component && component[ValyrianSymbol]) {
     let valyrianApp = component[ValyrianSymbol];
-    v.current.app = valyrianApp;
+    current.app = valyrianApp;
     valyrianApp.onCleanup.length && callCleanup(valyrianApp);
     let oldVnode = valyrianApp.mainVnode;
     valyrianApp.mainVnode = new Vnode(valyrianApp.mainVnode.tag, valyrianApp.mainVnode.props, [valyrianApp.component]);
     valyrianApp.mainVnode.dom = oldVnode.dom;
-    valyrianApp.mainVnode.isSVG = oldVnode.isSVG;
     patch(valyrianApp.mainVnode, oldVnode, valyrianApp);
     oldVnode = null;
     if (valyrianApp.isMounted === false) {
@@ -221,19 +238,19 @@ function unmount(component) {
 var emptyVnode = new Vnode("__empty__", {}, []);
 function onremove(vnode) {
   for (let i = 0; i < vnode.children.length; i++) {
-    vnode.children[i].tag !== "#text" && onremove(vnode.children[i]);
+    vnode.children[i].tag !== TextString && onremove(vnode.children[i]);
   }
   vnode.props.onremove && vnode.props.onremove(vnode);
 }
 function sharedSetAttribute(prop, value, vnode, oldVnode) {
-  if (v.reservedProps[prop]) {
-    if (v.directives[prop]) {
-      v.directives[prop](vnode.props[prop], vnode, oldVnode);
+  if (reservedProps[prop]) {
+    if (directives[prop]) {
+      return directives[prop](vnode.props[prop], vnode, oldVnode);
     }
     return;
   }
   if (typeof value === "function") {
-    let valyrianApp = v.current.app;
+    let valyrianApp = current.app;
     if (prop in valyrianApp.eventListenerNames === false) {
       valyrianApp.eventListenerNames[prop] = true;
       valyrianApp.container.addEventListener(prop.slice(2), valyrianApp.eventListener);
@@ -256,21 +273,18 @@ function sharedSetAttribute(prop, value, vnode, oldVnode) {
   }
 }
 function setAttribute(name, value, vnode, oldVnode) {
-  if (name in vnode.props === false) {
-    vnode.props[name] = value;
-  }
+  vnode.props[name] = value;
   sharedSetAttribute(name, value, vnode, oldVnode);
 }
-function updateAttributes(vnode, oldVnode) {
+function setAttributes(vnode, oldVnode) {
   for (let prop in vnode.props) {
-    if (prop in vnode.props === false) {
+    if (sharedSetAttribute(prop, vnode.props[prop], vnode, oldVnode) === false) {
       return;
     }
-    sharedSetAttribute(prop, vnode.props[prop], vnode, oldVnode);
   }
   if (oldVnode) {
     for (let prop in oldVnode.props) {
-      if (prop in vnode.props === false && typeof oldVnode.props[prop] !== "function" && prop in v.reservedProps === false) {
+      if (prop in vnode.props === false && typeof oldVnode.props[prop] !== "function" && prop in reservedProps === false) {
         if (prop in oldVnode.dom && vnode.isSVG === false) {
           oldVnode.dom[prop] = null;
         } else {
@@ -280,151 +294,33 @@ function updateAttributes(vnode, oldVnode) {
     }
   }
 }
-function flatTree(newVnode) {
+function patch(newVnode, oldVnode = emptyVnode, valyrianApp) {
+  current.vnode = newVnode;
+  current.oldVnode = oldVnode === emptyVnode ? Und : oldVnode;
   let newTree = newVnode.children;
+  let oldTree = oldVnode.children;
   for (let i = 0; i < newTree.length; i++) {
     let childVnode = newTree[i];
     if (childVnode instanceof Vnode) {
-      if (childVnode.tag !== "#text") {
-        if (childVnode.tag === "__component__") {
+      if (childVnode.tag !== TextString) {
+        if (childVnode.tag === ComponentString) {
           let component = childVnode.component;
-          v.current.component = component;
+          current.component = component;
           let result = ("view" in component ? component.view : component).call(component, childVnode.props, ...childVnode.children);
           newTree.splice(i--, 1, result);
           continue;
         }
         childVnode.isSVG = newVnode.isSVG || childVnode.tag === "svg";
       }
-    } else if (childVnode === null || childVnode === void 0) {
-      newTree.splice(i--, 1);
     } else if (Array.isArray(childVnode)) {
       newTree.splice(i--, 1, ...childVnode);
+    } else if (childVnode === null || childVnode === Und) {
+      newTree.splice(i--, 1);
     } else {
-      if (i > 0 && newTree[i - 1].tag === "#text") {
-        newTree[i - 1].nodeValue += childVnode;
-        newTree.splice(i--, 1);
-      } else {
-        newTree[i] = new Vnode("#text", {}, []);
-        newTree[i].nodeValue = String(childVnode);
-      }
+      newTree[i] = new Vnode(TextString, {}, []);
+      newTree[i].nodeValue = childVnode;
     }
   }
-}
-function patchKeyedTree(newVnode, newTree, oldTree, newTreeLength, oldTreeLength, valyrianApp) {
-  let oldKeyedList = oldTree.reduce((acc, vnode, i) => {
-    acc[vnode.props.key] = i;
-    return acc;
-  }, {});
-  let newKeyedList = newTree.reduce((acc, vnode, i) => {
-    acc[vnode.props.key] = i;
-    return acc;
-  }, {});
-  for (let i = 0; i < newTreeLength; i++) {
-    let childVnode = newTree[i];
-    let oldChildVnode = oldTree[oldKeyedList[childVnode.props.key]];
-    let shouldPatch = true;
-    if (oldChildVnode) {
-      childVnode.dom = oldChildVnode.dom;
-      if ("v-once" in childVnode.props || childVnode.props.shouldupdate && childVnode.props.shouldupdate(childVnode, oldChildVnode) === false) {
-        childVnode.children = oldChildVnode.children;
-        shouldPatch = false;
-      } else {
-        updateAttributes(childVnode, oldChildVnode);
-        if (valyrianApp.isMounted) {
-          childVnode.props.onupdate && childVnode.props.onupdate(childVnode, oldChildVnode);
-        } else {
-          childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
-        }
-      }
-    } else {
-      childVnode.dom = createDomElement(childVnode.tag, childVnode.isSVG);
-      updateAttributes(childVnode);
-      childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
-    }
-    if (newVnode.dom.childNodes[i] === void 0) {
-      newVnode.dom.appendChild(childVnode.dom);
-    } else if (newVnode.dom.childNodes[i] !== childVnode.dom) {
-      oldTree[i] && newKeyedList[oldTree[i].props.key] === void 0 && onremove(oldTree[i]);
-      newVnode.dom.replaceChild(childVnode.dom, newVnode.dom.childNodes[i]);
-    }
-    shouldPatch && patch(childVnode, oldChildVnode, valyrianApp);
-  }
-  for (let i = newTreeLength; i < oldTreeLength; i++) {
-    if (newKeyedList[oldTree[i].props.key] === void 0) {
-      let oldChildVnode = oldTree[i];
-      onremove(oldChildVnode);
-      oldChildVnode.dom.parentNode && oldChildVnode.dom.parentNode.removeChild(oldChildVnode.dom);
-    }
-  }
-}
-function patchNormalTree(newVnode, newTree, oldTree, newTreeLength, oldTreeLength, valyrianApp) {
-  for (let i = 0; i < newTreeLength; i++) {
-    let oldChildVnode = oldTree[i];
-    let newChildVnode = newTree[i];
-    if (!oldChildVnode) {
-      if (newChildVnode.tag === "#text") {
-        newChildVnode.dom = document.createTextNode(newChildVnode.nodeValue);
-        newVnode.dom.appendChild(newChildVnode.dom);
-        continue;
-      }
-      newChildVnode.dom = createDomElement(newChildVnode.tag, newChildVnode.isSVG);
-      updateAttributes(newChildVnode);
-      newVnode.dom.appendChild(newChildVnode.dom);
-      newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
-      patch(newChildVnode, void 0, valyrianApp);
-      continue;
-    }
-    if (newChildVnode.tag === "#text") {
-      if (oldChildVnode.tag === "#text") {
-        newChildVnode.dom = oldChildVnode.dom;
-        if (newChildVnode.dom.nodeValue != newChildVnode.nodeValue) {
-          newChildVnode.dom.nodeValue = newChildVnode.nodeValue;
-        }
-        continue;
-      }
-      newChildVnode.dom = document.createTextNode(newChildVnode.nodeValue);
-      onremove(oldChildVnode);
-      newVnode.dom.replaceChild(newChildVnode.dom, oldChildVnode.dom);
-      continue;
-    }
-    if (oldChildVnode.tag === newChildVnode.tag) {
-      newChildVnode.dom = oldChildVnode.dom;
-      if (newChildVnode.props["v-once"] || newChildVnode.props.shouldupdate && newChildVnode.props.shouldupdate(newChildVnode, oldChildVnode) === false) {
-        newChildVnode.children = oldChildVnode.children;
-        continue;
-      }
-      updateAttributes(newChildVnode, oldChildVnode);
-      if (valyrianApp && valyrianApp.isMounted) {
-        newChildVnode.props.onupdate && newChildVnode.props.onupdate(newChildVnode, oldChildVnode);
-      } else {
-        newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
-      }
-      patch(newChildVnode, oldChildVnode, valyrianApp);
-      continue;
-    }
-    newChildVnode.dom = createDomElement(newChildVnode.tag, newChildVnode.isSVG);
-    updateAttributes(newChildVnode);
-    if (oldChildVnode.tag !== "#text") {
-      onremove(oldChildVnode);
-    }
-    newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
-    newVnode.dom.replaceChild(newChildVnode.dom, oldChildVnode.dom);
-    patch(newChildVnode, void 0, valyrianApp);
-  }
-  for (let i = newTreeLength; i < oldTreeLength; i++) {
-    let oldChildVnode = oldTree[i];
-    if (oldChildVnode.tag !== "#text") {
-      onremove(oldChildVnode);
-    }
-    oldChildVnode.dom.parentNode && oldChildVnode.dom.parentNode.removeChild(oldChildVnode.dom);
-  }
-}
-function patch(newVnode, oldVnode = emptyVnode, valyrianApp) {
-  v.current.vnode = newVnode;
-  v.current.oldVnode = oldVnode;
-  flatTree(newVnode);
-  let newTree = newVnode.children;
-  let oldTree = oldVnode.children;
   let oldTreeLength = oldTree.length;
   let newTreeLength = newTree.length;
   if (newTreeLength === 0) {
@@ -435,15 +331,114 @@ function patch(newVnode, oldVnode = emptyVnode, valyrianApp) {
     return;
   }
   if (oldTreeLength && "key" in newTree[0].props && "key" in oldTree[0].props) {
-    patchKeyedTree(newVnode, newTree, oldTree, newTreeLength, oldTreeLength, valyrianApp);
+    let oldKeyedList = oldTree.reduce((acc, vnode, i) => {
+      acc[vnode.props.key] = i;
+      return acc;
+    }, {});
+    let newKeyedList = newTree.reduce((acc, vnode, i) => {
+      acc[vnode.props.key] = i;
+      return acc;
+    }, {});
+    for (let i = 0; i < newTreeLength; i++) {
+      let childVnode = newTree[i];
+      let oldChildVnode = oldTree[oldKeyedList[childVnode.props.key]];
+      let shouldPatch = true;
+      if (oldChildVnode) {
+        childVnode.dom = oldChildVnode.dom;
+        if ("v-once" in childVnode.props || childVnode.props.shouldupdate && childVnode.props.shouldupdate(childVnode, oldChildVnode) === false) {
+          childVnode.children = oldChildVnode.children;
+          shouldPatch = false;
+        } else {
+          setAttributes(childVnode, oldChildVnode);
+          if (valyrianApp.isMounted) {
+            childVnode.props.onupdate && childVnode.props.onupdate(childVnode, oldChildVnode);
+          } else {
+            childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
+          }
+        }
+      } else {
+        childVnode.dom = createDomElement(childVnode.tag, childVnode.isSVG);
+        setAttributes(childVnode);
+        childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
+      }
+      if (newVnode.dom.childNodes[i] === Und) {
+        newVnode.dom.appendChild(childVnode.dom);
+      } else if (newVnode.dom.childNodes[i] !== childVnode.dom) {
+        oldTree[i] && newKeyedList[oldTree[i].props.key] === Und && onremove(oldTree[i]);
+        newVnode.dom.replaceChild(childVnode.dom, newVnode.dom.childNodes[i]);
+      }
+      shouldPatch && patch(childVnode, oldChildVnode, valyrianApp);
+    }
+    for (let i = newTreeLength; i < oldTreeLength; i++) {
+      if (newKeyedList[oldTree[i].props.key] === Und) {
+        let oldChildVnode = oldTree[i];
+        onremove(oldChildVnode);
+        oldChildVnode.dom.parentNode && oldChildVnode.dom.parentNode.removeChild(oldChildVnode.dom);
+      }
+    }
     return;
   }
-  patchNormalTree(newVnode, newTree, oldTree, newTreeLength, oldTreeLength, valyrianApp);
+  for (let i = 0; i < newTreeLength; i++) {
+    let newChildVnode = newTree[i];
+    if (i < oldTreeLength) {
+      let oldChildVnode = oldTree[i];
+      if (newChildVnode.tag === TextString) {
+        if (oldChildVnode.tag === TextString) {
+          newChildVnode.dom = oldChildVnode.dom;
+          if (newChildVnode.dom.nodeValue != newChildVnode.nodeValue) {
+            newChildVnode.dom.nodeValue = newChildVnode.nodeValue;
+          }
+          continue;
+        }
+        newChildVnode.dom = document.createTextNode(newChildVnode.nodeValue);
+        onremove(oldChildVnode);
+        newVnode.dom.replaceChild(newChildVnode.dom, oldChildVnode.dom);
+        continue;
+      }
+      if (oldChildVnode.tag === newChildVnode.tag) {
+        newChildVnode.dom = oldChildVnode.dom;
+        if (newChildVnode.props["v-once"] || newChildVnode.props.shouldupdate && newChildVnode.props.shouldupdate(newChildVnode, oldChildVnode) === false) {
+          newChildVnode.children = oldChildVnode.children;
+          continue;
+        }
+        setAttributes(newChildVnode, oldChildVnode);
+        if (valyrianApp.isMounted) {
+          newChildVnode.props.onupdate && newChildVnode.props.onupdate(newChildVnode, oldChildVnode);
+        } else {
+          newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
+        }
+        patch(newChildVnode, oldChildVnode, valyrianApp);
+        continue;
+      }
+      newChildVnode.dom = createDomElement(newChildVnode.tag, newChildVnode.isSVG);
+      setAttributes(newChildVnode);
+      oldChildVnode.tag !== TextString && onremove(oldChildVnode);
+      newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
+      newVnode.dom.replaceChild(newChildVnode.dom, oldChildVnode.dom);
+      patch(newChildVnode, emptyVnode, valyrianApp);
+      continue;
+    }
+    if (newChildVnode.tag === TextString) {
+      newChildVnode.dom = document.createTextNode(newChildVnode.nodeValue);
+      newVnode.dom.appendChild(newChildVnode.dom);
+      continue;
+    }
+    newChildVnode.dom = createDomElement(newChildVnode.tag, newChildVnode.isSVG);
+    setAttributes(newChildVnode);
+    newVnode.dom.appendChild(newChildVnode.dom);
+    newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
+    patch(newChildVnode, emptyVnode, valyrianApp);
+  }
+  for (let i = newTreeLength; i < oldTreeLength; i++) {
+    let oldChildVnode = oldTree[i];
+    oldChildVnode.tag !== TextString && onremove(oldChildVnode);
+    oldChildVnode.dom.parentNode && oldChildVnode.dom.parentNode.removeChild(oldChildVnode.dom);
+  }
 }
 function directive(name, directive2) {
   let fullName = `v-${name}`;
-  v.directives[fullName] = directive2;
-  v.reservedProps[fullName] = true;
+  directives[fullName] = directive2;
+  reservedProps[fullName] = true;
 }
 function hideDirective(test) {
   return (bool, vnode, oldVnode) => {
@@ -451,17 +446,18 @@ function hideDirective(test) {
     if (value) {
       let newdom = document.createTextNode("");
       if (oldVnode && oldVnode.dom && oldVnode.dom.parentNode) {
-        oldVnode.tag !== "#text" && onremove(oldVnode);
+        oldVnode.tag !== TextString && onremove(oldVnode);
         oldVnode.dom.parentNode.replaceChild(newdom, oldVnode.dom);
       }
-      vnode.tag = "#text";
+      vnode.tag = TextString;
       vnode.children = [];
       vnode.props = {};
       vnode.dom = newdom;
+      return false;
     }
   };
 }
-var builtInDirectives = {
+var directives = {
   "v-if": hideDirective(false),
   "v-unless": hideDirective(true),
   "v-for": (set, vnode) => {
@@ -538,14 +534,14 @@ var builtInDirectives = {
           }
         };
         vnode.children.forEach((child) => {
-          if (child.name === "option") {
+          if (child.tag === "option") {
             let value2 = "value" in child.props ? child.props.value : child.children.join("").trim();
             child.props.selected = model[property].indexOf(value2) !== -1;
           }
         });
       } else {
         vnode.children.forEach((child) => {
-          if (child.name === "option") {
+          if (child.tag === "option") {
             let value2 = "value" in child.props ? child.props.value : child.children.join("").trim();
             child.props.selected = value2 === model[property];
           }
@@ -583,24 +579,9 @@ var v = function v2(tagOrComponent, props, ...children) {
 v.fragment = (props, ...children) => {
   return children;
 };
-v.current = {};
-v.directives = { ...builtInDirectives };
-v.reservedProps = {
-  key: true,
-  state: true,
-  oncreate: true,
-  onupdate: true,
-  onremove: true,
-  shouldupdate: true,
-  "v-cleanup": true,
-  "v-once": true,
-  "v-if": true,
-  "v-unless": true,
-  "v-for": true,
-  "v-show": true,
-  "v-class": true,
-  "v-html": true
-};
+v.current = current;
+v.directives = directives;
+v.reservedProps = reservedProps;
 v.isVnode = isVnode;
 v.isComponent = isComponent;
 v.isVnodeComponent = isVnodeComponent;
