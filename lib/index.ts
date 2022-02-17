@@ -4,11 +4,13 @@ import {
   Children,
   Current,
   Directive,
+  Directives,
   DomElement,
   IVnode,
   MountedValyrianApp,
   Plugin,
   Props,
+  ReservedProps,
   Valyrian,
   ValyrianApp,
   ValyrianComponent,
@@ -69,6 +71,25 @@ export const trust = (htmlString: string): IVnode[] => {
   div.innerHTML = htmlString.trim();
 
   return [].map.call(div.childNodes, (item) => domToVnode(item)) as IVnode[];
+};
+
+const reservedProps: ReservedProps = {
+  key: true,
+  state: true,
+  oncreate: true,
+  onupdate: true,
+  onremove: true,
+  shouldupdate: true,
+  "v-cleanup": true,
+  "v-once": true,
+
+  // Built in directives
+  "v-if": true,
+  "v-unless": true,
+  "v-for": true,
+  "v-show": true,
+  "v-class": true,
+  "v-html": true
 };
 
 /*** Mount ***/
@@ -257,10 +278,10 @@ function onremove(vnode: IVnode) {
 
 function sharedSetAttribute(prop: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
   // It is a reserved prop
-  if (v.reservedProps[prop]) {
+  if (reservedProps[prop]) {
     // If it is a directive name call the directive
-    if (v.directives[prop]) {
-      v.directives[prop](vnode.props[prop], vnode, oldVnode);
+    if (directives[prop]) {
+      directives[prop](vnode.props[prop], vnode, oldVnode);
     }
     return;
   }
@@ -268,7 +289,7 @@ function sharedSetAttribute(prop: string, value: any, vnode: VnodeWithDom, oldVn
   // It is not a reserved prop so we add it to the dom
   if (typeof value === "function") {
     let valyrianApp = v.current.app as MountedValyrianApp;
-    if (prop in valyrianApp.eventListenerNames === false) {
+    if (!valyrianApp.eventListenerNames[prop]) {
       valyrianApp.eventListenerNames[prop] = true;
       valyrianApp.container.addEventListener(prop.slice(2), valyrianApp.eventListener);
     }
@@ -302,7 +323,7 @@ export function setAttribute(name: string, value: any, vnode: VnodeWithDom, oldV
   sharedSetAttribute(name, value, vnode, oldVnode);
 }
 
-function updateAttributes(vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
+function setAttributes(vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
   for (let prop in vnode.props) {
     // We asume that we clean the props in some directive
     if (prop in vnode.props === false) {
@@ -311,22 +332,27 @@ function updateAttributes(vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
 
     sharedSetAttribute(prop, vnode.props[prop], vnode, oldVnode);
   }
+}
 
-  if (oldVnode) {
-    for (let prop in oldVnode.props) {
-      if (prop in vnode.props === false && typeof oldVnode.props[prop] !== "function" && prop in v.reservedProps === false) {
-        if (prop in oldVnode.dom && vnode.isSVG === false) {
-          oldVnode.dom[prop] = null;
-        } else {
-          oldVnode.dom.removeAttribute(prop);
-        }
+function removeAttributes(vnode: VnodeWithDom, oldVnode: VnodeWithDom) {
+  for (let prop in oldVnode.props) {
+    if (prop in vnode.props === false && typeof oldVnode.props[prop] !== "function" && prop in v.reservedProps === false) {
+      if (prop in oldVnode.dom && vnode.isSVG === false) {
+        oldVnode.dom[prop] = null;
+      } else {
+        oldVnode.dom.removeAttribute(prop);
       }
     }
   }
 }
 
-function flatTree(newVnode: IVnode): void {
+// eslint-disable-next-line complexity
+function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom = emptyVnode as VnodeWithDom, valyrianApp: MountedValyrianApp) {
+  v.current.vnode = newVnode;
+  v.current.oldVnode = oldVnode;
   let newTree = newVnode.children;
+  let oldTree = oldVnode.children;
+
   for (let i = 0; i < newTree.length; i++) {
     let childVnode = newTree[i];
     if (childVnode instanceof Vnode) {
@@ -346,184 +372,11 @@ function flatTree(newVnode: IVnode): void {
     } else if (Array.isArray(childVnode)) {
       newTree.splice(i--, 1, ...childVnode);
     } else {
-      if (i > 0 && newTree[i - 1].tag === "#text") {
-        newTree[i - 1].nodeValue += childVnode;
-        newTree.splice(i--, 1);
-      } else {
-        newTree[i] = new Vnode("#text", {}, []);
-        newTree[i].nodeValue = String(childVnode);
-      }
+      newTree[i] = new Vnode("#text", {}, []);
+      newTree[i].nodeValue = String(childVnode);
     }
   }
-}
 
-function patchKeyedTree(
-  newVnode: VnodeWithDom,
-  newTree: (VnodeWithDom & { props: Props & { key: string } })[],
-  oldTree: (VnodeWithDom & { props: Props & { key: string } })[],
-  newTreeLength: number,
-  oldTreeLength: number,
-  valyrianApp: MountedValyrianApp
-) {
-  let oldKeyedList = oldTree.reduce((acc, vnode, i) => {
-    acc[vnode.props.key] = i;
-    return acc;
-  }, {} as { [key: string]: number });
-  let newKeyedList = newTree.reduce((acc, vnode, i) => {
-    acc[vnode.props.key] = i;
-    return acc;
-  }, {} as { [key: string]: number });
-
-  for (let i = 0; i < newTreeLength; i++) {
-    let childVnode = newTree[i];
-    let oldChildVnode = oldTree[oldKeyedList[childVnode.props.key]];
-    let shouldPatch = true;
-
-    if (oldChildVnode) {
-      childVnode.dom = oldChildVnode.dom;
-      if ("v-once" in childVnode.props || (childVnode.props.shouldupdate && childVnode.props.shouldupdate(childVnode, oldChildVnode) === false)) {
-        // skip this patch
-        childVnode.children = oldChildVnode.children;
-        shouldPatch = false;
-      } else {
-        updateAttributes(childVnode, oldChildVnode);
-        if (valyrianApp.isMounted) {
-          childVnode.props.onupdate && childVnode.props.onupdate(childVnode, oldChildVnode);
-        } else {
-          childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
-        }
-      }
-    } else {
-      childVnode.dom = createDomElement(childVnode.tag, childVnode.isSVG);
-      updateAttributes(childVnode);
-      childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
-    }
-
-    if (newVnode.dom.childNodes[i] === undefined) {
-      newVnode.dom.appendChild(childVnode.dom);
-    } else if (newVnode.dom.childNodes[i] !== childVnode.dom) {
-      oldTree[i] && newKeyedList[oldTree[i].props.key] === undefined && onremove(oldTree[i]);
-      newVnode.dom.replaceChild(childVnode.dom, newVnode.dom.childNodes[i]);
-    }
-
-    shouldPatch && patch(childVnode, oldChildVnode, valyrianApp);
-  }
-
-  // For the rest of the children, we should remove them
-  for (let i = newTreeLength; i < oldTreeLength; i++) {
-    if (newKeyedList[oldTree[i].props.key] === undefined) {
-      let oldChildVnode = oldTree[i];
-      onremove(oldChildVnode);
-      oldChildVnode.dom.parentNode && oldChildVnode.dom.parentNode.removeChild(oldChildVnode.dom);
-    }
-  }
-}
-
-// eslint-disable-next-line complexity
-function patchNormalTree(
-  newVnode: VnodeWithDom,
-  newTree: (VnodeWithDom & { props: Props & { key: string } })[],
-  oldTree: (VnodeWithDom & { props: Props & { key: string } })[],
-  newTreeLength: number,
-  oldTreeLength: number,
-  valyrianApp: MountedValyrianApp
-) {
-  // If new tree and old tree have more than one child, we should update the dom
-  for (let i = 0; i < newTreeLength; i++) {
-    let oldChildVnode = oldTree[i];
-    let newChildVnode = newTree[i];
-
-    // Old child does not exists
-    if (!oldChildVnode) {
-      // New child is a text node
-      if (newChildVnode.tag === "#text") {
-        newChildVnode.dom = document.createTextNode(newChildVnode.nodeValue as string) as unknown as DomElement;
-        newVnode.dom.appendChild(newChildVnode.dom);
-        continue;
-      }
-
-      // New child is a normal node
-      newChildVnode.dom = createDomElement(newChildVnode.tag, newChildVnode.isSVG);
-      updateAttributes(newChildVnode);
-      newVnode.dom.appendChild(newChildVnode.dom);
-      newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
-      patch(newChildVnode, undefined, valyrianApp);
-      continue;
-    }
-
-    // Old child exists
-    // New child is a text node
-    if (newChildVnode.tag === "#text") {
-      // Old child is a text node
-      if (oldChildVnode.tag === "#text") {
-        newChildVnode.dom = oldChildVnode.dom;
-        // eslint-disable-next-line eqeqeq
-        if (newChildVnode.dom.nodeValue != newChildVnode.nodeValue) {
-          newChildVnode.dom.nodeValue = newChildVnode.nodeValue as string;
-        }
-        continue;
-      }
-
-      // Old child is a normal node
-      newChildVnode.dom = document.createTextNode(newChildVnode.nodeValue as string) as unknown as DomElement;
-      onremove(oldChildVnode);
-      newVnode.dom.replaceChild(newChildVnode.dom, oldChildVnode.dom);
-
-      continue;
-    }
-
-    // New child is a normal node
-    // Old child is the same type as new child
-    if (oldChildVnode.tag === newChildVnode.tag) {
-      newChildVnode.dom = oldChildVnode.dom;
-      // If we have a v-once directive or a shouldupdate method that returns false, we skip the update
-      if (newChildVnode.props["v-once"] || (newChildVnode.props.shouldupdate && newChildVnode.props.shouldupdate(newChildVnode, oldChildVnode) === false)) {
-        newChildVnode.children = oldChildVnode.children;
-        continue;
-      }
-
-      // We update the dom element
-      updateAttributes(newChildVnode, oldChildVnode);
-      if (valyrianApp && valyrianApp.isMounted) {
-        newChildVnode.props.onupdate && newChildVnode.props.onupdate(newChildVnode, oldChildVnode);
-      } else {
-        newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
-      }
-      patch(newChildVnode, oldChildVnode, valyrianApp);
-
-      continue;
-    }
-
-    // Old child is of a different type than new child
-    newChildVnode.dom = createDomElement(newChildVnode.tag, newChildVnode.isSVG);
-    updateAttributes(newChildVnode);
-    if (oldChildVnode.tag !== "#text") {
-      onremove(oldChildVnode);
-    }
-    newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
-    newVnode.dom.replaceChild(newChildVnode.dom, oldChildVnode.dom);
-    patch(newChildVnode, undefined, valyrianApp);
-  }
-
-  // For the rest of the children, we should remove them
-  for (let i = newTreeLength; i < oldTreeLength; i++) {
-    let oldChildVnode = oldTree[i];
-    if (oldChildVnode.tag !== "#text") {
-      onremove(oldChildVnode);
-    }
-    oldChildVnode.dom.parentNode && oldChildVnode.dom.parentNode.removeChild(oldChildVnode.dom);
-  }
-}
-
-// eslint-disable-next-line complexity
-function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom = emptyVnode as VnodeWithDom, valyrianApp: MountedValyrianApp) {
-  v.current.vnode = newVnode;
-  v.current.oldVnode = oldVnode;
-
-  flatTree(newVnode);
-
-  let newTree = newVnode.children;
-  let oldTree = oldVnode.children;
   let oldTreeLength = oldTree.length;
   let newTreeLength = newTree.length;
 
@@ -539,11 +392,150 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom = emptyVnode as Vn
 
   // If the tree is keyed list and is not first render and old tree is keyed list too
   if (oldTreeLength && "key" in newTree[0].props && "key" in oldTree[0].props) {
-    patchKeyedTree(newVnode, newTree, oldTree, newTreeLength, oldTreeLength, valyrianApp);
+    let oldKeyedList = oldTree.reduce((acc, vnode, i) => {
+      acc[vnode.props.key] = i;
+      return acc;
+    }, {} as { [key: string]: number });
+    let newKeyedList = newTree.reduce((acc, vnode, i) => {
+      acc[vnode.props.key] = i;
+      return acc;
+    }, {} as { [key: string]: number });
+
+    for (let i = 0; i < newTreeLength; i++) {
+      let childVnode = newTree[i];
+      let oldChildVnode = oldTree[oldKeyedList[childVnode.props.key]];
+      let shouldPatch = true;
+
+      if (oldChildVnode) {
+        childVnode.dom = oldChildVnode.dom;
+        if ("v-once" in childVnode.props || (childVnode.props.shouldupdate && childVnode.props.shouldupdate(childVnode, oldChildVnode) === false)) {
+          // skip this patch
+          childVnode.children = oldChildVnode.children;
+          shouldPatch = false;
+        } else {
+          setAttributes(childVnode, oldChildVnode);
+          removeAttributes(childVnode, oldChildVnode);
+          if (valyrianApp.isMounted) {
+            childVnode.props.onupdate && childVnode.props.onupdate(childVnode, oldChildVnode);
+          } else {
+            childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
+          }
+        }
+      } else {
+        childVnode.dom = createDomElement(childVnode.tag, childVnode.isSVG);
+        setAttributes(childVnode);
+        childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
+      }
+
+      if (newVnode.dom.childNodes[i] === undefined) {
+        newVnode.dom.appendChild(childVnode.dom);
+      } else if (newVnode.dom.childNodes[i] !== childVnode.dom) {
+        oldTree[i] && newKeyedList[oldTree[i].props.key] === undefined && onremove(oldTree[i]);
+        newVnode.dom.replaceChild(childVnode.dom, newVnode.dom.childNodes[i]);
+      }
+
+      shouldPatch && patch(childVnode, oldChildVnode, valyrianApp);
+    }
+
+    // For the rest of the children, we should remove them
+    for (let i = newTreeLength; i < oldTreeLength; i++) {
+      if (newKeyedList[oldTree[i].props.key] === undefined) {
+        let oldChildVnode = oldTree[i];
+        onremove(oldChildVnode);
+        oldChildVnode.dom.parentNode && oldChildVnode.dom.parentNode.removeChild(oldChildVnode.dom);
+      }
+    }
+
     return;
   }
 
-  patchNormalTree(newVnode, newTree, oldTree, newTreeLength, oldTreeLength, valyrianApp);
+  // If new tree and old tree have more than one child, we should update the dom
+  for (let i = 0; i < newTreeLength; i++) {
+    let oldChildVnode = oldTree[i];
+    let newChildVnode = newTree[i];
+
+    // Old child exists
+    if (oldChildVnode) {
+      // New child is a text node
+      if (newChildVnode.tag === "#text") {
+        // Old child is a text node
+        if (oldChildVnode.tag === "#text") {
+          newChildVnode.dom = oldChildVnode.dom;
+          // eslint-disable-next-line eqeqeq
+          if (newChildVnode.dom.nodeValue != newChildVnode.nodeValue) {
+            newChildVnode.dom.nodeValue = newChildVnode.nodeValue as string;
+          }
+          continue;
+        }
+
+        // Old child is a normal node
+        newChildVnode.dom = document.createTextNode(newChildVnode.nodeValue as string) as unknown as DomElement;
+        onremove(oldChildVnode);
+        newVnode.dom.replaceChild(newChildVnode.dom, oldChildVnode.dom);
+
+        continue;
+      }
+
+      // New child is a normal node
+      // Old child is the same type as new child
+      if (oldChildVnode.tag === newChildVnode.tag) {
+        newChildVnode.dom = oldChildVnode.dom;
+        // If we have a v-once directive or a shouldupdate method that returns false, we skip the update
+        if (newChildVnode.props["v-once"] || (newChildVnode.props.shouldupdate && newChildVnode.props.shouldupdate(newChildVnode, oldChildVnode) === false)) {
+          newChildVnode.children = oldChildVnode.children;
+          continue;
+        }
+
+        // We update the dom element
+        setAttributes(newChildVnode, oldChildVnode);
+        removeAttributes(newChildVnode, oldChildVnode);
+        if (valyrianApp.isMounted) {
+          newChildVnode.props.onupdate && newChildVnode.props.onupdate(newChildVnode, oldChildVnode);
+        } else {
+          newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
+        }
+        patch(newChildVnode, oldChildVnode, valyrianApp);
+
+        continue;
+      }
+
+      // Old child is of a different type than new child
+      newChildVnode.dom = createDomElement(newChildVnode.tag, newChildVnode.isSVG);
+      setAttributes(newChildVnode);
+      if (oldChildVnode.tag !== "#text") {
+        onremove(oldChildVnode);
+      }
+      newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
+      newVnode.dom.replaceChild(newChildVnode.dom, oldChildVnode.dom);
+      patch(newChildVnode, undefined, valyrianApp);
+      continue;
+    }
+
+    // Old child does not exists
+    // New child is a text node
+    if (newChildVnode.tag === "#text") {
+      newChildVnode.dom = document.createTextNode(newChildVnode.nodeValue as string) as unknown as DomElement;
+      newVnode.dom.appendChild(newChildVnode.dom);
+      continue;
+    }
+
+    // New child is a normal node
+    newChildVnode.dom = createDomElement(newChildVnode.tag, newChildVnode.isSVG);
+    setAttributes(newChildVnode);
+    newVnode.dom.appendChild(newChildVnode.dom);
+    newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
+    patch(newChildVnode, undefined, valyrianApp);
+
+  }
+
+  // For the rest of the children, we should remove them
+  for (let i = newTreeLength; i < oldTreeLength; i++) {
+    let oldChildVnode = oldTree[i];
+    if (oldChildVnode.tag !== "#text") {
+      onremove(oldChildVnode);
+    }
+    oldChildVnode.dom.parentNode && oldChildVnode.dom.parentNode.removeChild(oldChildVnode.dom);
+  }
 }
 
 /*** Directives ***/
@@ -571,7 +563,7 @@ function hideDirective(test: boolean): Directive {
   };
 }
 
-const builtInDirectives = {
+const directives: Directives = {
   "v-if": hideDirective(false),
   "v-unless": hideDirective(true),
   "v-for": (set: unknown[], vnode: VnodeWithDom) => {
@@ -647,15 +639,15 @@ const builtInDirectives = {
             model[property].push(val);
           }
         };
-        vnode.children.forEach((child) => {
-          if (child.name === "option") {
+        vnode.children.forEach((child: IVnode) => {
+          if (child.tag === "option") {
             let value = "value" in child.props ? child.props.value : child.children.join("").trim();
             child.props.selected = model[property].indexOf(value) !== -1;
           }
         });
       } else {
-        vnode.children.forEach((child) => {
-          if (child.name === "option") {
+        vnode.children.forEach((child: IVnode) => {
+          if (child.tag === "option") {
             let value = "value" in child.props ? child.props.value : child.children.join("").trim();
             child.props.selected = value === model[property];
           }
@@ -708,26 +700,9 @@ v.fragment = (props: Props, ...children: Children): Children => {
 // This is intended to make the properties and methods available for plugins
 v.current = {} as Current;
 
-v.directives = { ...builtInDirectives };
+v.directives = directives;
 
-v.reservedProps = {
-  key: true,
-  state: true,
-  oncreate: true,
-  onupdate: true,
-  onremove: true,
-  shouldupdate: true,
-  "v-cleanup": true,
-  "v-once": true,
-
-  // Built in directives
-  "v-if": true,
-  "v-unless": true,
-  "v-for": true,
-  "v-show": true,
-  "v-class": true,
-  "v-html": true
-};
+v.reservedProps = reservedProps;
 
 v.isVnode = isVnode;
 v.isComponent = isComponent;
