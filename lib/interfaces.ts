@@ -98,3 +98,16 @@ export interface Valyrian {
   reservedProps: ReservedProps;
   [key: string | number | symbol]: any;
 }
+
+declare global {
+  namespace JSX {
+    type Element = IVnode;
+    interface IntrinsicElements {
+      [elemName: string]: any;
+    }
+  }
+}
+
+interface HTMLAttributes<T> {
+  [key: string]: any;
+}
