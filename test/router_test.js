@@ -1,9 +1,11 @@
-import "../lib/index";
 import "../plugins/node";
 
-import Router from "../plugins/router";
+import plugin, { Router } from "../plugins/router";
+
 import expect from "expect";
-import { update } from "../lib/index";
+import { v } from "../lib/index";
+
+v.use(plugin);
 
 // eslint-disable-next-line max-lines-per-function
 describe("Router", () => {
@@ -52,7 +54,7 @@ describe("Router", () => {
     router.use("/ok", subrouter);
     router.use(() => () => "Not found");
 
-    router.mount("body");
+    v.mount("body", router);
     expect(await router.go("/ok/not/found/url?hello=world")).toEqual("Not ok");
     expect(await router.go("/not/found/url?hello=world")).toEqual("Not found");
   });
@@ -69,13 +71,13 @@ describe("Router", () => {
     let result = {};
     let router = new Router();
     router.get("/", () => Component);
-    router.mount("body");
+    v.mount("body", router);
 
     result.before = await router.go("/");
     Component.world = "John Doe";
     result.after = await router.go("/");
     Component.world = "World";
-    result.final = update(Component);
+    result.final = v.update(Component);
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -95,13 +97,13 @@ describe("Router", () => {
     let result = {};
     let router = new Router();
     router.get("/", () => Component);
-    router.mount("body");
+    v.mount("body", router);
 
     result.before = await router.go("/");
     Component.world = "John Doe";
     result.after = await router.go("/");
     Component.world = "World";
-    result.final = update(Component);
+    result.final = v.update(Component);
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -123,13 +125,13 @@ describe("Router", () => {
     let result = {};
     let router = new Router();
     router.get("/", () => Component);
-    router.mount("body");
+    v.mount("body", router);
 
     result.before = await router.go("/");
     state.world = "John Doe";
     result.after = await router.go("/");
     state.world = "World";
-    result.final = update(Component);
+    result.final = v.update(Component);
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -148,7 +150,7 @@ describe("Router", () => {
     let result = {};
     let router = new Router();
     router.get("/", () => <Component {...props} />);
-    router.mount("body");
+    v.mount("body", router);
 
     result.before = await router.go("/");
     props.world = "John Doe";
@@ -171,7 +173,7 @@ describe("Router", () => {
     router.get("/", () => Hello);
     router.use(() => NotFound);
 
-    router.mount("body");
+    v.mount("body", router);
 
     let result = {};
     result.found = await router.go("/");
@@ -204,7 +206,7 @@ describe("Router", () => {
     );
     router.get("/hello/:world/whats/:up", [({ params }) => Object.assign(Hello, params), () => Hello]);
 
-    router.mount("body");
+    v.mount("body", router);
 
     let result = {};
     result.before = await router.go("/hello");
@@ -238,7 +240,7 @@ describe("Router", () => {
       // This is the final response
       () => Hello
     );
-    router.mount("body");
+    v.mount("body", router);
 
     let result = await router.go("/");
 
@@ -279,7 +281,7 @@ describe("Router", () => {
 
     let router = new Router();
     router.use("/hello/:world", subrouter);
-    router.mount("body");
+    v.mount("body", router);
 
     let result = {};
     result.before = await router.go("/hello/Mike");
@@ -302,7 +304,7 @@ describe("Router", () => {
 
     let router = new Router();
     router.get("/", () => Component);
-    router.mount("body");
+    v.mount("body", router);
 
     let result = await router.go("/", ParentComponent);
 
@@ -314,7 +316,7 @@ describe("Router", () => {
 
     let router = new Router();
     router.get("/", () => Component);
-    router.mount("body");
+    v.mount("body", router);
 
     let err;
     try {
@@ -331,7 +333,7 @@ describe("Router", () => {
     router.get("/", () => {
       // Component is not returned
     });
-    router.mount("body");
+    v.mount("body", router);
 
     let err;
     try {
@@ -351,7 +353,7 @@ describe("Router", () => {
     let router = new Router();
     router.use("/hello/:world", subrouter).get("/", () => Component);
 
-    router.mount("body");
+    v.mount("body", router);
 
     expect(router.routes()).toEqual(["/hello/:world/from/:country", "/hello/:world", "/"]);
   });

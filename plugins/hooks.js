@@ -1,6 +1,8 @@
+let current = {};
+
 function createHook({ create, update, remove }) {
   return (...args) => {
-    let { component, vnode, oldVnode, app } = v.current;
+    let { component, vnode, oldVnode, app } = current;
 
     // Init the components array for the current vnode
     if (vnode.components === undefined) {
@@ -105,6 +107,13 @@ const useEffect = createHook({
   }
 });
 
-const plugin = { useState, useEffect, createHook };
+function plugin(v) {
+  current = v.current;
+}
+
+plugin.useState = useState;
+plugin.useEffect = useEffect;
+plugin.createHook = createHook;
+
 plugin.default = plugin;
 module.exports = plugin;

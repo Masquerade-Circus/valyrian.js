@@ -1,5 +1,4 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-const { mount, unmount } = require("../lib");
 let fs = require("fs");
 let path = require("path");
 
@@ -295,20 +294,32 @@ icons.options = {
   }
 };
 
-let plugin = {
-  inline,
-  sw,
-  icons,
-  htmlTDom: treeAdapter.htmlToDom,
-  domToHtml: treeAdapter.domToHtml,
-  domToHyperscript: treeAdapter.domToHyperscript,
-  htmlToHyperscript: treeAdapter.htmlToHyperscript,
-  render: (...args) => {
-    let Component = () => args;
-    let result = mount("div", Component);
-    unmount(Component);
-    return result;
+let mount = () => {};
+let unmount = () => {};
+let isInUse = false;
+
+function plugin(v) {
+  mount = v.mount;
+  unmount = v.unmount;
+  isInUse = true;
+}
+
+plugin.inline = inline;
+plugin.sw = sw;
+plugin.icons = icons;
+plugin.htmlTDom = treeAdapter.htmlToDom;
+plugin.domToHtml = treeAdapter.domToHtml;
+plugin.domToHyperscript = treeAdapter.domToHyperscript;
+plugin.htmlToHyperscript = treeAdapter.htmlToHyperscript;
+plugin.render = (...args) => {
+  if (!isInUse) {
+    throw new Error("This plugin is not in use. Please invoke `v.use(nodeJsPlugin)`");
   }
+
+  let Component = () => args;
+  let result = mount("div", Component);
+  unmount(Component);
+  return result;
 };
 
 plugin.default = plugin;

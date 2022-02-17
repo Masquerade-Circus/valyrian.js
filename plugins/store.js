@@ -61,7 +61,7 @@ function Store({ state = {}, getters = {}, actions = {}, mutations = {} } = {}) 
     frozen = false;
     mutations[mutation](this.state, ...args);
     frozen = true;
-    v.isMounted && v.update();
+    update();
   };
 
   this.dispatch = (action, ...args) => {
@@ -70,5 +70,18 @@ function Store({ state = {}, getters = {}, actions = {}, mutations = {} } = {}) 
   };
 }
 
-Store.default = Store;
-module.exports = Store;
+let update = () => {};
+let current = {};
+
+function plugin(v) {
+  current = v.current;
+  update = () => {
+    if (current.app) {
+      v.update(v.current.app.component);
+    }
+  };
+}
+
+plugin.Store = Store;
+plugin.default = plugin;
+module.exports = plugin;

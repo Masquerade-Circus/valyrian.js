@@ -1,8 +1,7 @@
 import "../plugins/node";
 
-import { mount, update } from "../lib/index";
-
 import expect from "expect";
+import { v } from "../lib/index";
 
 describe("Lifecycle", () => {
   it("Mount and update", () => {
@@ -122,19 +121,19 @@ describe("Lifecycle", () => {
       "onspanremove"
     ];
 
-    result.push(mount("body", Lifecycle));
+    result.push(v.mount("body", Lifecycle));
     s = 0;
-    result.push(update(Lifecycle));
+    result.push(v.update(Lifecycle));
     s = 1;
-    result.push(update(Lifecycle));
+    result.push(v.update(Lifecycle));
     s = 2;
-    result.push(update(Lifecycle));
+    result.push(v.update(Lifecycle));
     s = 1;
-    result.push(update(Lifecycle));
+    result.push(v.update(Lifecycle));
     s = 3;
-    result.push(update(Lifecycle));
+    result.push(v.update(Lifecycle));
     s = 0;
-    result.push(update(Lifecycle));
+    result.push(v.update(Lifecycle));
 
     expect(result).toEqual(expectedDom);
     expect(calls).toEqual(expectedLifeCycleCalls);

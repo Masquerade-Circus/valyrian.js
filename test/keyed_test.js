@@ -1,6 +1,5 @@
-import { mount, update } from "../lib/index";
-
 import expect from "expect";
+import { v } from "../lib/index";
 
 require("../plugins/node");
 
@@ -46,9 +45,9 @@ describe("Keyed lists", () => {
         </ul>
       );
 
-      let before = mount("body", component);
+      let before = v.mount("body", component);
       keys = [...test.set];
-      let after = update(component);
+      let after = v.update(component);
 
       let afterString = getString(test.set);
 
@@ -71,15 +70,15 @@ describe("Keyed lists", () => {
       </ul>
     );
 
-    let before = mount("body", component);
+    let before = v.mount("body", component);
 
     useStrings = false;
-    let after = update(component);
+    let after = v.update(component);
 
     let afterString = getString(keys);
 
     useStrings = true;
-    let afterUpdate = update(component);
+    let afterUpdate = v.update(component);
 
     expect(before).toEqual("<ul>12345</ul>");
     expect(after).toEqual(afterString);
@@ -99,15 +98,15 @@ describe("Keyed lists", () => {
       </ul>
     );
 
-    let before = mount("body", component);
+    let before = v.mount("body", component);
 
     keys = [6, 7, 8, 9, , 10];
-    let after = update(component);
+    let after = v.update(component);
 
     let afterString = getString(keys);
 
     keys = [1, 2, 3, 4, 5];
-    let afterUpdate = update(component);
+    let afterUpdate = v.update(component);
 
     let afterUpdateString = getString(keys);
 

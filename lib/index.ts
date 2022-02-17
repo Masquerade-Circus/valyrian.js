@@ -7,6 +7,7 @@ import {
   DomElement,
   IVnode,
   MountedValyrianApp,
+  Plugin,
   Props,
   Valyrian,
   ValyrianApp,
@@ -21,15 +22,15 @@ export const Vnode = function Vnode(this: IVnode, tag: string, props: Props, chi
   this.tag = tag;
 } as unknown as IVnode;
 
-export function isVnode(component?: unknown): component is IVnode {
-  return component instanceof Vnode;
+export function isVnode(object?: unknown | IVnode): object is IVnode {
+  return object instanceof Vnode;
 }
 
 export function isComponent(component?: unknown | ValyrianComponent): component is ValyrianComponent {
   return typeof component === "function" || (typeof component === "object" && component !== null && "view" in component);
 }
 
-export function isVnodeComponent(vnode?: unknown): vnode is VnodeComponent {
+export function isVnodeComponent(vnode?: unknown | VnodeComponent): vnode is VnodeComponent {
   return vnode instanceof Vnode && vnode.tag === "__component__";
 }
 
@@ -63,7 +64,7 @@ function domToVnode(dom: DomElement): VnodeWithDom {
   return vnode as VnodeWithDom;
 }
 
-export const trust = (htmlString: string) => {
+export const trust = (htmlString: string): IVnode[] => {
   let div = createDomElement("div");
   div.innerHTML = htmlString.trim();
 
@@ -106,7 +107,7 @@ export function onUpdate(callback: Function) {
   mount('#app', <App><div>Hello world</div></App>); // App is a Vnode component (Vnode with tag __component__)
 */
 
-export function mount(container: DomElement | string, component: ValyrianComponent | IVnode) {
+export function mount(container: DomElement | string, component: ValyrianComponent | IVnode): void | string {
   let appContainer = null;
 
   if (isNodeJs) {
@@ -194,7 +195,7 @@ function callUpdate(valyrianApp: ValyrianApp) {
   valyrianApp.onUpdate = [];
 }
 
-export function update(component?: ValyrianComponent | IVnode) {
+export function update(component?: ValyrianComponent | IVnode): void | string {
   if (component && component[ValyrianSymbol]) {
     let valyrianApp = component[ValyrianSymbol];
     v.current.app = valyrianApp;
@@ -218,7 +219,7 @@ export function update(component?: ValyrianComponent | IVnode) {
   }
 }
 
-export function unmount(component?: ValyrianComponent | IVnode) {
+export function unmount(component?: ValyrianComponent | IVnode): void | string {
   if (!component || !component[ValyrianSymbol]) {
     return;
   }
@@ -254,7 +255,7 @@ function onremove(vnode: IVnode) {
   vnode.props.onremove && vnode.props.onremove(vnode);
 }
 
-function sharedUpdateProperty(prop: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
+function sharedSetAttribute(prop: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
   // It is a reserved prop
   if (v.reservedProps[prop]) {
     // If it is a directive name call the directive
@@ -293,22 +294,22 @@ function sharedUpdateProperty(prop: string, value: any, vnode: VnodeWithDom, old
   }
 }
 
-export function setProperty(name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
+export function setAttribute(name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
   if (name in vnode.props === false) {
     vnode.props[name] = value;
   }
 
-  sharedUpdateProperty(name, value, vnode, oldVnode);
+  sharedSetAttribute(name, value, vnode, oldVnode);
 }
 
-function updateProperties(vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
+function updateAttributes(vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
   for (let prop in vnode.props) {
     // We asume that we clean the props in some directive
     if (prop in vnode.props === false) {
       return;
     }
 
-    sharedUpdateProperty(prop, vnode.props[prop], vnode, oldVnode);
+    sharedSetAttribute(prop, vnode.props[prop], vnode, oldVnode);
   }
 
   if (oldVnode) {
@@ -385,7 +386,7 @@ function patchKeyedTree(
         childVnode.children = oldChildVnode.children;
         shouldPatch = false;
       } else {
-        updateProperties(childVnode, oldChildVnode);
+        updateAttributes(childVnode, oldChildVnode);
         if (valyrianApp.isMounted) {
           childVnode.props.onupdate && childVnode.props.onupdate(childVnode, oldChildVnode);
         } else {
@@ -394,7 +395,7 @@ function patchKeyedTree(
       }
     } else {
       childVnode.dom = createDomElement(childVnode.tag, childVnode.isSVG);
-      updateProperties(childVnode);
+      updateAttributes(childVnode);
       childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
     }
 
@@ -443,7 +444,7 @@ function patchNormalTree(
 
       // New child is a normal node
       newChildVnode.dom = createDomElement(newChildVnode.tag, newChildVnode.isSVG);
-      updateProperties(newChildVnode);
+      updateAttributes(newChildVnode);
       newVnode.dom.appendChild(newChildVnode.dom);
       newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
       patch(newChildVnode, undefined, valyrianApp);
@@ -482,7 +483,7 @@ function patchNormalTree(
       }
 
       // We update the dom element
-      updateProperties(newChildVnode, oldChildVnode);
+      updateAttributes(newChildVnode, oldChildVnode);
       if (valyrianApp && valyrianApp.isMounted) {
         newChildVnode.props.onupdate && newChildVnode.props.onupdate(newChildVnode, oldChildVnode);
       } else {
@@ -495,7 +496,7 @@ function patchNormalTree(
 
     // Old child is of a different type than new child
     newChildVnode.dom = createDomElement(newChildVnode.tag, newChildVnode.isSVG);
-    updateProperties(newChildVnode);
+    updateAttributes(newChildVnode);
     if (oldChildVnode.tag !== "#text") {
       onremove(oldChildVnode);
     }
@@ -618,15 +619,15 @@ const builtInDirectives = {
             handler = () => (model[property] = !model[property]);
             value = model[property];
           }
-          setProperty("checked", value, vnode, oldVnode);
+          setAttribute("checked", value, vnode, oldVnode);
           break;
         }
         case "radio": {
-          setProperty("checked", model[property] === vnode.dom.value, vnode, oldVnode);
+          setAttribute("checked", model[property] === vnode.dom.value, vnode, oldVnode);
           break;
         }
         default: {
-          setProperty("value", model[property], vnode, oldVnode);
+          setAttribute("value", model[property], vnode, oldVnode);
         }
       }
     } else if (vnode.name === "select") {
@@ -669,10 +670,23 @@ const builtInDirectives = {
       if (!handler) {
         handler = (e: Event) => (model[property] = (e.target as DomElement & Record<string, any>).value);
       }
-      setProperty(event, handler, vnode, oldVnode);
+      setAttribute(event, handler, vnode, oldVnode);
     }
   }
 };
+
+/*** Plugins ***/
+const plugins = new Map<Plugin, any>();
+
+export function use(plugin: Plugin, options?: Record<string | number | symbol, any>): void | any {
+  if (plugins.has(plugin)) {
+    return plugins.get(plugin);
+  }
+
+  let result = plugin(v, options);
+  plugins.set(plugin, result);
+  return result;
+}
 
 /*** Hyperscript ***/
 
@@ -690,6 +704,8 @@ v.fragment = (props: Props, ...children: Children): Children => {
   return children;
 };
 
+/*** V properties and methods ***/
+// This is intended to make the properties and methods available for plugins
 v.current = {} as Current;
 
 v.directives = { ...builtInDirectives };
@@ -713,4 +729,22 @@ v.reservedProps = {
   "v-html": true
 };
 
-((isNodeJs ? global : window) as unknown as { v: Valyrian }).v = v as Valyrian;
+v.isVnode = isVnode;
+v.isComponent = isComponent;
+v.isVnodeComponent = isVnodeComponent;
+
+v.isNodeJs = isNodeJs;
+v.trust = trust;
+
+v.onCleanup = onCleanup;
+v.onUnmount = onUnmount;
+v.onMount = onMount;
+v.onUpdate = onUpdate;
+
+v.mount = mount;
+v.unmount = unmount;
+v.update = update;
+
+v.setAttribute = setAttribute;
+v.directive = directive;
+v.use = use;

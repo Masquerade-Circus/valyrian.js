@@ -1,7 +1,7 @@
 require("../plugins/node");
 
 import expect from "expect";
-import { trust } from "../lib";
+import { v } from "../lib";
 
 describe("Hyperscript", () => {
   it("should create a div element", () => {
@@ -85,7 +85,7 @@ describe("Hyperscript", () => {
   });
 
   it("should create a div element from string", () => {
-    expect(trust('<div id="unique" class="unique">Hola mundo</div>')).toEqual([
+    expect(v.trust('<div id="unique" class="unique">Hola mundo</div>')).toEqual([
       {
         tag: "div",
         props: {

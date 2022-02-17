@@ -1,10 +1,11 @@
-import "../lib/index";
-
-import { htmlToHyperscript, icons, inline, render, sw } from "../plugins/node";
+import plugin, { htmlToHyperscript, icons, inline, render, sw } from "../plugins/node";
 
 import expect from "expect";
 import fs from "fs";
 import packageJson from "../package.json";
+import { v } from "../lib/index";
+
+v.use(plugin);
 
 describe("Node test", () => {
   it("Get hyperscript string from html", () => {

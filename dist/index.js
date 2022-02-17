@@ -4,8 +4,8 @@ var Vnode = function Vnode2(tag, props, children) {
   this.children = children;
   this.tag = tag;
 };
-function isVnode(component) {
-  return component instanceof Vnode;
+function isVnode(object) {
+  return object instanceof Vnode;
 }
 function isComponent(component) {
   return typeof component === "function" || typeof component === "object" && component !== null && "view" in component;
@@ -182,7 +182,7 @@ function onremove(vnode) {
   }
   vnode.props.onremove && vnode.props.onremove(vnode);
 }
-function sharedUpdateProperty(prop, value, vnode, oldVnode) {
+function sharedSetAttribute(prop, value, vnode, oldVnode) {
   if (v.reservedProps[prop]) {
     if (v.directives[prop]) {
       v.directives[prop](vnode.props[prop], vnode, oldVnode);
@@ -212,18 +212,18 @@ function sharedUpdateProperty(prop, value, vnode, oldVnode) {
     }
   }
 }
-function setProperty(name, value, vnode, oldVnode) {
+function setAttribute(name, value, vnode, oldVnode) {
   if (name in vnode.props === false) {
     vnode.props[name] = value;
   }
-  sharedUpdateProperty(name, value, vnode, oldVnode);
+  sharedSetAttribute(name, value, vnode, oldVnode);
 }
-function updateProperties(vnode, oldVnode) {
+function updateAttributes(vnode, oldVnode) {
   for (let prop in vnode.props) {
     if (prop in vnode.props === false) {
       return;
     }
-    sharedUpdateProperty(prop, vnode.props[prop], vnode, oldVnode);
+    sharedSetAttribute(prop, vnode.props[prop], vnode, oldVnode);
   }
   if (oldVnode) {
     for (let prop in oldVnode.props) {
@@ -286,7 +286,7 @@ function patchKeyedTree(newVnode, newTree, oldTree, newTreeLength, oldTreeLength
         childVnode.children = oldChildVnode.children;
         shouldPatch = false;
       } else {
-        updateProperties(childVnode, oldChildVnode);
+        updateAttributes(childVnode, oldChildVnode);
         if (valyrianApp.isMounted) {
           childVnode.props.onupdate && childVnode.props.onupdate(childVnode, oldChildVnode);
         } else {
@@ -295,7 +295,7 @@ function patchKeyedTree(newVnode, newTree, oldTree, newTreeLength, oldTreeLength
       }
     } else {
       childVnode.dom = createDomElement(childVnode.tag, childVnode.isSVG);
-      updateProperties(childVnode);
+      updateAttributes(childVnode);
       childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
     }
     if (newVnode.dom.childNodes[i] === void 0) {
@@ -325,7 +325,7 @@ function patchNormalTree(newVnode, newTree, oldTree, newTreeLength, oldTreeLengt
         continue;
       }
       newChildVnode.dom = createDomElement(newChildVnode.tag, newChildVnode.isSVG);
-      updateProperties(newChildVnode);
+      updateAttributes(newChildVnode);
       newVnode.dom.appendChild(newChildVnode.dom);
       newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
       patch(newChildVnode, void 0, valyrianApp);
@@ -350,7 +350,7 @@ function patchNormalTree(newVnode, newTree, oldTree, newTreeLength, oldTreeLengt
         newChildVnode.children = oldChildVnode.children;
         continue;
       }
-      updateProperties(newChildVnode, oldChildVnode);
+      updateAttributes(newChildVnode, oldChildVnode);
       if (valyrianApp && valyrianApp.isMounted) {
         newChildVnode.props.onupdate && newChildVnode.props.onupdate(newChildVnode, oldChildVnode);
       } else {
@@ -360,7 +360,7 @@ function patchNormalTree(newVnode, newTree, oldTree, newTreeLength, oldTreeLengt
       continue;
     }
     newChildVnode.dom = createDomElement(newChildVnode.tag, newChildVnode.isSVG);
-    updateProperties(newChildVnode);
+    updateAttributes(newChildVnode);
     if (oldChildVnode.tag !== "#text") {
       onremove(oldChildVnode);
     }
@@ -466,15 +466,15 @@ var builtInDirectives = {
             handler = () => model[property] = !model[property];
             value = model[property];
           }
-          setProperty("checked", value, vnode, oldVnode);
+          setAttribute("checked", value, vnode, oldVnode);
           break;
         }
         case "radio": {
-          setProperty("checked", model[property] === vnode.dom.value, vnode, oldVnode);
+          setAttribute("checked", model[property] === vnode.dom.value, vnode, oldVnode);
           break;
         }
         default: {
-          setProperty("value", model[property], vnode, oldVnode);
+          setAttribute("value", model[property], vnode, oldVnode);
         }
       }
     } else if (vnode.name === "select") {
@@ -516,10 +516,19 @@ var builtInDirectives = {
       if (!handler) {
         handler = (e) => model[property] = e.target.value;
       }
-      setProperty(event, handler, vnode, oldVnode);
+      setAttribute(event, handler, vnode, oldVnode);
     }
   }
 };
+var plugins = /* @__PURE__ */ new Map();
+function use(plugin, options) {
+  if (plugins.has(plugin)) {
+    return plugins.get(plugin);
+  }
+  let result = plugin(v, options);
+  plugins.set(plugin, result);
+  return result;
+}
 var v = function v2(tagOrComponent, props, ...children) {
   if (typeof tagOrComponent === "string") {
     return new Vnode(tagOrComponent, props || {}, children);
@@ -549,7 +558,21 @@ v.reservedProps = {
   "v-class": true,
   "v-html": true
 };
-(isNodeJs ? global : window).v = v;
+v.isVnode = isVnode;
+v.isComponent = isComponent;
+v.isVnodeComponent = isVnodeComponent;
+v.isNodeJs = isNodeJs;
+v.trust = trust;
+v.onCleanup = onCleanup;
+v.onUnmount = onUnmount;
+v.onMount = onMount;
+v.onUpdate = onUpdate;
+v.mount = mount;
+v.unmount = unmount;
+v.update = update;
+v.setAttribute = setAttribute;
+v.directive = directive;
+v.use = use;
 export {
   Vnode,
   directive,
@@ -562,9 +585,10 @@ export {
   onMount,
   onUnmount,
   onUpdate,
-  setProperty,
+  setAttribute,
   trust,
   unmount,
   update,
+  use,
   v
 };

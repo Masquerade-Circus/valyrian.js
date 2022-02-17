@@ -90,12 +90,37 @@ export interface ReservedProps {
   [key: string]: true;
 }
 
+export interface Plugin {
+  (valyrian: Valyrian, options?: Record<string | string | symbol, any>): void | any;
+}
+
 export interface Valyrian {
   (tagOrComponent: string | ValyrianComponent, props: Props, ...children: Children): IVnode | VnodeComponent;
   fragment: (props: Props, ...children: Children) => Children;
   current: Current;
   directives: Directives;
   reservedProps: ReservedProps;
+
+  isVnode: (object?: unknown | IVnode) => object is IVnode;
+  isComponent: (component?: unknown | ValyrianComponent) => component is ValyrianComponent;
+  isVnodeComponent: (vnode?: unknown | VnodeComponent) => vnode is VnodeComponent;
+
+  isNodeJs: boolean;
+  trust: (htmlString: string) => IVnode[];
+
+  onCleanup: (fn: Function) => void;
+  onUnmount: (fn: Function) => void;
+  onMount: (fn: Function) => void;
+  onUpdate: (fn: Function) => void;
+
+  mount: (container: DomElement | string, component: ValyrianComponent | IVnode) => void | string;
+  update: (component: ValyrianComponent | IVnode) => void | string;
+  unmount: (component: ValyrianComponent | IVnode) => void | string;
+
+  setAttribute: (name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) => void;
+  directive: (name: string, directive: Directive) => void;
+  use: (plugin: Plugin, options?: Record<string | number | symbol, any>) => void | any;
+
   [key: string | number | symbol]: any;
 }
 

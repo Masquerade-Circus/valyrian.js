@@ -1,11 +1,14 @@
 let { compare, benchmark, before, afterCycle } = require("buffalo-test");
 
-const { mount, update, unmount, v } = require("../lib/index");
+const { mount, update, unmount, v, use } = require("../lib/index");
 
 const expect = require("expect");
 require("../plugins/node");
 const { v: vOld } = require("./index-old.ts");
-const { useEffect } = require("../plugins/hooks");
+const plugin = require("../plugins/hooks");
+
+use(plugin);
+const useEffect = plugin.useEffect;
 
 console.log(vOld);
 

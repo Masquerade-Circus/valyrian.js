@@ -1,6 +1,6 @@
-import "../lib/index";
+import plugin, {Store} from "../plugins/store";
+import { use, v } from "../lib/index";
 
-import Store from "../plugins/store";
 import expect from "expect";
 
 function getNewStore() {

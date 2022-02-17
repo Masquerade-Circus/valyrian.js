@@ -1,10 +1,12 @@
-import "../lib";
 import "../plugins/node";
 
-import { mount, onCleanup, unmount, update } from "../lib/index";
-import { useEffect, useState } from "../plugins/hooks";
+import { v } from "../lib/index";
+import plugin, { useEffect, useState } from "../plugins/hooks";
 
 import expect from "expect";
+import { v } from "../lib";
+
+v.use(plugin);
 
 describe("Hooks", () => {
   describe("State hook", () => {
@@ -12,29 +14,29 @@ describe("Hooks", () => {
       let Counter = () => {
         let [count, setCount] = useState(0);
         let interval = setInterval(() => setCount(count + 1), 1000);
-        onCleanup(() => clearInterval(interval));
+        v.onCleanup(() => clearInterval(interval));
         return <div>{count}</div>;
       };
 
-      let result = mount("div", Counter);
+      let result = v.mount("div", Counter);
       expect(result).toEqual("<div>0</div>");
       await new Promise((resolve) => setTimeout(() => resolve(), 2050));
-      result = update(Counter);
+      result = v.update(Counter);
       expect(result).toEqual("<div>2</div>");
     });
 
-    it("should handle subcomponents state and onCleanup", async () => {
+    it("should handle subcomponents state and v.onCleanup", async () => {
       let Ok = () => {
         let [ok, setOk] = useState("ok");
         let interval = setInterval(() => setOk("not ok"), 1000);
-        onCleanup(() => clearInterval(interval));
+        v.onCleanup(() => clearInterval(interval));
         return <div>{ok}</div>;
       };
 
       let Counter = () => {
         let [count, setCount] = useState(0);
         let interval = setInterval(() => setCount(count + 1), 1000);
-        onCleanup(() => clearInterval(interval));
+        v.onCleanup(() => clearInterval(interval));
         return (
           <div>
             {count} <Ok />
@@ -42,10 +44,10 @@ describe("Hooks", () => {
         );
       };
 
-      let result = mount("div", Counter);
+      let result = v.mount("div", Counter);
       expect(result).toEqual("<div>0 <div>ok</div></div>");
       await new Promise((resolve) => setTimeout(() => resolve(), 2050));
-      result = update(Counter);
+      result = v.update(Counter);
       expect(result).toEqual("<div>2 <div>not ok</div></div>");
     });
 
@@ -53,14 +55,14 @@ describe("Hooks", () => {
       let Counter = () => {
         let [count, setCount] = useState(0);
         let interval = setInterval(() => setCount(count + 1), 1000);
-        onCleanup(() => clearInterval(interval));
+        v.onCleanup(() => clearInterval(interval));
         return <div>{count}</div>;
       };
 
-      let result = mount("div", Counter);
+      let result = v.mount("div", Counter);
       expect(result).toEqual("<div>0</div>");
       await new Promise((resolve) => setTimeout(() => resolve(), 2050));
-      result = update(Counter);
+      result = v.update(Counter);
       expect(result).toEqual("<div>2</div>");
     });
   });
@@ -73,24 +75,24 @@ describe("Hooks", () => {
         return <div>{count}</div>;
       };
 
-      let response = mount("body", Component);
+      let response = v.mount("body", Component);
       expect(response).toEqual("<div>1</div>");
     });
 
-    it("should call the effect at every update", () => {
+    it("should call the effect at every v.update", () => {
       let count = 0;
       let Component = function () {
         useEffect(() => count++);
         return <div>{count}</div>;
       };
 
-      let response = mount("body", Component);
+      let response = v.mount("body", Component);
       expect(response).toEqual("<div>1</div>");
-      response = update(Component);
+      response = v.update(Component);
       expect(response).toEqual("<div>2</div>");
     });
 
-    it("should handle onCleanup", () => {
+    it("should handle v.onCleanup", () => {
       let count = 0;
       let Component = function () {
         useEffect(() => {
@@ -100,9 +102,9 @@ describe("Hooks", () => {
         return <div>{count}</div>;
       };
 
-      let response = mount("body", Component);
+      let response = v.mount("body", Component);
       expect(response).toEqual("<div>1</div>");
-      response = update(Component);
+      response = v.update(Component);
       expect(response).toEqual("<div>0</div>");
     });
 
@@ -113,9 +115,9 @@ describe("Hooks", () => {
         return <div>{count}</div>;
       };
 
-      let response = mount("body", Component);
+      let response = v.mount("body", Component);
       expect(response).toEqual("<div>1</div>");
-      response = update(Component);
+      response = v.update(Component);
       expect(response).toEqual("<div>1</div>");
     });
 
@@ -126,9 +128,9 @@ describe("Hooks", () => {
         return <div>{count}</div>;
       };
 
-      let response = mount("body", Component);
+      let response = v.mount("body", Component);
       expect(response).toEqual("<div>1</div>");
-      response = update(Component);
+      response = v.update(Component);
       expect(response).toEqual("<div>1</div>");
     });
 
@@ -139,13 +141,13 @@ describe("Hooks", () => {
         return <div>{count}</div>;
       };
 
-      let response = mount("body", Component);
+      let response = v.mount("body", Component);
       expect(response).toEqual("<div>1</div>");
-      response = update(Component);
+      response = v.update(Component);
       expect(response).toEqual("<div>2</div>");
     });
 
-    it("should call onCleanup even if the changes array is passed and there are changes", () => {
+    it("should call v.onCleanup even if the changes array is passed and there are changes", () => {
       let count = 0;
       let Component = function () {
         useEffect(() => {
@@ -155,15 +157,15 @@ describe("Hooks", () => {
         return <div>{count}</div>;
       };
 
-      let response = mount("body", Component);
+      let response = v.mount("body", Component);
       expect(response).toEqual("<div>1</div>");
-      response = update(Component);
+      response = v.update(Component);
       expect(response).toEqual("<div>3</div>");
-      response = update(Component);
+      response = v.update(Component);
       expect(response).toEqual("<div>5</div>");
     });
 
-    it("should handle onCleanup on unMount", () => {
+    it("should handle v.onCleanup on unMount", () => {
       let count = 0;
       let Component = function () {
         useEffect(() => {
@@ -173,20 +175,20 @@ describe("Hooks", () => {
         return <div>{count}</div>;
       };
 
-      let response = mount("body", Component);
+      let response = v.mount("body", Component);
       expect(response).toEqual("<div>1</div>");
       expect(count).toEqual(1);
 
-      response = update(Component);
+      response = v.update(Component);
       expect(response).toEqual("<div>0</div>");
       expect(count).toEqual(0);
 
-      response = unmount(Component);
+      response = v.unmount(Component);
       expect(response).toEqual("");
       expect(count).toEqual(-2);
     });
 
-    it("should call the effect only in the unmount", () => {
+    it("should call the effect only in the v.unmount", () => {
       let count = 0;
       let Component = function () {
         useEffect(() => {
@@ -195,15 +197,15 @@ describe("Hooks", () => {
         return <div>{count}</div>;
       };
 
-      let response = mount("body", Component);
+      let response = v.mount("body", Component);
       expect(response).toEqual("<div>0</div>");
       expect(count).toEqual(0);
 
-      response = update(Component);
+      response = v.update(Component);
       expect(response).toEqual("<div>0</div>");
       expect(count).toEqual(0);
 
-      response = unmount(Component);
+      response = v.unmount(Component);
       expect(response).toEqual("");
       expect(count).toEqual(1);
     });
@@ -225,26 +227,26 @@ describe("Hooks", () => {
 
       let HooksComponent = () => {
         // useEffect(plusHooks, []); // Only create replaced by the next line
-        useEffect(plusHooks); // Create & Update
+        useEffect(plusHooks); // Create & v.update
         useEffect(plusHooks, null); // Remove
         return <div>Hello world</div>;
       };
 
       it("should call the lifecycle", () => {
-        mount("body", LifecycleComponent);
+        v.mount("body", LifecycleComponent);
         expect(lifecycleCount).toEqual(1);
-        update(LifecycleComponent);
+        v.update(LifecycleComponent);
         expect(lifecycleCount).toEqual(2);
-        unmount(LifecycleComponent);
+        v.unmount(LifecycleComponent);
         expect(lifecycleCount).toEqual(3);
       });
 
       it("should call the hooks", () => {
-        mount("body", HooksComponent);
+        v.mount("body", HooksComponent);
         expect(hooksCount).toEqual(1);
-        update(HooksComponent);
+        v.update(HooksComponent);
         expect(hooksCount).toEqual(2);
-        unmount(HooksComponent);
+        v.unmount(HooksComponent);
         expect(hooksCount).toEqual(3);
       });
     });

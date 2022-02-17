@@ -1,10 +1,8 @@
-import "../lib/index";
 import "../plugins/node";
-
-import { mount, update } from "../lib/index";
 
 import Signal from "../plugins/signals";
 import expect from "expect";
+import { v } from "../lib/index";
 
 describe("Signals", () => {
   it("should create a signal", async () => {
@@ -123,10 +121,10 @@ describe("Hooks like pattern", () => {
 
     let Component = Counter(1000);
 
-    let result = mount("div", Component);
+    let result = v.mount("div", Component);
     expect(result).toEqual("<div>0</div>");
     await new Promise((resolve) => setTimeout(() => resolve(), 2050));
-    result = update(Component);
+    result = v.update(Component);
     expect(result).toEqual("<div>2</div>");
   });
 
@@ -145,10 +143,10 @@ describe("Hooks like pattern", () => {
 
     let Component = Counter(1000);
 
-    let result = mount("div", Component);
+    let result = v.mount("div", Component);
     expect(result).toEqual("<div>0</div>");
     await new Promise((resolve) => setTimeout(() => resolve(), 2050));
-    result = update(Component);
+    result = v.update(Component);
     expect(result).toEqual("<div>2</div>");
   });
 
@@ -169,10 +167,10 @@ describe("Hooks like pattern", () => {
 
     let Component = Counter(1000);
 
-    let result = mount("div", Component);
+    let result = v.mount("div", Component);
     expect(result).toEqual("<div>0</div>");
     await new Promise((resolve) => setTimeout(() => resolve(), 2050));
-    result = update(Component);
+    result = v.update(Component);
     expect(result).toEqual("<div>2</div>");
   });
 });

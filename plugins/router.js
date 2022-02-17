@@ -1,5 +1,3 @@
-const { mount, updateProperty, directive, isNodeJs, isComponent, isVnodeComponent } = require("../lib");
-
 function flat(array) {
   return Array.isArray(array) ? array.flat(Infinity) : [array];
 }
@@ -104,7 +102,7 @@ async function searchComponent(router, middlewares) {
   for (; i < middlewares.length; i++) {
     response = await middlewares[i](req, response);
 
-    if (response !== undefined && (isComponent(response) || isVnodeComponent(response))) {
+    if (response !== undefined && (router.v.isComponent(response) || router.v.isVnodeComponent(response))) {
       return response;
     }
   }
@@ -179,55 +177,68 @@ class Router {
     }
 
     if (parentComponent) {
-      let childComponent = isVnodeComponent(component) ? component : v(component, {});
-      if (isVnodeComponent(parentComponent)) {
+      let childComponent = this.v.isVnodeComponent(component) ? component : this.v(component, {});
+      if (this.v.isVnodeComponent(parentComponent)) {
         parentComponent.children.push(childComponent);
       } else {
-        parentComponent = v(parentComponent, {}, childComponent);
+        parentComponent = this.v(parentComponent, {}, childComponent);
       }
       component = parentComponent;
     }
 
-    if (!isNodeJs) {
+    if (!this.v.isNodeJs) {
       window.history.pushState(null, null, url);
     }
 
-    return mount(this.container, component);
-  }
-
-  mount(elementContainer) {
-    if (elementContainer) {
-      this.container = elementContainer;
-      // Activate the use of the router
-      if (!isNodeJs) {
-        function onPopStateGoToRoute() {
-          this.go(document.location.pathname);
-        }
-        window.addEventListener("popstate", onPopStateGoToRoute.bind(this), false);
-        onPopStateGoToRoute();
-      }
-
-      directive("route", (url, vnode, oldnode) => {
-        vnode.props.href = url;
-        vnode.props.onclick = (e) => {
-          if (typeof url === "string" && url.length > 0) {
-            if (url.charAt(0) !== "/") {
-              let current = this.current.split("?", 2).shift().split("/");
-              current.pop();
-              url = `${current.join("/")}/${url}`;
-            }
-
-            this.go(url);
-          }
-          e.preventDefault();
-        };
-
-        updateProperty("href", vnode, oldnode);
-        updateProperty("onclick", vnode, oldnode);
-      });
+    if (this.v.current.component === component) {
+      return this.v.update(component);
     }
+
+    return this.v.mount(this.container, component);
   }
 }
 
-Router.default = Router;
-module.exports = Router;
+function plugin(v) {
+  const mount = v.mount;
+  v.mount = (elementContainer, routerOrComponent) => {
+    if (routerOrComponent instanceof Router === false) {
+      return mount(elementContainer, routerOrComponent);
+    }
+
+    routerOrComponent.container = elementContainer;
+    routerOrComponent.v = v;
+
+    // Activate the use of the router
+    if (!v.isNodeJs) {
+      function onPopStateGoToRoute() {
+        routerOrComponent.go(document.location.pathname);
+      }
+      window.addEventListener("popstate", onPopStateGoToRoute, false);
+      onPopStateGoToRoute();
+    }
+
+    v.directive("route", (url, vnode, oldnode) => {
+      vnode.props.href = url;
+      vnode.props.onclick = (e) => {
+        if (typeof url === "string" && url.length > 0) {
+          if (url.charAt(0) !== "/") {
+            let current = routerOrComponent.current.split("?", 2).shift().split("/");
+            current.pop();
+            url = `${current.join("/")}/${url}`;
+          }
+
+          routerOrComponent.go(url);
+        }
+        e.preventDefault();
+      };
+
+      v.setAttribute("href", vnode, oldnode);
+      v.setAttribute("onclick", vnode, oldnode);
+    });
+  };
+}
+
+plugin.Router = Router;
+
+plugin.default = plugin;
+module.exports = plugin;

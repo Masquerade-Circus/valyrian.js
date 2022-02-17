@@ -1,6 +1,5 @@
-import { mount, trust, update } from "../lib/index";
-
 import expect from "expect";
+import { v } from "../lib/index";
 
 require("../plugins/node");
 
@@ -16,9 +15,9 @@ describe("Mount and update", () => {
 
     let result = {};
 
-    result.before = mount("body", Component);
+    result.before = v.mount("body", Component);
     Component.world = "John Doe";
-    result.after = update(Component);
+    result.after = v.update(Component);
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -35,9 +34,9 @@ describe("Mount and update", () => {
 
     let result = {};
 
-    result.before = mount("body", Component);
+    result.before = v.mount("body", Component);
     Component.world = "John Doe";
-    result.after = update(Component);
+    result.after = v.update(Component);
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -57,9 +56,9 @@ describe("Mount and update", () => {
 
     let result = {};
 
-    result.before = mount("body", Component);
+    result.before = v.mount("body", Component);
     state.world = "John Doe";
-    result.after = update(Component);
+    result.after = v.update(Component);
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -77,7 +76,7 @@ describe("Mount and update", () => {
     );
 
     expect(
-      mount(
+      v.mount(
         "body",
         <Component hello="world">
           <span>Hello John</span>
@@ -97,10 +96,10 @@ describe("Mount and update", () => {
     };
     let result = {};
 
-    result.before = mount("body", Component);
+    result.before = v.mount("body", Component);
     Component.world = "John Doe";
-    result.after = update(Component);
-    result.afteragain = update(Component);
+    result.after = v.update(Component);
+    result.afteragain = v.update(Component);
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -120,9 +119,9 @@ describe("Mount and update", () => {
 
     let app = <Component props={props} />;
 
-    result.before = mount("body", app);
+    result.before = v.mount("body", app);
     props.world = "John Doe";
-    result.after = update(app);
+    result.after = v.update(app);
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -136,9 +135,9 @@ describe("Mount and update", () => {
 
     let result = {};
 
-    result.before = mount("body", Component);
+    result.before = v.mount("body", Component);
     text = false;
-    result.after = update(Component);
+    result.after = v.update(Component);
 
     expect(result).toEqual({
       before: "Hello world",
@@ -152,9 +151,9 @@ describe("Mount and update", () => {
 
     let result = {};
 
-    result.before = mount("body", Component);
+    result.before = v.mount("body", Component);
     text = true;
-    result.after = update(Component);
+    result.after = v.update(Component);
 
     expect(result).toEqual({
       before: "<div>Hello world</div>",
@@ -168,9 +167,9 @@ describe("Mount and update", () => {
 
     let result = {};
 
-    result.before = mount("body", Component);
+    result.before = v.mount("body", Component);
     disabled = false;
-    result.after = update(Component);
+    result.after = v.update(Component);
 
     expect(result).toEqual({
       before: '<div disabled="true">Hello world</div>',
@@ -184,9 +183,9 @@ describe("Mount and update", () => {
 
     let result = {};
 
-    result.before = mount("body", Component);
+    result.before = v.mount("body", Component);
     disabled = true;
-    result.after = update(Component);
+    result.after = v.update(Component);
 
     expect(result).toEqual({
       before: "<div>Hello world</div>",
@@ -198,32 +197,32 @@ describe("Mount and update", () => {
     let date = new Date();
 
     let Component = () => v("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]]);
-    expect(mount("body", Component)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
+    expect(v.mount("body", Component)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
   });
 
   it("Should handle svgs", () => {
     let svg =
       // eslint-disable-next-line max-len
       '<svg enable-background="new 0 0 320.523 320.523" version="1.1" viewBox="0 0 320.523 320.523" xml:space="preserve" xmlns="http://www.w3.org/2000/svg"><path d="m254.41 225.55l-69.147-69.148 65.289-65.29-91.113-91.113v130.58l-82.726-82.726-10.607 10.606 93.333 93.333v9.222l-93.333 93.333 10.606 10.606 82.726-82.726v138.3l94.972-94.972zm-79.971-189.34l54.9 54.9-54.683 54.683-0.218-0.217 1e-3 -109.37zm0 131.01l0.218-0.217 58.541 58.542-58.759 58.759v-117.08z"></path></svg>';
-    let Component = () => trust(svg);
+    let Component = () => v.trust(svg);
 
     // eslint-disable-next-line max-len
-    expect(mount("body", Component)).toEqual(svg);
+    expect(v.mount("body", Component)).toEqual(svg);
   });
 
   it("should fail silently if try to update before mount", () => {
     let Component = () => <div>Hello world</div>;
-    update(Component);
+    v.update(Component);
   });
 
   it("should handle text vnode as new node", () => {
-    let vnode = trust("<span>Some text</span>");
+    let vnode = v.trust("<span>Some text</span>");
     let component = () => vnode;
-    let result = mount("body", component);
+    let result = v.mount("body", component);
     expect(result).toEqual("<span>Some text</span>");
 
     vnode.children = ["Other text"];
-    let result2 = update(component);
+    let result2 = v.update(component);
     expect(result2).toEqual("<span>Some text</span>");
   });
 
@@ -231,10 +230,10 @@ describe("Mount and update", () => {
     let state = { foo: "bar" };
     let component = () => <div state={state} onupdate={(newNode, oldNode) => expect(newNode.props.state).toEqual(oldNode.props.state)} />;
 
-    let result = mount("body", component);
+    let result = v.mount("body", component);
     expect(result).toEqual("<div></div>");
 
-    let result2 = update(component);
+    let result2 = v.update(component);
     expect(result2).toEqual("<div></div>");
   });
 
@@ -246,7 +245,7 @@ describe("Mount and update", () => {
       </>
     );
 
-    let result = mount("body", component);
+    let result = v.mount("body", component);
     expect(result).toEqual("<span>Hello</span><span>World</span>");
   });
 });
@@ -293,10 +292,10 @@ describe.skip("performance test", () => {
         </ul>
       );
 
-      let before = mount("body", component);
+      let before = v.mount("body", component);
       keys = [...test.set];
       v.unMount();
-      let after = mount("body", component);
+      let after = v.mount("body", component);
 
       let afterString = getString(test.set);
 
@@ -305,7 +304,7 @@ describe.skip("performance test", () => {
 
       for (let i = 100000; i--; ) {
         v.unMount();
-        mount("body", component);
+        v.mount("body", component);
       }
     });
   });
