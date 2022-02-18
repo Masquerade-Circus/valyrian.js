@@ -392,14 +392,15 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | IVnode = emptyVn
 
   // If the tree is keyed list and is not first render and old tree is keyed list too
   if (oldTreeLength && "key" in newTree[0].props && "key" in oldTree[0].props) {
-    let oldKeyedList = oldTree.reduce((acc, vnode, i) => {
-      acc[vnode.props.key] = i;
-      return acc;
-    }, {} as { [key: string]: number });
-    let newKeyedList = newTree.reduce((acc, vnode, i) => {
-      acc[vnode.props.key] = i;
-      return acc;
-    }, {} as { [key: string]: number });
+    let oldKeyedList: {[key: string]: number} = {};
+    for (let i = 0; i < oldTreeLength; i++) {
+      oldKeyedList[oldTree[i].props.key] = i;
+    }
+
+    let newKeyedList: {[key: string]: number} = {};
+    for (let i = 0; i < newTreeLength; i++) {
+      newKeyedList[newTree[i].props.key] = i;
+    }
 
     for (let i = 0; i < newTreeLength; i++) {
       let childVnode = newTree[i];
