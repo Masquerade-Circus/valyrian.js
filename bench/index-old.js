@@ -458,4 +458,4 @@ function valyrian() {
 
 const v = valyrian();
 
-module.exports = v;
+module.exports = { v };

@@ -73,13 +73,21 @@ function Store({ state = {}, getters = {}, actions = {}, mutations = {} } = {}) 
 let update = () => {};
 let current = {};
 
-function plugin(v) {
+function plugin(v, options) {
   current = v.current;
   update = () => {
     if (current.app) {
       v.update(v.current.app.component);
     }
   };
+
+  if (options) {
+    v.store = new Store(options);
+    v.commit = v.store.commit;
+    v.dispatch = v.store.dispatch;
+    v.state = v.store.state;
+    v.getters = v.store.getters;
+  }
 }
 
 plugin.Store = Store;

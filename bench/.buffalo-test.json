@@ -1,5 +1,505 @@
 [
   {
+    "tag": "8ee2c0b01c5ff0e70587dc197617db13018d6b4b",
+    "timestamp": "2022-02-18T17:56:28.277Z",
+    "suites": {
+      "Matching keyed list": {
+        "Removed at the end": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        }
+      },
+      "Matching keyed list -> stress": {
+        "Removed at the end": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        }
+      },
+      "hyperscript": {
+        "Valyrian 5.0.8": {
+          "hz": 15826318.698386787,
+          "meanTime": 0.00006318588795396445,
+          "medianTime": 0.00005600042641162872,
+          "standardDeviation": 0.00041938183081103626,
+          "maxTime": 0.6461410000920296,
+          "minTime": 0.000048998743295669556
+        },
+        "Valyrian next": {
+          "hz": 15979429.301208284,
+          "meanTime": 0.00006258045773414354,
+          "medianTime": 0.000058999285101890564,
+          "standardDeviation": 0.00029970880865018906,
+          "maxTime": 0.43538499996066093,
+          "minTime": 0.000048998743295669556
+        }
+      },
+      "Set.has vs [].indexOf": {
+        "Set.has": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "[].indexOf": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        }
+      },
+      "Object.keys for loop vs Object.keys for of vs for in": {
+        "Object.keys for loop": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "Object.keys for of": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "for in": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        }
+      },
+      "typeof function vs startsWith vs charAt vs string[0]": {
+        "typeof function": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "startsWith": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "charAt": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "string[0]": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        }
+      },
+      "Array.isArray vs typeof object & Array.isArray": {
+        "Array.isArray": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "typeof object & Array.isArray": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        }
+      },
+      "string comparison vs instance comparison vs property comparison": {
+        "string comparison": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "instance comparison": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "property comparison": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "property string comparison": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "typeof comparison": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        }
+      },
+      "Object with property equals true vs set vs map vs string array": {
+        "Object with property equals true": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "key in object": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "set": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "map": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "string array": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        }
+      },
+      "For loop if/continue vs if/else": {
+        "for loop if/continue": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "for loop if/else": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        }
+      },
+      "map array of strings vs reduce with object keys equals index": {
+        "map array of strings": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "reduce with object keys equals index": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "array by for": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "object by for": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "object map by for": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        }
+      },
+      "Symbol access vs direct access": {
+        "Direct access access": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        },
+        "Symbol access access": {
+          "hz": 0,
+          "meanTime": 0,
+          "medianTime": 0,
+          "standardDeviation": 0,
+          "maxTime": 0,
+          "minTime": 0
+        }
+      },
+      "Mount and update: Mount multiple types": {
+        "Valyrian 5.0.8": {
+          "hz": 149820.98145979192,
+          "meanTime": 0.006674632553173963,
+          "medianTime": 0.006341999396681786,
+          "standardDeviation": 0.004890587577619386,
+          "maxTime": 0.9418930001556873,
+          "minTime": 0.006046999245882034
+        },
+        "Valyrian next": {
+          "hz": 219.64299441340884,
+          "meanTime": 4.552842683057828,
+          "medianTime": 3.944251000881195,
+          "standardDeviation": 1.0526752445177507,
+          "maxTime": 15.64694899879396,
+          "minTime": 3.682345001026988
+        }
+      },
+      "Mount and update: Mount single text": {
+        "Valyrian 5.0.8": {
+          "hz": 1274748.8365707635,
+          "meanTime": 0.0007844682586180091,
+          "medianTime": 0.0006980001926422119,
+          "standardDeviation": 0.0036275670281757278,
+          "maxTime": 0.9234349988400936,
+          "minTime": 0.0006140004843473434
+        },
+        "Valyrian next": {
+          "hz": 1030333.0270050403,
+          "meanTime": 0.0009705599779779825,
+          "medianTime": 0.0008430015295743942,
+          "standardDeviation": 0.004477517876345002,
+          "maxTime": 1.7103610001504421,
+          "minTime": 0.0007469989359378815
+        }
+      },
+      "Mount and update: Mount single text in div": {
+        "Valyrian 5.0.8": {
+          "hz": 743806.3525947747,
+          "meanTime": 0.0013444359496413167,
+          "medianTime": 0.001202000305056572,
+          "standardDeviation": 0.006539302106062292,
+          "maxTime": 2.5767620000988245,
+          "minTime": 0.001058001071214676
+        },
+        "Valyrian next": {
+          "hz": 637604.4110100463,
+          "meanTime": 0.0015683705801468237,
+          "medianTime": 0.001338999718427658,
+          "standardDeviation": 0.007384922171649113,
+          "maxTime": 0.7896369993686676,
+          "minTime": 0.001166999340057373
+        }
+      },
+      "Mount and update: Update multiple types": {
+        "Valyrian 5.0.8": {
+          "hz": 64423.19587500971,
+          "meanTime": 0.015522359398936746,
+          "medianTime": 0.014667998999357224,
+          "standardDeviation": 0.012813584170645464,
+          "maxTime": 1.7863989993929863,
+          "minTime": 0.01405400037765503
+        },
+        "Valyrian next": {
+          "hz": 89.96917279162383,
+          "meanTime": 11.114918243341906,
+          "medianTime": 10.660915000364184,
+          "standardDeviation": 1.1566958434652994,
+          "maxTime": 24.305686999112368,
+          "minTime": 10.167387999594212
+        }
+      },
+      "Mount and update: Update single text": {
+        "Valyrian 5.0.8": {
+          "hz": 514879.7401684514,
+          "meanTime": 0.001942201104422624,
+          "medianTime": 0.0017949994653463364,
+          "standardDeviation": 0.00574504795924177,
+          "maxTime": 2.413348000496626,
+          "minTime": 0.001687999814748764
+        },
+        "Valyrian next": {
+          "hz": 580988.2352304558,
+          "meanTime": 0.0017212052488521361,
+          "medianTime": 0.0014730002731084824,
+          "standardDeviation": 0.011352834819472118,
+          "maxTime": 11.02280700020492,
+          "minTime": 0.0013829991221427917
+        }
+      },
+      "Mount and update: Render list": {
+        "vOld": {
+          "hz": 31094.44763656415,
+          "meanTime": 0.032160082458711825,
+          "medianTime": 0.029333001002669334,
+          "standardDeviation": 0.029701970732171276,
+          "maxTime": 2.286031000316143,
+          "minTime": 0.028245000168681145
+        },
+        "VNext": {
+          "hz": 32169.03522978382,
+          "meanTime": 0.031085793927514066,
+          "medianTime": 0.027785999700427055,
+          "standardDeviation": 0.030112827696981346,
+          "maxTime": 2.3631319999694824,
+          "minTime": 0.025744998827576637
+        }
+      },
+      "Mount and update: Render keyed list": {
+        "vOld": {
+          "hz": 8121.695124710499,
+          "meanTime": 0.12312700546434822,
+          "medianTime": 0.10807999968528748,
+          "standardDeviation": 0.09909183315302132,
+          "maxTime": 4.288349000737071,
+          "minTime": 0.10346500016748905
+        },
+        "VNext": {
+          "hz": 9303.114026787878,
+          "meanTime": 0.10749088930013617,
+          "medianTime": 0.0928729996085167,
+          "standardDeviation": 0.2119213107791509,
+          "maxTime": 41.89445700123906,
+          "minTime": 0.0864850003272295
+        }
+      },
+      "Mount and update: Render keyed list -> stress": {
+        "vOld": {
+          "hz": 4290.273506833652,
+          "meanTime": 0.23308537285727252,
+          "medianTime": 0.20196899957954884,
+          "standardDeviation": 0.1631035158995494,
+          "maxTime": 2.762967998161912,
+          "minTime": 0.19378499872982502
+        },
+        "VNext": {
+          "hz": 4795.642477616159,
+          "meanTime": 0.20852263375919647,
+          "medianTime": 0.18345599994063377,
+          "standardDeviation": 0.23749080001876208,
+          "maxTime": 29.148431001231074,
+          "minTime": 0.1677969992160797
+        }
+      },
+      "Mount and update: Render keyed list -> swap keys on large set": {
+        "vOld": {
+          "hz": 742.0811925014037,
+          "meanTime": 1.347561439509341,
+          "medianTime": 1.1005080007016659,
+          "standardDeviation": 0.6366548325131208,
+          "maxTime": 5.304254999384284,
+          "minTime": 0.9995709992945194
+        },
+        "VNext": {
+          "hz": 802.2642801718677,
+          "meanTime": 1.2464720475723683,
+          "medianTime": 1.0820850003510714,
+          "standardDeviation": 0.6140147044979994,
+          "maxTime": 27.181886000558734,
+          "minTime": 0.9548999983817339
+        }
+      },
+      "Mount and update: Update class": {
+        "vOld update": {
+          "hz": 1229456.450397081,
+          "meanTime": 0.0008133675655425023,
+          "medianTime": 0.0007619988173246384,
+          "standardDeviation": 0.004122510886838122,
+          "maxTime": 5.169614000245929,
+          "minTime": 0.0007060002535581589
+        },
+        "VNext update": {
+          "hz": 13965456.945974354,
+          "meanTime": 0.00007160524742359091,
+          "medianTime": 0.00006899982690811157,
+          "standardDeviation": 0.0004713339294665467,
+          "maxTime": 0.8383689988404512,
+          "minTime": 0.00005499832332134247
+        }
+      },
+      "Lifecycle vs hooks": {
+        "Hooks": {
+          "hz": 361475.5865528843,
+          "meanTime": 0.002766438556850364,
+          "medianTime": 0.002394000068306923,
+          "standardDeviation": 0.011011801340114655,
+          "maxTime": 2.7585150003433228,
+          "minTime": 0.002167999744415283
+        },
+        "Lifecycle": {
+          "hz": 366956.53041034855,
+          "meanTime": 0.0027251184190175103,
+          "medianTime": 0.0022840015590190887,
+          "standardDeviation": 0.02169705587130068,
+          "maxTime": 19.725862000137568,
+          "minTime": 0.002002999186515808
+        }
+      }
+    }
+  },
+  {
     "tag": "fa8448f9349a5415dd52b8495f9692db63ee3bbf",
     "timestamp": "2022-02-17T21:36:15.314Z",
     "suites": {

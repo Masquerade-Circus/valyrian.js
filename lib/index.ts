@@ -73,11 +73,11 @@ function domToVnode(dom: DomElement): VnodeWithDom {
   return vnode as VnodeWithDom;
 }
 
-export const trust = (htmlString: string): IVnode[] => {
+export const trust = (htmlString: string): Children => {
   let div = createDomElement("div");
   div.innerHTML = htmlString.trim();
 
-  return [].map.call(div.childNodes, (item) => domToVnode(item)) as IVnode[];
+  return [].map.call(div.childNodes, (item) => domToVnode(item)) as Children;
 };
 
 const reservedProps: ReservedProps = {
@@ -383,7 +383,7 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | IVnode = emptyVn
   // If new tree is empty, remove all old nodes
   if (newTreeLength === 0) {
     for (let i = 0; i < oldTreeLength; i++) {
-      onremove(oldTree[i]);
+      oldTree[i].tag !== TextString && onremove(oldTree[i]);
     }
 
     newVnode.dom.textContent = "";

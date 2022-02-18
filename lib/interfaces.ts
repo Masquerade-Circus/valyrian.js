@@ -17,7 +17,7 @@ export interface Props {
 export interface Children extends Array<IVnode | any> {}
 
 export interface IVnode {
-  new (tag: string, props: Props, children: IVnode[]): IVnode;
+  new (tag: string, props: Props, children: Children): IVnode;
   tag: string;
   props: Props;
   children: Children;
@@ -106,7 +106,7 @@ export interface Valyrian {
   isVnodeComponent: (vnode?: unknown | VnodeComponent) => vnode is VnodeComponent;
 
   isNodeJs: boolean;
-  trust: (htmlString: string) => IVnode[];
+  trust: (htmlString: string) => Children;
 
   onCleanup: (fn: Function) => void;
   onUnmount: (fn: Function) => void;
