@@ -1,8 +1,10 @@
-let current = {};
+let v = {
+  current: {}
+};
 
-function createHook({ create, update, remove }) {
+function createHook({ create, update, remove, returnValue }) {
   return (...args) => {
-    let { component, vnode, oldVnode, app } = current;
+    let { component, vnode, oldVnode, app } = v.current;
 
     // Init the components array for the current vnode
     if (vnode.components === undefined) {
@@ -39,6 +41,10 @@ function createHook({ create, update, remove }) {
       if (update) {
         update(hook, ...args);
       }
+    }
+
+    if (returnValue) {
+      return returnValue(hook);
     }
 
     return hook;
@@ -107,13 +113,49 @@ const useEffect = createHook({
   }
 });
 
-function plugin(v) {
-  current = v.current;
+const useRef = createHook({
+  create: (initialValue) => {
+    v.directive("ref", (ref, vnode) => {
+      ref.current = vnode.dom;
+    });
+    return { current: initialValue };
+  }
+});
+
+const useCallback = createHook({
+  create: (callback) => {
+    return callback;
+  }
+});
+
+const useMemo = createHook({
+  create: (callback, changes) => {
+    return { callback, changes, value: callback() };
+  },
+  update: (hook, callback, changes) => {
+    for (let i = 0, l = changes.length; i < l; i++) {
+      if (changes[i] !== hook.changes[i]) {
+        hook.changes = changes;
+        hook.value = callback();
+        return;
+      }
+    }
+  },
+  returnValue: (hook) => {
+    return hook.value;
+  }
+});
+
+function plugin(vInstance) {
+  v = vInstance;
 }
 
+plugin.createHook = createHook;
 plugin.useState = useState;
 plugin.useEffect = useEffect;
-plugin.createHook = createHook;
+plugin.useRef = useRef;
+plugin.useCallback = useCallback;
+plugin.useMemo = useMemo;
 
 plugin.default = plugin;
 module.exports = plugin;

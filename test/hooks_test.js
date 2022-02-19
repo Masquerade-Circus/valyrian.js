@@ -1,7 +1,7 @@
 import "../plugins/node";
 
 import { v } from "../lib/index";
-import plugin, { useEffect, useState } from "../plugins/hooks";
+import plugin, { useEffect, useState, useRef, useCallback, useMemo } from "../plugins/hooks";
 
 import expect from "expect";
 import { v } from "../lib";
@@ -249,6 +249,109 @@ describe("Hooks", () => {
         v.unmount(HooksComponent);
         expect(hooksCount).toEqual(3);
       });
+    });
+  });
+
+  describe("Ref hook", () => {
+    it("should return a ref", () => {
+      let ref;
+      let updated = false;
+      let Component = function () {
+        ref = useRef(null);
+        if (!updated) {
+          expect(ref.current).toEqual(null);
+        }
+        return <div v-ref={ref}>Hello world</div>;
+      };
+
+      let response = v.mount("body", Component);
+      expect(response).toEqual("<div>Hello world</div>");
+      expect(ref.current).not.toEqual(null);
+
+      let refCurrent = ref.current;
+      updated = true;
+      v.update(Component);
+      expect(refCurrent === ref.current).toEqual(true);
+    });
+  });
+
+  describe("Callback hook", () => {
+    it("should test the callback problem", () => {
+      let callback;
+      let Component = function () {
+        callback = () => {};
+        return <div>Hello world</div>;
+      };
+
+      let response = v.mount("body", Component);
+      expect(response).toEqual("<div>Hello world</div>");
+      expect(callback).not.toEqual(null);
+
+      let oldCallback = callback;
+      v.update(Component);
+      expect(oldCallback === callback).toEqual(false);
+    });
+
+    it("should call the callback", () => {
+      let callback;
+      let Component = function () {
+        callback = useCallback(() => {}, []);
+        return <div>Hello world</div>;
+      };
+      let response = v.mount("body", Component);
+      expect(response).toEqual("<div>Hello world</div>");
+      expect(callback).not.toEqual(null);
+      let oldCallback = callback;
+      v.update(Component);
+      expect(oldCallback === callback).toEqual(true);
+    });
+  });
+
+  describe("Memo hook", () => {
+    it("should test the memo problem", () => {
+      let computedTimes = 0;
+      let color = "red";
+      let Component = function () {
+        computedTimes++;
+        return <div class={color}>Hello world</div>;
+      };
+
+      let response = v.mount("body", Component);
+      expect(response).toEqual('<div class="red">Hello world</div>');
+      expect(computedTimes).toEqual(1);
+
+      let response2 = v.update(Component);
+      expect(response2).toEqual('<div class="red">Hello world</div>');
+      expect(computedTimes).toEqual(2);
+
+      color = "blue";
+      let response3 = v.update(Component);
+      expect(response3).toEqual('<div class="blue">Hello world</div>');
+      expect(computedTimes).toEqual(3);
+    });
+
+    it("should use the memo", () => {
+      let computedTimes = 0;
+      let color = "red";
+      let Component = function () {
+        return useMemo(() => {
+          computedTimes++;
+          return <div class={color}></div>;
+        }, [color]);
+      };
+
+      let response = v.mount("body", Component);
+      expect(response).toEqual('<div class="red"></div>');
+      expect(computedTimes).toEqual(1);
+
+      let response2 = v.update(Component);
+      expect(response2).toEqual('<div class="red"></div>');
+      expect(computedTimes).toEqual(1);
+
+      color = "blue";
+      let response3 = v.update(Component);
+      expect(response3).toEqual('<div class="blue"></div>');
+      expect(computedTimes).toEqual(2);
     });
   });
 });
