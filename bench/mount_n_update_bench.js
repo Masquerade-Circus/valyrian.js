@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 let { compare, benchmark, before, afterCycle } = require("buffalo-test");
 
 const { mount, update, unmount, v, use } = require("../lib/index");
@@ -690,7 +691,7 @@ compare("Mount and update: Render keyed list -> swap keys on large set", () => {
   });
 });
 
-compare.only("Mount and update: Update class", () => {
+compare("Mount and update: Update class", () => {
   // Init with 1000 words
   let words = [...Array(1000).keys()].map((key) => `word ${key}`);
   let useData = false;

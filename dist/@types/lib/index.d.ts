@@ -1,10 +1,10 @@
-import { Directive, DomElement, IVnode, Plugin, Valyrian, ValyrianComponent, VnodeComponent, VnodeWithDom } from "./interfaces";
+import { Children, Directive, DomElement, IVnode, Plugin, Valyrian, ValyrianComponent, VnodeComponent, VnodeWithDom } from "./interfaces";
 export declare const isNodeJs: boolean;
 export declare const Vnode: IVnode;
 export declare function isVnode(object?: unknown | IVnode): object is IVnode;
 export declare function isComponent(component?: unknown | ValyrianComponent): component is ValyrianComponent;
 export declare function isVnodeComponent(vnode?: unknown | VnodeComponent): vnode is VnodeComponent;
-export declare const trust: (htmlString: string) => IVnode[];
+export declare const trust: (htmlString: string) => Children;
 export declare function onCleanup(callback: Function): void;
 export declare function onUnmount(callback: Function): void;
 export declare function onMount(callback: Function): void;

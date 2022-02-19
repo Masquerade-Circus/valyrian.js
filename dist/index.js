@@ -282,20 +282,20 @@ function patch(newVnode, oldVnode = emptyVnode, valyrianApp) {
   let newTreeLength = newTree.length;
   if (newTreeLength === 0) {
     for (let i = 0; i < oldTreeLength; i++) {
-      onremove(oldTree[i]);
+      oldTree[i].tag !== TextString && onremove(oldTree[i]);
     }
     newVnode.dom.textContent = "";
     return;
   }
   if (oldTreeLength && "key" in newTree[0].props && "key" in oldTree[0].props) {
-    let oldKeyedList = oldTree.reduce((acc, vnode, i) => {
-      acc[vnode.props.key] = i;
-      return acc;
-    }, {});
-    let newKeyedList = newTree.reduce((acc, vnode, i) => {
-      acc[vnode.props.key] = i;
-      return acc;
-    }, {});
+    let oldKeyedList = {};
+    for (let i = 0; i < oldTreeLength; i++) {
+      oldKeyedList[oldTree[i].props.key] = i;
+    }
+    let newKeyedList = {};
+    for (let i = 0; i < newTreeLength; i++) {
+      newKeyedList[newTree[i].props.key] = i;
+    }
     for (let i = 0; i < newTreeLength; i++) {
       let childVnode = newTree[i];
       let oldChildVnode = oldTree[oldKeyedList[childVnode.props.key]];
