@@ -6,7 +6,7 @@ class Sw {
 
   constructor(file, options) {
     if (Boolean(typeof process !== "undefined" && process.versions && process.versions.node)) {
-      console.info('Service Worker registration not supported in node.js');
+      throw new Error("Service Worker registration not supported in node.js");
       return;
     }
 

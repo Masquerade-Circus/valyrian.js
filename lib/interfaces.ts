@@ -1,3 +1,5 @@
+/* eslint-disable no-use-before-define */
+/* eslint-disable no-unused-vars */
 /*** Interfaces ***/
 
 export interface DomElement extends Element {
