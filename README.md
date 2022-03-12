@@ -1,18 +1,28 @@
-<div style="text-align: center">
+<div style="text-align: center" align="center">
 
 <img src="assets/logo.png" style="width: 60%"/>
 
-[![npm version](https://img.shields.io/npm/v/valyrian.js.svg?style=flat)](https://npmjs.org/package/valyrian.js "View this project on npm")
-![](https://img.shields.io/bundlephobia/min/valyrian.js.svg?style=flat)
-![](https://img.shields.io/bundlephobia/minzip/valyrian.js.svg?style=flat)
+<p> 
 
-[![Build Status](https://travis-ci.org/Masquerade-Circus/valyrian.js.svg?branch=main)](https://travis-ci.org/Masquerade-Circus/valyrian.js)
-[![Dependencies](https://img.shields.io/librariesio/github/masquerade-circus/valyrian.js)](https://img.shields.io/librariesio/github/masquerade-circus/valyrian.js)
-[![Maintainability](https://api.codeclimate.com/v1/badges/aa7528a4a6b0d264e4d6/maintainability)](https://codeclimate.com/github/Masquerade-Circus/valyrian.js/maintainability)
-![](https://img.shields.io/github/issues/masquerade-circus/valyrian.js.svg)
-![](https://img.shields.io/snyk/vulnerabilities/npm/valyrian.js.svg)
-[![Coverage Status](https://coveralls.io/repos/github/Masquerade-Circus/valyrian.js/badge.svg?branch=main)](https://coveralls.io/github/Masquerade-Circus/valyrian.js?branch=main)
+[![npm version](https://img.shields.io/npm/v/valyrian.js)](https://npmjs.org/package/valyrian.js "View this project on npm")
+![node-current](https://img.shields.io/node/v/valyrian.js)
+[![ES version](https://badgen.net/badge/ES/latest/cyan)](https://tc39.es/ecma262/)
+![](https://badgen.net/npm/types/valyrian.js)
 [![License](https://img.shields.io/github/license/masquerade-circus/valyrian.js.svg)](https://github.com/masquerade-circus/valyrian.js/blob/main/LICENSE)
+
+![](https://badgen.net/badgesize/normal/masquerade-circus/valyrian.js/main/dist/index.min.js)
+![](https://badgen.net/badgesize/gzip/masquerade-circus/valyrian.js/main/dist/index.min.js)
+![](https://badgen.net/badgesize/brotli/masquerade-circus/valyrian.js/main/dist/index.min.js)
+
+![Travis (.org)](https://img.shields.io/travis/masquerade-circus/valyrian.js)
+![Libraries.io dependency status for latest release](https://img.shields.io/librariesio/release/npm/valyrian.js)
+[![Maintainability](https://api.codeclimate.com/v1/badges/aa7528a4a6b0d264e4d6/maintainability)](https://codeclimate.com/github/Masquerade-Circus/valyrian.js/maintainability)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8d5204c73bdc42089e4cebdb4b4d43e0)](https://www.codacy.com/gh/Masquerade-Circus/valyrian.js/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Masquerade-Circus/valyrian.js&amp;utm_campaign=Badge_Grade)
+
+![](https://img.shields.io/github/issues/masquerade-circus/valyrian.js.svg)
+[![Coverage Status](https://coveralls.io/repos/github/Masquerade-Circus/valyrian.js/badge.svg?branch=main)](https://coveralls.io/github/Masquerade-Circus/valyrian.js?branch=main)
+
+</p>
 
 </div>
 
