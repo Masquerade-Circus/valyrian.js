@@ -1,9 +1,15 @@
-### [6.0.2](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.1...6.0.2) (2022-03-12)
+### [6.0.3](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.2...6.0.3) (2022-03-12)
 
+
+### Build System
+
+* remove preinstall script ([213ca2b](https://github.com/Masquerade-Circus/valyrian.js/commit/213ca2b72f37e4c7eeae884393e723f4af469e96))
+
+### [6.0.2](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.1...6.0.2) (2022-03-12)
 
 ### Miscellaneous Chores
 
-* update package.json ([2506627](https://github.com/Masquerade-Circus/valyrian.js/commit/25066274d525f2c3f6f39cf0afca217f4495872e))
+*   update package.json ([2506627](https://github.com/Masquerade-Circus/valyrian.js/commit/25066274d525f2c3f6f39cf0afca217f4495872e))
 
 ### [6.0.1](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.0...6.0.1) (2022-03-12)
 
