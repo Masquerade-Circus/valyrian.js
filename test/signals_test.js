@@ -34,14 +34,14 @@ describe("Signals", () => {
     // Unlinked Pure computed
     let unlinked = Signal(() => "hello " + counter.value);
 
-    let interval = setInterval(() => (counter.value += 1), 1000);
+    let interval = setInterval(() => (counter.value += 1), 10);
     expect(counter.hello).toEqual("hello 0");
     expect(computed()).toEqual("hello 0");
     expect(computed.value).toEqual("hello 0");
     expect(unlinked()).toEqual("hello 0");
     expect(unlinked.value).toEqual("hello 0");
 
-    await new Promise((resolve) => setTimeout(() => resolve(), 2500));
+    await new Promise((resolve) => setTimeout(() => resolve(), 22));
     // effect.unsubscribe();
     counter.cleanup();
     expect(counter.hello).toEqual("hello 2");
@@ -50,7 +50,7 @@ describe("Signals", () => {
     expect(unlinked()).toEqual("hello 2");
     expect(unlinked.value).toEqual("hello 2");
 
-    await new Promise((resolve) => setTimeout(() => resolve(), 2000));
+    await new Promise((resolve) => setTimeout(() => resolve(), 20));
     clearInterval(interval);
     expect(counter.hello).toEqual("hello 4");
     expect(computed()).toEqual("hello 4");
@@ -60,7 +60,7 @@ describe("Signals", () => {
   });
 
   it("should test effect cleanup", async () => {
-    let delay = Signal(1000);
+    let delay = Signal(10);
     let count = Signal(0);
     let effectInterval = delay((delay) => {
       let interval = setInterval(() => {
@@ -69,15 +69,15 @@ describe("Signals", () => {
       return () => clearInterval(interval);
     });
 
-    await new Promise((resolve) => setTimeout(() => resolve(), 1000));
+    await new Promise((resolve) => setTimeout(() => resolve(), 10));
     expect(count()).toEqual(1);
     expect(count.value).toEqual(1);
-    delay(500);
-    await new Promise((resolve) => setTimeout(() => resolve(), 2000));
+    delay(5);
+    await new Promise((resolve) => setTimeout(() => resolve(), 20));
     expect(count()).toEqual(4);
     expect(count.value).toEqual(4);
     effectInterval.cleanup();
-    await new Promise((resolve) => setTimeout(() => resolve(), 2000));
+    await new Promise((resolve) => setTimeout(() => resolve(), 20));
     expect(count()).toEqual(4);
     expect(count.value).toEqual(4);
     delay.cleanup();
@@ -87,7 +87,7 @@ describe("Signals", () => {
   it("should test deep state effect cleanup", async () => {
     let state = Signal({
       count: 0,
-      delay: 1000
+      delay: 10
     });
     let effectInterval2 = state(() => {
       let interval = setInterval(() => {
@@ -96,17 +96,17 @@ describe("Signals", () => {
       return () => clearInterval(interval);
     });
 
-    await new Promise((resolve) => setTimeout(() => resolve(), 2000));
-    expect(state()).toEqual({ count: 1, delay: 1000 });
-    expect(state.value).toEqual({ count: 1, delay: 1000 });
-    state("delay", 500);
-    await new Promise((resolve) => setTimeout(() => resolve(), 2000));
-    expect(state()).toEqual({ count: 4, delay: 500 });
-    expect(state.value).toEqual({ count: 4, delay: 500 });
+    await new Promise((resolve) => setTimeout(() => resolve(), 20));
+    expect(state()).toEqual({ count: 1, delay: 10 });
+    expect(state.value).toEqual({ count: 1, delay: 10 });
+    state("delay", 5);
+    await new Promise((resolve) => setTimeout(() => resolve(), 20));
+    expect(state()).toEqual({ count: 4, delay: 5 });
+    expect(state.value).toEqual({ count: 4, delay: 5 });
     effectInterval2.cleanup();
-    await new Promise((resolve) => setTimeout(() => resolve(), 2000));
-    expect(state()).toEqual({ count: 4, delay: 500 });
-    expect(state.value).toEqual({ count: 4, delay: 500 });
+    await new Promise((resolve) => setTimeout(() => resolve(), 20));
+    expect(state()).toEqual({ count: 4, delay: 5 });
+    expect(state.value).toEqual({ count: 4, delay: 5 });
   });
 });
 
@@ -120,13 +120,14 @@ describe("Hooks like pattern", () => {
       return () => <div onremove={() => clearInterval(interval)}>{count.value}</div>;
     };
 
-    let Component = Counter(1000);
+    let Component = Counter(10);
 
     let result = v.mount("div", Component);
     expect(result).toEqual("<div>0</div>");
-    await new Promise((resolve) => setTimeout(() => resolve(), 2050));
+    await new Promise((resolve) => setTimeout(() => resolve(), 22));
     result = v.update(Component);
     expect(result).toEqual("<div>2</div>");
+    v.unmount(Component);
   });
 
   it("should create a counter with delay change", async () => {
@@ -142,13 +143,14 @@ describe("Hooks like pattern", () => {
       return () => <div onremove={interval.cleanup}>{count.value}</div>;
     };
 
-    let Component = Counter(1000);
+    let Component = Counter(10);
 
     let result = v.mount("div", Component);
     expect(result).toEqual("<div>0</div>");
-    await new Promise((resolve) => setTimeout(() => resolve(), 2050));
+    await new Promise((resolve) => setTimeout(() => resolve(), 22));
     result = v.update(Component);
     expect(result).toEqual("<div>2</div>");
+    v.unmount(Component);
   });
 
   it("should create a counter with deep state", async () => {
@@ -166,12 +168,13 @@ describe("Hooks like pattern", () => {
       return () => <div onremove={interval.cleanup}>{state.value.count}</div>;
     };
 
-    let Component = Counter(1000);
+    let Component = Counter(10);
 
     let result = v.mount("div", Component);
     expect(result).toEqual("<div>0</div>");
-    await new Promise((resolve) => setTimeout(() => resolve(), 2050));
+    await new Promise((resolve) => setTimeout(() => resolve(), 22));
     result = v.update(Component);
     expect(result).toEqual("<div>2</div>");
+    v.unmount(Component);
   });
 });

@@ -14,14 +14,14 @@ describe("Hooks", () => {
     it("should handle a component state", async () => {
       let Counter = () => {
         let [count, setCount] = useState(0);
-        let interval = setInterval(() => setCount(count + 1), 1000);
+        let interval = setInterval(() => setCount(count + 1), 10);
         v.onCleanup(() => clearInterval(interval));
         return <div>{count}</div>;
       };
 
       let result = v.mount("div", Counter);
       expect(result).toEqual("<div>0</div>");
-      await new Promise((resolve) => setTimeout(() => resolve(), 2050));
+      await new Promise((resolve) => setTimeout(() => resolve(), 25));
       result = v.update(Counter);
       expect(result).toEqual("<div>2</div>");
       v.unmount(Counter);
@@ -30,14 +30,14 @@ describe("Hooks", () => {
     it("should handle subcomponents state and v.onCleanup", async () => {
       let Ok = () => {
         let [ok, setOk] = useState("ok");
-        let interval = setInterval(() => setOk("not ok"), 1000);
+        let interval = setInterval(() => setOk("not ok"), 10);
         v.onCleanup(() => clearInterval(interval));
         return <div>{ok}</div>;
       };
 
       let Counter = () => {
         let [count, setCount] = useState(0);
-        let interval = setInterval(() => setCount(count + 1), 1000);
+        let interval = setInterval(() => setCount(count + 1), 10);
         v.onCleanup(() => clearInterval(interval));
         return (
           <div>
@@ -48,7 +48,7 @@ describe("Hooks", () => {
 
       let result = v.mount("div", Counter);
       expect(result).toEqual("<div>0 <div>ok</div></div>");
-      await new Promise((resolve) => setTimeout(() => resolve(), 2050));
+      await new Promise((resolve) => setTimeout(() => resolve(), 25));
       result = v.update(Counter);
       expect(result).toEqual("<div>2 <div>not ok</div></div>");
       v.unmount(Counter);
@@ -57,14 +57,14 @@ describe("Hooks", () => {
     it("array getter-setter based state", async () => {
       let Counter = () => {
         let [count, setCount] = useState(0);
-        let interval = setInterval(() => setCount(count + 1), 1000);
+        let interval = setInterval(() => setCount(count + 1), 10);
         v.onCleanup(() => clearInterval(interval));
         return <div>{count}</div>;
       };
 
       let result = v.mount("div", Counter);
       expect(result).toEqual("<div>0</div>");
-      await new Promise((resolve) => setTimeout(() => resolve(), 2050));
+      await new Promise((resolve) => setTimeout(() => resolve(), 25));
       result = v.update(Counter);
       expect(result).toEqual("<div>2</div>");
       v.unmount(Counter);
