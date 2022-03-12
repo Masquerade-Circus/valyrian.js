@@ -2,39 +2,39 @@ name: Test
 
 on:
   push:
-    branches: [ master ]
+    branches: [main]
   pull_request:
-    branches: [ master ]
+    branches: [main]
 
 jobs:
   test:
-    name: 'Test'
+    name: "Test"
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: Borales/actions-yarn@v2.3.0
-      name: 'Install'
-      with: 
-        cmd: install
-    - uses: Borales/actions-yarn@v2.3.0
-      name: 'Test'
-      with: 
-        cmd: test  
-    - if: github.event_name == 'push' && github.ref == 'refs/heads/master' && success()
-      uses: Borales/actions-yarn@v2.3.0
-      name: 'Coverage report'
-      with: 
-        cmd: coverage
-    - if: github.event_name == 'push' && github.ref == 'refs/heads/master' && success()
-      name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v2
+      - uses: Borales/actions-yarn@v2.3.0
+        name: "Install"
+        with:
+          cmd: install
+      - uses: Borales/actions-yarn@v2.3.0
+        name: "Test"
+        with:
+          cmd: test
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+        uses: Borales/actions-yarn@v2.3.0
+        name: "Coverage report"
+        with:
+          cmd: coverage
+      - if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
+        name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
   auto-approve:
     needs: test
     runs-on: ubuntu-latest
     steps:
-    - uses: hmarr/auto-approve-action@v2.0.0
-      if: github.event_name == 'pull_request' && (github.actor == 'dependabot[bot]' || github.actor == 'dependabot-preview[bot]')
-      with:
-        github-token: "${{ secrets.GITHUB_TOKEN }}"
+      - uses: hmarr/auto-approve-action@v2.0.0
+        if: github.event_name == 'pull_request' && (github.actor == 'dependabot[bot]' || github.actor == 'dependabot-preview[bot]')
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
