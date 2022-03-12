@@ -1,3 +1,10 @@
+### [6.0.4](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.3...6.0.4) (2022-03-12)
+
+
+### Bug Fixes
+
+* fix v-route directive using router plugin ([25b817d](https://github.com/Masquerade-Circus/valyrian.js/commit/25b817d8af4103415b5cdc2048df71bd3de3948d))
+
 ### [6.0.3](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.2...6.0.3) (2022-03-12)
 
 ### Build System
