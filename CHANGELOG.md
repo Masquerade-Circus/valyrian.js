@@ -1,9 +1,15 @@
-### [6.0.1](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.0...6.0.1) (2022-03-12)
+### [6.0.2](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.1...6.0.2) (2022-03-12)
 
+
+### Miscellaneous Chores
+
+* update package.json ([2506627](https://github.com/Masquerade-Circus/valyrian.js/commit/25066274d525f2c3f6f39cf0afca217f4495872e))
+
+### [6.0.1](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.0...6.0.1) (2022-03-12)
 
 ### Documentation
 
-* update badges ([abfaa9a](https://github.com/Masquerade-Circus/valyrian.js/commit/abfaa9a944bb91abd6d00acdf31bcf0036a0092f))
+*   update badges ([abfaa9a](https://github.com/Masquerade-Circus/valyrian.js/commit/abfaa9a944bb91abd6d00acdf31bcf0036a0092f))
 
 ## [6.0.0](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.17...6.0.0) (2022-03-12)
 
