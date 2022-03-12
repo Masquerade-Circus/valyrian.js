@@ -22,18 +22,22 @@ function createDomElement(tag, isSVG = false) {
   return isSVG ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag);
 }
 function domToVnode(dom) {
-  let vnode = v(dom.tagName.toLowerCase(), {}, ...Array.from(dom.childNodes).filter((child) => child.nodeType === 1 || child.nodeType === 3).map((child) => {
-    if (child.nodeType === 1) {
-      return domToVnode(child);
+  if (dom.nodeType === 1 || dom.nodeType === 3) {
+    let vnode = v(dom.tagName.toLowerCase(), {}, ...Array.from(dom.childNodes).filter((child) => child.nodeType === 1 || child.nodeType === 3).map((child) => {
+      if (child.nodeType === 1) {
+        return domToVnode(child);
+      }
+      let text = new Vnode(TextString, {}, []);
+      text.nodeValue = String(child.nodeValue);
+      text.dom = child;
+      return text;
+    }));
+    if (dom.nodeType === 1) {
+      [].forEach.call(dom.attributes, (prop) => vnode.props[prop.nodeName] = prop.nodeValue);
     }
-    let text = new Vnode(TextString, {}, []);
-    text.nodeValue = String(child.nodeValue);
-    text.dom = child;
-    return text;
-  }));
-  [].forEach.call(dom.attributes, (prop) => vnode.props[prop.nodeName] = prop.nodeValue);
-  vnode.dom = dom;
-  return vnode;
+    vnode.dom = dom;
+    return vnode;
+  }
 }
 var trust = (htmlString) => {
   let div = createDomElement("div");

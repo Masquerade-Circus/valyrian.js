@@ -218,22 +218,24 @@ function plugin(v) {
     }
 
     v.directive("route", (url, vnode, oldnode) => {
-      vnode.props.href = url;
-      vnode.props.onclick = (e) => {
-        if (typeof url === "string" && url.length > 0) {
-          if (url.charAt(0) !== "/") {
-            let current = routerOrComponent.current.split("?", 2).shift().split("/");
-            current.pop();
-            url = `${current.join("/")}/${url}`;
+      v.setAttribute("href", url, vnode, oldnode);
+      v.setAttribute(
+        "onclick",
+        (e) => {
+          if (typeof url === "string" && url.length > 0) {
+            if (url.charAt(0) !== "/") {
+              let current = routerOrComponent.current.split("?", 2).shift().split("/");
+              current.pop();
+              url = `${current.join("/")}/${url}`;
+            }
+
+            routerOrComponent.go(url);
           }
-
-          routerOrComponent.go(url);
-        }
-        e.preventDefault();
-      };
-
-      v.setAttribute("href", vnode, oldnode);
-      v.setAttribute("onclick", vnode, oldnode);
+          e.preventDefault();
+        },
+        vnode,
+        oldnode
+      );
     });
   };
 }

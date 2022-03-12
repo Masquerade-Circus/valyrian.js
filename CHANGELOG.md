@@ -1,9 +1,8 @@
 ### [6.0.3](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.2...6.0.3) (2022-03-12)
 
-
 ### Build System
 
-* remove preinstall script ([213ca2b](https://github.com/Masquerade-Circus/valyrian.js/commit/213ca2b72f37e4c7eeae884393e723f4af469e96))
+*   remove preinstall script ([213ca2b](https://github.com/Masquerade-Circus/valyrian.js/commit/213ca2b72f37e4c7eeae884393e723f4af469e96))
 
 ### [6.0.2](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.1...6.0.2) (2022-03-12)
 
