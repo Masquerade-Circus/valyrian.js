@@ -50,7 +50,7 @@ describe("Signals", () => {
     expect(unlinked()).toEqual("hello 2");
     expect(unlinked.value).toEqual("hello 2");
 
-    await new Promise((resolve) => setTimeout(() => resolve(), 20));
+    await new Promise((resolve) => setTimeout(() => resolve(), 22));
     clearInterval(interval);
     expect(counter.hello).toEqual("hello 4");
     expect(computed()).toEqual("hello 4");
@@ -73,11 +73,11 @@ describe("Signals", () => {
     expect(count()).toEqual(1);
     expect(count.value).toEqual(1);
     delay(5);
-    await new Promise((resolve) => setTimeout(() => resolve(), 20));
+    await new Promise((resolve) => setTimeout(() => resolve(), 18));
     expect(count()).toEqual(4);
     expect(count.value).toEqual(4);
     effectInterval.cleanup();
-    await new Promise((resolve) => setTimeout(() => resolve(), 20));
+    await new Promise((resolve) => setTimeout(() => resolve(), 18));
     expect(count()).toEqual(4);
     expect(count.value).toEqual(4);
     delay.cleanup();
@@ -100,11 +100,11 @@ describe("Signals", () => {
     expect(state()).toEqual({ count: 1, delay: 10 });
     expect(state.value).toEqual({ count: 1, delay: 10 });
     state("delay", 5);
-    await new Promise((resolve) => setTimeout(() => resolve(), 20));
+    await new Promise((resolve) => setTimeout(() => resolve(), 18));
     expect(state()).toEqual({ count: 4, delay: 5 });
     expect(state.value).toEqual({ count: 4, delay: 5 });
     effectInterval2.cleanup();
-    await new Promise((resolve) => setTimeout(() => resolve(), 20));
+    await new Promise((resolve) => setTimeout(() => resolve(), 18));
     expect(state()).toEqual({ count: 4, delay: 5 });
     expect(state.value).toEqual({ count: 4, delay: 5 });
   });
