@@ -9,7 +9,7 @@ import { v } from "../lib";
 v.use(plugin);
 v.use(nodePlugin);
 
-describe.only("Hooks", () => {
+describe("Hooks", () => {
   describe("State hook", () => {
     it("should handle a component state", async () => {
       let Counter = () => {

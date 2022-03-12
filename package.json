@@ -43,7 +43,7 @@
     "dev:test:nyc": "cross-env NODE_ENV=development nodemon -w ./test -w ./lib -w ./plugins --exec 'nyc --reporter=text --reporter=lcov mocha --timeout 10000 --slow 0 --require ./register \"test/**/*_test.js\"'",
     "build": "yarn build:source && yarn remark",
     "build:source": "cross-env NODE_ENV=production node source.js",
-    "test": "cross-env NODE_ENV=development nyc mocha --timeout 10000 --require ./register \"test/**/*_test.js\"",
+    "test": "cross-env NODE_ENV=development nyc mocha --forbid-only --timeout 10000 --require ./register \"test/**/*_test.js\"",
     "coverage": "nyc report --reporter=lcov",
     "remark": "remark . -o",
     "commit": "git add . && git-cz",

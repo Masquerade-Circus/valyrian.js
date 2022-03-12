@@ -6,13 +6,13 @@
 ![](https://img.shields.io/bundlephobia/min/valyrian.js.svg?style=flat)
 ![](https://img.shields.io/bundlephobia/minzip/valyrian.js.svg?style=flat)
 
-[![Build Status](https://travis-ci.org/Masquerade-Circus/valyrian.js.svg?branch=master)](https://travis-ci.org/Masquerade-Circus/valyrian.js)
-[![Dependencies](https://img.shields.io/david/masquerade-circus/valyrian.js.svg?style=flat)](https://david-dm.org/masquerade-circus/valyrian.js)
+[![Build Status](https://travis-ci.org/Masquerade-Circus/valyrian.js.svg?branch=main)](https://travis-ci.org/Masquerade-Circus/valyrian.js)
+[![Dependencies](https://img.shields.io/librariesio/github/masquerade-circus/valyrian.js)](https://img.shields.io/librariesio/github/masquerade-circus/valyrian.js)
+[![Maintainability](https://api.codeclimate.com/v1/badges/aa7528a4a6b0d264e4d6/maintainability)](https://codeclimate.com/github/Masquerade-Circus/valyrian.js/maintainability)
 ![](https://img.shields.io/github/issues/masquerade-circus/valyrian.js.svg)
 ![](https://img.shields.io/snyk/vulnerabilities/npm/valyrian.js.svg)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/521f72fc6d61426783692b62d64a3643)](https://www.codacy.com/app/Masquerade-Circus/valyrian.js?utm_source=github.com\&utm_medium=referral\&utm_content=Masquerade-Circus/valyrian.js\&utm_campaign=Badge_Grade)
-[![Coverage Status](https://coveralls.io/repos/github/Masquerade-Circus/valyrian.js/badge.svg?branch=master)](https://coveralls.io/github/Masquerade-Circus/valyrian.js?branch=master)
-[![License](https://img.shields.io/github/license/masquerade-circus/valyrian.js.svg)](https://github.com/masquerade-circus/valyrian.js/blob/master/LICENSE)
+[![Coverage Status](https://coveralls.io/repos/github/Masquerade-Circus/valyrian.js/badge.svg?branch=main)](https://coveralls.io/github/Masquerade-Circus/valyrian.js?branch=main)
+[![License](https://img.shields.io/github/license/masquerade-circus/valyrian.js.svg)](https://github.com/masquerade-circus/valyrian.js/blob/main/LICENSE)
 
 </div>
 
