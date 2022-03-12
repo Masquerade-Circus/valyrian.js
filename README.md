@@ -17,7 +17,7 @@
 ![Travis (.org)](https://img.shields.io/travis/masquerade-circus/valyrian.js)
 ![Libraries.io dependency status for latest release](https://img.shields.io/librariesio/release/npm/valyrian.js)
 [![Maintainability](https://api.codeclimate.com/v1/badges/aa7528a4a6b0d264e4d6/maintainability)](https://codeclimate.com/github/Masquerade-Circus/valyrian.js/maintainability)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8d5204c73bdc42089e4cebdb4b4d43e0)](https://www.codacy.com/gh/Masquerade-Circus/valyrian.js/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Masquerade-Circus/valyrian.js&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/8d5204c73bdc42089e4cebdb4b4d43e0)](https://www.codacy.com/gh/Masquerade-Circus/valyrian.js/dashboard?utm_source=github.com\&utm_medium=referral\&utm_content=Masquerade-Circus/valyrian.js\&utm_campaign=Badge_Grade)
 
 ![](https://img.shields.io/github/issues/masquerade-circus/valyrian.js.svg)
 [![Coverage Status](https://coveralls.io/repos/github/Masquerade-Circus/valyrian.js/badge.svg?branch=main)](https://coveralls.io/github/Masquerade-Circus/valyrian.js?branch=main)
