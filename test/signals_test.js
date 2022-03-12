@@ -96,7 +96,7 @@ describe("Signals", () => {
       return () => clearInterval(interval);
     });
 
-    await new Promise((resolve) => setTimeout(() => resolve(), 20));
+    await new Promise((resolve) => setTimeout(() => resolve(), 10));
     expect(state()).toEqual({ count: 1, delay: 10 });
     expect(state.value).toEqual({ count: 1, delay: 10 });
     state("delay", 5);
