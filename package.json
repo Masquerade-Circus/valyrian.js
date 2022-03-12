@@ -49,7 +49,8 @@
     "commit": "git add . && git-cz",
     "release": "release-it --verbose",
     "release-test": "release-it --dry-run --verbose",
-    "bench": "nodemon -e js,ts,json,css,tsx -w ./bench -w ./lib -w ./plugins --exec 'buffalo-test --require ./register'"
+    "bench": "nodemon -e js,ts,json,css,tsx -w ./bench -w ./lib -w ./plugins --exec 'buffalo-test --require ./register'",
+    "preinstall": "npx npm-force-resolutions"
   },
   "dependencies": {
     "clean-css": "^5.2.4",
@@ -87,6 +88,11 @@
     "release-it": "^14.12.4",
     "remark-cli": "^10.0.1",
     "remark-toc": "^8.0.1"
+  },
+  "resolutions": {
+    "jpeg-js": "^0.4.0",
+    "minimist": "^0.2.1",
+    "ansi-regex": "^5.0.1"
   },
   "nyc": {
     "exclude": [
@@ -185,9 +191,5 @@
       ]
     }
   },
-  "resolutions": {
-    "minimist": "^1.2.5",
-    "jpeg-js": "^0.4.0",
-    "ansi-regex": "^5.0.1"
-  }
+  "funding": "https://github.com/sponsors/Masquerade-Circus"
 }
