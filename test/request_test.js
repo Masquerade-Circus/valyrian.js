@@ -1,12 +1,10 @@
-import "../lib";
-
 import expect from "expect";
 import fastify from "fastify";
 import nodePlugin from "../plugins/node";
-import requestPlugin from "../plugins/request";
+import request from "../plugins/request";
+import { v } from "../lib/index";
 
-v.usePlugin(nodePlugin);
-v.usePlugin(requestPlugin);
+v.use(nodePlugin);
 
 let posts = [];
 for (let i = 10; i--; ) {
@@ -56,7 +54,7 @@ let createServer = async () => {
 describe("Request", () => {
   it("should get", async () => {
     let server = await createServer();
-    let res = await v.request.get(`${server.baseUrl}/posts/1`);
+    let res = await request.get(`${server.baseUrl}/posts/1`);
     expect(res).toEqual({
       userId: 1,
       id: 1,
@@ -72,7 +70,7 @@ describe("Request", () => {
 
   it("should post", async () => {
     let server = await createServer();
-    let res = await v.request.post(
+    let res = await request.post(
       `${server.baseUrl}/posts`,
       {
         title: "foo",
@@ -96,7 +94,7 @@ describe("Request", () => {
 
   it("should put", async () => {
     let server = await createServer();
-    let res = await v.request.put(
+    let res = await request.put(
       `${server.baseUrl}/posts/1`,
       {
         id: 1,
@@ -122,7 +120,7 @@ describe("Request", () => {
 
   it("should patch", async () => {
     let server = await createServer();
-    let res = await v.request.patch(
+    let res = await request.patch(
       `${server.baseUrl}/posts/1`,
       {
         body: "bar"
@@ -144,14 +142,14 @@ describe("Request", () => {
 
   it("should delete", async () => {
     let server = await createServer();
-    let res = await v.request.delete(`${server.baseUrl}/posts/1`);
+    let res = await request.delete(`${server.baseUrl}/posts/1`);
     expect(res).toEqual({});
     await server.close();
   });
 
   it("should serialize data", async () => {
     let server = await createServer();
-    let res = await v.request.get(`${server.baseUrl}/posts/`, {
+    let res = await request.get(`${server.baseUrl}/posts/`, {
       userId: 1
     });
     expect(res).toEqual(expect.any(Array));
@@ -161,7 +159,7 @@ describe("Request", () => {
 
   it("should resolve with full response", async () => {
     let server = await createServer();
-    let res = await v.request.get(`${server.baseUrl}/posts/1`, null, { resolveWithFullResponse: true });
+    let res = await request.get(`${server.baseUrl}/posts/1`, null, { resolveWithFullResponse: true });
     expect(res).toEqual(
       expect.objectContaining({
         body: expect.any(Object),
@@ -176,8 +174,8 @@ describe("Request", () => {
 
   it("should create a scoped request", async () => {
     let server = await createServer();
-    let request = v.request.new(`${server.baseUrl}`);
-    let res = await request.get("/posts", {
+    let request2 = request.new(`${server.baseUrl}`);
+    let res = await request2.get("/posts", {
       userId: 1
     });
     expect(res).toEqual(expect.any(Array));
@@ -187,21 +185,21 @@ describe("Request", () => {
 
   it("should create a scoped request with allowed methods", async () => {
     let server = await createServer();
-    let request = v.request.new(`${server.baseUrl}`, { methods: ["get"] });
-    let res = await request.get("/posts", {
+    let request2 = request.new(`${server.baseUrl}`, { methods: ["get"] });
+    let res = await request2.get("/posts", {
       userId: 1
     });
     expect(res).toEqual(expect.any(Array));
     expect(res.length).toEqual(10);
 
-    expect(request.post).toBeUndefined();
+    expect(request2.post).toBeUndefined();
     await server.close();
   });
 
   it("should create a child scoped request", async () => {
     let server = await createServer();
-    let request = v.request.new(`${server.baseUrl}/`);
-    let requestChild = request.new("/posts");
+    let request2 = request.new(`${server.baseUrl}/`);
+    let requestChild = request2.new("/posts");
     let res = await requestChild.get("/", {
       userId: 1
     });
@@ -212,8 +210,8 @@ describe("Request", () => {
 
   it("should create a child scoped request with allowed methods", async () => {
     let server = await createServer();
-    let request = v.request.new(`${server.baseUrl}/`, { methods: ["get"] });
-    let requestChild = request.new("/posts");
+    let request2 = request.new(`${server.baseUrl}/`, { methods: ["get"] });
+    let requestChild = request2.new("/posts");
     let res = await requestChild.get("/", {
       userId: 1
     });
@@ -226,34 +224,7 @@ describe("Request", () => {
 
   it("should work with server side rendering of local requests", async () => {
     let server = await createServer();
-    v.request.options("urls.node", `${server.baseUrl}`);
-
-    let res = await v.request.get("/hello", null, { headers: { Accept: "text/html" } });
-
-    expect(res).toEqual("Hello world");
-
-    await server.close();
-  });
-
-  it("should work with server side rendering of api requests", async () => {
-    let server = await createServer();
-    v.request.options("urls.node", `${server.baseUrl}`);
-    v.request.options("urls.api", "http://example.com/api");
-
-    let res = await v.request.get("http://example.com/api/hello", null, { headers: { Accept: "text/html" } });
-
-    expect(res).toEqual("Hello world");
-
-    await server.close();
-  });
-
-  it("should work with server side rendering of local requests with scoped request", async () => {
-    let server = await createServer();
-    let request = v.request.new("/", {
-      urls: {
-        node: `${server.baseUrl}`
-      }
-    });
+    request.options("urls.node", `${server.baseUrl}`);
 
     let res = await request.get("/hello", null, { headers: { Accept: "text/html" } });
 
@@ -262,14 +233,10 @@ describe("Request", () => {
     await server.close();
   });
 
-  it("should work with server side rendering of api requests with scoped request", async () => {
+  it("should work with server side rendering of api requests", async () => {
     let server = await createServer();
-    let request = v.request.new("/", {
-      urls: {
-        node: `${server.baseUrl}`,
-        api: "http://example.com/api"
-      }
-    });
+    request.options("urls.node", `${server.baseUrl}`);
+    request.options("urls.api", "http://example.com/api");
 
     let res = await request.get("http://example.com/api/hello", null, { headers: { Accept: "text/html" } });
 
@@ -278,16 +245,47 @@ describe("Request", () => {
     await server.close();
   });
 
+  it("should work with server side rendering of local requests with scoped request", async () => {
+    let server = await createServer();
+    let request2 = request.new("/", {
+      urls: {
+        node: `${server.baseUrl}`
+      }
+    });
+
+    let res = await request2.get("/hello", null, { headers: { Accept: "text/html" } });
+
+    expect(res).toEqual("Hello world");
+
+    await server.close();
+  });
+
+  it("should work with server side rendering of api requests with scoped request", async () => {
+    let server = await createServer();
+    let request2 = request.new("/", {
+      urls: {
+        node: `${server.baseUrl}`,
+        api: "http://example.com/api"
+      }
+    });
+
+    let res = await request2.get("http://example.com/api/hello", null, { headers: { Accept: "text/html" } });
+
+    expect(res).toEqual("Hello world");
+
+    await server.close();
+  });
+
   it("should work with server side rendering of local requests with child scoped request", async () => {
     let server = await createServer();
-    let request = v.request.new("/", {
+    let request2 = request.new("/", {
       urls: {
         node: `${server.baseUrl}`
       },
       methods: ["get"]
     });
 
-    let childRequest = request.new("/hello");
+    let childRequest = request2.new("/hello");
 
     let res = await childRequest.get("/", null, { headers: { Accept: "text/html" } });
 
@@ -300,7 +298,7 @@ describe("Request", () => {
 
   it("should work with server side rendering of api requests with child scoped request", async () => {
     let server = await createServer();
-    let request = v.request.new("/", {
+    let request2 = request.new("/", {
       urls: {
         node: `${server.baseUrl}`,
         api: "http://example.com/api"
@@ -308,7 +306,7 @@ describe("Request", () => {
       methods: ["get"]
     });
 
-    let childRequest = request.new("http://example.com/api/hello");
+    let childRequest = request2.new("http://example.com/api/hello");
 
     let res = await childRequest.get("/", null, { headers: { Accept: "text/html" } });
 

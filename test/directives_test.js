@@ -1,27 +1,20 @@
 const expect = require("expect");
-const faker = require("faker");
 const dayjs = require("dayjs");
 
-import "../lib";
+const { v } = require("../lib/index");
 
-const nodePlugin = require("../plugins/node");
-v.usePlugin(nodePlugin);
+const plugin = require("../plugins/node");
+v.use(plugin);
 
 // eslint-disable-next-line max-lines-per-function
 describe("Directives", () => {
   describe("Directive creation", () => {
-    let result;
-
     it("should be able create a directive", () => {
+      let result;
       let expected = "Hello world";
-      v.directive("test", (value) => (result = `Hello ${value}`));
-      v.mount("div", () => <div v-test="world" />);
-      expect(result).toEqual(expected);
-    });
 
-    it("should not be able overwrite a directive", () => {
-      let expected = "Hello world";
-      v.directive("test", () => (result = "Something else"));
+      v.directive("test", (value) => (result = `Hello ${value}`));
+
       v.mount("div", () => <div v-test="world" />);
       expect(result).toEqual(expected);
     });
@@ -30,16 +23,18 @@ describe("Directives", () => {
       let newVnode;
       let oldVnode;
 
-      v.directive("test2", (v, vnode, oldvnode) => {
+      let app = () => <div v-test2 />;
+
+      v.directive("test2", (v, vnode, old) => {
         newVnode = vnode;
-        oldVnode = oldvnode;
+        oldVnode = old;
       });
 
-      v.mount("div", () => <div v-test2 />);
-      v.update();
+      v.mount("div", app);
+      v.update(app);
 
       expect(newVnode).toEqual({
-        name: "div",
+        tag: "div",
         props: {
           "v-test2": true
         },
@@ -49,7 +44,7 @@ describe("Directives", () => {
       });
 
       expect(oldVnode).toEqual({
-        name: "div",
+        tag: "div",
         props: {
           "v-test2": true
         },
@@ -60,59 +55,66 @@ describe("Directives", () => {
     });
 
     it("should be able to identify if this is first render or update", () => {
-      v.directive("create", (placeholder, vnode, oldvnode) => {
-        if (!oldvnode) {
+      let app = () => <div v-create />;
+
+      v.directive("create", (v, vnode, oldVnode) => {
+        if (!oldVnode) {
           vnode.children = ["First render, vnode created"];
         } else {
           vnode.children = ["Second render, vnode updated"];
         }
       });
-      let component = () => <div v-create />;
 
-      let result = v.mount("body", component);
+      let result = v.mount("body", app);
+
       expect(result).toEqual("<div>First render, vnode created</div>");
 
-      let result2 = v.update();
+      let result2 = v.update(app);
       expect(result2).toEqual("<div>Second render, vnode updated</div>");
     });
 
     it("should be able to modify the children of a vnode", () => {
       let expected = "<div>Hello world</div>";
-      v.directive("test3", (v, vnode) => (vnode.children = ["Hello world"]));
-      let result = v.mount("div", () => (
+
+      v.directive("test3", (v, vnode) => {
+        vnode.children = ["Hello world"];
+      });
+
+      let app = () => (
         <div v-test3>
           <span>Hello John Doe</span>
         </div>
-      ));
+      );
+
+      let result = v.mount("div", app);
       expect(result).toEqual(expected);
     });
 
     /**
      * Modify properties is not guaranteed because the properties are processed by place
-     * If the directive needs to do update previous properties you need to update the property using the v.updateProperty method
+     * If the directive needs to update previous properties you need to update the property using the setAttribute method
      */
     it("Modify properties is not guaranteed", () => {
       let update = false;
-      v.directive("test4", (p, vnode, oldVnode) => {
+      let app = () => <div u="u" v-test4 x="x" />;
+
+      v.directive("test4", (value, vnode, oldVnode) => {
         // Try to change u property
         vnode.props.u = "property changed";
         if (update) {
-          if (oldVnode || v.addProperty === undefined) {
-            v.updateProperty("u", vnode, oldVnode);
-          } else {
-            v.addProperty("u", vnode);
-          }
+          console.log(v);
+          v.setAttribute("u", "property changed", vnode, oldVnode);
         }
 
         // Try to change x property
         vnode.props.x = "property changed";
       });
-      let result = v.mount("div", () => <div u="u" v-test4 x="x" />);
+
+      let result = v.mount("div", app);
       expect(result).toEqual('<div u="u" x="property changed"></div>');
-      v.unMount();
 
       update = true;
-      let result2 = v.mount("div", () => <div u="u" v-test4 x="x" />);
+      let result2 = v.mount("div", app);
       expect(result2).toEqual('<div u="property changed" x="property changed"></div>');
     });
 
@@ -126,7 +128,7 @@ describe("Directives", () => {
       let formatDate = (value) => dayjs(value).format("MMMM D, YYYY");
 
       v.directive("date-inline", (date, vnode) => (vnode.children = [formatDate(date)]));
-      v.directive("date", (v, vnode) => (vnode.children = [formatDate(vnode.children[0])]));
+      v.directive("date", (_, vnode) => (vnode.children = [formatDate(vnode.children[0])]));
 
       let date = "08-16-2018";
       let result = v.mount("div", () => <div v-date-inline={date} />);
@@ -204,7 +206,7 @@ describe("Directives", () => {
      */
     describe("v-for", () => {
       it("should create 10 list items", () => {
-        let items = faker.lorem.words(10).split(" ");
+        let items = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa"];
         let expected = "<ul>" + items.reduce((str, word) => str + `<li>${word}</li>`, "") + "</ul>";
         let result = v.mount("body", () => <ul v-for={items}>{(word) => <li>{word}</li>}</ul>);
 
@@ -212,7 +214,7 @@ describe("Directives", () => {
       });
 
       it("should create 10 list items getting its index", () => {
-        let items = faker.lorem.words(10).split(" ");
+        let items = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa"];
         let i = 0;
         let expected = "<ul>" + items.reduce((str, word) => str + `<li>${i++} - ${word}</li>`, "") + "</ul>";
         let result = v.mount("body", () => (
@@ -240,7 +242,6 @@ describe("Directives", () => {
         let expected = "<div><span>Hello world</span></div>";
 
         values.forEach((value) => {
-          v.unMount();
           let result = v.mount("div", () => (
             <div>
               <span v-if={value}>Hello world</span>
@@ -256,7 +257,6 @@ describe("Directives", () => {
         let expected = "<div></div>";
 
         values.forEach((value) => {
-          v.unMount();
           let result = v.mount("div", () => (
             <div>
               <span v-if={value}>Hello world</span>
@@ -271,15 +271,16 @@ describe("Directives", () => {
         let expected1 = "<div><span>Hello world</span></div>";
         let expected2 = "<div></div>";
 
-        let result1 = v.mount("div", () => (
+        let app = () => (
           <div>
             <span v-if={value}>Hello world</span>
           </div>
-        ));
+        );
+        let result1 = v.mount("div", app);
         expect(result1).toEqual(expected1);
 
         value = false;
-        let result2 = v.update();
+        let result2 = v.update(app);
         expect(result2).toEqual(expected2);
       });
     });
@@ -298,7 +299,6 @@ describe("Directives", () => {
         let expected = "<div><span>Hello world</span></div>";
 
         values.forEach((value) => {
-          v.unMount();
           let result = v.mount("div", () => (
             <div>
               <span v-unless={value}>Hello world</span>
@@ -314,7 +314,6 @@ describe("Directives", () => {
         let expected = "<div></div>";
 
         values.forEach((value) => {
-          v.unMount();
           let result = v.mount("div", () => (
             <div>
               <span v-unless={value}>Hello world</span>
@@ -364,11 +363,12 @@ describe("Directives", () => {
           world: true
         };
 
-        let result = v.mount("body", () => <div v-class={classes} />);
+        let app = () => <div v-class={classes} />;
+        let result = v.mount("body", app);
         expect(result).toEqual('<div class="world"></div>');
 
         classes.world = false;
-        let result2 = v.update();
+        let result2 = v.update(app);
         expect(result2).toEqual("<div></div>");
       });
 
@@ -376,32 +376,32 @@ describe("Directives", () => {
         let classes = {
           world: true
         };
-
-        let result = v.mount("body", () => <div class="hello" v-class={classes} />);
+        let app = () => <div class="hello" v-class={classes} />;
+        let result = v.mount("body", app);
         expect(result).toEqual('<div class="hello world"></div>');
 
         classes.world = false;
-        let result2 = v.update();
+        let result2 = v.update(app);
         expect(result2).toEqual('<div class="hello"></div>');
       });
     });
 
     /**
      * The directive v-once is used to render just once and skip all subsequent render updates
-     * Similar to write the lifecycle onbeforeupdate={() => false}
+     * Similar to write the lifecycle shouldupdate={() => false}
      */
     describe("v-once", () => {
       it("should not update the dom after first render", () => {
         let Store = { hello: "world" };
-        let Component = () => <div v-once>Hello {Store.hello}</div>;
+        let app = () => <div v-once>Hello {Store.hello}</div>;
 
-        let result = v.mount("body", Component);
+        let result = v.mount("body", app);
         expect(result).toEqual("<div>Hello world</div>");
 
         // We update our store
         Store.hello = "John Doe";
 
-        let result2 = v.update();
+        let result2 = v.update(app);
         expect(result2).toEqual("<div>Hello world</div>");
       });
     });
@@ -419,9 +419,6 @@ describe("Directives", () => {
 
         expect(result).toEqual("<div><div>Hello world</div></div>");
 
-        // Unmount to clean the instance
-        v.unMount();
-
         // Using v-html directive
         let Component2 = () => <div v-html="<div>Hello world</div>" />;
         let result2 = v.mount("body", Component2);
@@ -436,29 +433,29 @@ describe("Directives", () => {
     it("should use v-if with v-for directives", () => {
       let arr = [1, 2, 3, 4];
       let show = true;
-      let component = () => (
+      let app = () => (
         <div v-if={show} v-for={arr}>
           {(i) => <span>{i}</span>}
         </div>
       );
 
-      let result = v.mount("body", component);
+      let result = v.mount("body", app);
       expect(result).toEqual("<div><span>1</span><span>2</span><span>3</span><span>4</span></div>");
 
       show = false;
-      let result2 = v.update();
+      let result2 = v.update(app);
       expect(result2).toEqual("");
     });
   });
 
   /**
-   * The data directive is used just to pass data without creating an attribute on the node.
+   * The state directive is used just to pass data without creating an attribute on the node.
    * And its main use is in the lifecycle methods to validate properties or changes
    */
-  describe("reserved word data", () => {
+  describe("reserved word state", () => {
     it("should not render an attribute", () => {
-      let data = { hello: "world" };
-      let Component = () => <div data={data} onbeforeupdate={(oldVnode, newVnode) => oldVnode.props.data.hello !== newVnode.props.data.hello} />;
+      let state = { hello: "world" };
+      let Component = () => <div state={state} shouldupdate={(oldVnode, newVnode) => oldVnode.props.state.hello !== newVnode.props.state.hello} />;
 
       let result = v.mount("body", Component);
       expect(result).toEqual("<div></div>");

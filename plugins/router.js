@@ -1,279 +1,244 @@
-let plugin = function(v) {
-  function flat(array) {
-    return Array.isArray(array) ? array.flat(Infinity) : [array];
+function flat(array) {
+  return Array.isArray(array) ? array.flat(Infinity) : [array];
+}
+
+let addPath = (router, method, path, middlewares, i) => {
+  if (middlewares.length === 0) {
+    return;
   }
 
-  let addPath = (router, method, path, middlewares, i) => {
-    if (middlewares.length === 0) {
-      return;
+  let realpath = path.replace(/(\S)(\/+)$/, "$1");
+
+  // Find the express like params
+  let params = realpath.match(/:(\w+)?/gi) || [];
+
+  // Set the names of the params found
+  for (i in params) {
+    params[i] = params[i].slice(1);
+  }
+
+  let regexpPath = "^" + realpath.replace(/:(\w+)/gi, "([^\\/\\s]+)") + "$";
+
+  router.paths.push({
+    method,
+    path: realpath,
+    middlewares: flat(middlewares),
+    params,
+    regexp: new RegExp(regexpPath, "i")
+  });
+};
+
+function parseQuery(queryParts) {
+  let parts = queryParts ? queryParts.split("&", 20) : [];
+  let query = {};
+  let i = 0;
+  let nameValue;
+
+  for (; i < parts.length; i++) {
+    nameValue = parts[i].split("=", 2);
+    query[nameValue[0]] = nameValue[1];
+  }
+
+  return query;
+}
+
+function searchMiddlewares(router, path) {
+  let i;
+  let k;
+  let item;
+  let match;
+  let key;
+  let middlewares = [];
+  let params = {};
+  let matches = [];
+  router.params = {};
+  router.path = "";
+  router.matches = [];
+
+  // Search for middlewares
+  for (i = 0; i < router.paths.length; i++) {
+    item = router.paths[i];
+
+    match = item.regexp.exec(path);
+    // If we found middlewares
+    if (Array.isArray(match)) {
+      middlewares.push.apply(middlewares, item.middlewares);
+      match.shift();
+
+      // Parse params
+      for (k = 0; k < item.params.length; k++) {
+        key = item.params[k];
+        params[key] = match.shift();
+      }
+
+      while (match.length) {
+        matches.push(match.shift());
+      }
+
+      if (item.method === "get") {
+        router.path = item.path;
+        break;
+      }
     }
+  }
 
-    let realpath = path.replace(/(\S)(\/+)$/, "$1");
+  router.params = params;
+  router.matches = matches;
 
-    // Find the express like params
-    let params = realpath.match(/:(\w+)?/gi) || [];
+  return middlewares;
+}
 
-    // Set the names of the params found
-    for (i in params) {
-      params[i] = params[i].slice(1);
-    }
-
-    let regexpPath = "^" + realpath.replace(/:(\w+)/gi, "([^\\/\\s]+)") + "$";
-
-    router.paths.push({
-      method,
-      path: realpath,
-      middlewares: flat(middlewares),
-      params,
-      regexp: new RegExp(regexpPath, "i")
-    });
+async function searchComponent(router, middlewares) {
+  let response;
+  let req = {
+    params: router.params,
+    query: router.query,
+    url: router.url,
+    path: router.path,
+    matches: router.matches
   };
+  let i = 0;
 
-  function parseQuery(queryParts) {
-    let parts = queryParts ? queryParts.split("&", 20) : [];
-    let query = {};
-    let i = 0;
-    let nameValue;
+  for (; i < middlewares.length; i++) {
+    response = await middlewares[i](req, response);
 
-    for (; i < parts.length; i++) {
-      nameValue = parts[i].split("=", 2);
-      query[nameValue[0]] = nameValue[1];
+    if (response !== undefined && (router.v.isComponent(response) || router.v.isVnodeComponent(response))) {
+      return response;
     }
+  }
+}
 
-    return query;
+class Router {
+  paths = [];
+  container = null;
+  url = "";
+  query = {};
+  options = {};
+  current = "";
+  params = {};
+  matches = [];
+
+  get(path, ...args) {
+    addPath(this, "get", path, args);
+    return this;
   }
 
-  function searchMiddlewares(router, path) {
+  use(...args) {
+    let path = typeof args[0] === "string" ? args.shift() : "/";
     let i;
     let k;
+    let subrouter;
     let item;
-    let match;
-    let key;
-    let middlewares = [];
-    let params = {};
-    let matches = [];
-    router.params = {};
-    router.path = "";
-    router.matches = [];
+    let subpath;
 
-    // Search for middlewares
-    for (i = 0; i < router.paths.length; i++) {
-      item = router.paths[i];
-
-      match = item.regexp.exec(path);
-      // If we found middlewares
-      if (Array.isArray(match)) {
-        middlewares.push.apply(middlewares, item.middlewares);
-        match.shift();
-
-        // Parse params
-        for (k = 0; k < item.params.length; k++) {
-          key = item.params[k];
-          params[key] = match.shift();
-        }
-
-        while (match.length) {
-          matches.push(match.shift());
-        }
-
-        if (item.method === "get") {
-          router.path = item.path;
-          break;
+    for (i = 0; i < args.length; i++) {
+      subrouter = args[i];
+      if (typeof subrouter === "function") {
+        addPath(this, "use", `${path}.*`, [subrouter]);
+      } else if (subrouter.paths) {
+        for (k = 0; k < subrouter.paths.length; k++) {
+          item = subrouter.paths[k];
+          subpath = `${path}${item.path}`.replace(/^\/\//, "/");
+          addPath(this, item.method, subpath, item.middlewares);
         }
       }
     }
 
-    router.params = params;
-    router.matches = matches;
-
-    return middlewares;
+    return this;
   }
 
-  async function searchComponent(router, middlewares) {
-    let response;
-    let item = false;
-    let req = {
-      params: router.params,
-      query: router.query,
-      url: router.url,
-      path: router.path,
-      matches: router.matches
-    };
-    let i = 0;
-
-    for (; i < middlewares.length; i++) {
-      response = await middlewares[i](req, response);
-
-      if (response !== undefined) {
-        if (!response.view && typeof response === "function") {
-          response.view = response;
-        }
-
-        if (response.view) {
-          item = response;
-          break;
-        }
-      }
-    }
-    return item;
-  }
-
-  v.Router = function() {
-    const router = {
-      paths: [],
-      get(path, ...args) {
-        addPath(router, "get", path, args);
-        return router;
-      },
-      use(...args) {
-        let path = typeof args[0] === "string" ? args.shift() : "/";
-        let i;
-        let k;
-        let subrouter;
-        let item;
-        let subpath;
-
-        for (i = 0; i < args.length; i++) {
-          subrouter = args[i];
-          if (typeof subrouter === "function") {
-            addPath(router, "use", `${path}.*`, [subrouter]);
-          } else if (subrouter.paths) {
-            for (k = 0; k < subrouter.paths.length; k++) {
-              item = subrouter.paths[k];
-              subpath = `${path}${item.path}`.replace(/^\/\//, "/");
-              addPath(router, item.method, subpath, item.middlewares);
-            }
-          }
-        }
-
-        return router;
-      },
-      async go(path) {
-        let parts = path.split("?", 2);
-        let urlParts = parts[0].replace(/(.+)\/$/, "$1");
-        let queryParts = parts[1];
-        router.url = path;
-
-        router.query = parseQuery(queryParts);
-
-        let middlewares = searchMiddlewares(router, urlParts);
-
-        let component = await searchComponent(router, middlewares);
-
-        if (!component || !component.view) {
-          throw new Error(`The url ${path} requested wasn't found`);
-        }
-
-        return component;
-      }
-    };
-    return router;
-  };
-
-  let mainRouter;
-  let RoutesContainer;
-  async function runRoute(parentComponent, url, args) {
-    let response = await mainRouter.go(url);
-
-    if (parentComponent) {
-      args.unshift(v(response, ...args));
-      args.unshift({});
-      response = parentComponent;
-    }
-
-    args.unshift(response);
-
-    v.routes.params = mainRouter.params;
-    v.routes.query = mainRouter.query;
-    v.routes.url = mainRouter.url;
-    v.routes.path = mainRouter.path;
-    v.routes.matches = mainRouter.matches;
-
-    if (!v.isNode) {
-      window.history.pushState(null, null, url);
-    }
-
-    args.unshift(RoutesContainer);
-    return v.mount.apply(v, args);
-  }
-
-  v.routes = function(elementContainer, router) {
-    if (elementContainer && router) {
-      mainRouter = router;
-      RoutesContainer = elementContainer;
-      // Activate the use of the router
-      if (!v.isNode) {
-        function onPopStateGoToRoute() {
-          v.routes.go(document.location.pathname);
-        }
-        window.addEventListener("popstate", onPopStateGoToRoute, false);
-        onPopStateGoToRoute();
-      }
-    }
-  };
-
-  v.routes.url = "";
-  v.routes.params = {};
-  v.routes.query = {};
-  v.routes.path = "";
-  v.routes.matches = [];
-
-  v.routes.go = function(...args) {
-    let parentComponent;
-    let url;
-
-    if (args[0]) {
-      let arg = args[0];
-      let viewMethod = "view" in Object(arg) ? arg.view : arg;
-
-      if (typeof viewMethod === "function") {
-        parentComponent = args.shift();
-      }
-    }
-
-    if (typeof args[0] === "string") {
-      url = args.shift();
-    }
-
-    if (!url) {
-      throw new Error("v.router.url.required");
-    }
-
-    return runRoute(parentComponent, url, args);
-  };
-
-  v.routes.get = function() {
+  routes() {
     let routes = [];
-    mainRouter.paths.forEach((path) => {
+    this.paths.forEach((path) => {
       if (path.method === "get") {
         routes.push(path.path);
       }
     });
     return routes;
-  };
+  }
 
-  v.directive("route", (url, vnode, oldnode) => {
-    vnode.props.href = url;
-    vnode.props.onclick = (e) => {
-      if (typeof url === "string" && url.length > 0) {
-        if (url.charAt(0) !== "/") {
-          let current = v.routes.current
-            .split("?", 2)
-            .shift()
-            .split("/");
-          current.pop();
-          url = `${current.join("/")}/${url}`;
-        }
+  async go(path, parentComponent) {
+    if (!path) {
+      throw new Error("router.url.required");
+    }
 
-        v.routes.go(url);
+    let parts = path.split("?", 2);
+    let urlParts = parts[0].replace(/(.+)\/$/, "$1");
+    let queryParts = parts[1];
+    this.url = path;
+    this.query = parseQuery(queryParts);
+
+    let middlewares = searchMiddlewares(this, urlParts);
+
+    let component = await searchComponent(this, middlewares);
+
+    if (!component) {
+      throw new Error(`The url ${path} requested wasn't found`);
+    }
+
+    if (parentComponent) {
+      let childComponent = this.v.isVnodeComponent(component) ? component : this.v(component, {});
+      if (this.v.isVnodeComponent(parentComponent)) {
+        parentComponent.children.push(childComponent);
+      } else {
+        parentComponent = this.v(parentComponent, {}, childComponent);
       }
-      e.preventDefault();
-    };
+      component = parentComponent;
+    }
 
-    v.updateProperty("href", vnode, oldnode);
-    v.updateProperty("onclick", vnode, oldnode);
-  });
-};
+    if (!this.v.isNodeJs) {
+      window.history.pushState(null, null, url);
+    }
+
+    if (this.v.current.component === component) {
+      return this.v.update(component);
+    }
+
+    return this.v.mount(this.container, component);
+  }
+}
+
+function plugin(v) {
+  const mount = v.mount;
+  v.mount = (elementContainer, routerOrComponent) => {
+    if (routerOrComponent instanceof Router === false) {
+      return mount(elementContainer, routerOrComponent);
+    }
+
+    routerOrComponent.container = elementContainer;
+    routerOrComponent.v = v;
+
+    // Activate the use of the router
+    if (!v.isNodeJs) {
+      function onPopStateGoToRoute() {
+        routerOrComponent.go(document.location.pathname);
+      }
+      window.addEventListener("popstate", onPopStateGoToRoute, false);
+      onPopStateGoToRoute();
+    }
+
+    v.directive("route", (url, vnode, oldnode) => {
+      vnode.props.href = url;
+      vnode.props.onclick = (e) => {
+        if (typeof url === "string" && url.length > 0) {
+          if (url.charAt(0) !== "/") {
+            let current = routerOrComponent.current.split("?", 2).shift().split("/");
+            current.pop();
+            url = `${current.join("/")}/${url}`;
+          }
+
+          routerOrComponent.go(url);
+        }
+        e.preventDefault();
+      };
+
+      v.setAttribute("href", vnode, oldnode);
+      v.setAttribute("onclick", vnode, oldnode);
+    });
+  };
+}
+
+plugin.Router = Router;
 
 plugin.default = plugin;
 module.exports = plugin;

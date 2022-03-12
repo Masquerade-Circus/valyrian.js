@@ -1,14 +1,13 @@
-import "../lib";
-
 import expect from "expect";
 import nodePlugin from "../plugins/node";
+import { v } from "../lib";
 
-v.usePlugin(nodePlugin);
+v.use(nodePlugin);
 
 describe("Hyperscript", () => {
   it("should create a div element", () => {
     expect(v("div")).toEqual({
-      name: "div",
+      tag: "div",
       props: {},
       children: []
     });
@@ -16,7 +15,7 @@ describe("Hyperscript", () => {
 
   it("should create a div element with a text child", () => {
     expect(v("div", null, "Hello")).toEqual({
-      name: "div",
+      tag: "div",
       props: {},
       children: ["Hello"]
     });
@@ -24,11 +23,11 @@ describe("Hyperscript", () => {
 
   it("should create a div element with an element child", () => {
     expect(v("div", null, v("span"))).toEqual({
-      name: "div",
+      tag: "div",
       props: {},
       children: [
         {
-          name: "span",
+          tag: "span",
           props: {},
           children: []
         }
@@ -38,7 +37,7 @@ describe("Hyperscript", () => {
 
   it("should create a div element with comma separated children", () => {
     expect(v("div", null, "Hello ", "world")).toEqual({
-      name: "div",
+      tag: "div",
       props: {},
       children: ["Hello ", "world"]
     });
@@ -46,7 +45,7 @@ describe("Hyperscript", () => {
 
   it("should create a div element with array of children", () => {
     expect(v("div", null, ["Hello ", "world"])).toEqual({
-      name: "div",
+      tag: "div",
       props: {},
       children: [["Hello ", "world"]]
     });
@@ -54,12 +53,12 @@ describe("Hyperscript", () => {
 
   it("should create a div element with mixed array of children and comma separated children", () => {
     expect(v("div", null, ["Hello ", "world"], v("span", null, "Whats up"))).toEqual({
-      name: "div",
+      tag: "div",
       props: {},
       children: [
         ["Hello ", "world"],
         {
-          name: "span",
+          tag: "span",
           props: {},
           children: ["Whats up"]
         }
@@ -69,7 +68,7 @@ describe("Hyperscript", () => {
 
   it("should create a div element with mixed nested arrays of children ", () => {
     expect(v("div", null, ["Hello ", "world", ["Only", ["for", "this", ["time"]]]])).toEqual({
-      name: "div",
+      tag: "div",
       props: {},
       children: [["Hello ", "world", ["Only", ["for", "this", ["time"]]]]]
     });
@@ -77,7 +76,7 @@ describe("Hyperscript", () => {
 
   it("should create a div element with props", () => {
     expect(v("div", { id: "unique", class: "unique" })).toEqual({
-      name: "div",
+      tag: "div",
       props: {
         id: "unique",
         class: "unique"
@@ -89,12 +88,12 @@ describe("Hyperscript", () => {
   it("should create a div element from string", () => {
     expect(v.trust('<div id="unique" class="unique">Hola mundo</div>')).toEqual([
       {
-        name: "div",
+        tag: "div",
         props: {
           id: "unique",
           class: "unique"
         },
-        children: [{ nodeValue: "Hola mundo", dom: expect.anything() }],
+        children: [expect.objectContaining({ nodeValue: "Hola mundo", dom: expect.anything() })],
         dom: expect.anything()
       }
     ]);
@@ -104,7 +103,7 @@ describe("Hyperscript", () => {
     let date = new Date();
 
     expect(v("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]])).toEqual({
-      name: "div",
+      tag: "div",
       props: {},
       children: [[null, "Hello", undefined, 1, date, { hello: "world" }, ["Hello"]]]
     });

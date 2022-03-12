@@ -1,9 +1,10 @@
-import "../lib";
+import plugin, {Store} from "../plugins/store";
 
-import StorePlugin from "../plugins/store";
 import expect from "expect";
+import { v } from "../lib/index";
 
-v.usePlugin(StorePlugin);
+v.use(plugin);
+
 
 function getNewStore() {
   let mainModule = {
@@ -45,18 +46,18 @@ function getNewStore() {
     }
   };
 
-  return new v.Store(mainModule);
+  return new Store(mainModule);
 }
 
 // eslint-disable-next-line max-lines-per-function
 describe("Store slim", () => {
   it("Create empty state if state is not passed", () => {
-    let store = new v.Store();
+    let store = new Store();
     expect(store.state).toBeDefined();
   });
 
   it("Use deepFrozen to froze the state", () => {
-    let store = new v.Store({
+    let store = new Store({
       state: {
         a: {
           b: {
@@ -149,8 +150,8 @@ describe("Store slim", () => {
       }
     };
 
-    const store1 = new v.Store(myModule);
-    const store2 = new v.Store(myModule);
+    const store1 = new Store(myModule);
+    const store2 = new Store(myModule);
 
     store1.commit("increment", 5);
     store2.commit("increment", 3);

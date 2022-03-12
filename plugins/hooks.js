@@ -1,91 +1,161 @@
-let plugin = function (v) {
-  let UND;
+let v = {
+  current: {}
+};
 
-  v.createHook = function ({ name, init, update, response }) {
-    name = `use${name.charAt(0).toUpperCase()}${name.slice(1).toLowerCase()}`;
-    if (!v[name]) {
-      v[name] = (...args) => {
-        let { component, parentVnode, oldParentVnode } = v.current;
+function createHook({ create, update, remove, returnValue }) {
+  return (...args) => {
+    let { component, vnode, oldVnode, app } = v.current;
 
-        if (parentVnode.components === UND) {
-          parentVnode.components = [];
-        }
-
-        if (parentVnode.components.indexOf(component) === -1) {
-          parentVnode.components.push(component);
-        }
-
-        let hook;
-        let oldComponentNode = oldParentVnode && oldParentVnode.components && oldParentVnode.components[parentVnode.components.length - 1];
-        let oldMethod = oldComponentNode && ("view" in oldComponentNode.component ? oldComponentNode.component.view : oldComponentNode.component);
-        let currentMethod = "view" in component.component ? component.component.view : component.component;
-
-        if (component.hooks === UND) {
-          component.hooks = [];
-        }
-        let hookIndex = component.hooks.length;
-
-        if (oldMethod === currentMethod && "hooks" in oldComponentNode && oldComponentNode.hooks[hookIndex] !== UND) {
-          component.hooks = oldComponentNode.hooks;
-          hook = oldComponentNode.hooks[hookIndex];
-          if (update) {
-            update(hook, ...args);
-          }
-        } else {
-          hook = init(...args);
-          component.hooks.push(hook);
-        }
-
-        if (response) {
-          return response(hook);
-        }
-      };
+    // Init the components array for the current vnode
+    if (vnode.components === undefined) {
+      vnode.components = [];
+      app.onUnmount.push(() => {
+        Reflect.deleteProperty(vnode, "components");
+      });
     }
-  };
 
-  v.createHook({
-    name: "state",
-    init: (value) => {
-      let state = value;
-      let setState = (value) => (state = value);
+    // Add the component to the components array if it's not already there
+    if (vnode.components.indexOf(component) === -1) {
+      vnode.components.push(component);
+    }
 
-      let stateObj = Object.create(null);
-      stateObj.toJSON = stateObj.toString = stateObj.valueOf = () => (typeof state === "function" ? state() : state);
+    // Init the component hooks array
+    if (component.hooks === undefined) {
+      component.hooks = [];
+      app.onUnmount.push(() => {
+        Reflect.deleteProperty(component, "hooks");
+      });
+    }
+    let hook;
 
-      return [stateObj, setState];
-    },
-    response: (hook) => hook
-  });
+    if (!oldVnode || !oldVnode.components || oldVnode.components[vnode.components.length - 1] !== component) {
+      hook = create(...args);
+      component.hooks.push(hook);
 
-  // Effect hook
-  function callHook(hook, changes) {
-    let { prev } = hook;
-    if (!changes) {
-      hook.onCleanup = hook.effect();
-    } else if (changes.length > 0) {
-      for (let i = 0, l = changes.length; i < l; i++) {
-        if (changes[i] !== prev[i]) {
-          hook.prev = changes;
-          hook.onCleanup = hook.effect();
-          break;
-        }
+      if (remove) {
+        // Add the hook to the onRemove array
+        app.onUnmount.push(() => remove(hook));
+      }
+    } else {
+      hook = component.hooks[component.hooks.length - 1];
+      if (update) {
+        update(hook, ...args);
       }
     }
 
+    if (returnValue) {
+      return returnValue(hook);
+    }
+
+    return hook;
+  };
+}
+
+const useState = createHook({
+  create: (value) => {
+    let state = value;
+    let setState = (value) => (state = value);
+
+    let stateObj = Object.create(null);
+    stateObj.toJSON = stateObj.toString = stateObj.valueOf = () => (typeof state === "function" ? state() : state);
+
+    return [stateObj, setState];
+  }
+});
+
+// Effect hook
+const useEffect = createHook({
+  create: (effect, changes) => {
+    let hook = { effect, prev: [] };
+    // on unmount
+    if (changes === null) {
+      hook.onRemove = effect;
+      return hook;
+    }
+
+    // on create
+    hook.prev = changes;
+    hook.onCleanup = hook.effect();
+    return hook;
+  },
+  update: (hook, effect, changes) => {
+    // on update
+    if (typeof changes === "undefined") {
+      hook.prev = changes;
+      if (typeof hook.onCleanup === "function") {
+        hook.onCleanup();
+      }
+      hook.onCleanup = hook.effect();
+      return;
+    }
+
+    // on update if there are changes
+    if (Array.isArray(changes)) {
+      for (let i = 0, l = changes.length; i < l; i++) {
+        if (changes[i] !== hook.prev[i]) {
+          hook.prev = changes;
+          if (typeof hook.onCleanup === "function") {
+            hook.onCleanup();
+          }
+          hook.onCleanup = hook.effect();
+          return;
+        }
+      }
+    }
+  },
+  remove: (hook) => {
     if (typeof hook.onCleanup === "function") {
-      v.onCleanup(hook.onCleanup);
+      hook.onCleanup();
+    }
+    if (typeof hook.onRemove === "function") {
+      hook.onRemove();
     }
   }
-  v.createHook({
-    name: "effect",
-    init: (effect, changes) => {
-      let hook = { effect, prev: changes };
-      callHook(hook);
-      return hook;
-    },
-    update: (hook, effect, changes) => callHook(hook, changes)
-  });
-};
+});
+
+const useRef = createHook({
+  create: (initialValue) => {
+    v.directive("ref", (ref, vnode) => {
+      ref.current = vnode.dom;
+    });
+    return { current: initialValue };
+  }
+});
+
+const useCallback = createHook({
+  create: (callback) => {
+    return callback;
+  }
+});
+
+const useMemo = createHook({
+  create: (callback, changes) => {
+    return { callback, changes, value: callback() };
+  },
+  update: (hook, callback, changes) => {
+    for (let i = 0, l = changes.length; i < l; i++) {
+      if (changes[i] !== hook.changes[i]) {
+        hook.changes = changes;
+        hook.value = callback();
+        return;
+      }
+    }
+  },
+  returnValue: (hook) => {
+    return hook.value;
+  }
+});
+
+function plugin(vInstance) {
+  v = vInstance;
+}
+
+plugin.createHook = createHook;
+plugin.useState = useState;
+plugin.useEffect = useEffect;
+plugin.useRef = useRef;
+plugin.useCallback = useCallback;
+plugin.useMemo = useMemo;
 
 plugin.default = plugin;
 module.exports = plugin;

@@ -1,27 +1,17 @@
-let { compare, benchmark, before } = require("buffalo-test");
+const { before, benchmark, compare } = require("buffalo-test");
 
-import "../lib/index.ts";
-
-import expect from "expect";
-import fs from "fs";
-import nodePlugin from "../plugins/node";
-import vOld from "./index-old";
-
-let VNext = v;
-
-VNext.usePlugin(nodePlugin);
+const { v: VNext } = require("../lib/index.ts");
+const expect = require("expect");
+const nodePlugin = require("../plugins/node");
+const { v: vOld } = require("./index-old.ts");
 
 compare("hyperscript", () => {
   let date = new Date();
   before(async () => {
-    VNext.inline.extensions("ts");
-    await VNext.inline.ts("./lib/index.ts", { compact: true });
-    await VNext.inline.js("./bench/index-old.js", { compact: true });
-    console.log(VNext.inline.ts()[0].raw.length);
-    console.log(VNext.inline.js()[0].raw.length);
-
-    let compiled = fs.readFileSync("./dist/valyrian.min.js", "utf8");
-    console.log(compiled.length);
+    let { raw: newTs } = await nodePlugin.inline("./lib/index.ts", { compact: true, bundle: false });
+    let { raw: oldjs } = await nodePlugin.inline("./bench/index-old.ts", { compact: true, bundle: false });
+    console.log(oldjs.length);
+    console.log(newTs.length);
 
     expect(vOld("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]])).toEqual({
       name: "div",
@@ -29,7 +19,7 @@ compare("hyperscript", () => {
       children: [[null, "Hello", undefined, 1, date, { hello: "world" }, ["Hello"]]]
     });
     expect(VNext("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]])).toEqual({
-      name: "div",
+      tag: "div",
       props: {},
       children: [[null, "Hello", undefined, 1, date, { hello: "world" }, ["Hello"]]]
     });

@@ -11,7 +11,6 @@
 ![](https://img.shields.io/github/issues/masquerade-circus/valyrian.js.svg)
 ![](https://img.shields.io/snyk/vulnerabilities/npm/valyrian.js.svg)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/521f72fc6d61426783692b62d64a3643)](https://www.codacy.com/app/Masquerade-Circus/valyrian.js?utm_source=github.com\&utm_medium=referral\&utm_content=Masquerade-Circus/valyrian.js\&utm_campaign=Badge_Grade)
-[![Maintainability](https://api.codeclimate.com/v1/badges/c1263dd7fb4f90194625/maintainability)](https://codeclimate.com/github/Masquerade-Circus/valyrian.js/maintainability)
 [![Coverage Status](https://coveralls.io/repos/github/Masquerade-Circus/valyrian.js/badge.svg?branch=master)](https://coveralls.io/github/Masquerade-Circus/valyrian.js?branch=master)
 [![License](https://img.shields.io/github/license/masquerade-circus/valyrian.js.svg)](https://github.com/masquerade-circus/valyrian.js/blob/master/LICENSE)
 

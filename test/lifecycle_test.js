@@ -1,9 +1,8 @@
-import "../lib";
-
 import expect from "expect";
 import nodePlugin from "../plugins/node";
+import { v } from "../lib/index";
 
-v.usePlugin(nodePlugin);
+v.use(nodePlugin);
 
 describe("Lifecycle", () => {
   it("Mount and update", () => {
@@ -19,10 +18,10 @@ describe("Lifecycle", () => {
               calls.push("component oncreate");
             },
 
-            onbeforeupdate() {
+            shouldupdate() {
               // before dom element is updated
               // if you return false the update step is skipped
-              calls.push("component onbeforeupdate");
+              calls.push("component shouldupdate");
             },
 
             onupdate() {
@@ -98,24 +97,24 @@ describe("Lifecycle", () => {
     let expectedLifeCycleCalls = [
       "component oncreate",
       "oncreate",
-      "component onbeforeupdate",
+      "component shouldupdate",
       "component onupdate",
       "onremove",
       "onspanremove",
-      "component onbeforeupdate",
+      "component shouldupdate",
       "component onupdate",
       "oncreate",
-      "component onbeforeupdate",
+      "component shouldupdate",
       "component onupdate",
       "onupdate",
-      "component onbeforeupdate",
+      "component shouldupdate",
       "component onupdate",
       "onupdate",
       "onspanremove",
-      "component onbeforeupdate",
+      "component shouldupdate",
       "component onupdate",
       "onupdate",
-      "component onbeforeupdate",
+      "component shouldupdate",
       "component onupdate",
       "onremove",
       "onspanremove",
@@ -125,17 +124,17 @@ describe("Lifecycle", () => {
 
     result.push(v.mount("body", Lifecycle));
     s = 0;
-    result.push(v.update());
+    result.push(v.update(Lifecycle));
     s = 1;
-    result.push(v.update());
+    result.push(v.update(Lifecycle));
     s = 2;
-    result.push(v.update());
+    result.push(v.update(Lifecycle));
     s = 1;
-    result.push(v.update());
+    result.push(v.update(Lifecycle));
     s = 3;
-    result.push(v.update());
+    result.push(v.update(Lifecycle));
     s = 0;
-    result.push(v.update());
+    result.push(v.update(Lifecycle));
 
     expect(result).toEqual(expectedDom);
     expect(calls).toEqual(expectedLifeCycleCalls);

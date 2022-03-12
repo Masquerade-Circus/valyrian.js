@@ -1,6 +1,5 @@
 const { addHook } = require("pirates");
 const { transformSync } = require("esbuild");
-const fs = require("fs");
 
 addHook(
   (code, filePath) => {
@@ -8,8 +7,8 @@ addHook(
     let extension = fileName.split(".").pop();
 
     let loader = "default";
-    if (["js", "jsx", "ts", "tsx", "css", "json", "txt"].includes(extension)) {
-      if (["js", "jsx", "mjs", "ts", "tsx"].includes(extension)) {
+    if (["js", "cjs", "jsx", "ts", "tsx", "css", "json", "txt"].includes(extension)) {
+      if (["js", "cjs", "jsx", "mjs", "ts", "tsx"].includes(extension)) {
         loader = "tsx";
       } else if (extension === "txt") {
         loader = "text";
@@ -21,49 +20,17 @@ addHook(
     }
 
     let options = {
-      tsconfigRaw: {
-        compilerOptions: {
-          target: "ESNEXT",
-          module: "ESNEXT",
-          strict: true,
-          allowSyntheticDefaultImports: true,
-          allowJs: true,
-          esModuleInterop: true,
-          resolveJsonModule: true
-        }
-      },
-      loader,
+      sourcefile: filePath,
+      sourcemap: "inline",
       minify: false,
-      format: "cjs",
       target: "esnext",
-      logLevel: "warning",
+      loader: loader,
       jsxFactory: "v",
-      jsxFragment: "v.fragment"
+      jsxFragment: "v.fragment",
+
+      logLevel: "warning",
+      format: "cjs"
     };
-
-    // Check if tsconfig.json exists with fs module
-    if ((extension === "ts" || extension === "tsx") && fs.existsSync(process.cwd() + "/tsconfig.json")) {
-      let tsconfig = fs.readFileSync(process.cwd() + "/tsconfig.json", "utf8");
-
-      let tsconfigRaw = JSON.parse(tsconfig);
-      let compilerOptions = tsconfigRaw.compilerOptions || {};
-
-      options.tsconfigRaw = { ...options.tsconfigRaw, ...tsconfigRaw };
-      options.tsconfigRaw.compilerOptions = { ...options.tsconfigRaw.compilerOptions, ...compilerOptions };
-
-      if (compilerOptions.target) {
-        options.target = compilerOptions.target.toLowerCase();
-      }
-
-      if (compilerOptions.module) {
-        let format = compilerOptions.module.toLowerCase();
-        if (format === "commonjs") {
-          options.format = "cjs";
-        } else if (format.startsWith("es")) {
-          options.format = "esm";
-        }
-      }
-    }
 
     let { code: transformed } = transformSync(code, options);
     if (/"use strict"\;/gi.test(code) === false) {

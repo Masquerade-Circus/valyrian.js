@@ -1,86 +1,139 @@
-let { compare, benchmark, before } = require("buffalo-test");
+/* eslint-disable indent */
+let { compare, benchmark, before, afterCycle } = require("buffalo-test");
 
-import "../lib/index.ts";
+const { mount, update, unmount, v, use } = require("../lib/index");
 
-import expect from "expect";
-import nodePlugin from "../plugins/node";
-import vOld from "./index-old";
+const expect = require("expect");
+require("../plugins/node");
+const { v: vOld } = require("./index-old.ts");
+const plugin = require("../plugins/hooks");
+
+use(plugin);
+const useEffect = plugin.useEffect;
+const useMemo = plugin.useMemo;
+
+console.log(vOld);
+console.log(v);
 
 let VNext = v;
 
 let data = {
   before: [],
+  before2: [],
   update1: [],
   update2: []
 };
 
-function createNode({ className, i }) {
-  return {
-    class: className,
-    data: i,
-    onbeforeupdate(n, o) {
-      return n.props.data !== o.props.data || n.props.class !== o.props.class;
+function createNode({ className, i }, v) {
+  return v(
+    "div",
+    {
+      class: className,
+      data: i,
+      onbeforeupdate(n, o) {
+        return n.props.data !== o.props.data || n.props.class !== o.props.class;
+      },
+      id: className + i,
+      style: "font-size:" + i + "px",
+      autocomplete: "off",
+      focus: false,
+      onclick() {
+        // console.log("clicked", this);
+      }
     },
-    id: className + i,
-    style: "font-size:" + i + "px",
-    autocomplete: "off",
-    focus: false,
-    onclick() {
-      // console.log("clicked", this);
-    }
-  };
+    "Hello"
+  );
 }
 
 for (let i = 1000; i--; ) {
-  data.before.push(createNode({ className: "ok", i }));
+  data.before.push(createNode({ className: "ok", i }, vOld));
+  data.before2.push(createNode({ className: "ok", i }, VNext));
   if (i % 3) {
-    data.before.push(createNode({ className: "ok", i: i + 3 }));
+    data.before.push(createNode({ className: "ok", i: i + 3 }, vOld));
+    data.before2.push(createNode({ className: "ok", i: i + 3 }, VNext));
   } else {
-    data.before.push(createNode({ className: "not-ok", i }));
+    data.before.push(createNode({ className: "not-ok", i }, vOld));
+    data.before2.push(createNode({ className: "not-ok", i }, VNext));
   }
-  data.update2.push(createNode({ className: "ok", i: 1000 - i }));
+  data.update1.push(createNode({ className: "ok", i: 1000 - i }, vOld));
+  data.update2.push(createNode({ className: "ok", i: 1000 - i }, VNext));
 }
 
 compare("Mount and update: Mount multiple types", () => {
   let date = new Date();
   let useData = false;
   let Component = () => vOld("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]], useData ? data.before : null);
-  let Component2 = () => VNext("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]], useData ? data.before : null);
-  let Component3 = () => VNext("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]], useData ? data.before : null);
+  let Component2 = () => VNext("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]], useData ? data.before2 : null);
 
   before(() => {
     expect(vOld.mount("body", Component)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
-    expect(VNext.mount("body", Component2)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
-    expect(VNext.mount("body", Component3)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
+    expect(mount("body", Component2)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
+    vOld.unMount();
+    unmount(Component2);
     useData = true;
   });
 
-  benchmark("Valyrian 5.0.8", () => {
+  afterCycle(() => {
     vOld.unMount();
+    unmount(Component2);
+  });
+
+  benchmark("Valyrian 5.0.8", () => {
     vOld.mount("body", Component);
   });
 
   benchmark("Valyrian next", () => {
-    VNext.mount("body", Component2);
+    mount("body", Component2);
   });
 });
 
 compare("Mount and update: Mount single text", () => {
+  let Component = () => "hello world";
+  let Component2 = () => "hello world";
+
+  before(() => {
+    expect(vOld.mount("body", Component)).toEqual(`hello world`);
+    vOld.unMount();
+    expect(mount("body", Component2)).toEqual(`hello world`);
+    unmount(Component2);
+  });
+
+  afterCycle(() => {
+    vOld.unMount();
+    unmount(Component2);
+  });
+
+  benchmark("Valyrian 5.0.8", () => {
+    vOld.mount("body", Component);
+  });
+
+  benchmark("Valyrian next", () => {
+    mount("body", Component2);
+  });
+});
+
+compare("Mount and update: Mount single text in div", () => {
   let Component = () => vOld("div", null, ["hello world"]);
   let Component2 = () => VNext("div", null, ["hello world"]);
 
   before(() => {
     expect(vOld.mount("body", Component)).toEqual(`<div>hello world</div>`);
-    expect(VNext.mount("body", Component2)).toEqual(`<div>hello world</div>`);
+    expect(mount("body", Component2)).toEqual(`<div>hello world</div>`);
+    vOld.unMount();
+    unmount(Component2);
+  });
+
+  afterCycle(() => {
+    vOld.unMount();
+    unmount(Component2);
   });
 
   benchmark("Valyrian 5.0.8", () => {
-    vOld.unMount();
     vOld.mount("body", Component);
   });
 
   benchmark("Valyrian next", () => {
-    VNext.mount("body", Component2);
+    mount("body", Component2);
   });
 });
 
@@ -91,21 +144,30 @@ compare("Mount and update: Update multiple types", () => {
   let Component = () =>
     vOld("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]], useData ? (updateData ? data.update1 : data.before) : null);
   let Component2 = () =>
-    VNext("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]], useData ? (updateData ? data.update1 : data.before) : null);
+    VNext("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]], useData ? (updateData ? data.update2 : data.before2) : null);
 
-  before(() => {
-    expect(vOld.mount("body", Component)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
+  before(async () => {
+    let oldDate = date;
+    expect(vOld.mount("body", Component)).toEqual(`<div>Hello1${oldDate}[object Object]Hello</div>`);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    date = new Date();
     expect(vOld.update()).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
 
-    expect(VNext.mount("body", Component2)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
-    expect(VNext.update()).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
-    vOld.unMount();
+    date = oldDate;
+    let before = mount("body", Component2);
+    expect(before).toEqual(`<div>Hello1${oldDate}[object Object]Hello</div>`);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    date = new Date();
+    let after = update(Component2);
+    expect(after).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
+
     useData = true;
+    vOld.unMount();
+    vOld.mount("body", Component);
+    mount("body", Component2);
   });
 
   benchmark("Valyrian 5.0.8", () => {
-    vOld.unMount();
-    vOld.mount("body", Component);
     updateData = true;
     vOld.update();
     updateData = false;
@@ -116,13 +178,12 @@ compare("Mount and update: Update multiple types", () => {
   });
 
   benchmark("Valyrian next", () => {
-    VNext.mount("body", Component2);
     updateData = true;
-    VNext.update();
+    update(Component2);
     updateData = false;
-    VNext.update();
+    update(Component2);
     updateData = true;
-    VNext.update();
+    update(Component2);
     updateData = false;
   });
 });
@@ -134,16 +195,17 @@ compare("Mount and update: Update single text", () => {
 
   before(() => {
     expect(vOld.mount("body", Component)).toEqual(`<div>hello world</div>`);
-    expect(VNext.mount("body", Component2)).toEqual(`<div>hello world</div>`);
+    expect(mount("body", Component2)).toEqual(`<div>hello world</div>`);
     updateData = true;
     expect(vOld.update()).toEqual(`<div>hello moon</div>`);
-    expect(VNext.update()).toEqual(`<div>hello moon</div>`);
+    expect(update(Component2)).toEqual(`<div>hello moon</div>`);
     updateData = false;
+    vOld.unMount();
+    vOld.mount("body", Component);
+    mount("body", Component2);
   });
 
   benchmark("Valyrian 5.0.8", () => {
-    vOld.unMount();
-    vOld.mount("body", Component);
     updateData = true;
     vOld.update();
     updateData = false;
@@ -153,13 +215,12 @@ compare("Mount and update: Update single text", () => {
   });
 
   benchmark("Valyrian next", () => {
-    VNext.mount("body", Component2);
     updateData = true;
-    VNext.update();
+    update(Component2);
     updateData = false;
-    VNext.update();
+    update(Component2);
     updateData = true;
-    VNext.update();
+    update(Component2);
   });
 });
 
@@ -207,6 +268,7 @@ compare("Mount and update: Render list", () => {
           })
         );
 
+      vOld.unMount();
       let before = vOld.mount("body", component);
       keys = [...test.set];
       let after = vOld.update();
@@ -230,9 +292,9 @@ compare("Mount and update: Render list", () => {
           })
         );
 
-      let before = VNext.mount("body", component);
+      let before = mount("body", component);
       keys = [...test.set];
-      let after = VNext.update();
+      let after = update(component);
 
       let afterString = getString(test.set);
 
@@ -275,10 +337,10 @@ compare("Mount and update: Render list", () => {
         })
       );
 
-    VNext.mount("body", component);
+    mount("body", component);
     for (let test of tests) {
       keys = [...test.set];
-      VNext.update();
+      update(component);
     }
   });
 });
@@ -351,9 +413,9 @@ compare("Mount and update: Render keyed list", () => {
         );
 
       console.log(test.name);
-      let before = VNext.mount("body", component);
+      let before = mount("body", component);
       keys = [...test.set];
-      let after = VNext.update();
+      let after = update(component);
 
       let afterString = getString(test.set);
 
@@ -397,9 +459,9 @@ compare("Mount and update: Render keyed list", () => {
       );
 
     for (let test of tests) {
-      VNext.mount("body", component);
+      mount("body", component);
       keys = [...test.set];
-      VNext.update();
+      update(component);
     }
   });
 });
@@ -476,9 +538,9 @@ compare("Mount and update: Render keyed list -> stress", () => {
         );
 
       console.log(test.name);
-      let before = VNext.mount("body", component);
+      let before = mount("body", component);
       keys = [...test.set];
-      let after = VNext.update();
+      let after = update(component);
 
       let afterString = getString(test.set);
 
@@ -522,9 +584,9 @@ compare("Mount and update: Render keyed list -> stress", () => {
       );
 
     for (let test of tests) {
-      VNext.mount("body", component);
+      mount("body", component);
       keys = [...test.set];
-      VNext.update();
+      update(component);
     }
   });
 });
@@ -581,9 +643,9 @@ compare("Mount and update: Render keyed list -> swap keys on large set", () => {
         })
       );
 
-    let before = VNext.mount("body", component);
+    let before = mount("body", component);
     keys = [...updatedLargeSet];
-    let after = VNext.update();
+    let after = update(component);
 
     let afterString = getString(updatedLargeSet);
 
@@ -623,8 +685,189 @@ compare("Mount and update: Render keyed list -> swap keys on large set", () => {
         })
       );
 
-    VNext.mount("body", component);
+    mount("body", component);
     keys = [...updatedLargeSet];
-    VNext.update();
+    update(component);
+  });
+});
+
+compare("Mount and update: Update class", () => {
+  // Init with 1000 words
+  let words = [...Array(1000).keys()].map((key) => `word ${key}`);
+  let useData = false;
+  let updateClass = "";
+  let updateClass2 = "";
+  let Component = () =>
+    vOld(
+      "div",
+      {},
+      useData
+        ? words.map((word) =>
+            vOld(
+              "span",
+              { class: updateClass === word ? "selected" : false, onbeforeupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class },
+              word
+            )
+          )
+        : vOld(
+            "div",
+            { class: updateClass === "test" ? "test" : false, onbeforeupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class },
+            "test"
+          )
+    );
+  let Component2 = () => (
+    <div>
+      {useData ? (
+        words.map((word) => (
+          <span class={updateClass2 === word ? "selected" : false} shouldupdate={(vnode, oldVnode) => vnode.props.class !== oldVnode.props.class}>
+            {word}
+          </span>
+        ))
+      ) : (
+        <div class={updateClass2 === "test" ? "test" : false} shouldupdate={(vnode, oldVnode) => vnode.props.class !== oldVnode.props.class}>
+          test
+        </div>
+      )}
+    </div>
+  );
+
+  before(() => {
+    let before = vOld.mount("body", Component);
+    expect(before).toEqual("<div><div>test</div></div>");
+    let before2 = mount("body", Component2);
+    expect(before2).toEqual("<div><div>test</div></div>");
+
+    updateClass = "test";
+    updateClass2 = "test";
+
+    let after = vOld.update();
+    expect(after).toEqual('<div><div class="test">test</div></div>');
+    let after2 = update(Component2);
+    expect(after2).toEqual('<div><div class="test">test</div></div>');
+    useData = true;
+    updateClass = "";
+    updateClass2 = "";
+  });
+
+  benchmark("vOld update", () => {
+    vOld.update();
+    updateClass = updateClass === "word 10" ? "word 100" : "word 10";
+  });
+
+  benchmark("VNext update", () => {
+    update(Component2);
+    updateClass2 = updateClass2 === "word 10" ? "word 100" : "word 10";
+  });
+});
+
+compare("Mount and update: Update class with hooks vs shouldupdate property", () => {
+  // Init with 1000 words
+  let words = [...Array(1000).keys()].map((key) => `word ${key}`);
+  let useData = false;
+  let updateClass = "";
+  let updateClass2 = "";
+  let Component = () => (
+    <div>
+      {useData ? (
+        words.map((word) => (
+          <span class={updateClass2 === word ? "selected" : false} shouldupdate={(vnode, oldVnode) => vnode.props.class !== oldVnode.props.class}>
+            {word}
+          </span>
+        ))
+      ) : (
+        <div class={updateClass2 === "test" ? "test" : false} shouldupdate={(vnode, oldVnode) => vnode.props.class !== oldVnode.props.class}>
+          test
+        </div>
+      )}
+    </div>
+  );
+
+  let Component2 = () => (
+    <div>
+      {useData
+        ? words.map((word) =>
+            useMemo(() => <span class={updateClass2 === word ? "selected" : false}>{word}</span>, [updateClass2 === word ? "selected" : false])
+          )
+        : useMemo(() => <div class={updateClass2 === "test" ? "test" : false}>test</div>, [updateClass2 === "test" ? "test" : false])}
+    </div>
+  );
+
+  before(() => {
+    let before = mount("body", Component);
+    expect(before).toEqual("<div><div>test</div></div>");
+    let before2 = mount("body", Component2);
+    expect(before2).toEqual("<div><div>test</div></div>");
+
+    updateClass = "test";
+    updateClass2 = "test";
+
+    let after = update(Component);
+    expect(after).toEqual('<div><div class="test">test</div></div>');
+    let after2 = update(Component2);
+    expect(after2).toEqual('<div><div class="test">test</div></div>');
+    useData = true;
+    updateClass = "";
+    updateClass2 = "";
+  });
+
+  benchmark("shouldupdate property", () => {
+    update(Component);
+    updateClass = updateClass === "word 10" ? "word 100" : "word 10";
+  });
+
+  benchmark("useMemo hook", () => {
+    update(Component2);
+    updateClass2 = updateClass2 === "word 10" ? "word 100" : "word 10";
+  });
+});
+
+compare("Lifecycle vs hooks", () => {
+  let lifecycleCount = 0;
+  let plusLifeCycle = () => (lifecycleCount += 1);
+
+  let hooksCount = 0;
+  let plusHooks = () => (hooksCount += 1);
+
+  let LifecycleComponent = () => {
+    return (
+      <div oncreate={plusLifeCycle} onupdate={plusLifeCycle} onremove={plusLifeCycle}>
+        Hello world
+      </div>
+    );
+  };
+
+  let HooksComponent = () => {
+    // useEffect(plusHooks, []); // Only create replaced by the next line
+    useEffect(plusHooks); // Create & Update
+    useEffect(plusHooks, null); // Remove
+    return <div>Hello world</div>;
+  };
+
+  before(() => {
+    mount("body", LifecycleComponent);
+    expect(lifecycleCount).toEqual(1);
+    update(LifecycleComponent);
+    expect(lifecycleCount).toEqual(2);
+    unmount(LifecycleComponent);
+    expect(lifecycleCount).toEqual(3);
+
+    mount("body", HooksComponent);
+    expect(hooksCount).toEqual(1);
+    update(HooksComponent);
+    expect(hooksCount).toEqual(2);
+    unmount(HooksComponent);
+    expect(hooksCount).toEqual(3);
+  });
+
+  benchmark(`Hooks`, () => {
+    mount("body", HooksComponent);
+    update(HooksComponent);
+    unmount(HooksComponent);
+  });
+
+  benchmark(`Lifecycle`, () => {
+    mount("body", LifecycleComponent);
+    update(LifecycleComponent);
+    unmount(LifecycleComponent);
   });
 });

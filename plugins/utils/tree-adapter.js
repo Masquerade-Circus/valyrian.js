@@ -174,13 +174,20 @@ class Node {
 class Text extends Node {
   constructor(text) {
     super(3, "#text");
-    this.textContent = text;
+    this.node_value = String(text);
   }
+  node_value = "";
   set textContent(text) {
-    this.nodeValue = String(text);
+    this.node_value = String(text);
   }
   get textContent() {
-    return this.nodeValue;
+    return this.node_value;
+  }
+  set nodeValue(text) {
+    this.node_value = String(text);
+  }
+  get nodeValue() {
+    return this.node_value;
   }
 }
 
@@ -363,8 +370,7 @@ class Element extends Node {
   cloneNode() {
     let div = document.createElement("div");
     div.innerHTML = this.outerHTML;
-    let el = div.firstChild;
-    return el;
+    return div.firstChild;
   }
 
   get firstChild() {

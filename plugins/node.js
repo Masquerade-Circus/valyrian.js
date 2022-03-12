@@ -1,7 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 let fs = require("fs");
 let path = require("path");
-require("ts-node/register");
 
 let fetch = require("node-fetch");
 let FormData = require("form-data");
@@ -14,10 +13,6 @@ let CleanCSS = require("clean-css");
 
 const tsc = require("tsc-prog");
 
-global.fetch = fetch;
-global.FormData = FormData;
-global.document = treeAdapter.createDocument();
-
 let errorHandler = (resolve, reject) => (err) => {
   if (err) {
     return reject(err);
@@ -26,176 +21,91 @@ let errorHandler = (resolve, reject) => (err) => {
   resolve();
 };
 
-function fileMethodFactory() {
-  let prop = [];
-  return function (file, options = {}) {
-    if (!file) {
-      return prop;
-    }
+async function inline(file, options = {}) {
+  if (typeof file === "string") {
+    let ext = file.split(".").pop();
+    if (/(js|cjs|jsx|mjs|ts|tsx)/.test(ext)) {
+      if (/(ts|tsx)/.test(ext) && !options.noValidate) {
+        let declarationDir = options.declarationDir;
+        let emitDeclaration = !!declarationDir;
 
-    let asyncMethod = async () => {
-      let contents = "";
-      if (typeof file === "string") {
-        let ext = file.split(".").pop();
-        if (/(js|jsx|mjs|ts|tsx)/.test(ext)) {
-          if (/(ts|tsx)/.test(ext) && !options.noValidate) {
-            let declarationDir = options.declarationDir;
-            let emitDeclaration = !!declarationDir;
+        let tscProgOptions = {
+          basePath: process.cwd(), // always required, used for relative paths
+          configFilePath: "tsconfig.json", // config to inherit from (optional)
+          files: [file],
+          include: ["**/*.ts", "**/*.js", "**/*.tsx", "**/*.jsx", "**/*.mjs"],
+          exclude: ["test*/**/*", "**/*.test.ts", "**/*.spec.ts", "dist/**"],
+          pretty: true,
+          copyOtherToOutDir: false,
+          clean: emitDeclaration ? [declarationDir] : [],
+          ...(options.tsc || {}),
+          compilerOptions: {
+            rootDir: "./",
+            outDir: "dist",
+            noEmitOnError: true,
+            noEmit: !emitDeclaration,
+            declaration: emitDeclaration,
+            declarationDir,
+            emitDeclarationOnly: emitDeclaration,
+            allowJs: true,
+            esModuleInterop: true,
+            inlineSourceMap: true,
+            resolveJsonModule: true,
+            removeComments: true,
+            ...(options.tsc || {}).compilerOptions
+          },
+          jsxFactory: "v",
+          jsxFragment: "v.fragment"
+        };
 
-            let tscProgOptions = {
-              basePath: process.cwd(), // always required, used for relative paths
-              configFilePath: "tsconfig.json", // config to inherit from (optional)
-              files: [file],
-              include: ["**/*.ts", "**/*.js", "**/*.tsx", "**/*.jsx", "**/*.mjs"],
-              exclude: ["test*/**/*", "**/*.test.ts", "**/*.spec.ts", "dist/**"],
-              pretty: true,
-              copyOtherToOutDir: false,
-              clean: emitDeclaration ? [declarationDir] : [],
-              ...(options.tsc || {}),
-              compilerOptions: {
-                rootDir: "./",
-                outDir: "dist",
-                noEmitOnError: true,
-                noEmit: !emitDeclaration,
-                declaration: emitDeclaration,
-                declarationDir,
-                emitDeclarationOnly: emitDeclaration,
-                allowJs: true,
-                esModuleInterop: true,
-                inlineSourceMap: true,
-                resolveJsonModule: true,
-                removeComments: true,
-                ...(options.tsc || {}).compilerOptions
-              },
-              jsxFactory: "v",
-              jsxFragment: "v.fragment"
-            };
+        // eslint-disable-next-line no-console
+        console.log("tsc", tscProgOptions);
 
-            tsc.build(tscProgOptions);
-          }
-
-          let result = esbuild.buildSync({
-            entryPoints: [file],
-            bundle: true,
-            sourcemap: "external",
-            write: false,
-            minify: options.compact,
-            outdir: "out",
-            target: "esnext",
-            jsxFactory: "v",
-            jsxFragment: "v.fragment",
-            loader: { ".js": "jsx", ".ts": "tsx", ".mjs": "jsx" },
-            ...(options.esbuild || {})
-          });
-
-          if (options.compact) {
-            let result2 = await terser.minify(result.outputFiles[1].text, {
-              sourceMap: {
-                content: result.outputFiles[0].text.toString()
-              },
-              compress: {
-                booleans_as_integers: false
-              },
-              output: {
-                wrap_func_args: false
-              },
-              ecma: 2020,
-              ...(options.terser || {})
-            });
-
-            let mapBase64 = Buffer.from(result2.map.toString()).toString("base64");
-            let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
-            contents = { raw: result2.code, map: suffix, file };
-          } else {
-            let mapBase64 = Buffer.from(result.outputFiles[0].text.toString()).toString("base64");
-            let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
-            contents = { raw: result.outputFiles[1].text, map: suffix, file };
-          }
-        } else if (/(css|scss|styl)/.test(ext)) {
-          let result = new CleanCSS({
-            sourceMap: true,
-            level: {
-              1: {
-                roundingPrecision: "all=3"
-              },
-              2: {
-                restructureRules: true // controls rule restructuring; defaults to false
-              }
-            }
-          }).minify([file]);
-
-          contents = { raw: result.styles, map: null, file };
-        } else {
-          contents = { raw: fs.readFileSync(file, "utf8"), map: null, file };
-        }
-      } else if (typeof file === "object" && "raw" in file) {
-        contents = { map: null, ...file };
+        tsc.build(tscProgOptions);
       }
 
-      prop.push(contents);
-      return prop;
-    };
+      let esbuildOptions = {
+        entryPoints: [file],
+        bundle: "bundle" in options ? options.bundle : true,
+        sourcemap: "external",
+        write: false,
+        minify: options.compact,
+        outdir: "out",
+        target: "esnext",
+        jsxFactory: "v",
+        jsxFragment: "v.fragment",
+        loader: { ".js": "jsx", ".ts": "tsx", ".mjs": "jsx" },
+        ...(options.esbuild || {})
+      };
 
-    return asyncMethod();
-  };
-}
+      let result = esbuild.buildSync(esbuildOptions);
 
-async function inline(...args) {
-  for (let item of args) {
-    let ext = item.split(".").pop();
-    if (!inline[ext]) {
-      inline[ext] = fileMethodFactory();
-    }
-    await inline[ext](item);
-  }
-}
+      if (options.compact) {
+        let result2 = await terser.minify(result.outputFiles[1].text, {
+          sourceMap: {
+            content: result.outputFiles[0].text.toString()
+          },
+          compress: {
+            booleans_as_integers: false
+          },
+          output: {
+            wrap_func_args: false
+          },
+          ecma: 2020,
+          ...(options.terser || {})
+        });
 
-inline.extensions = (...extensions) => {
-  for (let ext of extensions) {
-    if (!inline[ext]) {
-      inline[ext] = fileMethodFactory();
-    }
-  }
-};
-
-inline.css = fileMethodFactory();
-inline.js = fileMethodFactory();
-
-inline.uncss = (function () {
-  let prop = "";
-  return function (renderedHtml, options = {}) {
-    if (!renderedHtml) {
-      return prop;
-    }
-
-    let asyncMethod = async () => {
-      let html = await Promise.all(renderedHtml);
-
-      let contents = html.map((item) => {
-        return {
-          raw: item,
-          extension: "html"
-        };
-      });
-
-      let purgecss = new PurgeCSS();
-      let css = inline
-        .css()
-        .map((item) => item.raw)
-        .join("");
-
-      let output = await purgecss.purge({
-        fontFace: true,
-        keyframes: true,
-        variables: true,
-        defaultExtractor: (content) => content.match(/[A-Za-z0-9-_/:@]*[A-Za-z0-9-_/:@/]+/g) || [],
-        ...options,
-        content: contents,
-        css: [{ raw: css }]
-      });
-
-      prop = new CleanCSS({
-        sourceMap: false,
+        let mapBase64 = Buffer.from(result2.map.toString()).toString("base64");
+        let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
+        return { raw: result2.code, map: suffix, file };
+      } else {
+        let mapBase64 = Buffer.from(result.outputFiles[0].text.toString()).toString("base64");
+        let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
+        return { raw: result.outputFiles[1].text, map: suffix, file };
+      }
+    } else if (/(css|scss|styl)/.test(ext)) {
+      let result = new CleanCSS({
+        sourceMap: true,
         level: {
           1: {
             roundingPrecision: "all=3"
@@ -203,15 +113,54 @@ inline.uncss = (function () {
           2: {
             restructureRules: true // controls rule restructuring; defaults to false
           }
-        }
-      }).minify(output[0].css).styles;
+        },
+        ...(options.cleanCss || {})
+      }).minify([file]);
 
-      return prop;
+      return { raw: result.styles, map: null, file };
+    } else {
+      return { raw: fs.readFileSync(file, "utf8"), map: null, file };
+    }
+  } else if (typeof file === "object" && "raw" in file) {
+    return { map: null, ...file };
+  }
+}
+
+inline.uncss = async function (renderedHtml, css, options = {}) {
+  let html = await Promise.all(renderedHtml);
+
+  let contents = html.map((item) => {
+    return {
+      raw: item,
+      extension: "html"
     };
+  });
 
-    return asyncMethod();
-  };
-})();
+  let purgecss = new PurgeCSS();
+
+  let output = await purgecss.purge({
+    fontFace: true,
+    keyframes: true,
+    variables: true,
+    defaultExtractor: (content) => content.match(/[A-Za-z0-9-_/:@]*[A-Za-z0-9-_/:@/]+/g) || [],
+    ...options,
+    content: contents,
+    css: [{ raw: css }]
+  });
+
+  return new CleanCSS({
+    sourceMap: false,
+    level: {
+      1: {
+        roundingPrecision: "all=3"
+      },
+      2: {
+        restructureRules: true // controls rule restructuring; defaults to false
+      }
+    },
+    ...(options.cleanCss || {})
+  }).minify(output[0].css).styles;
+};
 
 function sw(file, options = {}) {
   let swfiletemplate = path.resolve(__dirname, "./node.sw.tpl.js");
@@ -341,25 +290,36 @@ icons.options = {
   }
 };
 
-let plugin = function (v) {
-  v.inline = inline;
-  v.sw = sw;
-  v.icons = icons;
-  v.htmlToDom = treeAdapter.htmlToDom;
-  v.domToHtml = treeAdapter.domToHtml;
-  v.domToHyperscript = treeAdapter.domToHyperscript;
-  v.htmlToHyperscript = treeAdapter.htmlToHyperscript;
-  v.hyperscriptToHtml = (...args) => v.mount("div", () => args);
-};
+let mount = () => {};
+let unmount = () => {};
+let isInUse = false;
+
+function plugin(v) {
+  mount = v.mount;
+  unmount = v.unmount;
+  isInUse = true;
+  global.fetch = fetch;
+  global.FormData = FormData;
+  global.document = treeAdapter.createDocument();
+}
 
 plugin.inline = inline;
 plugin.sw = sw;
 plugin.icons = icons;
-plugin.htmlToDom = treeAdapter.htmlToDom;
+plugin.htmlTDom = treeAdapter.htmlToDom;
 plugin.domToHtml = treeAdapter.domToHtml;
 plugin.domToHyperscript = treeAdapter.domToHyperscript;
 plugin.htmlToHyperscript = treeAdapter.htmlToHyperscript;
-plugin.hyperscriptToHtml = (...args) => v.mount("div", () => args);
+plugin.render = (...args) => {
+  if (!isInUse) {
+    throw new Error("This plugin is not in use. Please invoke `v.use(nodePlugin)`");
+  }
+
+  let Component = () => args;
+  let result = mount("div", Component);
+  unmount(Component);
+  return result;
+};
 
 plugin.default = plugin;
 module.exports = plugin;

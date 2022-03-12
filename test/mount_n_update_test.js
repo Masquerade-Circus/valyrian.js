@@ -1,9 +1,8 @@
-import "../lib";
-
 import expect from "expect";
 import nodePlugin from "../plugins/node";
+import { v } from "../lib/index";
 
-v.usePlugin(nodePlugin);
+v.use(nodePlugin);
 
 describe("Mount and update", () => {
   it("Mount and update with POJO component", () => {
@@ -19,7 +18,7 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", Component);
     Component.world = "John Doe";
-    result.after = v.update();
+    result.after = v.update(Component);
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -38,7 +37,7 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", Component);
     Component.world = "John Doe";
-    result.after = v.update();
+    result.after = v.update(Component);
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -60,12 +59,32 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", Component);
     state.world = "John Doe";
-    result.after = v.update();
+    result.after = v.update(Component);
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
       after: '<div id="example">Hello John Doe</div>'
     });
+  });
+
+  it("Mount and update with Vnode Component", () => {
+    let Component = ({ hello }, ...children) => (
+      <div id="example">
+        <span>Hello World</span>
+        <span>Hello {hello}</span>
+        {...children}
+      </div>
+    );
+
+    expect(
+      v.mount(
+        "body",
+        <Component hello="world">
+          <span>Hello John</span>
+          <span>Hello Jane</span>
+        </Component>
+      )
+    ).toEqual('<div id="example"><span>Hello World</span><span>Hello world</span><span>Hello John</span><span>Hello Jane</span></div>');
   });
 
   it("Handle multiple update calls", () => {
@@ -80,8 +99,8 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", Component);
     Component.world = "John Doe";
-    result.after = v.update();
-    result.afteragain = v.update();
+    result.after = v.update(Component);
+    result.afteragain = v.update(Component);
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -91,7 +110,7 @@ describe("Mount and update", () => {
   });
 
   it("Antipattern: Mount and update with functional stateless component", () => {
-    let Component = (props) => <div id={props.id}>Hello {props.world}</div>;
+    let Component = ({ props }) => <div id={props.id}>Hello {props.world}</div>;
     let props = {
       world: "World",
       id: "example"
@@ -99,9 +118,11 @@ describe("Mount and update", () => {
 
     let result = {};
 
-    result.before = v.mount("body", Component, props);
+    let app = <Component props={props} />;
+
+    result.before = v.mount("body", app);
     props.world = "John Doe";
-    result.after = v.update(props);
+    result.after = v.update(app);
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -117,7 +138,7 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", Component);
     text = false;
-    result.after = v.update();
+    result.after = v.update(Component);
 
     expect(result).toEqual({
       before: "Hello world",
@@ -133,7 +154,7 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", Component);
     text = true;
-    result.after = v.update();
+    result.after = v.update(Component);
 
     expect(result).toEqual({
       before: "<div>Hello world</div>",
@@ -149,7 +170,7 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", Component);
     disabled = false;
-    result.after = v.update();
+    result.after = v.update(Component);
 
     expect(result).toEqual({
       before: '<div disabled="true">Hello world</div>',
@@ -165,7 +186,7 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", Component);
     disabled = true;
-    result.after = v.update();
+    result.after = v.update(Component);
 
     expect(result).toEqual({
       before: "<div>Hello world</div>",
@@ -191,8 +212,8 @@ describe("Mount and update", () => {
   });
 
   it("should fail silently if try to update before mount", () => {
-    v.unMount();
-    v.update();
+    let Component = () => <div>Hello world</div>;
+    v.update(Component);
   });
 
   it("should handle text vnode as new node", () => {
@@ -202,50 +223,19 @@ describe("Mount and update", () => {
     expect(result).toEqual("<span>Some text</span>");
 
     vnode.children = ["Other text"];
-    let result2 = v.update();
+    let result2 = v.update(component);
     expect(result2).toEqual("<span>Some text</span>");
   });
 
-  it("should handle the passing of data with the data property", () => {
-    let data = { foo: "bar" };
-    let onupdate = (newNode, oldNode) => expect(newNode.props.data).toEqual(oldNode.props.data);
-    let component = () => <div data={data} onupdate={onupdate} />;
+  it("should handle the passing of state with the state property", () => {
+    let state = { foo: "bar" };
+    let component = () => <div state={state} onupdate={(newNode, oldNode) => expect(newNode.props.state).toEqual(oldNode.props.state)} />;
 
     let result = v.mount("body", component);
     expect(result).toEqual("<div></div>");
 
-    let result2 = v.update();
+    let result2 = v.update(component);
     expect(result2).toEqual("<div></div>");
-  });
-
-  it("should create another v instance using the v.newInstance method", () => {
-    // We create a new instance
-    let v2 = v.newInstance();
-
-    let count = 0;
-    let component = () => `Hello world ${count}`;
-
-    // Get the first render
-    let result1 = v.mount("body", component);
-    let result2 = v2.mount("body", component);
-
-    // Bot updates must be equal
-    expect(result1).toEqual("Hello world 0");
-    expect(result2).toEqual("Hello world 0");
-
-    // We increment the counter and unMount the first instance
-    count++;
-    v.unMount();
-
-    // Get the second render
-    let result3 = v.update();
-    let result4 = v2.update();
-
-    // For the first instance should be '' because component has been unMounted;
-    expect(result3).toEqual("");
-
-    // For the second instance should be 'Hello world 1' because it is still mounted
-    expect(result4).toEqual("Hello world 1");
   });
 
   it("should allow to use fragments", () => {
