@@ -1,3 +1,46 @@
+## [6.0.0](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.17...6.0.0) (2022-03-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* Global variable 'v' will only have the 'fragment' method and the 'current' object.
+All other methods are functional style methods.
+
+### Bug Fixes
+
+* Fix infinite test ([e517bb5](https://github.com/Masquerade-Circus/valyrian.js/commit/e517bb5e6640dd4e00bb34c20822817870a3788a))
+
+
+### Code Refactoring
+
+* Compare to old version ([179509b](https://github.com/Masquerade-Circus/valyrian.js/commit/179509bcd7d250d165e31e0f4676155fd187101f))
+* Improve performance ([a9e3201](https://github.com/Masquerade-Circus/valyrian.js/commit/a9e32010fe793ade3b1e88d21007a0ffb74cdf19))
+* Multiple updates ([7313c05](https://github.com/Masquerade-Circus/valyrian.js/commit/7313c056499f7888695a0dd3eab842c06e8c4d63))
+* refactor to functional style ([5893703](https://github.com/Masquerade-Circus/valyrian.js/commit/58937038b4f3a55dd64f3907a71fe255a26ecfbf))
+
+
+### Styles
+
+* Fix coding style issues ([5a36d1f](https://github.com/Masquerade-Circus/valyrian.js/commit/5a36d1f883332a320bad792bb5b15302ccafae09))
+
+
+### Continuous Integration
+
+* update actions workflow ([7ed57ba](https://github.com/Masquerade-Circus/valyrian.js/commit/7ed57bacd7be7dbdc81e8c16668927cfd6ba7bdb))
+
+
+### Build System
+
+* update dependencies ([0f9d8a8](https://github.com/Masquerade-Circus/valyrian.js/commit/0f9d8a83ffdac17056ee4b6b04a95f95b2fa857b))
+
+
+### Tests
+
+* fix failing test ([24bcb94](https://github.com/Masquerade-Circus/valyrian.js/commit/24bcb943c240571096f90b3291f57e2adadd3841))
+* fix failing tests ([c5a19a8](https://github.com/Masquerade-Circus/valyrian.js/commit/c5a19a8ad61f6c06ba4802529022cbcf3d3df53b))
+* remove dot only test ([0ba67d9](https://github.com/Masquerade-Circus/valyrian.js/commit/0ba67d9c835ba117a18692a32155aa970b8839a3))
+* update tests ([903905d](https://github.com/Masquerade-Circus/valyrian.js/commit/903905dd350d9cfeef72609533256ff3b04af517))
+
 ### [5.0.17](https://github.com/Masquerade-Circus/valyrian.js/compare/5.0.16...5.0.17) (2021-12-17)
 
 ### Performance Improvements
