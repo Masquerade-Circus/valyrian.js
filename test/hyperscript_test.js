@@ -1,7 +1,8 @@
-require("../plugins/node");
-
 import expect from "expect";
+import nodePlugin from "../plugins/node";
 import { v } from "../lib";
+
+v.use(nodePlugin);
 
 describe("Hyperscript", () => {
   it("should create a div element", () => {

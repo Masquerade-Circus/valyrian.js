@@ -1,8 +1,9 @@
-import "../plugins/node";
-
 import Signal from "../plugins/signals";
 import expect from "expect";
+import nodePlugin from "../plugins/node";
 import { v } from "../lib/index";
+
+v.use(nodePlugin);
 
 describe("Signals", () => {
   it("should create a signal", async () => {

@@ -68,7 +68,6 @@
   },
   "devDependencies": {
     "@release-it/conventional-changelog": "^4.1.0",
-    "@types/mocha": "^9.1.0",
     "@types/node": "^17.0.18",
     "@typescript-eslint/eslint-plugin": "^5.12.0",
     "@typescript-eslint/parser": "^5.12.0",
@@ -187,6 +186,8 @@
     }
   },
   "resolutions": {
-    "minimist": "^1.2.5"
+    "minimist": "^1.2.5",
+    "jpeg-js": "^0.4.0",
+    "ansi-regex": "^5.0.1"
   }
 }

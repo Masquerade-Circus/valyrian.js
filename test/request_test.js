@@ -1,9 +1,10 @@
-import "../plugins/node";
-
 import expect from "expect";
 import fastify from "fastify";
+import nodePlugin from "../plugins/node";
 import request from "../plugins/request";
 import { v } from "../lib/index";
+
+v.use(nodePlugin);
 
 let posts = [];
 for (let i = 10; i--; ) {

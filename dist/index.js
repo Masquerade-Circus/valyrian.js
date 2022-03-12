@@ -555,21 +555,5 @@ v.setAttribute = setAttribute;
 v.directive = directive;
 v.use = use;
 export {
-  Vnode,
-  directive,
-  isComponent,
-  isNodeJs,
-  isVnode,
-  isVnodeComponent,
-  mount,
-  onCleanup,
-  onMount,
-  onUnmount,
-  onUpdate,
-  setAttribute,
-  trust,
-  unmount,
-  update,
-  use,
   v
 };

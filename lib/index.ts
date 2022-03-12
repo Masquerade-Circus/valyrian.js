@@ -1,3 +1,5 @@
+/* eslint-disable no-use-before-define */
+/* eslint-disable sonarjs/cognitive-complexity */
 /*** Vnode ***/
 
 import {
@@ -21,27 +23,27 @@ import {
 /*** Constants ***/
 const ComponentString = "__component__";
 const TextString = "#text";
-export const isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
+const isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
 const ValyrianSymbol = Symbol("Valyrian");
 const Und = undefined;
 
 /*** Vnode ***/
 
-export const Vnode = function Vnode(this: IVnode, tag: string, props: Props, children: Children) {
+const Vnode = function Vnode(this: IVnode, tag: string, props: Props, children: Children) {
   this.props = props;
   this.children = children;
   this.tag = tag;
 } as unknown as IVnode;
 
-export function isVnode(object?: unknown | IVnode): object is IVnode {
+function isVnode(object?: unknown | IVnode): object is IVnode {
   return object instanceof Vnode;
 }
 
-export function isComponent(component?: unknown | ValyrianComponent): component is ValyrianComponent {
+function isComponent(component?: unknown | ValyrianComponent): component is ValyrianComponent {
   return typeof component === "function" || (typeof component === "object" && component !== null && "view" in component);
 }
 
-export function isVnodeComponent(vnode?: unknown | VnodeComponent): vnode is VnodeComponent {
+function isVnodeComponent(vnode?: unknown | VnodeComponent): vnode is VnodeComponent {
   return vnode instanceof Vnode && vnode.tag === ComponentString;
 }
 
@@ -73,7 +75,7 @@ function domToVnode(dom: DomElement): VnodeWithDom {
   return vnode as VnodeWithDom;
 }
 
-export const trust = (htmlString: string): Children => {
+const trust = (htmlString: string): Children => {
   let div = createDomElement("div");
   div.innerHTML = htmlString.trim();
 
@@ -102,25 +104,25 @@ const reservedProps: ReservedProps = {
 
 const current: Current = {};
 
-export function onCleanup(callback: Function) {
+function onCleanup(callback: Function) {
   if (current.app?.onCleanup.indexOf(callback) === -1) {
     current.app?.onCleanup.push(callback);
   }
 }
 
-export function onUnmount(callback: Function) {
+function onUnmount(callback: Function) {
   if (current.app?.onUnmount.indexOf(callback) === -1) {
     current.app?.onUnmount.push(callback);
   }
 }
 
-export function onMount(callback: Function) {
+function onMount(callback: Function) {
   if (current.app?.onMount.indexOf(callback) === -1) {
     current.app?.onMount.push(callback);
   }
 }
 
-export function onUpdate(callback: Function) {
+function onUpdate(callback: Function) {
   if (current.app?.onUpdate.indexOf(callback) === -1) {
     current.app?.onUpdate.push(callback);
   }
@@ -134,7 +136,7 @@ export function onUpdate(callback: Function) {
   mount('#app', <App><div>Hello world</div></App>); // App is a Vnode component (Vnode with tag __component__)
 */
 
-export function mount(container: DomElement | string, component: ValyrianComponent | IVnode): void | string {
+function mount(container: DomElement | string, component: ValyrianComponent | IVnode): void | string {
   let appContainer = null;
 
   if (isNodeJs) {
@@ -221,7 +223,7 @@ function callUpdate(valyrianApp: ValyrianApp) {
   valyrianApp.onUpdate = [];
 }
 
-export function update(component?: ValyrianComponent | IVnode): void | string {
+function update(component?: ValyrianComponent | IVnode): void | string {
   if (component && component[ValyrianSymbol]) {
     let valyrianApp = component[ValyrianSymbol];
     current.app = valyrianApp;
@@ -244,7 +246,7 @@ export function update(component?: ValyrianComponent | IVnode): void | string {
   }
 }
 
-export function unmount(component?: ValyrianComponent | IVnode): void | string {
+function unmount(component?: ValyrianComponent | IVnode): void | string {
   if (!component || !component[ValyrianSymbol]) {
     return;
   }
@@ -320,7 +322,7 @@ function sharedSetAttribute(prop: string, value: any, vnode: VnodeWithDom, oldVn
   }
 }
 
-export function setAttribute(name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
+function setAttribute(name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
   vnode.props[name] = value;
 
   sharedSetAttribute(name, value, vnode, oldVnode);
@@ -392,12 +394,12 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | IVnode = emptyVn
 
   // If the tree is keyed list and is not first render and old tree is keyed list too
   if (oldTreeLength && "key" in newTree[0].props && "key" in oldTree[0].props) {
-    let oldKeyedList: {[key: string]: number} = {};
+    let oldKeyedList: { [key: string]: number } = {};
     for (let i = 0; i < oldTreeLength; i++) {
       oldKeyedList[oldTree[i].props.key] = i;
     }
 
-    let newKeyedList: {[key: string]: number} = {};
+    let newKeyedList: { [key: string]: number } = {};
     for (let i = 0; i < newTreeLength; i++) {
       newKeyedList[newTree[i].props.key] = i;
     }
@@ -534,7 +536,7 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | IVnode = emptyVn
 
 /*** Directives ***/
 
-export function directive(name: string, directive: Directive) {
+function directive(name: string, directive: Directive) {
   let fullName = `v-${name}`;
   directives[fullName] = directive;
   reservedProps[fullName] = true;
@@ -562,7 +564,7 @@ const directives: Directives = {
   "v-if": hideDirective(false),
   "v-unless": hideDirective(true),
   "v-for": (set: unknown[], vnode: VnodeWithDom) => {
-    vnode.children = set.map(vnode.children[0] as (value: unknown) => Function);
+    vnode.children = set.map(vnode.children[0]);
   },
   "v-show": (bool: boolean, vnode: VnodeWithDom) => {
     (vnode.dom as unknown as { style: { display: string } }).style.display = bool ? "" : "none";
@@ -665,7 +667,7 @@ const directives: Directives = {
 /*** Plugins ***/
 const plugins = new Map<Plugin, any>();
 
-export function use(plugin: Plugin, options?: Record<string | number | symbol, any>): void | any {
+function use(plugin: Plugin, options?: Record<string | number | symbol, any>): void | any {
   if (plugins.has(plugin)) {
     return plugins.get(plugin);
   }

@@ -1,3 +1,6 @@
+let update = () => {};
+let current = {};
+
 function keyExists(objectname, object, key) {
   if (key in object === false) {
     throw new Error(`The ${objectname} "${key}" does not exists.`);
@@ -70,9 +73,6 @@ function Store({ state = {}, getters = {}, actions = {}, mutations = {} } = {}) 
   };
 }
 
-let update = () => {};
-let current = {};
-
 function plugin(v, options) {
   current = v.current;
   update = () => {
@@ -83,8 +83,8 @@ function plugin(v, options) {
 
   if (options) {
     v.store = new Store(options);
-    v.commit = v.store.commit;
-    v.dispatch = v.store.dispatch;
+    v.commit = v.store.commit.bind(v.store);
+    v.dispatch = v.store.dispatch.bind(v.store);
     v.state = v.store.state;
     v.getters = v.store.getters;
   }

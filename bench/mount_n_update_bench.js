@@ -695,8 +695,8 @@ compare("Mount and update: Update class", () => {
   // Init with 1000 words
   let words = [...Array(1000).keys()].map((key) => `word ${key}`);
   let useData = false;
-  let updateClass = false;
-  let updateClass2 = false;
+  let updateClass = "";
+  let updateClass2 = "";
   let Component = () =>
     vOld(
       "div",
@@ -745,8 +745,8 @@ compare("Mount and update: Update class", () => {
     let after2 = update(Component2);
     expect(after2).toEqual('<div><div class="test">test</div></div>');
     useData = true;
-    updateClass = false;
-    updateClass2 = false;
+    updateClass = "";
+    updateClass2 = "";
   });
 
   benchmark("vOld update", () => {
@@ -764,8 +764,8 @@ compare("Mount and update: Update class with hooks vs shouldupdate property", ()
   // Init with 1000 words
   let words = [...Array(1000).keys()].map((key) => `word ${key}`);
   let useData = false;
-  let updateClass = false;
-  let updateClass2 = false;
+  let updateClass = "";
+  let updateClass2 = "";
   let Component = () => (
     <div>
       {useData ? (
@@ -806,8 +806,8 @@ compare("Mount and update: Update class with hooks vs shouldupdate property", ()
     let after2 = update(Component2);
     expect(after2).toEqual('<div><div class="test">test</div></div>');
     useData = true;
-    updateClass = false;
-    updateClass2 = false;
+    updateClass = "";
+    updateClass2 = "";
   });
 
   benchmark("shouldupdate property", () => {

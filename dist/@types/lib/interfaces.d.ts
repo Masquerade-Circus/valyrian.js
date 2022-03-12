@@ -1,3 +1,4 @@
+/*** Interfaces ***/
 export interface DomElement extends Element {
     [key: string]: any;
 }

@@ -1,11 +1,11 @@
-import "../plugins/node";
-
 import plugin, { Router } from "../plugins/router";
 
 import expect from "expect";
+import nodePlugin from "../plugins/node";
 import { v } from "../lib/index";
 
 v.use(plugin);
+v.use(nodePlugin);
 
 // eslint-disable-next-line max-lines-per-function
 describe("Router", () => {

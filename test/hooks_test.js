@@ -1,4 +1,4 @@
-import "../plugins/node";
+import nodePlugin from "../plugins/node";
 
 import { v } from "../lib/index";
 import plugin, { useEffect, useState, useRef, useCallback, useMemo } from "../plugins/hooks";
@@ -7,6 +7,7 @@ import expect from "expect";
 import { v } from "../lib";
 
 v.use(plugin);
+v.use(nodePlugin);
 
 describe("Hooks", () => {
   describe("State hook", () => {

@@ -3,7 +3,8 @@ const dayjs = require("dayjs");
 
 const { v } = require("../lib/index");
 
-require("../plugins/node");
+const plugin = require("../plugins/node");
+v.use(plugin);
 
 // eslint-disable-next-line max-lines-per-function
 describe("Directives", () => {

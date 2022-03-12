@@ -1,7 +1,8 @@
-import "../plugins/node";
-
 import expect from "expect";
+import nodePlugin from "../plugins/node";
 import { v } from "../lib/index";
+
+v.use(nodePlugin);
 
 describe("Lifecycle", () => {
   it("Mount and update", () => {

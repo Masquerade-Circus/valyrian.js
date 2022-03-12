@@ -13,10 +13,6 @@ let CleanCSS = require("clean-css");
 
 const tsc = require("tsc-prog");
 
-global.fetch = fetch;
-global.FormData = FormData;
-global.document = treeAdapter.createDocument();
-
 let errorHandler = (resolve, reject) => (err) => {
   if (err) {
     return reject(err);
@@ -302,6 +298,9 @@ function plugin(v) {
   mount = v.mount;
   unmount = v.unmount;
   isInUse = true;
+  global.fetch = fetch;
+  global.FormData = FormData;
+  global.document = treeAdapter.createDocument();
 }
 
 plugin.inline = inline;
@@ -313,7 +312,7 @@ plugin.domToHyperscript = treeAdapter.domToHyperscript;
 plugin.htmlToHyperscript = treeAdapter.htmlToHyperscript;
 plugin.render = (...args) => {
   if (!isInUse) {
-    throw new Error("This plugin is not in use. Please invoke `v.use(nodeJsPlugin)`");
+    throw new Error("This plugin is not in use. Please invoke `v.use(nodePlugin)`");
   }
 
   let Component = () => args;

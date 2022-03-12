@@ -24,22 +24,6 @@ var __toCommonJS = /* @__PURE__ */ ((cache) => {
 // lib/index.ts
 var lib_exports = {};
 __export(lib_exports, {
-  Vnode: () => Vnode,
-  directive: () => directive,
-  isComponent: () => isComponent,
-  isNodeJs: () => isNodeJs,
-  isVnode: () => isVnode,
-  isVnodeComponent: () => isVnodeComponent,
-  mount: () => mount,
-  onCleanup: () => onCleanup,
-  onMount: () => onMount,
-  onUnmount: () => onUnmount,
-  onUpdate: () => onUpdate,
-  setAttribute: () => setAttribute,
-  trust: () => trust,
-  unmount: () => unmount,
-  update: () => update,
-  use: () => use,
   v: () => v
 });
 var ComponentString = "__component__";
