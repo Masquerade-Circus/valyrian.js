@@ -9,7 +9,7 @@ import { v } from "../lib";
 v.use(plugin);
 v.use(nodePlugin);
 
-describe("Hooks", () => {
+describe.only("Hooks", () => {
   describe("State hook", () => {
     it("should handle a component state", async () => {
       let Counter = () => {
@@ -24,6 +24,7 @@ describe("Hooks", () => {
       await new Promise((resolve) => setTimeout(() => resolve(), 2050));
       result = v.update(Counter);
       expect(result).toEqual("<div>2</div>");
+      v.unmount(Counter);
     });
 
     it("should handle subcomponents state and v.onCleanup", async () => {
@@ -50,6 +51,7 @@ describe("Hooks", () => {
       await new Promise((resolve) => setTimeout(() => resolve(), 2050));
       result = v.update(Counter);
       expect(result).toEqual("<div>2 <div>not ok</div></div>");
+      v.unmount(Counter);
     });
 
     it("array getter-setter based state", async () => {
@@ -65,6 +67,7 @@ describe("Hooks", () => {
       await new Promise((resolve) => setTimeout(() => resolve(), 2050));
       result = v.update(Counter);
       expect(result).toEqual("<div>2</div>");
+      v.unmount(Counter);
     });
   });
 
