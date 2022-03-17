@@ -1,7 +1,7 @@
 import Signal from "../plugins/signals";
 import expect from "expect";
 import nodePlugin from "../plugins/node";
-import { v } from "../lib/index";
+import v from "../lib/index";
 
 v.use(nodePlugin);
 
@@ -125,9 +125,9 @@ describe("Hooks like pattern", () => {
     let result = v.mount("div", Component);
     expect(result).toEqual("<div>0</div>");
     await new Promise((resolve) => setTimeout(() => resolve(), 22));
-    result = v.update(Component);
+    result = v.update();
     expect(result).toEqual("<div>2</div>");
-    v.unmount(Component);
+    v.unmount();
   });
 
   it("should create a counter with delay change", async () => {
@@ -148,9 +148,9 @@ describe("Hooks like pattern", () => {
     let result = v.mount("div", Component);
     expect(result).toEqual("<div>0</div>");
     await new Promise((resolve) => setTimeout(() => resolve(), 22));
-    result = v.update(Component);
+    result = v.update();
     expect(result).toEqual("<div>2</div>");
-    v.unmount(Component);
+    v.unmount();
   });
 
   it("should create a counter with deep state", async () => {
@@ -173,8 +173,8 @@ describe("Hooks like pattern", () => {
     let result = v.mount("div", Component);
     expect(result).toEqual("<div>0</div>");
     await new Promise((resolve) => setTimeout(() => resolve(), 22));
-    result = v.update(Component);
+    result = v.update();
     expect(result).toEqual("<div>2</div>");
-    v.unmount(Component);
+    v.unmount();
   });
 });

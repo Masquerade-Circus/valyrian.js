@@ -3,7 +3,7 @@ import plugin, { htmlToHyperscript, icons, inline, render, sw } from "../plugins
 import expect from "expect";
 import fs from "fs";
 import packageJson from "../package.json";
-import { v } from "../lib/index";
+import v from "../lib/index";
 
 v.use(plugin);
 

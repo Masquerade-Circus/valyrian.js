@@ -2,7 +2,6 @@
 var ComponentString = "__component__";
 var TextString = "#text";
 var isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
-var ValyrianSymbol = Symbol("Valyrian");
 var Und = void 0;
 var Vnode = function Vnode2(tag, props, children) {
   this.props = props;
@@ -22,19 +21,23 @@ function createDomElement(tag, isSVG = false) {
   return isSVG ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag);
 }
 function domToVnode(dom) {
-  if (dom.nodeType === 1 || dom.nodeType === 3) {
-    let vnode = v(dom.tagName.toLowerCase(), {}, ...Array.from(dom.childNodes).filter((child) => child.nodeType === 1 || child.nodeType === 3).map((child) => {
-      if (child.nodeType === 1) {
-        return domToVnode(child);
+  if (dom.nodeType === 3) {
+    let vnode = v(TextString, {}, []);
+    vnode.nodeValue = dom.nodeValue;
+    vnode.dom = dom;
+    return vnode;
+  }
+  if (dom.nodeType === 1) {
+    let children = [];
+    for (let i = 0; i < dom.childNodes.length; i++) {
+      let child = domToVnode(dom.childNodes[i]);
+      if (child) {
+        children.push(child);
       }
-      let text = new Vnode(TextString, {}, []);
-      text.nodeValue = String(child.nodeValue);
-      text.dom = child;
-      return text;
-    }));
-    if (dom.nodeType === 1) {
-      [].forEach.call(dom.attributes, (prop) => vnode.props[prop.nodeName] = prop.nodeValue);
     }
+    let props = {};
+    [].forEach.call(dom.attributes, (prop) => props[prop.nodeName] = prop.nodeValue);
+    let vnode = v(dom.tagName.toLowerCase(), props, ...children);
     vnode.dom = dom;
     return vnode;
   }
@@ -59,25 +62,44 @@ var reservedProps = {
   "v-class": true,
   "v-html": true
 };
+var eventListenerNames = {};
+var onCleanupList = [];
+var onMountList = [];
+var onUpdateList = [];
+var onUnmountList = [];
 var current = {};
+function eventListener(e) {
+  let dom = e.target;
+  let name = `v-on${e.type}`;
+  while (dom) {
+    if (dom[name]) {
+      dom[name](e, dom);
+      if (!e.defaultPrevented) {
+        update();
+      }
+      return;
+    }
+    dom = dom.parentNode;
+  }
+}
 function onCleanup(callback) {
-  if (current.app?.onCleanup.indexOf(callback) === -1) {
-    current.app?.onCleanup.push(callback);
+  if (onCleanupList.indexOf(callback) === -1) {
+    onCleanupList.push(callback);
   }
 }
 function onUnmount(callback) {
-  if (current.app?.onUnmount.indexOf(callback) === -1) {
-    current.app?.onUnmount.push(callback);
+  if (onUnmountList.indexOf(callback) === -1) {
+    onUnmountList.push(callback);
   }
 }
 function onMount(callback) {
-  if (current.app?.onMount.indexOf(callback) === -1) {
-    current.app?.onMount.push(callback);
+  if (onMountList.indexOf(callback) === -1) {
+    onMountList.push(callback);
   }
 }
 function onUpdate(callback) {
-  if (current.app?.onUpdate.indexOf(callback) === -1) {
-    current.app?.onUpdate.push(callback);
+  if (onUpdateList.indexOf(callback) === -1) {
+    onUpdateList.push(callback);
   }
 }
 function mount(container, component) {
@@ -98,102 +120,54 @@ function mount(container, component) {
   } else {
     throw new Error("Component must be a Valyrian Component or a Vnode component");
   }
-  if (component[ValyrianSymbol]) {
-    unmount(component);
-  } else {
-    let eventListener = function(e) {
-      let dom = e.target;
-      let name = `v-on${e.type}`;
-      while (dom) {
-        if (dom[name]) {
-          dom[name](e, dom);
-          if (!e.defaultPrevented) {
-            update(component);
-          }
-          return;
-        }
-        dom = dom.parentNode;
-      }
-    };
-    component[ValyrianSymbol] = {
-      isMounted: false,
-      eventListenerNames: {},
-      onCleanup: [],
-      onMount: [],
-      onUpdate: [],
-      onUnmount: []
-    };
-    component[ValyrianSymbol].eventListener = eventListener;
+  if (v.isMounted) {
+    unmount();
   }
-  component[ValyrianSymbol].component = vnodeComponent;
-  component[ValyrianSymbol].container = appContainer;
-  component[ValyrianSymbol].mainVnode = domToVnode(appContainer);
-  return update(component);
+  v.component = vnodeComponent;
+  v.container = appContainer;
+  v.mainVnode = domToVnode(appContainer);
+  return update();
 }
-function callCleanup(valyrianApp) {
-  for (let i = 0; i < valyrianApp.onCleanup.length; i++) {
-    valyrianApp.onCleanup[i]();
+function callCallbackList(list) {
+  for (let i = 0; i < list.length; i++) {
+    list[i]();
   }
-  valyrianApp.onCleanup = [];
+  list = [];
 }
-function callUnmount(valyrianApp) {
-  for (let i = 0; i < valyrianApp.onUnmount.length; i++) {
-    valyrianApp.onUnmount[i]();
-  }
-  valyrianApp.onUnmount = [];
-}
-function callMount(valyrianApp) {
-  for (let i = 0; i < valyrianApp.onMount.length; i++) {
-    valyrianApp.onMount[i]();
-  }
-  valyrianApp.onMount = [];
-}
-function callUpdate(valyrianApp) {
-  for (let i = 0; i < valyrianApp.onUpdate.length; i++) {
-    valyrianApp.onUpdate[i]();
-  }
-  valyrianApp.onUpdate = [];
-}
-function update(component) {
-  if (component && component[ValyrianSymbol]) {
-    let valyrianApp = component[ValyrianSymbol];
-    current.app = valyrianApp;
-    valyrianApp.onCleanup.length && callCleanup(valyrianApp);
-    let oldVnode = valyrianApp.mainVnode;
-    valyrianApp.mainVnode = new Vnode(valyrianApp.mainVnode.tag, valyrianApp.mainVnode.props, [valyrianApp.component]);
-    valyrianApp.mainVnode.dom = oldVnode.dom;
-    patch(valyrianApp.mainVnode, oldVnode, valyrianApp);
+function update() {
+  if (v.component && v.mainVnode) {
+    onCleanupList.length && callCallbackList(onCleanupList);
+    let oldVnode = v.mainVnode;
+    v.mainVnode = new Vnode(v.mainVnode.tag, v.mainVnode.props, [v.component]);
+    v.mainVnode.dom = oldVnode.dom;
+    patch(v.mainVnode, oldVnode);
     oldVnode = null;
-    if (valyrianApp.isMounted === false) {
-      valyrianApp.onMount.length && callMount(valyrianApp);
-      valyrianApp.isMounted = true;
+    if (v.isMounted === false) {
+      onMountList.length && callCallbackList(onMountList);
+      v.isMounted = true;
     } else {
-      valyrianApp.onUpdate.length && callUpdate(valyrianApp);
+      onUpdateList.length && callCallbackList(onUpdateList);
     }
     if (isNodeJs) {
-      return valyrianApp.mainVnode.dom.innerHTML;
+      return v.mainVnode.dom.innerHTML;
     }
   }
 }
-function unmount(component) {
-  if (!component || !component[ValyrianSymbol]) {
-    return;
-  }
-  let valyrianApp = component[ValyrianSymbol];
-  if (valyrianApp.isMounted) {
-    valyrianApp.onCleanup.length && callCleanup(valyrianApp);
-    valyrianApp.onUnmount.length && callUnmount(valyrianApp);
-    let oldVnode = valyrianApp.mainVnode;
-    valyrianApp.mainVnode = new Vnode(valyrianApp.mainVnode.tag, valyrianApp.mainVnode.props, []);
-    valyrianApp.mainVnode.dom = oldVnode.dom;
-    valyrianApp.mainVnode.isSVG = oldVnode.isSVG;
-    patch(valyrianApp.mainVnode, oldVnode, valyrianApp);
+function unmount() {
+  if (v.isMounted && v.mainVnode && v.component) {
+    onCleanupList.length && callCallbackList(onCleanupList);
+    onUnmountList.length && callCallbackList(onUnmountList);
+    let oldVnode = v.mainVnode;
+    v.mainVnode = new Vnode(v.mainVnode.tag, v.mainVnode.props, []);
+    v.mainVnode.dom = oldVnode.dom;
+    v.mainVnode.isSVG = oldVnode.isSVG;
+    patch(v.mainVnode, oldVnode);
     oldVnode = null;
+    v.component = null;
+    v.isMounted = false;
     if (isNodeJs) {
-      return valyrianApp.mainVnode.dom.innerHTML;
+      return v.mainVnode.dom.innerHTML;
     }
-    valyrianApp = null;
-    Reflect.deleteProperty(component, ValyrianSymbol);
   }
 }
 var emptyVnode = new Vnode("__empty__", {}, []);
@@ -211,10 +185,9 @@ function sharedSetAttribute(prop, value, vnode, oldVnode) {
     return;
   }
   if (typeof value === "function") {
-    let valyrianApp = current.app;
-    if (prop in valyrianApp.eventListenerNames === false) {
-      valyrianApp.eventListenerNames[prop] = true;
-      valyrianApp.container.addEventListener(prop.slice(2), valyrianApp.eventListener);
+    if (prop in eventListenerNames === false) {
+      eventListenerNames[prop] = true;
+      v.container.addEventListener(prop.slice(2), eventListener);
     }
     vnode.dom[`v-${prop}`] = value;
     return;
@@ -255,7 +228,7 @@ function setAttributes(vnode, oldVnode) {
     }
   }
 }
-function patch(newVnode, oldVnode = emptyVnode, valyrianApp) {
+function patch(newVnode, oldVnode = emptyVnode) {
   current.vnode = newVnode;
   current.oldVnode = oldVnode === emptyVnode ? Und : oldVnode;
   let newTree = newVnode.children;
@@ -311,7 +284,7 @@ function patch(newVnode, oldVnode = emptyVnode, valyrianApp) {
           shouldPatch = false;
         } else {
           setAttributes(childVnode, oldChildVnode);
-          if (valyrianApp.isMounted) {
+          if (v.isMounted) {
             childVnode.props.onupdate && childVnode.props.onupdate(childVnode, oldChildVnode);
           } else {
             childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
@@ -328,7 +301,7 @@ function patch(newVnode, oldVnode = emptyVnode, valyrianApp) {
         oldTree[i] && newKeyedList[oldTree[i].props.key] === Und && onremove(oldTree[i]);
         newVnode.dom.replaceChild(childVnode.dom, newVnode.dom.childNodes[i]);
       }
-      shouldPatch && patch(childVnode, oldChildVnode, valyrianApp);
+      shouldPatch && patch(childVnode, oldChildVnode);
     }
     for (let i = newTreeLength; i < oldTreeLength; i++) {
       if (newKeyedList[oldTree[i].props.key] === Und) {
@@ -363,12 +336,12 @@ function patch(newVnode, oldVnode = emptyVnode, valyrianApp) {
           continue;
         }
         setAttributes(newChildVnode, oldChildVnode);
-        if (valyrianApp.isMounted) {
+        if (v.isMounted) {
           newChildVnode.props.onupdate && newChildVnode.props.onupdate(newChildVnode, oldChildVnode);
         } else {
           newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
         }
-        patch(newChildVnode, oldChildVnode, valyrianApp);
+        patch(newChildVnode, oldChildVnode);
         continue;
       }
       newChildVnode.dom = createDomElement(newChildVnode.tag, newChildVnode.isSVG);
@@ -376,7 +349,7 @@ function patch(newVnode, oldVnode = emptyVnode, valyrianApp) {
       oldChildVnode.tag !== TextString && onremove(oldChildVnode);
       newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
       newVnode.dom.replaceChild(newChildVnode.dom, oldChildVnode.dom);
-      patch(newChildVnode, emptyVnode, valyrianApp);
+      patch(newChildVnode, emptyVnode);
       continue;
     }
     if (newChildVnode.tag === TextString) {
@@ -388,7 +361,7 @@ function patch(newVnode, oldVnode = emptyVnode, valyrianApp) {
     setAttributes(newChildVnode);
     newVnode.dom.appendChild(newChildVnode.dom);
     newChildVnode.props.oncreate && newChildVnode.props.oncreate(newChildVnode);
-    patch(newChildVnode, emptyVnode, valyrianApp);
+    patch(newChildVnode, emptyVnode);
   }
   for (let i = newTreeLength; i < oldTreeLength; i++) {
     let oldChildVnode = oldTree[i];
@@ -546,6 +519,7 @@ v.reservedProps = reservedProps;
 v.isVnode = isVnode;
 v.isComponent = isComponent;
 v.isVnodeComponent = isVnodeComponent;
+v.isMounted = false;
 v.isNodeJs = isNodeJs;
 v.trust = trust;
 v.onCleanup = onCleanup;
@@ -558,6 +532,7 @@ v.update = update;
 v.setAttribute = setAttribute;
 v.directive = directive;
 v.use = use;
+var lib_default = v;
 export {
-  v
+  lib_default as default
 };

@@ -4,7 +4,7 @@ export interface DomElement extends Element {
 }
 export interface Props {
     key?: string | number;
-    data?: string;
+    state?: any;
     oncreate?: {
         (vnode: IVnode): never;
     };
@@ -29,12 +29,12 @@ export interface IVnode {
     dom?: DomElement;
     isSVG?: boolean;
     processed?: boolean;
-    component?: Component | POJOComponent;
+    component?: ValyrianComponent;
     nodeValue?: string;
     [key: string | number | symbol]: any;
 }
 export interface Component {
-    (props?: Record<string, any> | null, children?: Children): IVnode | Children;
+    (props?: Record<string, any> | null, children?: Children): any | IVnode | Children;
     [key: string | number | symbol]: any;
 }
 export interface POJOComponent {
@@ -52,25 +52,7 @@ export interface VnodeWithDom extends IVnode {
 export interface Directive {
     (value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
 }
-export interface ValyrianApp {
-    isMounted: boolean;
-    eventListenerNames: Record<string, true>;
-    onCleanup: Function[];
-    onUnmount: Function[];
-    onMount: Function[];
-    onUpdate: Function[];
-    eventListener?: EventListener;
-    mainVnode?: VnodeWithDom;
-    container?: DomElement;
-    [key: string | number | symbol]: any;
-}
-export interface MountedValyrianApp extends ValyrianApp {
-    eventListener: EventListener;
-    mainVnode: VnodeWithDom;
-    container: DomElement;
-}
 export interface Current {
-    app?: ValyrianApp;
     component?: ValyrianComponent;
     vnode?: VnodeWithDom;
     oldVnode?: VnodeWithDom;
@@ -87,21 +69,25 @@ export interface Plugin {
 export interface Valyrian {
     (tagOrComponent: string | ValyrianComponent, props: Props, ...children: Children): IVnode | VnodeComponent;
     fragment: (props: Props, ...children: Children) => Children;
+    isNodeJs: boolean;
+    isMounted: boolean;
     current: Current;
+    container?: DomElement;
+    mainVnode?: VnodeWithDom;
+    component?: null | VnodeComponent;
     directives: Directives;
     reservedProps: ReservedProps;
     isVnode: (object?: unknown | IVnode) => object is IVnode;
     isComponent: (component?: unknown | ValyrianComponent) => component is ValyrianComponent;
     isVnodeComponent: (vnode?: unknown | VnodeComponent) => vnode is VnodeComponent;
-    isNodeJs: boolean;
     trust: (htmlString: string) => Children;
     onCleanup: (fn: Function) => void;
     onUnmount: (fn: Function) => void;
     onMount: (fn: Function) => void;
     onUpdate: (fn: Function) => void;
     mount: (container: DomElement | string, component: ValyrianComponent | IVnode) => void | string;
-    update: (component: ValyrianComponent | IVnode) => void | string;
-    unmount: (component: ValyrianComponent | IVnode) => void | string;
+    update: () => void | string;
+    unmount: () => void | string;
     setAttribute: (name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) => void;
     directive: (name: string, directive: Directive) => void;
     use: (plugin: Plugin, options?: Record<string | number | symbol, any>) => void | any;

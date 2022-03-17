@@ -1,10 +1,8 @@
-import nodePlugin from "../plugins/node";
-
-import { v } from "../lib/index";
-import plugin, { useEffect, useState, useRef, useCallback, useMemo } from "../plugins/hooks";
+import plugin, { useCallback, useEffect, useMemo, useRef, useState } from "../plugins/hooks";
 
 import expect from "expect";
-import { v } from "../lib";
+import nodePlugin from "../plugins/node";
+import v from "../lib/index";
 
 v.use(plugin);
 v.use(nodePlugin);
@@ -22,9 +20,9 @@ describe("Hooks", () => {
       let result = v.mount("div", Counter);
       expect(result).toEqual("<div>0</div>");
       await new Promise((resolve) => setTimeout(() => resolve(), 25));
-      result = v.update(Counter);
+      result = v.update();
       expect(result).toEqual("<div>2</div>");
-      v.unmount(Counter);
+      v.unmount();
     });
 
     it("should handle subcomponents state and v.onCleanup", async () => {
@@ -49,9 +47,9 @@ describe("Hooks", () => {
       let result = v.mount("div", Counter);
       expect(result).toEqual("<div>0 <div>ok</div></div>");
       await new Promise((resolve) => setTimeout(() => resolve(), 25));
-      result = v.update(Counter);
+      result = v.update();
       expect(result).toEqual("<div>2 <div>not ok</div></div>");
-      v.unmount(Counter);
+      v.unmount();
     });
 
     it("array getter-setter based state", async () => {
@@ -65,9 +63,9 @@ describe("Hooks", () => {
       let result = v.mount("div", Counter);
       expect(result).toEqual("<div>0</div>");
       await new Promise((resolve) => setTimeout(() => resolve(), 25));
-      result = v.update(Counter);
+      result = v.update();
       expect(result).toEqual("<div>2</div>");
-      v.unmount(Counter);
+      v.unmount();
     });
   });
 
@@ -92,7 +90,7 @@ describe("Hooks", () => {
 
       let response = v.mount("body", Component);
       expect(response).toEqual("<div>1</div>");
-      response = v.update(Component);
+      response = v.update();
       expect(response).toEqual("<div>2</div>");
     });
 
@@ -108,7 +106,7 @@ describe("Hooks", () => {
 
       let response = v.mount("body", Component);
       expect(response).toEqual("<div>1</div>");
-      response = v.update(Component);
+      response = v.update();
       expect(response).toEqual("<div>0</div>");
     });
 
@@ -121,7 +119,7 @@ describe("Hooks", () => {
 
       let response = v.mount("body", Component);
       expect(response).toEqual("<div>1</div>");
-      response = v.update(Component);
+      response = v.update();
       expect(response).toEqual("<div>1</div>");
     });
 
@@ -134,7 +132,7 @@ describe("Hooks", () => {
 
       let response = v.mount("body", Component);
       expect(response).toEqual("<div>1</div>");
-      response = v.update(Component);
+      response = v.update();
       expect(response).toEqual("<div>1</div>");
     });
 
@@ -147,7 +145,7 @@ describe("Hooks", () => {
 
       let response = v.mount("body", Component);
       expect(response).toEqual("<div>1</div>");
-      response = v.update(Component);
+      response = v.update();
       expect(response).toEqual("<div>2</div>");
     });
 
@@ -163,9 +161,9 @@ describe("Hooks", () => {
 
       let response = v.mount("body", Component);
       expect(response).toEqual("<div>1</div>");
-      response = v.update(Component);
+      response = v.update();
       expect(response).toEqual("<div>3</div>");
-      response = v.update(Component);
+      response = v.update();
       expect(response).toEqual("<div>5</div>");
     });
 
@@ -183,11 +181,11 @@ describe("Hooks", () => {
       expect(response).toEqual("<div>1</div>");
       expect(count).toEqual(1);
 
-      response = v.update(Component);
+      response = v.update();
       expect(response).toEqual("<div>0</div>");
       expect(count).toEqual(0);
 
-      response = v.unmount(Component);
+      response = v.unmount();
       expect(response).toEqual("");
       expect(count).toEqual(-2);
     });
@@ -205,11 +203,11 @@ describe("Hooks", () => {
       expect(response).toEqual("<div>0</div>");
       expect(count).toEqual(0);
 
-      response = v.update(Component);
+      response = v.update();
       expect(response).toEqual("<div>0</div>");
       expect(count).toEqual(0);
 
-      response = v.unmount(Component);
+      response = v.unmount();
       expect(response).toEqual("");
       expect(count).toEqual(1);
     });
@@ -239,18 +237,18 @@ describe("Hooks", () => {
       it("should call the lifecycle", () => {
         v.mount("body", LifecycleComponent);
         expect(lifecycleCount).toEqual(1);
-        v.update(LifecycleComponent);
+        v.update();
         expect(lifecycleCount).toEqual(2);
-        v.unmount(LifecycleComponent);
+        v.unmount();
         expect(lifecycleCount).toEqual(3);
       });
 
       it("should call the hooks", () => {
         v.mount("body", HooksComponent);
         expect(hooksCount).toEqual(1);
-        v.update(HooksComponent);
+        v.update();
         expect(hooksCount).toEqual(2);
-        v.unmount(HooksComponent);
+        v.unmount();
         expect(hooksCount).toEqual(3);
       });
     });
@@ -274,7 +272,7 @@ describe("Hooks", () => {
 
       let refCurrent = ref.current;
       updated = true;
-      v.update(Component);
+      v.update();
       expect(refCurrent === ref.current).toEqual(true);
     });
   });
@@ -292,7 +290,7 @@ describe("Hooks", () => {
       expect(callback).not.toEqual(null);
 
       let oldCallback = callback;
-      v.update(Component);
+      v.update();
       expect(oldCallback === callback).toEqual(false);
     });
 
@@ -306,7 +304,7 @@ describe("Hooks", () => {
       expect(response).toEqual("<div>Hello world</div>");
       expect(callback).not.toEqual(null);
       let oldCallback = callback;
-      v.update(Component);
+      v.update();
       expect(oldCallback === callback).toEqual(true);
     });
   });
@@ -324,12 +322,12 @@ describe("Hooks", () => {
       expect(response).toEqual('<div class="red">Hello world</div>');
       expect(computedTimes).toEqual(1);
 
-      let response2 = v.update(Component);
+      let response2 = v.update();
       expect(response2).toEqual('<div class="red">Hello world</div>');
       expect(computedTimes).toEqual(2);
 
       color = "blue";
-      let response3 = v.update(Component);
+      let response3 = v.update();
       expect(response3).toEqual('<div class="blue">Hello world</div>');
       expect(computedTimes).toEqual(3);
     });
@@ -348,12 +346,12 @@ describe("Hooks", () => {
       expect(response).toEqual('<div class="red"></div>');
       expect(computedTimes).toEqual(1);
 
-      let response2 = v.update(Component);
+      let response2 = v.update();
       expect(response2).toEqual('<div class="red"></div>');
       expect(computedTimes).toEqual(1);
 
       color = "blue";
-      let response3 = v.update(Component);
+      let response3 = v.update();
       expect(response3).toEqual('<div class="blue"></div>');
       expect(computedTimes).toEqual(2);
     });

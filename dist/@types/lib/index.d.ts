@@ -1,4 +1,5 @@
 /*** Vnode ***/
 import { Valyrian } from "./interfaces";
 /*** Hyperscript ***/
-export declare const v: Valyrian;
+declare const v: Valyrian;
+export default v;

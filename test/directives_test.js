@@ -1,7 +1,7 @@
 const expect = require("expect");
 const dayjs = require("dayjs");
 
-const { v } = require("../lib/index");
+import v from "../lib";
 
 const plugin = require("../plugins/node");
 v.use(plugin);
@@ -31,7 +31,7 @@ describe("Directives", () => {
       });
 
       v.mount("div", app);
-      v.update(app);
+      v.update();
 
       expect(newVnode).toEqual({
         tag: "div",
@@ -69,7 +69,7 @@ describe("Directives", () => {
 
       expect(result).toEqual("<div>First render, vnode created</div>");
 
-      let result2 = v.update(app);
+      let result2 = v.update();
       expect(result2).toEqual("<div>Second render, vnode updated</div>");
     });
 
@@ -280,7 +280,7 @@ describe("Directives", () => {
         expect(result1).toEqual(expected1);
 
         value = false;
-        let result2 = v.update(app);
+        let result2 = v.update();
         expect(result2).toEqual(expected2);
       });
     });
@@ -368,7 +368,7 @@ describe("Directives", () => {
         expect(result).toEqual('<div class="world"></div>');
 
         classes.world = false;
-        let result2 = v.update(app);
+        let result2 = v.update();
         expect(result2).toEqual("<div></div>");
       });
 
@@ -381,7 +381,7 @@ describe("Directives", () => {
         expect(result).toEqual('<div class="hello world"></div>');
 
         classes.world = false;
-        let result2 = v.update(app);
+        let result2 = v.update();
         expect(result2).toEqual('<div class="hello"></div>');
       });
     });
@@ -401,7 +401,7 @@ describe("Directives", () => {
         // We update our store
         Store.hello = "John Doe";
 
-        let result2 = v.update(app);
+        let result2 = v.update();
         expect(result2).toEqual("<div>Hello world</div>");
       });
     });
@@ -443,7 +443,7 @@ describe("Directives", () => {
       expect(result).toEqual("<div><span>1</span><span>2</span><span>3</span><span>4</span></div>");
 
       show = false;
-      let result2 = v.update(app);
+      let result2 = v.update();
       expect(result2).toEqual("");
     });
   });

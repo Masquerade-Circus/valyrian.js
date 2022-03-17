@@ -1,6 +1,6 @@
 import expect from "expect";
 import nodePlugin from "../plugins/node";
-import { v } from "../lib";
+import v from "../lib";
 
 v.use(nodePlugin);
 

@@ -1,6 +1,6 @@
 import expect from "expect";
 import nodePlugin from "../plugins/node";
-import { v } from "../lib/index";
+import v from "../lib/index";
 
 v.use(nodePlugin);
 
@@ -18,7 +18,7 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", Component);
     Component.world = "John Doe";
-    result.after = v.update(Component);
+    result.after = v.update();
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -37,7 +37,7 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", Component);
     Component.world = "John Doe";
-    result.after = v.update(Component);
+    result.after = v.update();
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -59,7 +59,7 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", Component);
     state.world = "John Doe";
-    result.after = v.update(Component);
+    result.after = v.update();
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -99,8 +99,8 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", Component);
     Component.world = "John Doe";
-    result.after = v.update(Component);
-    result.afteragain = v.update(Component);
+    result.after = v.update();
+    result.afteragain = v.update();
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -122,7 +122,7 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", app);
     props.world = "John Doe";
-    result.after = v.update(app);
+    result.after = v.update();
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -138,7 +138,7 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", Component);
     text = false;
-    result.after = v.update(Component);
+    result.after = v.update();
 
     expect(result).toEqual({
       before: "Hello world",
@@ -154,7 +154,7 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", Component);
     text = true;
-    result.after = v.update(Component);
+    result.after = v.update();
 
     expect(result).toEqual({
       before: "<div>Hello world</div>",
@@ -170,7 +170,7 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", Component);
     disabled = false;
-    result.after = v.update(Component);
+    result.after = v.update();
 
     expect(result).toEqual({
       before: '<div disabled="true">Hello world</div>',
@@ -186,7 +186,7 @@ describe("Mount and update", () => {
 
     result.before = v.mount("body", Component);
     disabled = true;
-    result.after = v.update(Component);
+    result.after = v.update();
 
     expect(result).toEqual({
       before: "<div>Hello world</div>",
@@ -213,7 +213,7 @@ describe("Mount and update", () => {
 
   it("should fail silently if try to update before mount", () => {
     let Component = () => <div>Hello world</div>;
-    v.update(Component);
+    v.update();
   });
 
   it("should handle text vnode as new node", () => {
@@ -223,7 +223,7 @@ describe("Mount and update", () => {
     expect(result).toEqual("<span>Some text</span>");
 
     vnode.children = ["Other text"];
-    let result2 = v.update(component);
+    let result2 = v.update();
     expect(result2).toEqual("<span>Some text</span>");
   });
 
@@ -234,7 +234,7 @@ describe("Mount and update", () => {
     let result = v.mount("body", component);
     expect(result).toEqual("<div></div>");
 
-    let result2 = v.update(component);
+    let result2 = v.update();
     expect(result2).toEqual("<div></div>");
   });
 

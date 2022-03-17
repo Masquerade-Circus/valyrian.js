@@ -2,7 +2,7 @@ import plugin, { Router } from "../plugins/router";
 
 import expect from "expect";
 import nodePlugin from "../plugins/node";
-import { v } from "../lib/index";
+import v from "../lib/index";
 
 v.use(plugin);
 v.use(nodePlugin);
@@ -77,7 +77,7 @@ describe("Router", () => {
     Component.world = "John Doe";
     result.after = await router.go("/");
     Component.world = "World";
-    result.final = v.update(Component);
+    result.final = v.update();
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -103,7 +103,7 @@ describe("Router", () => {
     Component.world = "John Doe";
     result.after = await router.go("/");
     Component.world = "World";
-    result.final = v.update(Component);
+    result.final = v.update();
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',
@@ -131,7 +131,7 @@ describe("Router", () => {
     state.world = "John Doe";
     result.after = await router.go("/");
     state.world = "World";
-    result.final = v.update(Component);
+    result.final = v.update();
 
     expect(result).toEqual({
       before: '<div id="example">Hello World</div>',

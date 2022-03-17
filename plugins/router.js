@@ -1,3 +1,5 @@
+let v;
+
 function flat(array) {
   return Array.isArray(array) ? array.flat(Infinity) : [array];
 }
@@ -177,28 +179,29 @@ class Router {
     }
 
     if (parentComponent) {
-      let childComponent = this.v.isVnodeComponent(component) ? component : this.v(component, {});
-      if (this.v.isVnodeComponent(parentComponent)) {
+      let childComponent = v.isVnodeComponent(component) ? component : v(component, {});
+      if (v.isVnodeComponent(parentComponent)) {
         parentComponent.children.push(childComponent);
       } else {
-        parentComponent = this.v(parentComponent, {}, childComponent);
+        parentComponent = v(parentComponent, {}, childComponent);
       }
       component = parentComponent;
     }
 
-    if (!this.v.isNodeJs) {
+    if (!v.isNodeJs) {
       window.history.pushState(null, null, url);
     }
 
-    if (this.v.current.component === component) {
-      return this.v.update(component);
+    if (v.current.component === component) {
+      return v.update();
     }
 
-    return this.v.mount(this.container, component);
+    return v.mount(this.container, component);
   }
 }
 
-function plugin(v) {
+function plugin(vInstance) {
+  v = vInstance;
   const mount = v.mount;
   v.mount = (elementContainer, routerOrComponent) => {
     if (routerOrComponent instanceof Router === false) {

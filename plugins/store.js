@@ -77,16 +77,17 @@ function plugin(v, options) {
   current = v.current;
   update = () => {
     if (current.app) {
-      v.update(v.current.app.component);
+      v.update();
     }
   };
 
   if (options) {
-    v.store = new Store(options);
+    v.store = options instanceof Store ? options : new Store(options);
     v.commit = v.store.commit.bind(v.store);
     v.dispatch = v.store.dispatch.bind(v.store);
     v.state = v.store.state;
     v.getters = v.store.getters;
+    return v.store;
   }
 }
 

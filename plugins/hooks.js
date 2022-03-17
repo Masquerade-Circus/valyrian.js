@@ -4,14 +4,12 @@ let v = {
 
 function createHook({ create, update, remove, returnValue }) {
   return (...args) => {
-    let { component, vnode, oldVnode, app } = v.current;
+    let { component, vnode, oldVnode } = v.current;
 
     // Init the components array for the current vnode
     if (vnode.components === undefined) {
       vnode.components = [];
-      app.onUnmount.push(() => {
-        Reflect.deleteProperty(vnode, "components");
-      });
+      v.onUnmount(() => Reflect.deleteProperty(vnode, "components"));
     }
 
     // Add the component to the components array if it's not already there
@@ -22,9 +20,7 @@ function createHook({ create, update, remove, returnValue }) {
     // Init the component hooks array
     if (component.hooks === undefined) {
       component.hooks = [];
-      app.onUnmount.push(() => {
-        Reflect.deleteProperty(component, "hooks");
-      });
+      v.onUnmount(() => Reflect.deleteProperty(component, "hooks"));
     }
     let hook;
 
@@ -34,7 +30,7 @@ function createHook({ create, update, remove, returnValue }) {
 
       if (remove) {
         // Add the hook to the onRemove array
-        app.onUnmount.push(() => remove(hook));
+        v.onUnmount(() => remove(hook));
       }
     } else {
       hook = component.hooks[component.hooks.length - 1];

@@ -1,6 +1,6 @@
 import expect from "expect";
 import nodePlugin from "../plugins/node";
-import { v } from "../lib/index";
+import v from "../lib/index";
 
 v.use(nodePlugin);
 
@@ -124,17 +124,17 @@ describe("Lifecycle", () => {
 
     result.push(v.mount("body", Lifecycle));
     s = 0;
-    result.push(v.update(Lifecycle));
+    result.push(v.update());
     s = 1;
-    result.push(v.update(Lifecycle));
+    result.push(v.update());
     s = 2;
-    result.push(v.update(Lifecycle));
+    result.push(v.update());
     s = 1;
-    result.push(v.update(Lifecycle));
+    result.push(v.update());
     s = 3;
-    result.push(v.update(Lifecycle));
+    result.push(v.update());
     s = 0;
-    result.push(v.update(Lifecycle));
+    result.push(v.update());
 
     expect(result).toEqual(expectedDom);
     expect(calls).toEqual(expectedLifeCycleCalls);
