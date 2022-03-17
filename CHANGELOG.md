@@ -1,9 +1,15 @@
-### [6.0.5](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.4...6.0.5) (2022-03-17)
+### [6.0.6](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.5...6.0.6) (2022-03-17)
 
+
+### Bug Fixes
+
+* **router:** fix pushState error ([9cee5a9](https://github.com/Masquerade-Circus/valyrian.js/commit/9cee5a994020665a6c8091aed6d2ef2e20c0bf9c))
+
+### [6.0.5](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.4...6.0.5) (2022-03-17)
 
 ### Code Refactoring
 
-* return to only v exported ([28a67da](https://github.com/Masquerade-Circus/valyrian.js/commit/28a67da439c2582c054da3e93432363ce6015a1d))
+*   return to only v exported ([28a67da](https://github.com/Masquerade-Circus/valyrian.js/commit/28a67da439c2582c054da3e93432363ce6015a1d))
 
 ### [6.0.4](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.3...6.0.4) (2022-03-12)
 
