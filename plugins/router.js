@@ -189,7 +189,7 @@ class Router {
     }
 
     if (!v.isNodeJs) {
-      window.history.pushState(null, null, url);
+      window.history.pushState(null, null, path);
     }
 
     if (v.current.component === component) {
