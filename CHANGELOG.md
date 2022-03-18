@@ -1,9 +1,15 @@
-### [6.0.6](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.5...6.0.6) (2022-03-17)
+### [6.0.7](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.6...6.0.7) (2022-03-18)
 
 
 ### Bug Fixes
 
-* **router:** fix pushState error ([9cee5a9](https://github.com/Masquerade-Circus/valyrian.js/commit/9cee5a994020665a6c8091aed6d2ef2e20c0bf9c))
+* **v-model:** fix v-model directive not working ([3a8e780](https://github.com/Masquerade-Circus/valyrian.js/commit/3a8e7800e9291b177889b1da37f8286234d5094b))
+
+### [6.0.6](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.5...6.0.6) (2022-03-17)
+
+### Bug Fixes
+
+*   **router:** fix pushState error ([9cee5a9](https://github.com/Masquerade-Circus/valyrian.js/commit/9cee5a994020665a6c8091aed6d2ef2e20c0bf9c))
 
 ### [6.0.5](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.4...6.0.5) (2022-03-17)
 

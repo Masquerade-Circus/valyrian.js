@@ -4,10 +4,11 @@ var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __markAsModule = (target) => __defProp(target, "__esModule", { value: true });
 var __export = (target, all) => {
-  for (var name in all) __defProp(target, name, { get: all[name], enumerable: true });
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
 };
 var __reExport = (target, module2, copyDefault, desc) => {
-  if ((module2 && typeof module2 === "object") || typeof module2 === "function") {
+  if (module2 && typeof module2 === "object" || typeof module2 === "function") {
     for (let key of __getOwnPropNames(module2))
       if (!__hasOwnProp.call(target, key) && (copyDefault || key !== "default"))
         __defProp(target, key, { get: () => module2[key], enumerable: !(desc = __getOwnPropDesc(module2, key)) || desc.enumerable });
@@ -16,7 +17,7 @@ var __reExport = (target, module2, copyDefault, desc) => {
 };
 var __toCommonJS = /* @__PURE__ */ ((cache) => {
   return (module2, temp) => {
-    return (cache && cache.get(module2)) || ((temp = __reExport(__markAsModule({}), module2, 1)), cache && cache.set(module2, temp), temp);
+    return cache && cache.get(module2) || (temp = __reExport(__markAsModule({}), module2, 1), cache && cache.set(module2, temp), temp);
   };
 })(typeof WeakMap !== "undefined" ? /* @__PURE__ */ new WeakMap() : 0);
 
@@ -38,7 +39,7 @@ function isVnode(object) {
   return object instanceof Vnode;
 }
 function isComponent(component) {
-  return typeof component === "function" || (typeof component === "object" && component !== null && "view" in component);
+  return typeof component === "function" || typeof component === "object" && component !== null && "view" in component;
 }
 function isVnodeComponent(vnode) {
   return vnode instanceof Vnode && vnode.tag === ComponentString;
@@ -62,7 +63,7 @@ function domToVnode(dom) {
       }
     }
     let props = {};
-    [].forEach.call(dom.attributes, (prop) => (props[prop.nodeName] = prop.nodeValue));
+    [].forEach.call(dom.attributes, (prop) => props[prop.nodeName] = prop.nodeValue);
     let vnode = v(dom.tagName.toLowerCase(), props, ...children);
     vnode.dom = dom;
     return vnode;
@@ -306,7 +307,7 @@ function patch(newVnode, oldVnode = emptyVnode) {
       let shouldPatch = true;
       if (oldChildVnode) {
         childVnode.dom = oldChildVnode.dom;
-        if ("v-once" in childVnode.props || (childVnode.props.shouldupdate && childVnode.props.shouldupdate(childVnode, oldChildVnode) === false)) {
+        if ("v-once" in childVnode.props || childVnode.props.shouldupdate && childVnode.props.shouldupdate(childVnode, oldChildVnode) === false) {
           childVnode.children = oldChildVnode.children;
           shouldPatch = false;
         } else {
@@ -358,7 +359,7 @@ function patch(newVnode, oldVnode = emptyVnode) {
       }
       if (oldChildVnode.tag === newChildVnode.tag) {
         newChildVnode.dom = oldChildVnode.dom;
-        if (newChildVnode.props["v-once"] || (newChildVnode.props.shouldupdate && newChildVnode.props.shouldupdate(newChildVnode, oldChildVnode) === false)) {
+        if (newChildVnode.props["v-once"] || newChildVnode.props.shouldupdate && newChildVnode.props.shouldupdate(newChildVnode, oldChildVnode) === false) {
           newChildVnode.children = oldChildVnode.children;
           continue;
         }
@@ -438,7 +439,6 @@ var directives = {
   "v-model": ([model, property, event], vnode, oldVnode) => {
     let value;
     let handler;
-    console.log(vnode);
     if (vnode.tag === "input") {
       event = event || "oninput";
       switch (vnode.props.type) {
@@ -464,7 +464,7 @@ var directives = {
             };
             value = model[property] === vnode.props.value;
           } else {
-            handler = () => (model[property] = !model[property]);
+            handler = () => model[property] = !model[property];
             value = model[property];
           }
           setAttribute("checked", value, vnode, oldVnode);
@@ -515,7 +515,7 @@ var directives = {
     }
     if (!vnode.props[event]) {
       if (!handler) {
-        handler = (e) => (model[property] = e.target.value);
+        handler = (e) => model[property] = e.target.value;
       }
       setAttribute(event, handler, vnode, oldVnode);
     }

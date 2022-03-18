@@ -60,7 +60,8 @@ var reservedProps = {
   "v-for": true,
   "v-show": true,
   "v-class": true,
-  "v-html": true
+  "v-html": true,
+  "v-model": true
 };
 var eventListenerNames = {};
 var onCleanupList = [];
@@ -411,7 +412,7 @@ var directives = {
   "v-model": ([model, property, event], vnode, oldVnode) => {
     let value;
     let handler;
-    if (vnode.name === "input") {
+    if (vnode.tag === "input") {
       event = event || "oninput";
       switch (vnode.props.type) {
         case "checkbox": {
@@ -450,7 +451,7 @@ var directives = {
           setAttribute("value", model[property], vnode, oldVnode);
         }
       }
-    } else if (vnode.name === "select") {
+    } else if (vnode.tag === "select") {
       event = event || "onclick";
       if (vnode.props.multiple) {
         handler = (e) => {
@@ -481,7 +482,7 @@ var directives = {
           }
         });
       }
-    } else if (vnode.name === "textarea") {
+    } else if (vnode.tag === "textarea") {
       event = event || "oninput";
       vnode.children = [model[property]];
     }
