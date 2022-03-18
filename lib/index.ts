@@ -98,7 +98,8 @@ const reservedProps: ReservedProps = {
   "v-for": true,
   "v-show": true,
   "v-class": true,
-  "v-html": true
+  "v-html": true,
+  "v-model": true
 };
 
 /*** Mount ***/
@@ -541,7 +542,7 @@ const directives: Directives = {
   "v-model": ([model, property, event]: any[], vnode: VnodeWithDom, oldVnode?: VnodeWithDom) => {
     let value;
     let handler;
-    if (vnode.name === "input") {
+    if (vnode.tag === "input") {
       event = event || "oninput";
       switch (vnode.props.type) {
         case "checkbox": {
@@ -580,7 +581,7 @@ const directives: Directives = {
           setAttribute("value", model[property], vnode, oldVnode);
         }
       }
-    } else if (vnode.name === "select") {
+    } else if (vnode.tag === "select") {
       event = event || "onclick";
       if (vnode.props.multiple) {
         handler = (e: Event & Record<string, any>) => {
@@ -611,7 +612,7 @@ const directives: Directives = {
           }
         });
       }
-    } else if (vnode.name === "textarea") {
+    } else if (vnode.tag === "textarea") {
       event = event || "oninput";
       vnode.children = [model[property]];
     }
