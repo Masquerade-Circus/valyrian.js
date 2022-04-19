@@ -9,7 +9,7 @@ function convertToUMD(text, globalName) {
   const varName = "__EXPORTS__";
   let code = text;
   code = code.replace(/export\s*\{([^{}]+)\}/, (_, inner) => {
-    const defaultExport = inner.match(/^(\w+) as default$/);
+    const defaultExport = inner.match(/(\w+) as default/);
     return defaultExport != null ? `var ${varName}=${defaultExport[1]}` : `var ${varName}={${inner.replace(/(\w+) as (\w+)/g, "$2:$1")}}`;
   });
   code = `(()=>{${code};typeof module!=='undefined'?module.exports=${varName}:self.${globalName}=${varName}})()`;
@@ -88,7 +88,7 @@ async function build({ globalName, entryPoint, outfileName, clean = false, minif
       fs.mkdirSync(outdir, { recursive: true });
     }
 
-    fs.writeFileSync(`${outfileName}.js`, esmContent);
+    fs.writeFileSync(`${outfileName}.mjs`, esmContent);
     // fs.writeFileSync(`${outfileName}.mjs.map`, getSourceMap(esm.outputFiles[0].text));
     fs.writeFileSync(`${outfileName}.cjs`, cjs.outputFiles[1].text);
     // fs.writeFileSync(`${outfileName}.js.map`, getSourceMap(cjs.outputFiles[0].text));

@@ -13,42 +13,42 @@ describe("Router", () => {
     let Component = () => <div>Hello world</div>;
     let router = new Router();
     router
-      .get(
+      .add(
         "/",
         () => console.log("Hello 1"),
         () => Component
       )
-      .get("/hello", [() => console.log("Hello 2"), () => Component])
-      .get("/hello/", [() => console.log("Hello 3"), () => Component])
-      .get("/:hello", [() => console.log("Hello 4"), () => Component])
-      .get("/hello/(.*)", [() => console.log("Hello 5"), () => Component])
-      .get(
+      .add("/hello", [() => console.log("Hello 2"), () => Component])
+      .add("/hello/", [() => console.log("Hello 3"), () => Component])
+      .add("/:hello", [() => console.log("Hello 4"), () => Component])
+      .add("/hello/(.*)", [() => console.log("Hello 5"), () => Component])
+      .add(
         "/:hello/world",
         () => console.log("Hello 6"),
         [() => console.log("Hello 6")],
         () => Component
       )
-      .get("/hello/:world", [() => console.log("Hello 7"), () => Component], () => console.log("Hello 7"));
+      .add("/hello/:world", [() => console.log("Hello 7"), () => Component], () => console.log("Hello 7"));
 
     let subrouter = new Router();
 
     subrouter
-      .get(
+      .add(
         "/",
         () => console.log("Hello 1"),
         () => Component
       )
-      .get("/hello", [() => console.log("Hello 2"), () => Component])
-      .get("/hello/", [() => console.log("Hello 3"), () => Component])
-      .get("/:hello", [() => console.log("Hello 4"), () => Component])
-      .get("/hello/(.*)", [() => console.log("Hello 5"), () => Component])
-      .get(
+      .add("/hello", [() => console.log("Hello 2"), () => Component])
+      .add("/hello/", [() => console.log("Hello 3"), () => Component])
+      .add("/:hello", [() => console.log("Hello 4"), () => Component])
+      .add("/hello/(.*)", [() => console.log("Hello 5"), () => Component])
+      .add(
         "/:hello/world",
         () => console.log("Hello 6"),
         [() => console.log("Hello 6")],
         () => Component
       )
-      .get("/hello/:world", [() => console.log("Hello 7"), () => Component], () => console.log("Hello 7"))
+      .add("/hello/:world", [() => console.log("Hello 7"), () => Component], () => console.log("Hello 7"))
       .use(() => () => "Not ok");
 
     router.use("/ok", subrouter);
@@ -70,7 +70,7 @@ describe("Router", () => {
 
     let result = {};
     let router = new Router();
-    router.get("/", () => Component);
+    router.add("/", () => Component);
     v.mount("body", router);
 
     result.before = await router.go("/");
@@ -96,7 +96,7 @@ describe("Router", () => {
 
     let result = {};
     let router = new Router();
-    router.get("/", () => Component);
+    router.add("/", () => Component);
     v.mount("body", router);
 
     result.before = await router.go("/");
@@ -124,7 +124,7 @@ describe("Router", () => {
 
     let result = {};
     let router = new Router();
-    router.get("/", () => Component);
+    router.add("/", () => Component);
     v.mount("body", router);
 
     result.before = await router.go("/");
@@ -149,7 +149,7 @@ describe("Router", () => {
 
     let result = {};
     let router = new Router();
-    router.get("/", () => <Component {...props} />);
+    router.add("/", () => <Component {...props} />);
     v.mount("body", router);
 
     result.before = await router.go("/");
@@ -170,7 +170,7 @@ describe("Router", () => {
     let NotFound = () => <div>Ups, no route was found.</div>;
 
     let router = new Router();
-    router.get("/", () => Hello);
+    router.add("/", () => Hello);
     router.use(() => NotFound);
 
     v.mount("body", router);
@@ -199,12 +199,12 @@ describe("Router", () => {
     };
 
     let router = new Router();
-    router.get(
+    router.add(
       "/hello",
       () => Object.assign(Hello, Store),
       () => Hello
     );
-    router.get("/hello/:world/whats/:up", [({ params }) => Object.assign(Hello, params), () => Hello]);
+    router.add("/hello/:world/whats/:up", [({ params }) => Object.assign(Hello, params), () => Hello]);
 
     v.mount("body", router);
 
@@ -223,7 +223,7 @@ describe("Router", () => {
     let middlewares = [];
 
     let router = new Router();
-    router.get(
+    router.add(
       "/",
       () => middlewares.push("Middleware 1"),
       [
@@ -268,12 +268,12 @@ describe("Router", () => {
 
     let subrouter = new Router();
     subrouter
-      .get("/from/:country", ({ params }) => {
+      .add("/from/:country", ({ params }) => {
         Component.world = params.world;
         Component.country = params.country;
         return Component;
       })
-      .get("/", ({ params }) => {
+      .add("/", ({ params }) => {
         Component.world = params.world;
         Component.country = "USA";
         return Component;
@@ -303,7 +303,7 @@ describe("Router", () => {
     );
 
     let router = new Router();
-    router.get("/", () => Component);
+    router.add("/", () => Component);
     v.mount("body", router);
 
     let result = await router.go("/", ParentComponent);
@@ -315,7 +315,7 @@ describe("Router", () => {
     let Component = () => <div>Hello World</div>;
 
     let router = new Router();
-    router.get("/", () => Component);
+    router.add("/", () => Component);
     v.mount("body", router);
 
     let err;
@@ -330,7 +330,7 @@ describe("Router", () => {
 
   it("Test show error when no component is returned", async () => {
     let router = new Router();
-    router.get("/", () => {
+    router.add("/", () => {
       // Component is not returned
     });
     v.mount("body", router);
@@ -348,10 +348,10 @@ describe("Router", () => {
   it("Test get routes", () => {
     let Component = () => "Hello world";
     let subrouter = new Router();
-    subrouter.get("/from/:country", () => Component).get("/", () => Component);
+    subrouter.add("/from/:country", () => Component).add("/", () => Component);
 
     let router = new Router();
-    router.use("/hello/:world", subrouter).get("/", () => Component);
+    router.use("/hello/:world", subrouter).add("/", () => Component);
 
     v.mount("body", router);
 

@@ -77,7 +77,7 @@ function searchMiddlewares(router, path) {
         matches.push(match.shift());
       }
 
-      if (item.method === "get") {
+      if (item.method === "add") {
         router.path = item.path;
         break;
       }
@@ -97,7 +97,11 @@ async function searchComponent(router, middlewares) {
     query: router.query,
     url: router.url,
     path: router.path,
-    matches: router.matches
+    matches: router.matches,
+    redirect: (...args) => {
+      router.go(...args);
+      return false;
+    }
   };
   let i = 0;
 
@@ -106,6 +110,10 @@ async function searchComponent(router, middlewares) {
 
     if (response !== undefined && (router.v.isComponent(response) || router.v.isVnodeComponent(response))) {
       return response;
+    }
+
+    if (response === false) {
+      return false;
     }
   }
 }
@@ -120,8 +128,8 @@ class Router {
   params = {};
   matches = [];
 
-  get(path, ...args) {
-    addPath(this, "get", path, args);
+  add(path, ...args) {
+    addPath(this, "add", path, args);
     return this;
   }
 
@@ -152,7 +160,7 @@ class Router {
   routes() {
     let routes = [];
     this.paths.forEach((path) => {
-      if (path.method === "get") {
+      if (path.method === "add") {
         routes.push(path.path);
       }
     });
@@ -173,6 +181,10 @@ class Router {
     let middlewares = searchMiddlewares(this, urlParts);
 
     let component = await searchComponent(this, middlewares);
+
+    if (component === false) {
+      return;
+    }
 
     if (!component) {
       throw new Error(`The url ${path} requested wasn't found`);

@@ -189,8 +189,10 @@ function sw(file, options = {}) {
 }
 
 function icons(source, configuration = {}) {
-  let favicons = require("favicons"),
+  let { default: favicons } = require("favicons"),
     options = Object.assign({}, icons.options, configuration);
+
+  console.log(favicons);
 
   if (options.iconsPath) {
     options.iconsPath = options.iconsPath.replace(/\/$/gi, "") + "/";

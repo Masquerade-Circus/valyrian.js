@@ -119,8 +119,18 @@ const useRef = createHook({
 });
 
 const useCallback = createHook({
-  create: (callback) => {
-    return callback;
+  create: (callback, changes) => {
+    callback();
+    return { callback, changes };
+  },
+  update: (hook, callback, changes) => {
+    for (let i = 0, l = changes.length; i < l; i++) {
+      if (changes[i] !== hook.changes[i]) {
+        hook.changes = changes;
+        hook.callback();
+        return;
+      }
+    }
   }
 });
 
