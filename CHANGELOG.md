@@ -1,9 +1,17 @@
-### [6.0.7](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.6...6.0.7) (2022-03-18)
 
+
+### [6.0.8](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.7...6.0.8) (2022-04-19)
+
+
+### Code Refactoring
+
+* refactor build system, hooks and router plugins ([02b9597](https://github.com/Masquerade-Circus/valyrian.js/commit/02b9597971422286d680c93cdd71583c9f433155))
+
+### [6.0.7](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.6...6.0.7) (2022-03-18)
 
 ### Bug Fixes
 
-* **v-model:** fix v-model directive not working ([3a8e780](https://github.com/Masquerade-Circus/valyrian.js/commit/3a8e7800e9291b177889b1da37f8286234d5094b))
+*   **v-model:** fix v-model directive not working ([3a8e780](https://github.com/Masquerade-Circus/valyrian.js/commit/3a8e7800e9291b177889b1da37f8286234d5094b))
 
 ### [6.0.6](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.5...6.0.6) (2022-03-17)
 
