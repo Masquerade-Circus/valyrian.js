@@ -78,7 +78,7 @@ async function inline(file, options = {}) {
         ...(options.esbuild || {})
       };
 
-      let result = esbuild.buildSync(esbuildOptions);
+      let result = await esbuild.build(esbuildOptions);
 
       if (options.compact) {
         let result2 = await terser.minify(result.outputFiles[1].text, {
@@ -191,8 +191,6 @@ function sw(file, options = {}) {
 function icons(source, configuration = {}) {
   let { default: favicons } = require("favicons"),
     options = Object.assign({}, icons.options, configuration);
-
-  console.log(favicons);
 
   if (options.iconsPath) {
     options.iconsPath = options.iconsPath.replace(/\/$/gi, "") + "/";

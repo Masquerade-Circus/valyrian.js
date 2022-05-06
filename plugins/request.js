@@ -93,10 +93,22 @@ function Request(baseUrl = "", options = {}) {
     }
 
     let response = await fetch(parseUrl(url, opts), innerOptions);
-
+    let body = null;
     if (!response.ok) {
       let err = new Error(response.statusText);
       err.response = response;
+      if (/text/gi.test(acceptType)) {
+        err.body = await response.text();
+      }
+
+      if (/json/gi.test(acceptType)) {
+        try {
+          err.body = await response.json();
+        } catch (error) {
+          // ignore
+        }
+      }
+
       throw err;
     }
 
@@ -105,11 +117,17 @@ function Request(baseUrl = "", options = {}) {
     }
 
     if (/text/gi.test(acceptType)) {
-      return response.text();
+      body = await response.text();
+      return body;
     }
 
     if (/json/gi.test(acceptType)) {
-      return response.json();
+      try {
+        body = await response.json();
+        return body;
+      } catch (error) {
+        // ignore
+      }
     }
 
     return response;

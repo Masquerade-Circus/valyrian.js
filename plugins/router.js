@@ -204,7 +204,7 @@ class Router {
       window.history.pushState(null, null, path);
     }
 
-    if (v.current.component === component) {
+    if (v.isMounted && v.component.component === component) {
       return v.update();
     }
 
@@ -222,6 +222,7 @@ function plugin(vInstance) {
 
     routerOrComponent.container = elementContainer;
     routerOrComponent.v = v;
+    v.redirect = routerOrComponent.go.bind(routerOrComponent);
 
     // Activate the use of the router
     if (!v.isNodeJs) {
