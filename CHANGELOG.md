@@ -1,11 +1,17 @@
 
 
-### [6.0.8](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.7...6.0.8) (2022-04-19)
+### [6.0.9](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.8...6.0.9) (2022-05-06)
 
 
 ### Code Refactoring
 
-* refactor build system, hooks and router plugins ([02b9597](https://github.com/Masquerade-Circus/valyrian.js/commit/02b9597971422286d680c93cdd71583c9f433155))
+* minor refactor ([38e21ce](https://github.com/Masquerade-Circus/valyrian.js/commit/38e21ce12bdfe67383cce14fb578b2aca2892eea))
+
+### [6.0.8](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.7...6.0.8) (2022-04-19)
+
+### Code Refactoring
+
+*   refactor build system, hooks and router plugins ([02b9597](https://github.com/Masquerade-Circus/valyrian.js/commit/02b9597971422286d680c93cdd71583c9f433155))
 
 ### [6.0.7](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.6...6.0.7) (2022-03-18)
 
