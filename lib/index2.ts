@@ -32,18 +32,14 @@ function createDomElement(tag: string, isSVG: boolean = false): DomElement {
       elementsToClone.svg[tag] = document.createElementNS("http://www.w3.org/2000/svg", tag) as any;
     }
 
-    let dom = elementsToClone.svg[tag].cloneNode(false) as any;
-    dom.vProps = {};
-    return dom;
+    return elementsToClone.svg[tag].cloneNode(false) as any;
   }
 
   if (!elementsToClone.notSvg[tag]) {
     elementsToClone.notSvg[tag] = document.createElement(tag) as any;
   }
 
-  let dom = elementsToClone.notSvg[tag].cloneNode(false) as any;
-  dom.vProps = {};
-  return dom as DomElement;
+  return elementsToClone.notSvg[tag].cloneNode(false) as any;
 }
 
 function domToVnode(dom: any): void | VnodeWithDom {
@@ -171,18 +167,12 @@ function eventListener(e: Event) {
 
 const current: Current = {};
 
-function sharedSetAttribute(prop: string, vnode: Vnode, dom: DomElement, isSVG: boolean = false, oldVnode?: VnodeWithDom): void | boolean {
+function sharedSetAttribute(prop: string, vnode: VnodeWithDom, oldVnode?: VnodeWithDom, isSVG: boolean = false): void | boolean {
   // It is a reserved prop
   if (reservedProps[prop]) {
     // If it is a directive name call the directive
     if (directives[prop]) {
-      vnode.dom = dom;
-      dom.vProps[prop] = vnode.props[prop];
-      return directives[prop](vnode.props[prop], vnode as VnodeWithDom, oldVnode);
-    }
-
-    if (conservedProps[prop]) {
-      dom.vProps[prop] = vnode.props[prop];
+      return directives[prop](vnode.props[prop], vnode, oldVnode);
     }
 
     return;
@@ -196,73 +186,64 @@ function sharedSetAttribute(prop: string, vnode: Vnode, dom: DomElement, isSVG: 
       eventListenerNames[prop] = true;
       (v.container as DomElement).addEventListener(prop.slice(2), eventListener);
     }
-    dom[`v-${prop}`] = value;
+    vnode.dom[`v-${prop}`] = value;
     return;
   }
 
-  if (prop in dom && isSVG === false) {
+  if (prop in vnode.dom && isSVG === false) {
     // eslint-disable-next-line eqeqeq
-    if (dom[prop] != value) {
-      dom.vProps[prop] = value;
-      dom[prop] = value;
+    if (vnode.dom[prop] != value) {
+      vnode.dom.vProps[prop] = value;
+      vnode.dom[prop] = value;
     }
     return;
   }
 
   // Use set attribute
-  if (dom[prop] !== value) {
+  if (vnode.dom[prop] !== value) {
     if (value === false) {
-      dom.removeAttribute(prop);
-      Reflect.deleteProperty(dom.vProps, prop);
+      vnode.dom.removeAttribute(prop);
     } else {
-      dom.setAttribute(prop, value);
-      dom.vProps[prop] = value;
+      vnode.dom.setAttribute(prop, value);
     }
   }
 }
 
-function setAttribute(name: string, value: any, vnode: VnodeWithDom, isSVG: boolean = false, oldVnode?: VnodeWithDom): void {
+function setAttribute(name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom, isSVG: boolean = false): void {
   vnode.props[name] = value;
-  sharedSetAttribute(name, vnode, vnode.dom, isSVG || vnode.tag === "svg", oldVnode);
+  sharedSetAttribute(name, vnode, oldVnode, isSVG || vnode.tag === "svg");
 }
 
-function addAttributes(vnode: Vnode, dom: DomElement, isSVG = false): void {
+function addAttributes(vnode: VnodeWithDom, isSVG = false): void {
   for (let prop in vnode.props) {
-    if (sharedSetAttribute(prop, vnode, dom, isSVG) === false) {
+    if (sharedSetAttribute(prop, vnode, undefined, isSVG) === false) {
       break;
     }
   }
 }
 
-function updateAttributes(vnode: Vnode, dom: DomElement, isSVG: boolean = false) {
-  let oldProps = { ...dom.vProps };
-  let oldVnode;
-
-  if (dom.vProps) {
-    oldVnode = domToVnode(dom) as VnodeWithDom;
-  }
+function updateAttributes(vnode: VnodeWithDom, oldVnode: VnodeWithDom, isSVG: boolean = false) {
+  let oldProps = oldVnode.props;
 
   for (let prop in vnode.props) {
-    if (sharedSetAttribute(prop, vnode, dom, isSVG, oldVnode) === false) {
+    if (sharedSetAttribute(prop, vnode, oldVnode, isSVG) === false) {
       break;
     }
   }
 
   for (let prop in oldProps) {
-    if (prop in vnode.props === false) {
-      if (prop in dom && isSVG === false) {
-        dom[prop] = null;
+    if (prop in vnode.props === false && prop in reservedProps === false && typeof oldProps[prop] !== "function") {
+      if (prop in vnode.dom && isSVG === false) {
+        vnode.dom[prop] = null;
       } else {
-        dom.removeAttribute(prop);
+        vnode.dom.removeAttribute(prop);
       }
-      Reflect.deleteProperty(dom.vProps, prop);
     }
   }
 }
 
-function callLifeCycle(event: string, vnode: Vnode, dom: DomElement, oldVnode?: VnodeWithDom) {
+function callLifeCycle(event: string, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
   if (vnode.props[event]) {
-    vnode.dom = dom;
     vnode.props[event](vnode, oldVnode);
   }
 
@@ -270,7 +251,7 @@ function callLifeCycle(event: string, vnode: Vnode, dom: DomElement, oldVnode?: 
     for (let i = 0; i < vnode.children.length; i++) {
       let child = vnode.children[i];
       if (child.tag !== "#text") {
-        callLifeCycle(event, child, child.dom);
+        callLifeCycle(event, child);
       }
     }
   }
@@ -308,7 +289,7 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom, isSVG: boolean =
       let oldChild = oldTree[i];
 
       if (oldChild.tag !== "#text") {
-        callLifeCycle("onremove", oldChild, oldChild.dom);
+        callLifeCycle("onremove", oldChild);
       }
 
       newVnode.dom.textContent = "";
@@ -331,9 +312,9 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom, isSVG: boolean =
 
         isSVG = isSVG || newChild.tag === "svg";
         newChild.dom = createDomElement(newChild.tag, isSVG);
-        addAttributes(newChild, newChild.dom, isSVG);
+        addAttributes(newChild, isSVG);
         newVnode.dom.appendChild(newChild.dom);
-        callLifeCycle("oncreate", newChild, newChild.dom);
+        callLifeCycle("oncreate", newChild);
         if (newChild.children.length > 0) {
           patch(newChild, undefined, isSVG);
         }
@@ -352,7 +333,7 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom, isSVG: boolean =
 
         newChild.dom = document.createTextNode(newChild.nodeValue);
         if (oldChild.tag !== "#text") {
-          callLifeCycle("onremove", oldChild, oldChild.dom);
+          callLifeCycle("onremove", oldChild);
         }
 
         newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
@@ -363,11 +344,11 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom, isSVG: boolean =
       if (oldChild.tag !== newChild.tag) {
         newChild.dom = createDomElement(newChild.tag, isSVG);
         if (oldChild.tag !== "#text") {
-          callLifeCycle("onremove", oldChild, oldChild.dom);
+          callLifeCycle("onremove", oldChild);
         }
-        addAttributes(newChild, newChild.dom, isSVG);
+        addAttributes(newChild, isSVG);
         newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
-        callLifeCycle("oncreate", newChild, newChild.dom);
+        callLifeCycle("oncreate", newChild);
         patch(newChild, oldChild, isSVG);
         continue;
       }
@@ -378,8 +359,8 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom, isSVG: boolean =
         continue;
       }
 
-      updateAttributes(newChild, newChild.dom, isSVG);
-      callLifeCycle(v.isMounted ? "onupdate" : "oncreate", newChild, newChild.dom, oldChild);
+      updateAttributes(newChild, oldChild, isSVG);
+      callLifeCycle(v.isMounted ? "onupdate" : "oncreate", newChild, oldChild);
 
       patch(newChild, oldChild, isSVG);
     }
@@ -495,7 +476,7 @@ function hideDirective(test: boolean): Directive {
     if (value) {
       let newdom = document.createTextNode("");
       if (oldVnode && oldVnode.dom && oldVnode.dom.parentNode) {
-        oldVnode.tag !== "#text" && callLifeCycle("onremove", oldVnode, oldVnode.dom);
+        oldVnode.tag !== "#text" && callLifeCycle("onremove", oldVnode);
         oldVnode.dom.parentNode.replaceChild(newdom, oldVnode.dom);
       }
       vnode.tag = "#text";
@@ -556,15 +537,15 @@ const directives: Directives = {
             handler = () => (model[property] = !model[property]);
             value = model[property];
           }
-          setAttribute("checked", value, vnode, false, oldVnode);
+          setAttribute("checked", value, vnode, oldVnode);
           break;
         }
         case "radio": {
-          setAttribute("checked", model[property] === vnode.dom.value, vnode, false, oldVnode);
+          setAttribute("checked", model[property] === vnode.dom.value, vnode, oldVnode);
           break;
         }
         default: {
-          setAttribute("value", model[property], vnode, false, oldVnode);
+          setAttribute("value", model[property], vnode, oldVnode);
         }
       }
     } else if (vnode.tag === "select") {
@@ -607,7 +588,7 @@ const directives: Directives = {
       if (!handler) {
         handler = (e: Event) => (model[property] = (e.target as DomElement & Record<string, any>).value);
       }
-      setAttribute(event, handler, vnode, false, oldVnode);
+      setAttribute(event, handler, vnode, oldVnode);
     }
   }
 };

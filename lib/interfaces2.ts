@@ -81,7 +81,7 @@ export interface Valyrian {
   update: () => void | string;
   unmount: () => void | string;
 
-  setAttribute: (name: string, value: any, vnode: VnodeWithDom, isSVG: boolean) => void;
+  setAttribute: (name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom, isSVG?: boolean) => void;
   directive: (name: string, directive: Directive) => void;
   use: (plugin: Plugin, options?: Record<string | number | symbol, any>) => void | any;
 
