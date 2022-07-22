@@ -1,13 +1,13 @@
 const expect = require("expect");
 const dayjs = require("dayjs");
 
-import v from "../lib";
+import v from "../lib/index2";
 
 const plugin = require("../plugins/node");
 v.use(plugin);
 
 // eslint-disable-next-line max-lines-per-function
-describe("Directives", () => {
+describe.only("Directives", () => {
   describe("Directive creation", () => {
     it("should be able create a directive", () => {
       let result;
@@ -39,8 +39,7 @@ describe("Directives", () => {
           "v-test2": true
         },
         dom: expect.any(Object),
-        children: [],
-        isSVG: false
+        children: []
       });
 
       expect(oldVnode).toEqual({
@@ -49,8 +48,7 @@ describe("Directives", () => {
           "v-test2": true
         },
         dom: expect.any(Object),
-        children: [],
-        isSVG: false
+        children: []
       });
     });
 
@@ -58,6 +56,7 @@ describe("Directives", () => {
       let app = () => <div v-create />;
 
       v.directive("create", (v, vnode, oldVnode) => {
+        console.log(oldVnode);
         if (!oldVnode) {
           vnode.children = ["First render, vnode created"];
         } else {
@@ -455,7 +454,7 @@ describe("Directives", () => {
   describe("reserved word state", () => {
     it("should not render an attribute", () => {
       let state = { hello: "world" };
-      let Component = () => <div state={state} shouldupdate={(oldVnode, newVnode) => oldVnode.props.state.hello !== newVnode.props.state.hello} />;
+      let Component = () => <div state={state} shouldupdate={(newVnode, oldVnode) => oldVnode.props.state.hello !== newVnode.props.state.hello} />;
 
       let result = v.mount("body", Component);
       expect(result).toEqual("<div></div>");

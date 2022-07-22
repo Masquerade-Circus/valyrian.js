@@ -1,10 +1,10 @@
 import expect from "expect";
 import nodePlugin from "../plugins/node";
-import v from "../lib/index";
+import v from "../lib/index2";
 
 v.use(nodePlugin);
 
-describe("Lifecycle", () => {
+describe.only("Lifecycle", () => {
   it("Mount and update", () => {
     let s = 1;
     let calls = [];

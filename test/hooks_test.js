@@ -2,7 +2,7 @@ import plugin, { useCallback, useEffect, useMemo, useRef, useState } from "../pl
 
 import expect from "expect";
 import nodePlugin from "../plugins/node";
-import v from "../lib/index";
+import v from "../lib/index2";
 
 v.use(plugin);
 v.use(nodePlugin);

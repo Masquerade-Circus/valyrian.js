@@ -2,7 +2,7 @@ import expect from "expect";
 import fastify from "fastify";
 import nodePlugin from "../plugins/node";
 import request from "../plugins/request";
-import v from "../lib/index";
+import v from "../lib/index2";
 
 v.use(nodePlugin);
 
@@ -51,7 +51,7 @@ let createServer = async () => {
   return server;
 };
 
-describe("Request", () => {
+describe.only("Request", () => {
   it("should get", async () => {
     let server = await createServer();
     let res = await request.get(`${server.baseUrl}/posts/1`);

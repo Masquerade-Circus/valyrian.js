@@ -1,7 +1,7 @@
 import plugin, { Store } from "../plugins/store";
 
 import expect from "expect";
-import v from "../lib/index";
+import v from "../lib/index2";
 
 v.use(plugin);
 
@@ -49,7 +49,7 @@ function getNewStore() {
 }
 
 // eslint-disable-next-line max-lines-per-function
-describe("Store slim", () => {
+describe.only("Store slim", () => {
   it("Create empty state if state is not passed", () => {
     let store = new Store();
     expect(store.state).toBeDefined();

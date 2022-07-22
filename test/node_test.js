@@ -3,11 +3,11 @@ import plugin, { htmlToHyperscript, icons, inline, render, sw } from "../plugins
 import expect from "expect";
 import fs from "fs";
 import packageJson from "../package.json";
-import v from "../lib/index";
+import v from "../lib/index2";
 
 v.use(plugin);
 
-describe("Node test", () => {
+describe.only("Node test", () => {
   it("Get hyperscript string from html", () => {
     let html = '<body><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</body>';
 
@@ -166,10 +166,12 @@ span.hello{display: inline-block}
 
   it("should inline js", async () => {
     let { raw: indexTs } = await inline("./lib/index.ts", { compact: true });
+    let { raw: index2Ts } = await inline("./lib/index2.ts", { compact: true });
     let { raw: indexOld } = await inline("./bench/index-old.js", { compact: true });
     console.log(indexTs.length);
     // console.log(inline.ts()[1].raw.length);
     console.log(indexOld.length);
+    console.log(index2Ts.length);
 
     // console.log(inline.ts()[1].raw);
     // fs.writeFileSync("./dist/valyrian.lite.js", inline.ts()[1].raw);

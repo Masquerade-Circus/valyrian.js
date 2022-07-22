@@ -2,13 +2,13 @@ import plugin, { Router } from "../plugins/router";
 
 import expect from "expect";
 import nodePlugin from "../plugins/node";
-import v from "../lib/index";
+import v from "../lib/index2";
 
 v.use(plugin);
 v.use(nodePlugin);
 
 // eslint-disable-next-line max-lines-per-function
-describe("Router", () => {
+describe.only("Router", () => {
   it("Dev test", async () => {
     let Component = () => <div>Hello world</div>;
     let router = new Router();
