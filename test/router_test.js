@@ -8,7 +8,7 @@ v.use(plugin);
 v.use(nodePlugin);
 
 // eslint-disable-next-line max-lines-per-function
-describe.only("Router", () => {
+describe("Router", () => {
   it("Dev test", async () => {
     let Component = () => <div>Hello world</div>;
     let router = new Router();

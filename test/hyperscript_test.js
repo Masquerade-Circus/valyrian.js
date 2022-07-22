@@ -4,7 +4,7 @@ import v from "../lib/index2";
 
 v.use(nodePlugin);
 
-describe.only("Hyperscript", () => {
+describe("Hyperscript", () => {
   it("should create a div element", () => {
     expect(v("div")).toEqual({
       tag: "div",

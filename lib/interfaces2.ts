@@ -15,6 +15,8 @@ export interface Vnode {
   dom?: DomElement;
 
   processed?: boolean;
+
+  [key: string]: any;
 }
 
 export interface VnodeWithDom extends Vnode {
@@ -30,6 +32,7 @@ export interface ValyrianComponent {
   view: Component;
   props: Props | null;
   children: any[];
+  [key: string]: any;
 }
 
 export interface Children extends Array<Vnode | any> {}
@@ -72,10 +75,10 @@ export interface Valyrian {
   isComponent: (component?: unknown | ValyrianComponent) => component is ValyrianComponent;
   isValyrianComponent: (component?: unknown | ValyrianComponent) => component is ValyrianComponent;
 
-  // onCleanup: (fn: Function) => void;
-  // onUnmount: (fn: Function) => void;
-  // onMount: (fn: Function) => void;
-  // onUpdate: (fn: Function) => void;
+  onCleanup: (fn: Function) => void;
+  onUnmount: (fn: Function) => void;
+  onMount: (fn: Function) => void;
+  onUpdate: (fn: Function) => void;
 
   mount: (container: string | Element, normalComponent: Component | ValyrianComponent) => void | string;
   update: () => void | string;

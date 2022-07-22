@@ -51,7 +51,7 @@ let createServer = async () => {
   return server;
 };
 
-describe.only("Request", () => {
+describe("Request", () => {
   it("should get", async () => {
     let server = await createServer();
     let res = await request.get(`${server.baseUrl}/posts/1`);

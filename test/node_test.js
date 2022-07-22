@@ -7,7 +7,7 @@ import v from "../lib/index2";
 
 v.use(plugin);
 
-describe.only("Node test", () => {
+describe("Node test", () => {
   it("Get hyperscript string from html", () => {
     let html = '<body><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</body>';
 

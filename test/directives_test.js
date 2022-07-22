@@ -8,7 +8,7 @@ const plugin = require("../plugins/node");
 v.use(plugin);
 
 // eslint-disable-next-line max-lines-per-function
-describe.only("Directives", () => {
+describe("Directives", () => {
   describe("Directive creation", () => {
     it("should be able create a directive", () => {
       let result;

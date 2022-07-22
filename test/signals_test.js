@@ -5,7 +5,7 @@ import v from "../lib/index2";
 
 v.use(nodePlugin);
 
-describe.only("Signals", () => {
+describe("Signals", () => {
   it("should create a signal", async () => {
     // Create signal
     let counter = Signal(0);

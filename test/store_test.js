@@ -49,7 +49,7 @@ function getNewStore() {
 }
 
 // eslint-disable-next-line max-lines-per-function
-describe.only("Store slim", () => {
+describe("Store slim", () => {
   it("Create empty state if state is not passed", () => {
     let store = new Store();
     expect(store.state).toBeDefined();

@@ -2,12 +2,12 @@ let v = {
   current: {}
 };
 
-function createHook({ create, update, remove, returnValue }) {
+function createHook({ onCreate, onUpdate, onRemove, onCleanup, returnValue }) {
   return (...args) => {
     let { component, vnode, oldVnode } = v.current;
 
     // Init the components array for the current vnode
-    if (vnode.components === undefined) {
+    if (!vnode.components) {
       vnode.components = [];
       v.onUnmount(() => Reflect.deleteProperty(vnode, "components"));
     }
@@ -18,50 +18,81 @@ function createHook({ create, update, remove, returnValue }) {
     }
 
     // Init the component hooks array
-    if (component.hooks === undefined) {
+    if (!component.hooks) {
       component.hooks = [];
       v.onUnmount(() => Reflect.deleteProperty(component, "hooks"));
     }
+
     let hook;
 
+    // if no old vnode or old vnode has no components or old vnode's last component is not the current component
+    // we are mounting the component for the first time so we create a new hook
     if (!oldVnode || !oldVnode.components || oldVnode.components[vnode.components.length - 1] !== component) {
-      hook = create(...args);
+      // create a new hook
+      hook = onCreate(...args);
+
+      // add the hook to the component's hooks array
       component.hooks.push(hook);
 
-      if (remove) {
+      // if we have a onRemove hook, add it to the onRemove array
+      if (onRemove) {
         // Add the hook to the onRemove array
-        v.onUnmount(() => remove(hook));
+        v.onUnmount(() => onRemove(hook));
       }
     } else {
-      hook = component.hooks[component.hooks.length - 1];
-      if (update) {
-        update(hook, ...args);
+      // old vnode has components, we are updating the component
+
+      // Set the calls property to the current component if it's not already set
+      if ("calls" in component === false) {
+        component.calls = -1;
+        v.onUnmount(() => Reflect.deleteProperty(component, "calls"));
+      }
+
+      // Reset the calls property to -1 on cleanup so we can detect if the component is updated again
+      v.onCleanup(() => (component.calls = -1));
+
+      // Increment the calls property
+      component.calls++;
+
+      // Get the current hook from the component's hooks array
+      hook = component.hooks[component.calls];
+
+      // If we have an onUpdate hook, call it
+      if (onUpdate) {
+        onUpdate(hook, ...args);
       }
     }
 
+    // If we have an onCleanup function, add it to the cleanup array
+    if (onCleanup) {
+      // Add the hook to the onCleanup array
+      v.onCleanup(() => onCleanup(hook));
+    }
+
+    // If we have a returnValue function, call it and return the result instead of the hook
     if (returnValue) {
       return returnValue(hook);
     }
 
+    // Return the hook
     return hook;
   };
 }
 
+// Use state hook
 const useState = createHook({
-  create: (value) => {
-    let state = value;
-    let setState = (value) => (state = value);
-
+  onCreate: (value) => {
     let stateObj = Object.create(null);
-    stateObj.toJSON = stateObj.toString = stateObj.valueOf = () => (typeof state === "function" ? state() : state);
+    stateObj.value = value;
+    stateObj.toJSON = stateObj.toString = stateObj.valueOf = () => (typeof stateObj.value === "function" ? stateObj.value() : stateObj.value);
 
-    return [stateObj, setState];
+    return [stateObj, (value) => (stateObj.value = value)];
   }
 });
 
 // Effect hook
 const useEffect = createHook({
-  create: (effect, changes) => {
+  onCreate: (effect, changes) => {
     let hook = { effect, prev: [] };
     // on unmount
     if (changes === null) {
@@ -74,7 +105,7 @@ const useEffect = createHook({
     hook.onCleanup = hook.effect();
     return hook;
   },
-  update: (hook, effect, changes) => {
+  onUpdate: (hook, effect, changes) => {
     // on update
     if (typeof changes === "undefined") {
       hook.prev = changes;
@@ -99,7 +130,7 @@ const useEffect = createHook({
       }
     }
   },
-  remove: (hook) => {
+  onRemove: (hook) => {
     if (typeof hook.onCleanup === "function") {
       hook.onCleanup();
     }
@@ -110,7 +141,7 @@ const useEffect = createHook({
 });
 
 const useRef = createHook({
-  create: (initialValue) => {
+  onCreate: (initialValue) => {
     v.directive("ref", (ref, vnode) => {
       ref.current = vnode.dom;
     });
@@ -119,11 +150,11 @@ const useRef = createHook({
 });
 
 const useCallback = createHook({
-  create: (callback, changes) => {
+  onCreate: (callback, changes) => {
     callback();
     return { callback, changes };
   },
-  update: (hook, callback, changes) => {
+  onUpdate: (hook, callback, changes) => {
     for (let i = 0, l = changes.length; i < l; i++) {
       if (changes[i] !== hook.changes[i]) {
         hook.changes = changes;
@@ -135,10 +166,10 @@ const useCallback = createHook({
 });
 
 const useMemo = createHook({
-  create: (callback, changes) => {
+  onCreate: (callback, changes) => {
     return { callback, changes, value: callback() };
   },
-  update: (hook, callback, changes) => {
+  onUpdate: (hook, callback, changes) => {
     for (let i = 0, l = changes.length; i < l; i++) {
       if (changes[i] !== hook.changes[i]) {
         hook.changes = changes;

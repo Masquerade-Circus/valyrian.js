@@ -62,18 +62,12 @@ function domToVnode(dom: any): void | VnodeWithDom {
       }
     }
 
-    let vProps: Props = {};
-    if (dom.vProps) {
-      vProps = dom.vProps;
-    } else {
-      [].forEach.call(dom.attributes, (prop: Attr) => (vProps[prop.nodeName] = prop.nodeValue));
-    }
-
-    dom.vProps = vProps;
+    let props: Props = {};
+    [].forEach.call(dom.attributes, (prop: Attr) => (props[prop.nodeName] = prop.nodeValue));
 
     return {
       tag: dom.tagName.toLowerCase(),
-      props: vProps,
+      props,
       children,
       dom
     };
@@ -97,7 +91,7 @@ function createVnode(tag: string, props: Props, children: any[]): Vnode {
 
 function createValyrianComponent(component: Component, props: Record<string, any>, children: any[]): ValyrianComponent {
   return {
-    view: component.bind(component),
+    view: component,
     props,
     children
   };
@@ -144,11 +138,7 @@ const reservedProps: Record<string, true> = {
   "v-html": true,
   "v-model": true
 };
-const conservedProps: Record<string, true> = {
-  key: true,
-  state: true,
-  onremove: true
-};
+
 const eventListenerNames: Record<string, any> = {};
 function eventListener(e: Event) {
   let dom = e.target as any;
@@ -163,6 +153,39 @@ function eventListener(e: Event) {
     }
     dom = dom.parentNode;
   }
+}
+
+let onCleanupList: Function[] = [];
+let onMountList: Function[] = [];
+let onUpdateList: Function[] = [];
+let onUnmountList: Function[] = [];
+
+function onCleanup(callback: Function): void {
+  if (onCleanupList.indexOf(callback) === -1) {
+    onCleanupList.push(callback);
+  }
+}
+function onUnmount(callback: Function): void {
+  if (onUnmountList.indexOf(callback) === -1) {
+    onUnmountList.push(callback);
+  }
+}
+function onMount(callback: Function): void {
+  if (onMountList.indexOf(callback) === -1) {
+    onMountList.push(callback);
+  }
+}
+function onUpdate(callback: Function): void {
+  if (onUpdateList.indexOf(callback) === -1) {
+    onUpdateList.push(callback);
+  }
+}
+
+function callCallbackList(list: Function[]): void {
+  for (let i = 0; i < list.length; i++) {
+    list[i]();
+  }
+  list.length = 0;
 }
 
 const current: Current = {};
@@ -258,6 +281,8 @@ function callLifeCycle(event: string, vnode: VnodeWithDom, oldVnode?: VnodeWithD
 }
 
 function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom, isSVG: boolean = false) {
+  v.current.vnode = newVnode;
+  v.current.oldVnode = oldVnode;
   let newTree = newVnode.children;
   let oldTree = oldVnode?.children || [];
 
@@ -269,6 +294,7 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom, isSVG: boolean =
       newTree.splice(i--, 1, ...childVnode);
     } else if (typeof childVnode === "object" && ("tag" in childVnode || "view" in childVnode)) {
       if (childVnode.view) {
+        v.current.component = childVnode.view;
         let result = childVnode.view(childVnode.props, ...childVnode.children);
 
         newTree.splice(i--, 1, result);
@@ -297,73 +323,127 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom, isSVG: boolean =
     return;
   }
 
-  // If new tree and old tree have more than one child, we should update the dom
-  if (newTreeLength) {
+  // If the tree is keyed list and is not first render and old tree is keyed list too
+  if (oldTreeLength && "key" in newTree[0].props && "key" in oldTree[0].props) {
+    let oldKeyedList: { [key: string]: number } = {};
+    for (let i = 0; i < oldTreeLength; i++) {
+      oldKeyedList[oldTree[i].props.key] = i;
+    }
+
+    let newKeyedList: { [key: string]: number } = {};
     for (let i = 0; i < newTreeLength; i++) {
-      let newChild = newTree[i];
-      let oldChild = oldTree[i];
+      newKeyedList[newTree[i].props.key] = i;
+    }
 
-      if (!oldChild) {
-        if (newChild.tag === "#text") {
-          newChild.dom = document.createTextNode(newChild.nodeValue);
-          newVnode.dom.appendChild(newChild.dom);
-          continue;
-        }
+    for (let i = 0; i < newTreeLength; i++) {
+      let childVnode = newTree[i];
+      let oldChildVnode = oldTree[oldKeyedList[childVnode.props.key]];
+      let shouldPatch = true;
 
-        isSVG = isSVG || newChild.tag === "svg";
-        newChild.dom = createDomElement(newChild.tag, isSVG);
-        addAttributes(newChild, isSVG);
-        newVnode.dom.appendChild(newChild.dom);
-        callLifeCycle("oncreate", newChild);
-        if (newChild.children.length > 0) {
-          patch(newChild, undefined, isSVG);
+      if (oldChildVnode) {
+        childVnode.dom = oldChildVnode.dom;
+        if ("v-once" in childVnode.props || (childVnode.props.shouldupdate && childVnode.props.shouldupdate(childVnode, oldChildVnode) === false)) {
+          // skip this patch
+          childVnode.children = oldChildVnode.children;
+          shouldPatch = false;
+        } else {
+          updateAttributes(childVnode, oldChildVnode);
+          callLifeCycle(v.isMounted ? "onupdate" : "oncreate", childVnode, oldChildVnode);
         }
-        continue;
+      } else {
+        childVnode.dom = createDomElement(childVnode.tag, childVnode.isSVG);
+        addAttributes(childVnode);
+        childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
       }
 
+      if (!newVnode.dom.childNodes[i]) {
+        newVnode.dom.appendChild(childVnode.dom);
+      } else if (newVnode.dom.childNodes[i] !== childVnode.dom) {
+        oldTree[i] && !newKeyedList[oldTree[i].props.key] && callLifeCycle("onremove", oldTree[i]);
+        newVnode.dom.replaceChild(childVnode.dom, newVnode.dom.childNodes[i]);
+      }
+
+      shouldPatch && patch(childVnode, oldChildVnode);
+    }
+
+    // For the rest of the children, we should remove them
+    for (let i = newTreeLength; i < oldTreeLength; i++) {
+      if (!newKeyedList[oldTree[i].props.key]) {
+        let oldChildVnode = oldTree[i];
+        callLifeCycle("onremove", oldChildVnode);
+        oldChildVnode.dom.parentNode && oldChildVnode.dom.parentNode.removeChild(oldChildVnode.dom);
+      }
+    }
+
+    return;
+  }
+
+  // If new tree and old tree have more than one child, we should update the dom
+
+  for (let i = 0; i < newTreeLength; i++) {
+    let newChild = newTree[i];
+    let oldChild = oldTree[i];
+
+    if (!oldChild) {
       if (newChild.tag === "#text") {
-        if (oldChild.tag === "#text") {
-          newChild.dom = oldChild.dom;
-          // eslint-disable-next-line eqeqeq
-          if (newChild.dom.textContent != newChild.nodeValue) {
-            newChild.dom.textContent = newChild.nodeValue;
-          }
-          continue;
-        }
-
         newChild.dom = document.createTextNode(newChild.nodeValue);
-        if (oldChild.tag !== "#text") {
-          callLifeCycle("onremove", oldChild);
-        }
-
-        newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
+        newVnode.dom.appendChild(newChild.dom);
         continue;
       }
 
       isSVG = isSVG || newChild.tag === "svg";
-      if (oldChild.tag !== newChild.tag) {
-        newChild.dom = createDomElement(newChild.tag, isSVG);
-        if (oldChild.tag !== "#text") {
-          callLifeCycle("onremove", oldChild);
-        }
-        addAttributes(newChild, isSVG);
-        newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
-        callLifeCycle("oncreate", newChild);
-        patch(newChild, oldChild, isSVG);
-        continue;
+      newChild.dom = createDomElement(newChild.tag, isSVG);
+      addAttributes(newChild, isSVG);
+      newVnode.dom.appendChild(newChild.dom);
+      callLifeCycle("oncreate", newChild);
+      if (newChild.children.length > 0) {
+        patch(newChild, undefined, isSVG);
       }
-
-      newChild.dom = oldChild.dom;
-      if ("v-once" in newChild.props || ("shouldupdate" in newChild.props && newChild.props.shouldupdate(oldChild, newChild) === false)) {
-        newChild.children = oldChild.children;
-        continue;
-      }
-
-      updateAttributes(newChild, oldChild, isSVG);
-      callLifeCycle(v.isMounted ? "onupdate" : "oncreate", newChild, oldChild);
-
-      patch(newChild, oldChild, isSVG);
+      continue;
     }
+
+    if (newChild.tag === "#text") {
+      if (oldChild.tag === "#text") {
+        newChild.dom = oldChild.dom;
+        // eslint-disable-next-line eqeqeq
+        if (newChild.dom.textContent != newChild.nodeValue) {
+          newChild.dom.textContent = newChild.nodeValue;
+        }
+        continue;
+      }
+
+      newChild.dom = document.createTextNode(newChild.nodeValue);
+      if (oldChild.tag !== "#text") {
+        callLifeCycle("onremove", oldChild);
+      }
+
+      newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
+      continue;
+    }
+
+    isSVG = isSVG || newChild.tag === "svg";
+    if (oldChild.tag !== newChild.tag) {
+      newChild.dom = createDomElement(newChild.tag, isSVG);
+      if (oldChild.tag !== "#text") {
+        callLifeCycle("onremove", oldChild);
+      }
+      addAttributes(newChild, isSVG);
+      newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
+      callLifeCycle("oncreate", newChild);
+      patch(newChild, oldChild, isSVG);
+      continue;
+    }
+
+    newChild.dom = oldChild.dom;
+    if ("v-once" in newChild.props || ("shouldupdate" in newChild.props && newChild.props.shouldupdate(oldChild, newChild) === false)) {
+      newChild.children = oldChild.children;
+      continue;
+    }
+
+    updateAttributes(newChild, oldChild, isSVG);
+    callLifeCycle(v.isMounted ? "onupdate" : "oncreate", newChild, oldChild);
+
+    patch(newChild, oldChild, isSVG);
   }
 
   // For the rest of the children, we should remove them
@@ -379,20 +459,44 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom, isSVG: boolean =
 }
 
 function update() {
+  onCleanupList.length && callCallbackList(onCleanupList);
   if (v.component && v.container && v.mainVnode) {
     let oldVnode = v.mainVnode;
-
     v.mainVnode = v(oldVnode.tag, oldVnode.props, v.component) as VnodeWithDom;
     v.mainVnode.dom = oldVnode.dom;
 
     patch(v.mainVnode, oldVnode, v.mainVnode.tag === "svg");
 
-    v.isMounted = true;
-
-    // console.log(v.mainVnode.children[0]);
+    if (v.isMounted === false) {
+      onMountList.length && callCallbackList(onMountList);
+      v.isMounted = true;
+    } else {
+      onUpdateList.length && callCallbackList(onUpdateList);
+    }
 
     if (isNodeJs) {
       return v.container.innerHTML;
+    }
+  }
+}
+
+function unmount() {
+  onCleanupList.length && callCallbackList(onCleanupList);
+  onUnmountList.length && callCallbackList(onUnmountList);
+  if (v.component && v.container && v.mainVnode) {
+    let oldVnode = v.mainVnode;
+    v.mainVnode = v(oldVnode.tag, oldVnode.props) as VnodeWithDom;
+    v.mainVnode.dom = oldVnode.dom;
+
+    patch(v.mainVnode, oldVnode, v.mainVnode.tag === "svg");
+
+    let container = v.container;
+    v.container = null;
+    v.component = null;
+    v.isMounted = false;
+    v.mainVnode = undefined;
+    if (isNodeJs) {
+      return container.innerHTML;
     }
   }
 }
@@ -420,7 +524,7 @@ function mount(container: string | Element, normalComponent: Component | Valyria
     v.component = normalComponent;
   } else {
     v.component = createValyrianComponent(
-      normalComponent,
+      normalComponent.bind(normalComponent),
       normalComponent.props || {},
       "children" in normalComponent ? (Array.isArray(normalComponent.children) ? normalComponent.children : [normalComponent.children]) : []
     );
@@ -428,28 +532,7 @@ function mount(container: string | Element, normalComponent: Component | Valyria
 
   v.mainVnode = domToVnode(v.container) as VnodeWithDom;
 
-  // console.log(v.mainVnode);
-
   return update();
-}
-
-function unmount() {
-  if (v.component && v.container && v.mainVnode) {
-    let oldVnode = v.mainVnode;
-    v.mainVnode = v(oldVnode.tag, oldVnode.props) as VnodeWithDom;
-    v.mainVnode.dom = oldVnode.dom;
-
-    patch(v.mainVnode, oldVnode, v.mainVnode.tag === "svg");
-
-    let container = v.container;
-    v.container = null;
-    v.component = null;
-    v.isMounted = false;
-    v.mainVnode = undefined;
-    if (isNodeJs) {
-      return container.innerHTML;
-    }
-  }
 }
 
 const plugins = new Map<Plugin, any>();
@@ -605,5 +688,9 @@ v.use = use;
 v.trust = trust;
 v.setAttribute = setAttribute;
 v.current = current;
+v.onCleanup = onCleanup;
+v.onUnmount = onUnmount;
+v.onMount = onMount;
+v.onUpdate = onUpdate;
 
 export default v;

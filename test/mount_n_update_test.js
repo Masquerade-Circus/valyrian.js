@@ -5,7 +5,7 @@ import v from "../lib/index2";
 
 v.use(nodePlugin);
 
-describe.only("Mount and update", () => {
+describe("Mount and update", () => {
   it("Mount and update with POJO component", () => {
     let Component = {
       world: "World",
@@ -28,9 +28,9 @@ describe.only("Mount and update", () => {
   });
 
   it("Mount and update with functional stateful component", () => {
-    let Component = function () {
+    function Component() {
       return <div id={this.id}>Hello {this.world}</div>;
-    };
+    }
     Component.world = "World";
     Component.id = "example";
 

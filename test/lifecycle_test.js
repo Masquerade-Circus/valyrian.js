@@ -4,7 +4,7 @@ import v from "../lib/index2";
 
 v.use(nodePlugin);
 
-describe.only("Lifecycle", () => {
+describe("Lifecycle", () => {
   it("Mount and update", () => {
     let s = 1;
     let calls = [];
