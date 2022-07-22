@@ -1,7 +1,7 @@
 /* eslint-disable indent */
 let { compare, benchmark, before, afterCycle } = require("buffalo-test");
 
-import v from "../lib";
+import v from "../lib/index2";
 
 const expect = require("expect");
 const nodePlugin = require("../plugins/node");
@@ -55,7 +55,7 @@ for (let i = 1000; i--; ) {
   data.update2.push(createNode({ className: "ok", i: 1000 - i }, v));
 }
 
-compare("Mount and update: Mount multiple types", () => {
+compare.only("Mount and update: Mount multiple types", () => {
   let date = new Date();
   let useData = false;
   let Component = () => vOld("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]], useData ? data.before : null);

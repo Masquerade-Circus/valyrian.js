@@ -3,11 +3,11 @@ export interface Props {
 }
 
 export interface DomElement extends Element {
-  vProps: Props;
   [key: string]: any;
 }
 
 export interface Vnode {
+  new (tag: string, props: Props, children: Children): Vnode;
   tag: string;
   props: Props;
   children: Children;
