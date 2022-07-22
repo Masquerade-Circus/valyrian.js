@@ -11,6 +11,7 @@ export interface Vnode {
   tag: string;
   props: Props;
   children: Children;
+  nodeValue?: any;
   dom?: DomElement;
 
   processed?: boolean;
@@ -59,6 +60,7 @@ export interface Valyrian {
   isMounted: boolean;
   container?: Element | null;
   component?: ValyrianComponent | null;
+  mainVnode?: VnodeWithDom;
 
   directives: Directives;
   reservedProps: ReservedProps;

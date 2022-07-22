@@ -367,10 +367,15 @@ class Element extends Node {
     return elementFound;
   }
 
-  cloneNode() {
-    let div = document.createElement("div");
-    div.innerHTML = this.outerHTML;
-    return div.firstChild;
+  cloneNode(cloneChildren = true) {
+    let result = [...htmlToDom(this.outerHTML, { treeAdapter: TreeAdapter })];
+    let element = result[0];
+
+    if (!cloneChildren) {
+      element.childNodes = [];
+    }
+
+    return element;
   }
 
   get firstChild() {

@@ -43,7 +43,7 @@
   },
   "scripts": {
     "dev:source": "cross-env NODE_ENV=development nodemon -e js,ts,json,css -w ./test -w ./lib -w ./plugins source.js",
-    "dev:test": "cross-env NODE_ENV=development nodemon -e js,ts,json,css,tsx -w ./test -w ./lib -w ./plugins --exec 'mocha --bail --timeout 15000 --slow 0 --require ./register'",
+    "dev:test": "nodemon --enable-source-maps -e js,ts,json,css,tsx -w ./test -w ./lib -w ./plugins --exec 'mocha --bail --timeout 15000 --slow 0 --require ./register --enable-source-maps'",
     "dev:test:nyc": "cross-env NODE_ENV=development nodemon -w ./test -w ./lib -w ./plugins --exec 'nyc --reporter=text --reporter=lcov mocha --timeout 15000 --slow 0 --require ./register \"test/**/*_test.js\"'",
     "build": "yarn build:source && yarn remark",
     "build:source": "cross-env NODE_ENV=production node source.js",
@@ -57,7 +57,7 @@
   },
   "dependencies": {
     "clean-css": "^5.2.4",
-    "esbuild": "^0.14.22",
+    "esbuild": "^0.14.49",
     "favicons": "^7.0.0-beta.4",
     "form-data": "^4.0.0",
     "node-fetch": "2.6.7",

@@ -2,6 +2,7 @@ const expect = require("expect");
 const dayjs = require("dayjs");
 
 import v from "../lib/index2";
+// import v from "../dist/index2.cjs";
 
 const plugin = require("../plugins/node");
 v.use(plugin);

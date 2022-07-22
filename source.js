@@ -139,8 +139,8 @@ async function build({ globalName, entryPoint, outfileName, clean = false, minif
 (async () => {
   await build({
     globalName: "Valyrian",
-    entryPoint: "./lib/index.ts",
-    outfileName: "./dist/index",
+    entryPoint: "./lib/index2.ts",
+    outfileName: "./dist/index2",
     clean: true,
     minify: true,
     bundle: true

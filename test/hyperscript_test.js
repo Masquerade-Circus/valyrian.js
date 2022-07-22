@@ -97,7 +97,8 @@ describe.only("Hyperscript", () => {
           {
             tag: "#text",
             props: {},
-            children: ["Hola mundo"],
+            children: [],
+            nodeValue: "Hola mundo",
             dom: expect.anything()
           }
         ],
