@@ -165,8 +165,8 @@ span.hello{display: inline-block}
   });
 
   it("should inline js", async () => {
-    let { raw: indexTs } = await inline("./lib/index.ts", { compact: true });
-    let { raw: index2Ts } = await inline("./lib/index2.ts", { compact: true });
+    let { raw: indexTs } = await inline("./lib/index.ts", { compact: true, noValidate: true });
+    let { raw: index2Ts } = await inline("./lib/index2.ts", { compact: true, noValidate: true });
     let { raw: indexOld } = await inline("./bench/index-old.js", { compact: true });
     console.log(indexTs.length);
     // console.log(inline.ts()[1].raw.length);

@@ -423,7 +423,23 @@ function mount(container: string | Element, normalComponent: Component | Valyria
     v.container = typeof container === "string" ? document.querySelectorAll(container)[0] : container;
   }
 
-  v.component = (normalComponent.view ? normalComponent : createValyrianComponent(normalComponent as Component, {}, [])) as ValyrianComponent;
+  if (v.isValyrianComponent(normalComponent)) {
+    if (!normalComponent.props) {
+      normalComponent.props = {};
+    }
+
+    if (!Array.isArray(normalComponent.children)) {
+      normalComponent.children = "children" in normalComponent ? [normalComponent.children] : [];
+    }
+
+    v.component = normalComponent;
+  } else {
+    v.component = createValyrianComponent(
+      normalComponent,
+      normalComponent.props || {},
+      "children" in normalComponent ? (Array.isArray(normalComponent.children) ? normalComponent.children : [normalComponent.children]) : []
+    );
+  }
 
   v.mainVnode = domToVnode(v.container);
 
