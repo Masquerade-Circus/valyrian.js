@@ -1,10 +1,10 @@
 import expect from "expect";
 import nodePlugin from "../plugins/node";
-import v from "../lib";
+import v from "../lib/index2";
 
 v.use(nodePlugin);
 
-describe("Hyperscript", () => {
+describe.only("Hyperscript", () => {
   it("should create a div element", () => {
     expect(v("div")).toEqual({
       tag: "div",
@@ -93,7 +93,14 @@ describe("Hyperscript", () => {
           id: "unique",
           class: "unique"
         },
-        children: [expect.objectContaining({ nodeValue: "Hola mundo", dom: expect.anything() })],
+        children: [
+          {
+            tag: "#text",
+            props: {},
+            children: ["Hola mundo"],
+            dom: expect.anything()
+          }
+        ],
         dom: expect.anything()
       }
     ]);

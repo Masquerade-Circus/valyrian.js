@@ -1,10 +1,11 @@
 import expect from "expect";
 import nodePlugin from "../plugins/node";
-import v from "../lib/index";
+// import v from "../lib/index";
+import v from "../lib/index2";
 
 v.use(nodePlugin);
 
-describe("Mount and update", () => {
+describe.only("Mount and update", () => {
   it("Mount and update with POJO component", () => {
     let Component = {
       world: "World",
