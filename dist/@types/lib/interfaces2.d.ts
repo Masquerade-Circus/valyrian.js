@@ -2,15 +2,17 @@ export interface Props {
     [key: string]: any;
 }
 export interface DomElement extends Element {
-    vProps: Props;
     [key: string]: any;
 }
 export interface Vnode {
+    new (tag: string, props: Props, children: Children): Vnode;
     tag: string;
     props: Props;
     children: Children;
+    nodeValue?: any;
     dom?: DomElement;
     processed?: boolean;
+    [key: string]: any;
 }
 export interface VnodeWithDom extends Vnode {
     dom: DomElement;
@@ -23,6 +25,7 @@ export interface ValyrianComponent {
     view: Component;
     props: Props | null;
     children: any[];
+    [key: string]: any;
 }
 export interface Children extends Array<Vnode | any> {
 }
@@ -55,10 +58,14 @@ export interface Valyrian {
     isVnode: (object?: unknown | Vnode) => object is Vnode;
     isComponent: (component?: unknown | ValyrianComponent) => component is ValyrianComponent;
     isValyrianComponent: (component?: unknown | ValyrianComponent) => component is ValyrianComponent;
+    onCleanup: (fn: Function) => void;
+    onUnmount: (fn: Function) => void;
+    onMount: (fn: Function) => void;
+    onUpdate: (fn: Function) => void;
     mount: (container: string | Element, normalComponent: Component | ValyrianComponent) => void | string;
     update: () => void | string;
     unmount: () => void | string;
-    setAttribute: (name: string, value: any, vnode: VnodeWithDom, isSVG: boolean) => void;
+    setAttribute: (name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) => void;
     directive: (name: string, directive: Directive) => void;
     use: (plugin: Plugin, options?: Record<string | number | symbol, any>) => void | any;
     [key: string | number | symbol]: any;

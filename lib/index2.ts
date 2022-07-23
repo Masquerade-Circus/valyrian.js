@@ -86,7 +86,7 @@ const trust = (htmlString: string): Children => {
   return [].map.call(div.childNodes, (item) => domToVnode(item)) as Vnode[];
 };
 
-const v: Valyrian = function (tagOrComponent: string | Component, props: Record<string, any> | null, ...children: any[]): Vnode | ValyrianComponent {
+const v: Valyrian = function (tagOrComponent: string | Component, props: Props | null, ...children: any[]): Vnode | ValyrianComponent {
   if (typeof tagOrComponent === "string") {
     return new Vnode(tagOrComponent, props || {}, children);
   }
@@ -401,8 +401,8 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
       newChild.dom = createDomElement(newChild.tag);
       NodeValueString in oldChild === false && callRemove(oldChild);
       setAttributes(newChild);
-      newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
       newChild.props.oncreate && newChild.props.oncreate(newChild);
+      newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
       patch(newChild, oldChild);
       continue;
     }
@@ -426,9 +426,7 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
   // For the rest of the children, we should remove them
   for (let i = newTreeLength; i < oldTreeLength; i++) {
     let oldChild = oldTree[i];
-
     NodeValueString in oldChild === false && callRemove(oldChild);
-
     oldChild.dom.parentNode && oldChild.dom.parentNode.removeChild(oldChild.dom);
   }
 }
