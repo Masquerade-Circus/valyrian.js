@@ -18,7 +18,7 @@ addHook(
     let result = transformSync(code, esbuildOptions);
 
     if (!/^"use strict";/.test(result.code)) {
-      result.code = `"use strict";\n${result.code}`;
+      result.code = `"use strict";${result.code}`;
     }
 
     return result.code;
