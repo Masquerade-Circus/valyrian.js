@@ -389,5 +389,42 @@ describe("Hooks", () => {
       expect(response3).toEqual('<div class="blue"></div>');
       expect(computedTimes).toEqual(2);
     });
+
+    it("Update class with hooks vs shouldupdate property", () => {
+      let updateClass = "";
+      let Component = () => (
+        <div>
+          {
+            <div class={updateClass === "test" ? "test" : false} shouldupdate={(vnode, oldVnode) => vnode.props.class !== oldVnode.props.class}>
+              test
+            </div>
+          }
+        </div>
+      );
+
+      let Component2 = () => (
+        <div>
+          {useMemo(
+            () => (
+              <div class={updateClass === "test" ? "test" : false}>test</div>
+            ),
+            [updateClass]
+          )}
+        </div>
+      );
+
+      let before = v.mount("body", Component);
+      expect(before).toEqual("<div><div>test</div></div>");
+      updateClass = "test";
+      let after = v.update();
+      expect(after).toEqual('<div><div class="test">test</div></div>');
+
+      updateClass = "";
+      let before2 = v.mount("body", Component2);
+      expect(before2).toEqual("<div><div>test</div></div>");
+      updateClass = "test";
+      let after2 = v.update();
+      expect(after2).toEqual('<div><div class="test">test</div></div>');
+    });
   });
 });

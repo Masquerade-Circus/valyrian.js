@@ -262,23 +262,30 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
 
   for (let i = 0; i < newTree.length; i++) {
     let childVnode = newTree[i];
+
     if (childVnode instanceof Vnode) {
       if ("view" in childVnode) {
         v.current.component = childVnode.view;
-        let result = childVnode.view(childVnode.props, ...childVnode.children);
-
-        newTree.splice(i--, 1, result);
-      } else {
-        childVnode.isSVG = newVnode.isSVG || childVnode.tag === "svg";
+        newTree.splice(i--, 1, childVnode.view(childVnode.props, ...childVnode.children));
+        continue;
       }
-    } else if (Array.isArray(childVnode)) {
-      newTree.splice(i--, 1, ...childVnode);
-    } else if (childVnode === null || childVnode === undefined) {
-      newTree.splice(i--, 1);
-    } else {
-      newTree[i] = new Vnode(TextTagString, {}, []);
-      newTree[i].nodeValue = childVnode;
+
+      childVnode.isSVG = newVnode.isSVG || childVnode.tag === "svg";
+      continue;
     }
+
+    if (Array.isArray(childVnode)) {
+      newTree.splice(i--, 1, ...childVnode);
+      continue;
+    }
+
+    if (childVnode === null || childVnode === undefined) {
+      newTree.splice(i--, 1);
+      continue;
+    }
+
+    newTree[i] = new Vnode(TextTagString, {}, []);
+    newTree[i].nodeValue = childVnode;
   }
 
   let oldTreeLength = oldTree.length;
@@ -356,59 +363,64 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
   }
 
   // If new tree and old tree have more than one child, we should update the dom
-
   for (let i = 0; i < newTreeLength; i++) {
     let newChild = newTree[i];
     let oldChild = oldTree[i];
 
-    if (NodeValueString in newChild) {
-      if (oldChild) {
-        if (NodeValueString in oldChild) {
-          newChild.dom = oldChild.dom;
-          // eslint-disable-next-line eqeqeq
-          if (newChild.dom.nodeValue != newChild.nodeValue) {
-            newChild.dom.nodeValue = newChild.nodeValue;
-          }
-          continue;
-        }
-
+    if (!oldChild) {
+      if (NodeValueString in newChild) {
         newChild.dom = document.createTextNode(newChild.nodeValue);
-        NodeValueString in oldChild === false && callRemove(oldChild);
-        newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
-
-        continue;
+      } else {
+        newChild.dom = createDomElement(newChild.tag, newChild.isSVG);
+        setAttributes(newChild);
+        newChild.props.oncreate && newChild.props.oncreate(newChild);
+        patch(newChild);
       }
-      newChild.dom = document.createTextNode(newChild.nodeValue);
+
       newVnode.dom.appendChild(newChild.dom);
       continue;
     }
 
-    let shouldPatch = true;
-
-    if (oldChild) {
-      newChild.dom = oldChild.dom;
-      if ("v-once" in newChild.props || (newChild.props.shouldupdate && newChild.props.shouldupdate(newChild, oldChild) === false)) {
-        // skip this patch
-        newChild.children = oldChild.children;
-        shouldPatch = false;
-      } else {
-        setAttributes(newChild, oldChild);
-        if (v.isMounted) {
-          newChild.props.onupdate && newChild.props.onupdate(newChild, oldChild);
-        } else {
-          newChild.props.oncreate && newChild.props.oncreate(newChild);
+    if (NodeValueString in newChild) {
+      if (NodeValueString in oldChild) {
+        newChild.dom = oldChild.dom;
+        // eslint-disable-next-line eqeqeq
+        if (newChild.dom.nodeValue != newChild.nodeValue) {
+          newChild.dom.nodeValue = newChild.nodeValue;
         }
-        oldTree[i] && callRemove(oldTree[i]);
-        newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
+        continue;
       }
-    } else {
-      newChild.dom = createDomElement(newChild.tag, newChild.isSVG);
-      setAttributes(newChild);
-      newChild.props.oncreate && newChild.props.oncreate(newChild);
-      newVnode.dom.appendChild(newChild.dom);
+
+      newChild.dom = document.createTextNode(newChild.nodeValue);
+      NodeValueString in oldChild === false && callRemove(oldChild);
+      newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
+      continue;
     }
 
-    shouldPatch && patch(newChild, oldChild);
+    if (oldChild.tag !== newChild.tag) {
+      newChild.dom = createDomElement(newChild.tag);
+      NodeValueString in oldChild === false && callRemove(oldChild);
+      setAttributes(newChild);
+      newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
+      newChild.props.oncreate && newChild.props.oncreate(newChild);
+      patch(newChild, oldChild);
+      continue;
+    }
+
+    newChild.dom = oldChild.dom;
+    if ("v-once" in newChild.props || ("shouldupdate" in newChild.props && newChild.props.shouldupdate(oldChild, newChild) === false)) {
+      newChild.children = oldChild.children;
+      continue;
+    }
+
+    setAttributes(newChild, oldChild);
+    if (v.isMounted) {
+      newChild.props.onupdate && newChild.props.onupdate(newChild, oldChild);
+    } else {
+      newChild.props.oncreate && newChild.props.oncreate(newChild);
+    }
+
+    patch(newChild, oldChild);
   }
 
   // For the rest of the children, we should remove them
@@ -417,7 +429,7 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
 
     NodeValueString in oldChild === false && callRemove(oldChild);
 
-    newVnode.dom.removeChild(oldChild.dom);
+    oldChild.dom.parentNode && oldChild.dom.parentNode.removeChild(oldChild.dom);
   }
 }
 

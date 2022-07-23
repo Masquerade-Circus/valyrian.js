@@ -40,7 +40,8 @@ describe("Directives", () => {
           "v-test2": true
         },
         dom: expect.any(Object),
-        children: []
+        children: [],
+        isSVG: false
       });
 
       expect(oldVnode).toEqual({
@@ -49,7 +50,8 @@ describe("Directives", () => {
           "v-test2": true
         },
         dom: expect.any(Object),
-        children: []
+        children: [],
+        isSVG: false
       });
     });
 
@@ -57,7 +59,6 @@ describe("Directives", () => {
       let app = () => <div v-create />;
 
       v.directive("create", (v, vnode, oldVnode) => {
-        console.log(oldVnode);
         if (!oldVnode) {
           vnode.children = ["First render, vnode created"];
         } else {
@@ -102,7 +103,6 @@ describe("Directives", () => {
         // Try to change u property
         vnode.props.u = "property changed";
         if (update) {
-          console.log(v);
           v.setAttribute("u", "property changed", vnode, oldVnode);
         }
 

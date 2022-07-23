@@ -55,7 +55,7 @@ for (let i = 1000; i--; ) {
   data.update2.push(createNode({ className: "ok", i: 1000 - i }, v));
 }
 
-compare.only("Mount and update: Mount multiple types", () => {
+compare("Mount and update: Mount multiple types", () => {
   let date = new Date();
   let useData = false;
   let Component = () => vOld("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]], useData ? data.before : null);
@@ -756,63 +756,60 @@ compare("Mount and update: Update class", () => {
 });
 
 compare("Mount and update: Update class with hooks vs shouldupdate property", () => {
-  // Init with 1000 words
-  let words = [...Array(1000).keys()].map((key) => `word ${key}`);
-  let useData = false;
-  let updateClass = "";
   let updateClass2 = "";
   let Component = () => (
     <div>
-      {useData ? (
-        words.map((word) => (
-          <span class={updateClass2 === word ? "selected" : false} shouldupdate={(vnode, oldVnode) => vnode.props.class !== oldVnode.props.class}>
-            {word}
-          </span>
-        ))
-      ) : (
+      {
         <div class={updateClass2 === "test" ? "test" : false} shouldupdate={(vnode, oldVnode) => vnode.props.class !== oldVnode.props.class}>
           test
         </div>
-      )}
+      }
     </div>
   );
 
   let Component2 = () => (
     <div>
-      {useData
-        ? words.map((word) =>
-            useMemo(() => <span class={updateClass2 === word ? "selected" : false}>{word}</span>, [updateClass2 === word ? "selected" : false])
-          )
-        : useMemo(() => <div class={updateClass2 === "test" ? "test" : false}>test</div>, [updateClass2 === "test" ? "test" : false])}
+      {useMemo(
+        () => (
+          <div class={updateClass2 === "test" ? "test" : false}>test</div>
+        ),
+        [updateClass2]
+      )}
     </div>
   );
 
   before(() => {
     let before = v.mount("body", Component);
     expect(before).toEqual("<div><div>test</div></div>");
-    let before2 = v.mount("body", Component2);
-    expect(before2).toEqual("<div><div>test</div></div>");
-
-    updateClass = "test";
     updateClass2 = "test";
-
     let after = v.update();
     expect(after).toEqual('<div><div class="test">test</div></div>');
+
+    updateClass2 = "";
+    let before2 = v.mount("body", Component2);
+    expect(before2).toEqual("<div><div>test</div></div>");
+    updateClass2 = "test";
     let after2 = v.update();
     expect(after2).toEqual('<div><div class="test">test</div></div>');
-    useData = true;
-    updateClass = "";
     updateClass2 = "";
   });
 
   benchmark("shouldupdate property", () => {
-    v.update();
-    updateClass = updateClass === "word 10" ? "word 100" : "word 10";
+    updateClass2 = "";
+    v.mount("body", Component);
+    for (let i = 0; i < 10000; i++) {
+      updateClass2 = updateClass2 === "test" ? "" : "test";
+      v.update();
+    }
   });
 
   benchmark("useMemo hook", () => {
-    v.update();
-    updateClass2 = updateClass2 === "word 10" ? "word 100" : "word 10";
+    updateClass2 = "";
+    v.mount("body", Component2);
+    for (let i = 0; i < 10000; i++) {
+      updateClass2 = updateClass2 === "test" ? "" : "test";
+      v.update();
+    }
   });
 });
 
@@ -856,13 +853,17 @@ compare("Lifecycle vs hooks", () => {
 
   benchmark(`Hooks`, () => {
     v.mount("body", HooksComponent);
-    v.update();
+    for (let i = 0; i < 10000; i++) {
+      v.update();
+    }
     v.unmount();
   });
 
   benchmark(`Lifecycle`, () => {
     v.mount("body", LifecycleComponent);
-    v.update();
+    for (let i = 0; i < 10000; i++) {
+      v.update();
+    }
     v.unmount();
   });
 });
