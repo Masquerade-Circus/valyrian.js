@@ -30,7 +30,7 @@ const elementsToClone: {
 };
 
 function createDomElement(tag: string, isSVG: boolean = false): DomElement {
-  return (isSVG ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag)) as DomElement;
+  // return (isSVG ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag)) as DomElement;
 
   if (isSVG) {
     if (!elementsToClone.svg[tag]) {

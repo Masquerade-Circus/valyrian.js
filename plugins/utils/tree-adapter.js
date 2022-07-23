@@ -368,12 +368,20 @@ class Element extends Node {
   }
 
   cloneNode(cloneChildren = true) {
+    if (cloneChildren === false) {
+      let element = new Element(this.nodeType, this.nodeName);
+
+      for (let i = 0, l = this.attributes.length; i < l; i++) {
+        element.setAttribute(this.attributes[i].nodeName, this.attributes[i].nodeValue);
+      }
+
+      return element;
+    }
+
     let result = [...htmlToDom(this.outerHTML, { treeAdapter: TreeAdapter })];
     let element = result[0];
 
-    if (!cloneChildren) {
-      element.childNodes = [];
-    }
+    element.childNodes = [];
 
     return element;
   }
