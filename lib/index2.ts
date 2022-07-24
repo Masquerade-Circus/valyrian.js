@@ -417,6 +417,12 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
       continue;
     }
 
+    if (i > 0 && NodeValueString in newTree[i - 1]) {
+      newTree[i - 1].dom.nodeValue += newChild;
+      newTree.splice(i--, 1);
+      continue;
+    }
+
     // Is Text node
     newTree[i] = new Vnode(TextTagString, {}, []);
     newTree[i].nodeValue = String(newChild);
