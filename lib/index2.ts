@@ -25,9 +25,11 @@ const isNodeJs = Boolean(typeof process !== "undefined" && process.versions && p
 const elementsToClone: {
   svg: Record<string, DomElement>;
   notSvg: Record<string, DomElement>;
+  text: DomElement | null;
 } = {
   svg: {},
-  notSvg: {}
+  notSvg: {},
+  text: null
 };
 
 function createDomElement(tag: string, isSVG: boolean = false): DomElement {
@@ -337,7 +339,8 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
       // New child is text node
       if (NodeValueString in newChild) {
         if (!oldChild) {
-          newChild.dom = document.createTextNode(newChild.nodeValue as string) as unknown as DomElement;
+          newChild.dom = (elementsToClone.text as DomElement).cloneNode(false) as DomElement;
+          newChild.dom.nodeValue = newChild.nodeValue as string;
           newVnode.dom.appendChild(newChild.dom);
           continue;
         }
@@ -351,7 +354,8 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
           continue;
         }
 
-        newChild.dom = document.createTextNode(newChild.nodeValue as string) as unknown as DomElement;
+        newChild.dom = (elementsToClone.text as DomElement).cloneNode(false) as DomElement;
+        newChild.dom.nodeValue = newChild.nodeValue as string;
         NodeValueString in oldChild === false && callRemove(oldChild);
         newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
         continue;
@@ -499,6 +503,11 @@ function mount(container: string | Element, normalComponent: Component | Valyria
   v.mainVnode = domToVnode(v.container) as VnodeWithDom;
   v.mainVnode.isSVG = v.mainVnode.tag === "svg";
 
+  // Just to facilitate the text node creation
+  if (!elementsToClone.text) {
+    elementsToClone.text = document.createTextNode("") as unknown as DomElement;
+  }
+
   return update();
 }
 
@@ -524,7 +533,7 @@ function hideDirective(test: boolean): Directive {
   return (bool: boolean, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) => {
     let value = test ? bool : !bool;
     if (value) {
-      let newdom = document.createTextNode("");
+      let newdom = (elementsToClone.text as DomElement).cloneNode(false) as DomElement;
       if (oldVnode && oldVnode.dom && oldVnode.dom.parentNode) {
         NodeValueString in oldVnode && callRemove(oldVnode);
         oldVnode.dom.parentNode.replaceChild(newdom, oldVnode.dom);

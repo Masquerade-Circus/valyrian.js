@@ -189,6 +189,10 @@ class Text extends Node {
   get nodeValue() {
     return this.node_value;
   }
+
+  cloneNode() {
+    return new Text(this.node_value);
+  }
 }
 
 class Element extends Node {
