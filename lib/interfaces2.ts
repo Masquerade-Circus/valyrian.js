@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 export interface Props {
   [key: string]: any;
 }
@@ -11,6 +12,8 @@ export interface Vnode {
   tag: string;
   props: Props;
   children: Children;
+  view?: Component;
+  nodeValue?: string;
   dom?: DomElement;
 
   processed?: boolean;
@@ -18,22 +21,12 @@ export interface Vnode {
   [key: string]: any;
 }
 
-export interface TextVnode {
-  new (nodeValue: any): TextVnode;
-  nodeValue: any;
-  dom?: DomElement;
-}
-
 export interface VnodeWithDom extends Vnode {
   dom: DomElement;
 }
 
-export interface TextVnodeWithDom extends TextVnode {
-  dom: DomElement;
-}
-
 export interface Component {
-  (props?: Props | null, ...children: any[]): Vnode | Vnode[];
+  (props?: Props | null, ...children: any[]): Vnode | Children | any;
   [key: string]: any;
 }
 
@@ -44,15 +37,14 @@ export interface ValyrianComponent {
   [key: string]: any;
 }
 
-export interface ComponentVnode {
-  new (component: Component | ValyrianComponent, props: Props | null, children: Children): ComponentVnode;
+export interface VnodeComponent {
+  new (component: Component, props: Props, children: Children): VnodeComponent;
   view: Component;
-  props: Props | null;
-  children: any[];
-  [key: string]: any;
+  props: Props;
+  children: Children;
 }
 
-export interface Children extends Array<Vnode | any> {}
+export interface Children extends Array<Vnode | VnodeComponent | any> {}
 
 export interface Directive {
   (value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
@@ -72,14 +64,18 @@ export interface Current {
   oldVnode?: VnodeWithDom;
 }
 
+export interface Plugin {
+  (valyrian: Valyrian, options?: Record<string | string | symbol, any>): void | any;
+}
+
 export interface Valyrian {
-  (tagOrComponent: string | Component, props: Props | null, ...children: Children): Vnode | ComponentVnode;
+  (tagOrComponent: string | Component, props: Props | null, ...children: Children): Vnode | VnodeComponent;
   fragment: (_: any, ...children: Children) => Children;
 
   isNodeJs: boolean;
   isMounted: boolean;
   container?: Element | null;
-  component?: ComponentVnode | null;
+  component?: VnodeComponent | null;
   mainVnode?: VnodeWithDom;
 
   directives: Directives;
@@ -89,10 +85,7 @@ export interface Valyrian {
   trust: (htmlString: string) => Children;
 
   isVnode: (object?: unknown | Vnode) => object is Vnode;
-  isComponentVnode: (object?: unknown | ComponentVnode) => object is ComponentVnode;
-  isTextVnode: (object?: unknown | TextVnode) => object is TextVnode;
-  isComponent: (component?: unknown | ValyrianComponent) => component is ValyrianComponent;
-  isValyrianComponent: (component?: unknown | ValyrianComponent) => component is ValyrianComponent;
+  isComponent: (component?: unknown | Component | ValyrianComponent) => component is ValyrianComponent;
 
   onCleanup: (fn: Function) => void;
   onUnmount: (fn: Function) => void;
@@ -108,8 +101,4 @@ export interface Valyrian {
   use: (plugin: Plugin, options?: Record<string | number | symbol, any>) => void | any;
 
   [key: string | number | symbol]: any;
-}
-
-export interface Plugin {
-  (valyrian: Valyrian, options?: Record<string | string | symbol, any>): void | any;
 }

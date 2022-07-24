@@ -266,7 +266,7 @@ function valyrian(): Valyrian {
   function removeProperties(newVnode: Vnode & { dom: DomElement }, oldVnode: Vnode) {
     for (let name in oldVnode.props) {
       if (name in newVnode.props === false && typeof oldVnode.props[name] !== "function" && reservedWords.indexOf(name) === -1) {
-        if (name in newVnode.dom) {
+        if (name in newVnode.dom && newVnode.isSVG === false) {
           newVnode.dom[name] = null;
         } else {
           newVnode.dom.removeAttribute(name);

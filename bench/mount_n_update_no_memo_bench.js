@@ -76,7 +76,30 @@ for (let i = 1000; i--; ) {
   data.update2.push(createNode2({ className: "ok", i: 1000 - i }, v));
 }
 
-compare("Mount and update: Mount multiple types", () => {
+function createNewData() {
+  data = {
+    before: [],
+    before2: [],
+    update1: [],
+    update2: []
+  };
+
+  for (let i = 1000; i--; ) {
+    data.before.push(createNode({ className: "ok", i }, vOld));
+    data.before2.push(createNode2({ className: "ok", i }, v));
+    if (i % 3) {
+      data.before.push(createNode({ className: "ok", i: i + 3 }, vOld));
+      data.before2.push(createNode2({ className: "ok", i: i + 3 }, v));
+    } else {
+      data.before.push(createNode({ className: "not-ok", i }, vOld));
+      data.before2.push(createNode2({ className: "not-ok", i }, v));
+    }
+    data.update1.push(createNode({ className: "ok", i: 1000 - i }, vOld));
+    data.update2.push(createNode2({ className: "ok", i: 1000 - i }, v));
+  }
+}
+
+compare("(No memo) Mount and update: Mount multiple types", () => {
   let date = new Date();
   let useData = false;
   let Component = () => vOld("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]], useData ? data.before : null);
@@ -93,6 +116,7 @@ compare("Mount and update: Mount multiple types", () => {
   afterCycle(() => {
     vOld.unMount();
     v.unmount();
+    createNewData();
   });
 
   benchmark("vOld", () => {
@@ -104,7 +128,7 @@ compare("Mount and update: Mount multiple types", () => {
   });
 });
 
-compare("Mount and update: Mount single text", () => {
+compare("(No memo) Mount and update: Mount single text", () => {
   let Component = () => "hello world";
   let Component2 = () => "hello world";
 
@@ -129,7 +153,7 @@ compare("Mount and update: Mount single text", () => {
   });
 });
 
-compare("Mount and update: Mount single text in div", () => {
+compare("(No memo) Mount and update: Mount single text in div", () => {
   let Component = () => vOld("div", null, ["hello world"]);
   let Component2 = () => v("div", null, ["hello world"]);
 
@@ -154,7 +178,7 @@ compare("Mount and update: Mount single text in div", () => {
   });
 });
 
-compare("Mount and update: Update multiple types", () => {
+compare("(No memo) Mount and update: Update multiple types", () => {
   let date = new Date();
   let useData = false;
   let updateData = false;
@@ -183,6 +207,10 @@ compare("Mount and update: Update multiple types", () => {
     v.mount("body", Component2);
   });
 
+  afterCycle(() => {
+    createNewData();
+  });
+
   benchmark("vOld", () => {
     updateData = true;
     vOld.update();
@@ -204,7 +232,7 @@ compare("Mount and update: Update multiple types", () => {
   });
 });
 
-compare("Mount and update: Update single text", () => {
+compare("(No memo) Mount and update: Update single text", () => {
   let updateData = false;
   let Component = () => vOld("div", null, [updateData ? "hello moon" : "hello world"]);
   let Component2 = () => v("div", null, [updateData ? "hello moon" : "hello world"]);
@@ -240,7 +268,7 @@ compare("Mount and update: Update single text", () => {
   });
 });
 
-compare("Mount and update: Render list", () => {
+compare("(No memo) Mount and update: Render list", () => {
   let set = [1, 2, 3, 4, 5];
   let tests = [
     { name: "Removed at the end", set: [1, 2, 3, 4] }, // Removed at the end
@@ -361,7 +389,7 @@ compare("Mount and update: Render list", () => {
   });
 });
 
-compare("Mount and update: Render keyed list", () => {
+compare("(No memo) Mount and update: Render keyed list", () => {
   let set = [1, 2, 3, 4, 5];
   let tests = [
     { name: "Removed at the end", set: [1, 2, 3, 4] }, // Removed at the end
@@ -482,7 +510,7 @@ compare("Mount and update: Render keyed list", () => {
   });
 });
 
-compare("Mount and update: Render keyed list -> stress", () => {
+compare("(No memo) Mount and update: Render keyed list -> stress", () => {
   let set = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   let tests = [
@@ -607,7 +635,7 @@ compare("Mount and update: Render keyed list -> stress", () => {
   });
 });
 
-compare("Mount and update: Render keyed list -> swap keys on large set", () => {
+compare("(No memo) Mount and update: Render keyed list -> swap keys on large set", () => {
   let set = [...Array(1000).keys()];
   let updatedLargeSet = [...set];
   updatedLargeSet[1] = 998;
@@ -707,7 +735,7 @@ compare("Mount and update: Render keyed list -> swap keys on large set", () => {
   });
 });
 
-compare("Mount and update: Update class", () => {
+compare("(No memo) Mount and update: Update class", () => {
   // Init with 1000 words
   let words = [...Array(1000).keys()].map((key) => `word ${key}`);
   let useData = false;
@@ -731,16 +759,21 @@ compare("Mount and update: Update class", () => {
             "test"
           )
     );
-  let Component2 = () =>
-    v(
-      "div",
-      {},
-      useData
-        ? words.map((word) =>
-            v("span", { class: updateClass === word ? "selected" : false, shouldupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class }, word)
-          )
-        : v("div", { class: updateClass === "test" ? "test" : false, shouldupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class }, "test")
-    );
+  let Component2 = () => (
+    <div>
+      {useData ? (
+        words.map((word) => (
+          <span class={updateClass2 === word ? "selected" : false} shouldupdate={(vnode, oldVnode) => vnode.props.class !== oldVnode.props.class}>
+            {word}
+          </span>
+        ))
+      ) : (
+        <div class={updateClass2 === "test" ? "test" : false} shouldupdate={(vnode, oldVnode) => vnode.props.class !== oldVnode.props.class}>
+          test
+        </div>
+      )}
+    </div>
+  );
 
   before(() => {
     let before = vOld.mount("body", Component);
@@ -771,7 +804,7 @@ compare("Mount and update: Update class", () => {
   });
 });
 
-compare("Mount and update: Update class with hooks vs shouldupdate property", () => {
+compare("(No memo) Mount and update: Update class with hooks vs shouldupdate property", () => {
   let updateClass2 = "";
   let Component = () => (
     <div>
@@ -829,7 +862,7 @@ compare("Mount and update: Update class with hooks vs shouldupdate property", ()
   });
 });
 
-compare("Lifecycle vs hooks", () => {
+compare("(No memo) Lifecycle vs hooks", () => {
   let lifecycleCount = 0;
   let plusLifeCycle = () => (lifecycleCount += 1);
 

@@ -108,7 +108,7 @@ async function searchComponent(router, middlewares) {
   for (; i < middlewares.length; i++) {
     response = await middlewares[i](req, response);
 
-    if (response !== undefined && (router.v.isComponent(response) || router.v.isValyrianComponent(response))) {
+    if (response !== undefined && router.v.isComponent(response)) {
       return response;
     }
 
