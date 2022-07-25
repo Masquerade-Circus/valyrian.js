@@ -27,7 +27,7 @@ function createNode({ className, i }, v) {
       class: className,
       state: i,
       shouldupdate(n, o) {
-        return n.props.data !== o.props.data || n.props.class !== o.props.class;
+        return n.props.state !== o.props.state || n.props.class !== o.props.class;
       },
       id: className + i,
       style: "font-size:" + i + "px",
@@ -133,7 +133,7 @@ compare("Mount and update: Mount single text in div", () => {
   });
 });
 
-compare.only("Mount and update: Update multiple types", () => {
+compare("Mount and update: Update multiple types", () => {
   let date = new Date();
   let useData = false;
   let updateData = false;
@@ -142,13 +142,6 @@ compare.only("Mount and update: Update multiple types", () => {
   let Component2 = () => v("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]], useData ? (updateData ? data.update2 : data.before2) : null);
 
   before(async () => {
-    let { raw: newTs } = await nodePlugin.inline("./lib/index.ts", { compact: true, noValidate: true });
-    let { raw: newTs2 } = await nodePlugin.inline("./lib/index2.ts", { compact: true, noValidate: true });
-    let { raw: oldjs } = await nodePlugin.inline("./bench/index-old.ts", { compact: true, noValidate: true });
-    console.log(oldjs.length);
-    console.log(newTs.length);
-    console.log(newTs2.length);
-
     let oldDate = date;
     expect(vOld.mount("body", Component)).toEqual(`<div>Hello1${oldDate}[object Object]Hello</div>`);
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -693,7 +686,7 @@ compare("Mount and update: Render keyed list -> swap keys on large set", () => {
   });
 });
 
-compare("Mount and update: Update class", () => {
+compare.only("Mount and update: Update class", () => {
   // Init with 1000 words
   let words = [...Array(1000).keys()].map((key) => `word ${key}`);
   let useData = false;
@@ -707,15 +700,11 @@ compare("Mount and update: Update class", () => {
         ? words.map((word) =>
             vOld(
               "span",
-              { class: updateClass === word ? "selected" : false, onbeforeupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class },
+              { class: updateClass === word ? "selected" : false, shouldupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class },
               word
             )
           )
-        : vOld(
-            "div",
-            { class: updateClass === "test" ? "test" : false, onbeforeupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class },
-            "test"
-          )
+        : vOld("div", { class: updateClass === "test" ? "test" : false, shouldupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class }, "test")
     );
   let Component2 = () =>
     v(

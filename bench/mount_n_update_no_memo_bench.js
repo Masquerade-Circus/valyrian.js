@@ -65,16 +65,16 @@ function createNewData() {
 
   for (let i = 1000; i--; ) {
     data.before.push(createNode({ className: "ok", i }, vOld));
-    data.before2.push(createNode2({ className: "ok", i }, v));
+    data.before2.push(createNode({ className: "ok", i }, v));
     if (i % 3) {
       data.before.push(createNode({ className: "ok", i: i + 3 }, vOld));
-      data.before2.push(createNode2({ className: "ok", i: i + 3 }, v));
+      data.before2.push(createNode({ className: "ok", i: i + 3 }, v));
     } else {
       data.before.push(createNode({ className: "not-ok", i }, vOld));
-      data.before2.push(createNode2({ className: "not-ok", i }, v));
+      data.before2.push(createNode({ className: "not-ok", i }, v));
     }
     data.update1.push(createNode({ className: "ok", i: 1000 - i }, vOld));
-    data.update2.push(createNode2({ className: "ok", i: 1000 - i }, v));
+    data.update2.push(createNode({ className: "ok", i: 1000 - i }, v));
   }
 }
 
@@ -728,15 +728,11 @@ compare("(No memo) Mount and update: Update class", () => {
         ? words.map((word) =>
             vOld(
               "span",
-              { class: updateClass === word ? "selected" : false, onbeforeupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class },
+              { class: updateClass === word ? "selected" : false, shouldupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class },
               word
             )
           )
-        : vOld(
-            "div",
-            { class: updateClass === "test" ? "test" : false, onbeforeupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class },
-            "test"
-          )
+        : vOld("div", { class: updateClass === "test" ? "test" : false, shouldupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class }, "test")
     );
   let Component2 = () => (
     <div>

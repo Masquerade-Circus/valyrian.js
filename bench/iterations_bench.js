@@ -162,7 +162,7 @@ compare.skip("string comparison vs instance comparison vs property comparison", 
   });
 });
 
-compare("Object with property equals true vs set vs map vs string array", () => {
+compare.skip("Object with property equals true vs set vs map vs string array", () => {
   let obj = {
     alpha: true,
     beta: true,
