@@ -335,7 +335,7 @@ function patch(newParentVnode: VnodeWithDom, oldParentVnode?: VnodeWithDom): voi
     let childVnode = newTree[i];
 
     if (childVnode instanceof Vnode) {
-      childVnode.isSVG = newParentVnode.isSVG || childVnode.tag === "svg";
+      // childVnode.isSVG = newParentVnode.isSVG || childVnode.tag === "svg";
       continue;
     }
 
@@ -406,6 +406,8 @@ function patch(newParentVnode: VnodeWithDom, oldParentVnode?: VnodeWithDom): voi
       newParentVnode.dom.replaceChild(childVnode.dom, oldChildVnode.dom as DomElement);
       continue;
     }
+
+    childVnode.isSVG = newParentVnode.isSVG || childVnode.tag === "svg";
 
     if (!oldChildVnode) {
       childVnode.dom = createDomElement(childVnode.tag, childVnode.isSVG);
