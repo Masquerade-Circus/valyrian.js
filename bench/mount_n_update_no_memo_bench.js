@@ -25,27 +25,6 @@ function createNode({ className, i }, v) {
     "div",
     {
       class: className,
-      data: i,
-      onbeforeupdate(n, o) {
-        return n.props.data !== o.props.data || n.props.class !== o.props.class;
-      },
-      id: className + i,
-      style: "font-size:" + i + "px",
-      autocomplete: "off",
-      focus: false,
-      onclick() {
-        // console.log("clicked", this);
-      }
-    },
-    "Hello"
-  );
-}
-
-function createNode2({ className, i }, v) {
-  return v(
-    "div",
-    {
-      class: className,
       state: i,
       shouldupdate(n, o) {
         return n.props.state !== o.props.state || n.props.class !== o.props.class;
@@ -64,16 +43,16 @@ function createNode2({ className, i }, v) {
 
 for (let i = 1000; i--; ) {
   data.before.push(createNode({ className: "ok", i }, vOld));
-  data.before2.push(createNode2({ className: "ok", i }, v));
+  data.before2.push(createNode({ className: "ok", i }, v));
   if (i % 3) {
     data.before.push(createNode({ className: "ok", i: i + 3 }, vOld));
-    data.before2.push(createNode2({ className: "ok", i: i + 3 }, v));
+    data.before2.push(createNode({ className: "ok", i: i + 3 }, v));
   } else {
     data.before.push(createNode({ className: "not-ok", i }, vOld));
-    data.before2.push(createNode2({ className: "not-ok", i }, v));
+    data.before2.push(createNode({ className: "not-ok", i }, v));
   }
   data.update1.push(createNode({ className: "ok", i: 1000 - i }, vOld));
-  data.update2.push(createNode2({ className: "ok", i: 1000 - i }, v));
+  data.update2.push(createNode({ className: "ok", i: 1000 - i }, v));
 }
 
 function createNewData() {
@@ -108,13 +87,13 @@ compare("(No memo) Mount and update: Mount multiple types", () => {
   before(() => {
     expect(vOld.mount("body", Component)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
     expect(v.mount("body", Component2)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
-    vOld.unMount();
+    vOld.unmount();
     v.unmount();
     useData = true;
   });
 
   afterCycle(() => {
-    vOld.unMount();
+    vOld.unmount();
     v.unmount();
     createNewData();
   });
@@ -134,13 +113,13 @@ compare("(No memo) Mount and update: Mount single text", () => {
 
   before(() => {
     expect(vOld.mount("body", Component)).toEqual(`hello world`);
-    vOld.unMount();
+    vOld.unmount();
     expect(v.mount("body", Component2)).toEqual(`hello world`);
     v.unmount();
   });
 
   afterCycle(() => {
-    vOld.unMount();
+    vOld.unmount();
     v.unmount();
   });
 
@@ -160,12 +139,12 @@ compare("(No memo) Mount and update: Mount single text in div", () => {
   before(() => {
     expect(vOld.mount("body", Component)).toEqual(`<div>hello world</div>`);
     expect(v.mount("body", Component2)).toEqual(`<div>hello world</div>`);
-    vOld.unMount();
+    vOld.unmount();
     v.unmount();
   });
 
   afterCycle(() => {
-    vOld.unMount();
+    vOld.unmount();
     v.unmount();
   });
 
@@ -202,7 +181,7 @@ compare("(No memo) Mount and update: Update multiple types", () => {
     expect(after).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
 
     useData = true;
-    vOld.unMount();
+    vOld.unmount();
     vOld.mount("body", Component);
     v.mount("body", Component2);
   });
@@ -244,7 +223,7 @@ compare("(No memo) Mount and update: Update single text", () => {
     expect(vOld.update()).toEqual(`<div>hello moon</div>`);
     expect(v.update()).toEqual(`<div>hello moon</div>`);
     updateData = false;
-    vOld.unMount();
+    vOld.unmount();
     vOld.mount("body", Component);
     v.mount("body", Component2);
   });
@@ -312,7 +291,7 @@ compare("(No memo) Mount and update: Render list", () => {
           })
         );
 
-      vOld.unMount();
+      vOld.unmount();
       let before = vOld.mount("body", component);
       keys = [...test.set];
       let after = vOld.update();
@@ -360,7 +339,7 @@ compare("(No memo) Mount and update: Render list", () => {
         })
       );
 
-    vOld.unMount();
+    vOld.unmount();
     vOld.mount("body", component);
     for (let test of tests) {
       keys = [...test.set];
@@ -482,7 +461,7 @@ compare("(No memo) Mount and update: Render keyed list", () => {
       );
 
     for (let test of tests) {
-      vOld.unMount();
+      vOld.unmount();
       vOld.mount("body", component);
       keys = [...test.set];
       vOld.update();
@@ -607,7 +586,7 @@ compare("(No memo) Mount and update: Render keyed list -> stress", () => {
       );
 
     for (let test of tests) {
-      vOld.unMount();
+      vOld.unmount();
       vOld.mount("body", component);
       keys = [...test.set];
       vOld.update();
@@ -710,7 +689,7 @@ compare("(No memo) Mount and update: Render keyed list -> swap keys on large set
         })
       );
 
-    vOld.unMount();
+    vOld.unmount();
     vOld.mount("body", component);
     keys = [...updatedLargeSet];
     vOld.update();

@@ -21,6 +21,12 @@ export interface Vnode {
   [key: string]: any;
 }
 
+export interface VnodeText {
+  new (nodeValue: string): VnodeText;
+  dom?: Text;
+  nodeValue: string;
+}
+
 export interface VnodeWithDom extends Vnode {
   dom: DomElement;
 }
@@ -38,8 +44,8 @@ export interface ValyrianComponent {
 }
 
 export interface VnodeComponent {
-  new (component: Component, props: Props, children: Children): VnodeComponent;
-  view: Component;
+  new (component: Component | ValyrianComponent, props: Props, children: Children): VnodeComponent;
+  component: Component | ValyrianComponent;
   props: Props;
   children: Children;
 }
@@ -59,9 +65,9 @@ export interface ReservedProps {
 }
 
 export interface Current {
-  component?: Component;
-  vnode?: VnodeWithDom;
-  oldVnode?: VnodeWithDom;
+  component?: Component | ValyrianComponent | null;
+  vnode?: VnodeWithDom | null;
+  oldVnode?: VnodeWithDom | null;
 }
 
 export interface Plugin {
@@ -69,13 +75,13 @@ export interface Plugin {
 }
 
 export interface Valyrian {
-  (tagOrComponent: string | Component, props: Props | null, ...children: Children): Vnode | VnodeComponent;
+  (tagOrComponent: string | Component | ValyrianComponent, props: Props | null, ...children: Children): Vnode | VnodeComponent;
   fragment: (_: any, ...children: Children) => Children;
 
   isNodeJs: boolean;
   isMounted: boolean;
   container?: Element | null;
-  component?: VnodeComponent | null;
+  component?: Component | VnodeComponent | null;
   mainVnode?: VnodeWithDom;
 
   directives: Directives;

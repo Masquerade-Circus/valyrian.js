@@ -13,11 +13,11 @@ type DomElement = (HTMLElement | SVGElement) & Record<string, any>;
 
 type Props = {
   key?: string | number;
-  data?: string;
+  state?: string;
   oncreate?: { (vnode: Vnode): never };
   onupdate?: { (vnode: Vnode, oldVnode: Vnode | TextVnode): never };
   onremove?: { (oldVnode: Vnode): never };
-  onbeforeupdate?: { (vnode: Vnode, oldVnode: Vnode | TextVnode): undefined | boolean };
+  shouldupdate?: { (vnode: Vnode, oldVnode: Vnode | TextVnode): undefined | boolean };
 } & Record<string, any>;
 
 type Component = (props?: Record<string, any> | null, children?: VnodeOrUnknown) => VnodeOrUnknown | VnodeOrUnknown[];
@@ -47,7 +47,6 @@ interface Vnode {
   props: Props;
   children: VnodeOrUnknown[];
   dom?: DomElement;
-  onCleanup?: FunctionConstructor[];
   isSVG?: boolean;
   processed?: boolean;
 }
@@ -57,7 +56,6 @@ class Vnode implements Vnode {
   props: Props;
   children: VnodeOrUnknown[];
   dom?: DomElement;
-  onCleanup?: FunctionConstructor[];
   isSVG?: boolean;
   processed?: boolean;
 
@@ -108,12 +106,11 @@ interface Valyrian {
   reservedWords: string[];
   current: Current;
   trust: (htmlString: string) => Vnode[];
-  usePlugin: (plugin: Plugin, options: Record<string, any>) => void;
-  onCleanup: (callback: typeof Function) => void;
+  use: (plugin: Plugin, options: Record<string, any>) => void;
   updateProperty: (name: string, newVnode: Vnode & { dom: DomElement }, oldNode: Vnode & { dom: DomElement }) => void;
   update: (props?: Props | null, ...children: VnodeOrUnknown) => string | void;
   mount: (container: string | DomElement, component: ValyrianComponent, props?: Props | null, ...children: VnodeOrUnknown[]) => string | void;
-  unMount: () => string | boolean | void;
+  unmount: () => string | boolean | void;
   directive: (directive: string, handler: Directive) => void;
   newInstance: () => Valyrian;
   [x: string]: any;
@@ -169,7 +166,7 @@ function valyrian(): Valyrian {
 
   v.isMounted = false;
   v.isNode = isNode;
-  const reservedWords = ["key", "data", "v-once", "oncreate", "onupdate", "onremove", "onbeforeupdate"];
+  const reservedWords = ["key", "state", "v-once", "oncreate", "onupdate", "onremove", "shouldupdate"];
   v.reservedWords = reservedWords;
   v.trust = trust;
 
@@ -182,31 +179,7 @@ function valyrian(): Valyrian {
 
   const plugins = new Map();
 
-  v.usePlugin = (plugin: Plugin, options: Record<string, any> = {}) => !plugins.has(plugin) && plugins.set(plugin, true) && plugin(v as Valyrian, options);
-
-  let vnodesToCleanup: Vnode[] = [];
-
-  v.onCleanup = (callback: FunctionConstructor) => {
-    let parentVnode = v.current.parentVnode as Vnode;
-    if (!parentVnode.onCleanup) {
-      parentVnode.onCleanup = [] as FunctionConstructor[];
-    }
-
-    parentVnode.onCleanup.push(callback);
-
-    if (vnodesToCleanup.indexOf(parentVnode) === -1) {
-      vnodesToCleanup.push(parentVnode);
-    }
-  };
-
-  let cleanupVnodes = () => {
-    for (let l = vnodesToCleanup.length; l--; ) {
-      for (let callback of vnodesToCleanup[l].onCleanup as FunctionConstructor[]) {
-        callback();
-      }
-    }
-    vnodesToCleanup = [];
-  };
+  v.use = (plugin: Plugin, options: Record<string, any> = {}) => !plugins.has(plugin) && plugins.set(plugin, true) && plugin(v as Valyrian, options);
 
   let mainContainer: DomElement | null = null;
   let emptyComponent: ValyrianComponent = () => "";
@@ -334,7 +307,7 @@ function valyrian(): Valyrian {
         newParentVnode.dom.textContent = "";
       }
       // If the tree is keyed list and is not first render
-    } else if (oldTreeLength && newTree[0] instanceof Vnode && "key" in newTree[0].props) {
+    } else if (oldTreeLength && newTree[0] instanceof Vnode && "key" in newTree[0].props && "key" in oldTree[0].props) {
       // 1. Mutate the old key list to match the new key list
       let oldKeyedList;
 
@@ -364,7 +337,7 @@ function valyrian(): Valyrian {
           if (oldChildVnode) {
             childVnode.dom = oldChildVnode.dom;
             oldChildVnode.processed = true;
-            if ("v-once" in childVnode.props || (childVnode.props.onbeforeupdate && childVnode.props.onbeforeupdate(childVnode, oldChildVnode) === false)) {
+            if ("v-once" in childVnode.props || (childVnode.props.shouldupdate && childVnode.props.shouldupdate(childVnode, oldChildVnode) === false)) {
               // skip this patch
               childVnode.children = oldChildVnode.children;
               shouldPatch = false;
@@ -420,7 +393,7 @@ function valyrian(): Valyrian {
             if (childVnode.name === oldChildVnode.name) {
               childVnode.dom = oldChildVnode.dom;
 
-              if ("v-once" in childVnode.props || (childVnode.props.onbeforeupdate && childVnode.props.onbeforeupdate(childVnode, oldChildVnode) === false)) {
+              if ("v-once" in childVnode.props || (childVnode.props.shouldupdate && childVnode.props.shouldupdate(childVnode, oldChildVnode) === false)) {
                 // skip this patch
                 childVnode.children = oldChildVnode.children;
                 continue;
@@ -471,7 +444,7 @@ function valyrian(): Valyrian {
   let mainVnode: Vnode | null = null;
   let oldMainVnode: Vnode | null = null;
 
-  v.unMount = () => {
+  v.unmount = () => {
     mountedComponent = emptyComponent;
     let result = v.update();
     v.isMounted = false;
@@ -481,7 +454,6 @@ function valyrian(): Valyrian {
 
   v.update = (props, ...children) => {
     if (mainVnode) {
-      cleanupVnodes();
       oldMainVnode = mainVnode;
       mainVnode = new Vnode(mainVnode.name, mainVnode.props, [v(mountedComponent, props, ...children)]);
       mainVnode.dom = oldMainVnode.dom;
@@ -496,7 +468,7 @@ function valyrian(): Valyrian {
 
   v.mount = (container, component, props, ...children) => {
     if (v.isMounted) {
-      v.unMount();
+      v.unmount();
     }
 
     if (isNode) {

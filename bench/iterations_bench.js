@@ -162,7 +162,7 @@ compare.skip("string comparison vs instance comparison vs property comparison", 
   });
 });
 
-compare.skip("Object with property equals true vs set vs map vs string array", () => {
+compare("Object with property equals true vs set vs map vs string array", () => {
   let obj = {
     alpha: true,
     beta: true,
@@ -182,6 +182,8 @@ compare.skip("Object with property equals true vs set vs map vs string array", (
     arr.push(key);
   }
 
+  let prop = "alpha";
+
   beforeEach(() => {
     expect(obj.alpha).toEqual(true);
     expect(obj.capa).toBeUndefined();
@@ -194,83 +196,23 @@ compare.skip("Object with property equals true vs set vs map vs string array", (
   });
 
   benchmark("Object with property equals true", () => {
-    obj.alpha === true;
-    obj.beta === true;
-    obj.gamma === true;
-    obj.delta === true;
-    obj.epsilon === true;
-    obj.zeta === true;
-
-    obj.capa === true;
-    obj.capa === true;
-    obj.capa === true;
-    obj.capa === true;
-    obj.capa === true;
-    obj.capa === true;
+    obj[prop] === true;
   });
 
   benchmark("key in object", () => {
-    "alpha" in obj === true;
-    "beta" in obj === true;
-    "gamma" in obj === true;
-    "delta" in obj === true;
-    "epsilon" in obj === true;
-    "zeta" in obj === true;
-
-    "capa" in obj === true;
-    "capa" in obj === true;
-    "capa" in obj === true;
-    "capa" in obj === true;
-    "capa" in obj === true;
-    "capa" in obj === true;
+    prop in obj === true;
   });
 
   benchmark("set", () => {
-    set.has("alpha") === true;
-    set.has("beta") === true;
-    set.has("gamma") === true;
-    set.has("delta") === true;
-    set.has("epsilon") === true;
-    set.has("zeta") === true;
-
-    set.has("capa") === true;
-    set.has("capa") === true;
-    set.has("capa") === true;
-    set.has("capa") === true;
-    set.has("capa") === true;
-    set.has("capa") === true;
+    set.has(prop) === true;
   });
 
   benchmark("map", () => {
-    map.has("alpha") === true;
-    map.has("beta") === true;
-    map.has("gamma") === true;
-    map.has("delta") === true;
-    map.has("epsilon") === true;
-    map.has("zeta") === true;
-
-    map.has("capa") === true;
-    map.has("capa") === true;
-    map.has("capa") === true;
-    map.has("capa") === true;
-    map.has("capa") === true;
-    map.has("capa") === true;
+    map.has(prop) === true;
   });
 
   benchmark("string array", () => {
-    arr.indexOf("alpha") !== -1;
-    arr.indexOf("beta") !== -1;
-    arr.indexOf("gamma") !== -1;
-    arr.indexOf("delta") !== -1;
-    arr.indexOf("epsilon") !== -1;
-    arr.indexOf("zeta") !== -1;
-
-    arr.indexOf("capa") !== -1;
-    arr.indexOf("capa") !== -1;
-    arr.indexOf("capa") !== -1;
-    arr.indexOf("capa") !== -1;
-    arr.indexOf("capa") !== -1;
-    arr.indexOf("capa") !== -1;
+    arr.indexOf(prop) !== -1;
   });
 });
 
