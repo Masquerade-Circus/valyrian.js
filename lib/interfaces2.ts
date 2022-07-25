@@ -23,7 +23,7 @@ export interface Vnode {
 
 export interface VnodeText {
   new (nodeValue: string): VnodeText;
-  dom?: Text;
+  dom?: DomElement;
   nodeValue: string;
 }
 
