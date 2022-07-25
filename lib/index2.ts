@@ -22,32 +22,23 @@ const NodeValueString = "nodeValue";
 
 const isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
 
-const elementsToClone: {
-  svg: Record<string, DomElement>;
-  notSvg: Record<string, DomElement>;
-  text: DomElement | null;
-} = {
-  svg: {},
-  notSvg: {},
-  text: null
-};
+const elementsToClone: Record<string, DomElement> = {};
+const elementsToCloneSvg: Record<string, DomElement> = {};
 
 function createDomElement(tag: string, isSVG: boolean = false): DomElement {
-  // return (isSVG ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag)) as DomElement;
-
   if (isSVG) {
-    if (!elementsToClone.svg[tag]) {
-      elementsToClone.svg[tag] = document.createElementNS("http://www.w3.org/2000/svg", tag) as any;
+    if (!elementsToCloneSvg[tag]) {
+      elementsToCloneSvg[tag] = document.createElementNS("http://www.w3.org/2000/svg", tag) as any;
     }
 
-    return elementsToClone.svg[tag].cloneNode(false) as any;
+    return elementsToCloneSvg[tag].cloneNode(false) as any;
   }
 
-  if (!elementsToClone.notSvg[tag]) {
-    elementsToClone.notSvg[tag] = document.createElement(tag) as any;
+  if (!elementsToClone[tag]) {
+    elementsToClone[tag] = document.createElement(tag) as any;
   }
 
-  return elementsToClone.notSvg[tag].cloneNode(false) as any;
+  return elementsToClone[tag].cloneNode(false) as any;
 }
 
 const Vnode = function Vnode(this: Vnode, tag: string, props: Props, children: Children) {
@@ -62,30 +53,32 @@ const VnodeComponent = function VnodeComponent(this: VnodeComponent, component: 
   this.view = component;
 } as unknown as VnodeComponent;
 
-function domToVnode(dom: any): void | VnodeWithDom {
-  if (dom.nodeType === 3) {
-    let vnode = new Vnode(TextTagString, {}, []);
-    vnode.dom = dom;
-    vnode.nodeValue = dom.nodeValue;
-    return vnode as VnodeWithDom;
-  }
-
-  if (dom.nodeType === 1) {
-    let children = [];
-    for (let i = 0; i < dom.childNodes.length; i++) {
-      let child = domToVnode(dom.childNodes[i]);
-      if (child) {
-        children.push(child);
-      }
+function domToVnode(dom: any): VnodeWithDom {
+  let children = [];
+  for (let i = 0; i < dom.childNodes.length; i++) {
+    let childDom = dom.childNodes[i];
+    if (childDom.nodeType === 3) {
+      let vnode = new Vnode(TextTagString, {}, []);
+      vnode.dom = childDom;
+      vnode.nodeValue = childDom.nodeValue;
+      children.push(vnode);
+      continue;
     }
 
-    let props: Props = {};
-    [].forEach.call(dom.attributes, (prop: Attr) => (props[prop.nodeName] = prop.nodeValue));
-
-    let vnode = new Vnode(dom.tagName.toLowerCase(), props, children);
-    vnode.dom = dom;
-    return vnode as VnodeWithDom;
+    if (childDom.nodeType === 1) {
+      children.push(domToVnode(childDom));
+    }
   }
+
+  let props: Props = {};
+  for (let i = 0; i < dom.attributes.length; i++) {
+    let attr = dom.attributes[i];
+    props[attr.nodeName] = attr.nodeValue;
+  }
+
+  let vnode = new Vnode(dom.tagName.toLowerCase(), props, children);
+  vnode.dom = dom;
+  return vnode as VnodeWithDom;
 }
 
 const trust = (htmlString: string): Children => {
@@ -256,7 +249,7 @@ function setAttributes(vnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
 
 function callRemove(vnode: VnodeWithDom) {
   for (let i = 0, l = vnode.children.length; i < l; i++) {
-    vnode.children[i] instanceof Vnode && callRemove(vnode.children[i]);
+    NodeValueString in vnode === false && callRemove(vnode.children[i]);
   }
   vnode.props.onremove && vnode.props.onremove(vnode);
 }
@@ -338,63 +331,61 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
 
       // New child is text node
       if (NodeValueString in newChild) {
-        if (!oldChild) {
-          newChild.dom = (elementsToClone.text as DomElement).cloneNode(false) as DomElement;
-          newChild.dom.nodeValue = newChild.nodeValue as string;
-          newVnode.dom.appendChild(newChild.dom);
-          continue;
-        }
-
-        if (NodeValueString in oldChild) {
-          newChild.dom = oldChild.dom;
-          // eslint-disable-next-line eqeqeq
-          if (newChild.dom.nodeValue != newChild.nodeValue) {
-            newChild.dom.nodeValue = newChild.nodeValue as string;
+        if (oldChild) {
+          if (NodeValueString in oldChild) {
+            newChild.dom = oldChild.dom;
+            // eslint-disable-next-line eqeqeq
+            if (newChild.dom.nodeValue != newChild.nodeValue) {
+              newChild.dom.nodeValue = newChild.nodeValue as string;
+            }
+            continue;
           }
+
+          newChild.dom = document.createTextNode(newChild.nodeValue as string) as unknown as DomElement;
+          newChild.dom.nodeValue = newChild.nodeValue as string;
+          NodeValueString in oldChild === false && callRemove(oldChild);
+          newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
           continue;
         }
-
-        newChild.dom = (elementsToClone.text as DomElement).cloneNode(false) as DomElement;
-        newChild.dom.nodeValue = newChild.nodeValue as string;
-        NodeValueString in oldChild === false && callRemove(oldChild);
-        newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
+        newChild.dom = document.createTextNode(newChild.nodeValue as string) as unknown as DomElement;
+        newVnode.dom.appendChild(newChild.dom);
         continue;
       }
 
       newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
 
-      if (!oldChild) {
-        newChild.dom = createDomElement(newChild.tag, newChild.isSVG);
-        setAttributes(newChild as VnodeWithDom);
-        newChild.props.oncreate && newChild.props.oncreate(newChild);
-        patch(newChild as VnodeWithDom);
-        newVnode.dom.appendChild(newChild.dom);
-        continue;
-      }
+      if (oldChild) {
+        if (oldChild.tag === newChild.tag) {
+          newChild.dom = oldChild.dom;
+          if ("v-once" in newChild.props || ("shouldupdate" in newChild.props && newChild.props.shouldupdate(oldChild, newChild) === false)) {
+            newChild.children = oldChild.children;
+            continue;
+          }
 
-      if (oldChild.tag === newChild.tag) {
-        newChild.dom = oldChild.dom;
-        if ("v-once" in newChild.props || ("shouldupdate" in newChild.props && newChild.props.shouldupdate(oldChild, newChild) === false)) {
-          newChild.children = oldChild.children;
+          setAttributes(newChild as VnodeWithDom, oldChild);
+          if (v.isMounted) {
+            newChild.props.onupdate && newChild.props.onupdate(newChild, oldChild);
+          } else {
+            newChild.props.oncreate && newChild.props.oncreate(newChild);
+          }
+          patch(newChild as VnodeWithDom, oldChild);
           continue;
         }
 
-        setAttributes(newChild as VnodeWithDom, oldChild);
-        if (v.isMounted) {
-          newChild.props.onupdate && newChild.props.onupdate(newChild, oldChild);
-        } else {
-          newChild.props.oncreate && newChild.props.oncreate(newChild);
-        }
-        patch(newChild as VnodeWithDom, oldChild);
+        newChild.dom = createDomElement(newChild.tag);
+        NodeValueString in oldChild === false && callRemove(oldChild);
+        setAttributes(newChild as VnodeWithDom);
+        newChild.props.oncreate && newChild.props.oncreate(newChild);
+        newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
+        patch(newChild as VnodeWithDom);
         continue;
       }
 
-      newChild.dom = createDomElement(newChild.tag);
-      NodeValueString in oldChild === false && callRemove(oldChild);
+      newChild.dom = createDomElement(newChild.tag, newChild.isSVG);
       setAttributes(newChild as VnodeWithDom);
       newChild.props.oncreate && newChild.props.oncreate(newChild);
-      newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
       patch(newChild as VnodeWithDom);
+      newVnode.dom.appendChild(newChild.dom);
       continue;
     }
 
@@ -425,7 +416,7 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
 
     // Is Text node
     newTree[i] = new Vnode(TextTagString, {}, []);
-    newTree[i].nodeValue = String(newChild);
+    newTree[i].nodeValue = newChild;
     i--;
   }
 
@@ -434,8 +425,8 @@ function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom) {
     for (let i = oldTreeLength - 1; i >= 0; i--) {
       let oldChild = oldTree[i];
       NodeValueString in oldChild === false && callRemove(oldChild);
-      newVnode.dom.textContent = "";
     }
+    newVnode.dom.textContent = "";
     return;
   }
 
@@ -509,11 +500,6 @@ function mount(container: string | Element, normalComponent: Component | Valyria
   v.mainVnode = domToVnode(v.container) as VnodeWithDom;
   v.mainVnode.isSVG = v.mainVnode.tag === "svg";
 
-  // Just to facilitate the text node creation
-  if (!elementsToClone.text) {
-    elementsToClone.text = document.createTextNode("") as unknown as DomElement;
-  }
-
   return update();
 }
 
@@ -539,7 +525,7 @@ function hideDirective(test: boolean): Directive {
   return (bool: boolean, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) => {
     let value = test ? bool : !bool;
     if (value) {
-      let newdom = (elementsToClone.text as DomElement).cloneNode(false) as DomElement;
+      let newdom = document.createTextNode("");
       if (oldVnode && oldVnode.dom && oldVnode.dom.parentNode) {
         NodeValueString in oldVnode && callRemove(oldVnode);
         oldVnode.dom.parentNode.replaceChild(newdom, oldVnode.dom);
