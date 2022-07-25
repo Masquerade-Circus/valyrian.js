@@ -197,31 +197,44 @@ function sharedSetAttribute(prop: string, newVnode: VnodeWithDom, oldVnode?: Vno
     if (directives[prop]) {
       return directives[prop](newVnode.props[prop], newVnode, oldVnode);
     }
-  } else if (typeof newVnode.props[prop] === "function") {
+    return;
+  }
+
+  let value = newVnode.props[prop];
+  let dom = newVnode.dom;
+
+  if (typeof value === "function") {
     if (!eventListenerNames[prop]) {
       (mainContainer as DomElement).addEventListener(prop.slice(2), eventListener);
       eventListenerNames[prop] = true;
     }
-    newVnode.dom[`v-${prop}`] = newVnode.props[prop];
-  } else if (prop in newVnode.dom && !newVnode.isSVG) {
+    dom[`v-${prop}`] = value;
+    return;
+  }
+
+  if (prop in dom && !newVnode.isSVG) {
     // eslint-disable-next-line eqeqeq
-    if (newVnode.dom[prop] != newVnode.props[prop]) {
-      newVnode.dom[prop] = newVnode.props[prop];
+    if (dom[prop] != value) {
+      dom[prop] = value;
     }
-  } else if (!oldVnode || newVnode.props[prop] !== oldVnode.props[prop]) {
-    if (newVnode.props[prop] === false) {
-      newVnode.dom.removeAttribute(prop);
+
+    return;
+  }
+
+  if (!oldVnode || value !== oldVnode.props[prop]) {
+    if (value === false) {
+      dom.removeAttribute(prop);
     } else {
-      newVnode.dom.setAttribute(prop, newVnode.props[prop]);
+      dom.setAttribute(prop, value);
     }
   }
 }
+
 function setAttribute(name: string, value: any, vnode: Vnode, oldVnode?: VnodeWithDom): void {
   vnode.props[name] = value;
   sharedSetAttribute(name, vnode as VnodeWithDom, oldVnode);
 }
 
-// Update a Vnode.dom HTMLElement with new Vnode props that are different from old Vnode props
 function setAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void {
   for (let prop in newVnode.props) {
     if (sharedSetAttribute(prop, newVnode, oldVnode) === false) {
