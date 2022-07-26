@@ -686,7 +686,7 @@ compare("Mount and update: Render keyed list -> swap keys on large set", () => {
   });
 });
 
-compare.only("Mount and update: Update class", () => {
+compare("Mount and update: Update class", () => {
   // Init with 1000 words
   let words = [...Array(1000).keys()].map((key) => `word ${key}`);
   let useData = false;
@@ -712,24 +712,28 @@ compare.only("Mount and update: Update class", () => {
       {},
       useData
         ? words.map((word) =>
-            v("span", { class: updateClass === word ? "selected" : false, shouldupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class }, word)
+            v(
+              "span",
+              { class: updateClass2 === word ? "selected" : false, shouldupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class },
+              word
+            )
           )
-        : v("div", { class: updateClass === "test" ? "test" : false, shouldupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class }, "test")
+        : v("div", { class: updateClass2 === "test" ? "test" : false, shouldupdate: (vnode, oldVnode) => vnode.props.class !== oldVnode.props.class }, "test")
     );
 
   before(() => {
     let before = vOld.mount("body", Component);
     expect(before).toEqual("<div><div>test</div></div>");
-    let before2 = v.mount("body", Component2);
-    expect(before2).toEqual("<div><div>test</div></div>");
-
     updateClass = "test";
-    updateClass2 = "test";
-
     let after = vOld.update();
     expect(after).toEqual('<div><div class="test">test</div></div>');
+
+    let before2 = v.mount("body", Component2);
+    expect(before2).toEqual("<div><div>test</div></div>");
+    updateClass2 = "test";
     let after2 = v.update();
     expect(after2).toEqual('<div><div class="test">test</div></div>');
+
     useData = true;
     updateClass = "";
     updateClass2 = "";

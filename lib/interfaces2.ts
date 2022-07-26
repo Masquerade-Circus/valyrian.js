@@ -80,9 +80,8 @@ export interface Valyrian {
 
   isNodeJs: boolean;
   isMounted: boolean;
-  container?: Element | null;
-  component?: Component | VnodeComponent | null;
-  mainVnode?: VnodeWithDom;
+  component: Component | ValyrianComponent | null;
+  mainVnode: VnodeWithDom | null;
 
   directives: Directives;
   reservedProps: ReservedProps;

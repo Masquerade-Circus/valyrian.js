@@ -1,6 +1,6 @@
 const { before, benchmark, compare } = require("buffalo-test");
 
-import VNext from "../lib/index";
+import VNext from "../lib/index2";
 const expect = require("expect");
 const nodePlugin = require("../plugins/node");
 const { v: vOld } = require("./index-old.ts");

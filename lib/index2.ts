@@ -24,11 +24,6 @@ const onMountList: Function[] = [];
 const onUpdateList: Function[] = [];
 const onUnmountList: Function[] = [];
 const emptyComponent: Component = () => "";
-let isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
-let isMounted = false;
-let mainContainer: DomElement | null = null;
-let mountedComponent: VnodeComponent | null = null;
-let mainVnode: VnodeWithDom | undefined;
 
 const eventListenerNames: Record<string, true> = {};
 function eventListener(e: Event) {
@@ -205,7 +200,7 @@ function sharedSetAttribute(prop: string, newVnode: VnodeWithDom, oldVnode?: Vno
 
   if (typeof value === "function") {
     if (!eventListenerNames[prop]) {
-      (mainContainer as DomElement).addEventListener(prop.slice(2), eventListener);
+      (v.mainVnode as VnodeWithDom).dom.addEventListener(prop.slice(2), eventListener);
       eventListenerNames[prop] = true;
     }
     dom[`v-${prop}`] = value;
@@ -355,7 +350,7 @@ function patch(newParentVnode: VnodeWithDom, oldParentVnode?: VnodeWithDom): voi
         }
 
         setAttributes(childVnode as VnodeWithDom, oldChildVnode);
-        if (isMounted) {
+        if (v.isMounted) {
           childVnode.props.onupdate && childVnode.props.onupdate(childVnode, oldChildVnode);
         } else {
           childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
@@ -448,53 +443,56 @@ function patch(newParentVnode: VnodeWithDom, oldParentVnode?: VnodeWithDom): voi
 }
 
 v.update = () => {
-  if (mainVnode) {
+  if (v.mainVnode) {
     onCleanupList.length && callCallbackList(onCleanupList);
-    let oldMainVnode = mainVnode;
-    mainVnode = new Vnode(mainVnode.tag, mainVnode.props, [mountedComponent]) as VnodeWithDom;
-    mainVnode.dom = oldMainVnode.dom;
-    mainVnode.isSVG = oldMainVnode.isSVG;
-    patch(mainVnode, oldMainVnode);
-    if (isMounted === false) {
+    let oldMainVnode = v.mainVnode;
+    let newMainVnode = new Vnode(oldMainVnode.tag, oldMainVnode.props, [
+      v.component instanceof VnodeComponent ? v.component : v(v.component as Component, null)
+    ]) as VnodeWithDom;
+    newMainVnode.dom = oldMainVnode.dom;
+    newMainVnode.isSVG = oldMainVnode.isSVG;
+    v.mainVnode = newMainVnode;
+    patch(newMainVnode, oldMainVnode);
+    if (v.isMounted === false) {
       onMountList.length && callCallbackList(onMountList);
-      isMounted = true;
+      v.isMounted = true;
     } else {
       onUpdateList.length && callCallbackList(onUpdateList);
     }
-    if (isNodeJs) {
-      return (mainVnode.dom as HTMLElement).innerHTML;
+    if (v.isNodeJs) {
+      return (newMainVnode.dom as HTMLElement).innerHTML;
     }
   }
 };
 
 v.unmount = () => {
-  onCleanupList.length && callCallbackList(onCleanupList);
-  onUnmountList.length && callCallbackList(onUnmountList);
-  mountedComponent = v(emptyComponent, {}, []) as VnodeComponent;
-  let result = v.update();
-  isMounted = false;
-  mainContainer = null;
-  return result;
+  if (v.mainVnode) {
+    onCleanupList.length && callCallbackList(onCleanupList);
+    onUnmountList.length && callCallbackList(onUnmountList);
+    v.component = emptyComponent;
+    let result = v.update();
+    v.mainVnode = null;
+    v.component = null;
+    v.isMounted = false;
+    return result;
+  }
 };
 
 v.mount = (container, component) => {
-  if (isMounted) {
+  if (v.isMounted) {
     v.unmount();
   }
 
-  if (isNodeJs) {
+  let mainContainer;
+  if (v.isNodeJs) {
     mainContainer = typeof container === "string" ? createDomElement(container, container === "svg") : container;
   } else {
     mainContainer = typeof container === "string" ? (document.querySelectorAll(container)[0] as DomElement) : container;
   }
 
-  mainVnode = domToVnode(mainContainer);
-  mainVnode.isSVG = mainVnode.tag === "svg";
-  if (component instanceof VnodeComponent) {
-    mountedComponent = component;
-  } else {
-    mountedComponent = v(component, {}, []) as VnodeComponent;
-  }
+  v.mainVnode = domToVnode(mainContainer);
+  v.mainVnode.isSVG = v.mainVnode.tag === "svg";
+  v.component = component;
 
   return v.update();
 };
@@ -637,12 +635,11 @@ v.directive = (name: string, directive: Directive) => {
   reservedProps[fullName] = true;
 };
 
-v.isNodeJs = isNodeJs;
-v.isMounted = isMounted;
+v.isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
+v.isMounted = false;
 
-v.container = mainContainer;
-v.component = mountedComponent;
-v.mainVnode = mainVnode;
+v.component = null;
+v.mainVnode = null;
 
 v.directives = directives;
 v.reservedProps = reservedProps;
