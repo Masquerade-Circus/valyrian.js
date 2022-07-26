@@ -157,7 +157,7 @@ compare("(No memo) Mount and update: Mount single text in div", () => {
   });
 });
 
-compare("(No memo) Mount and update: Update multiple types", () => {
+compare.only("(No memo) Mount and update: Update multiple types", () => {
   let date = new Date();
   let useData = false;
   let updateData = false;

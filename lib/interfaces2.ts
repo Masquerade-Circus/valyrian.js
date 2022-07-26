@@ -53,7 +53,7 @@ export interface VnodeComponent {
 export interface Children extends Array<Vnode | VnodeComponent | any> {}
 
 export interface Directive {
-  (value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+  (value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void | false;
 }
 
 export interface Directives {
