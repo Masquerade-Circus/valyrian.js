@@ -36,19 +36,8 @@ var reservedProps = {
   "v-html": true,
   "v-model": true
 };
-var elementsToClone = {};
-var elementsToCloneSvg = {};
 function createDomElement(tag, isSVG = false) {
-  if (isSVG) {
-    if (!elementsToCloneSvg[tag]) {
-      elementsToCloneSvg[tag] = document.createElementNS("http://www.w3.org/2000/svg", tag);
-    }
-    return elementsToCloneSvg[tag].cloneNode(false);
-  }
-  if (!elementsToClone[tag]) {
-    elementsToClone[tag] = document.createElement(tag);
-  }
-  return elementsToClone[tag].cloneNode(false);
+  return isSVG ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag);
 }
 var Vnode = function Vnode2(tag, props, children) {
   this.tag = tag;

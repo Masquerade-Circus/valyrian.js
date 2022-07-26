@@ -42,7 +42,7 @@ export interface VnodeComponent {
 export interface Children extends Array<Vnode | VnodeComponent | any> {
 }
 export interface Directive {
-    (value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+    (value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void | boolean;
 }
 export interface Directives {
     [key: string]: Directive;
@@ -59,6 +59,8 @@ export interface Plugin {
     (valyrian: Valyrian, options?: Record<string | string | symbol, any>): void | any;
 }
 export interface Valyrian {
+    isVnodeComponent: (object?: unknown) => object is VnodeComponent;
+    isValyrianComponent: (component?: unknown) => component is ValyrianComponent;
     (tagOrComponent: string | Component | ValyrianComponent, props: Props | null, ...children: Children): Vnode | VnodeComponent;
     fragment: (_: any, ...children: Children) => Children;
     isNodeJs: boolean;
@@ -81,5 +83,4 @@ export interface Valyrian {
     setAttribute: (name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom, isSVG?: boolean) => void;
     directive: (name: string, directive: Directive) => void;
     use: (plugin: Plugin, options?: Record<string | number | symbol, any>) => void | any;
-    [key: string | number | symbol]: any;
 }
