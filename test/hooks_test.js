@@ -3,7 +3,7 @@ import plugin, { useCallback, useEffect, useMemo, useRef, useState } from "../pl
 /* eslint-disable max-lines-per-function */
 import expect from "expect";
 import nodePlugin from "../plugins/node";
-import v from "../lib/index2";
+import v from "../lib/index";
 
 v.use(nodePlugin);
 v.use(plugin);

@@ -1,7 +1,7 @@
 /* eslint-disable indent */
 let { compare, benchmark, before, afterCycle } = require("buffalo-test");
 
-import v from "../lib/index2";
+import v from "../lib/index";
 
 const expect = require("expect");
 const nodePlugin = require("../plugins/node");

@@ -1,7 +1,7 @@
 import plugin, { Store } from "../plugins/store";
 
 import expect from "expect";
-import v from "../lib/index2";
+import v from "../lib/index";
 
 v.use(plugin);
 

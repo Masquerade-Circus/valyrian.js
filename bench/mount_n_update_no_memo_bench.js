@@ -1,7 +1,7 @@
 /* eslint-disable indent */
 let { compare, benchmark, before, afterCycle } = require("buffalo-test");
 
-import v from "../lib/index2";
+import v from "../lib/index";
 
 const expect = require("expect");
 const nodePlugin = require("../plugins/node");
@@ -157,7 +157,7 @@ compare("(No memo) Mount and update: Mount single text in div", () => {
   });
 });
 
-compare.only("(No memo) Mount and update: Update multiple types", () => {
+compare("(No memo) Mount and update: Update multiple types", () => {
   let date = new Date();
   let useData = false;
   let updateData = false;

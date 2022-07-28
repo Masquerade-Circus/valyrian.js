@@ -1,65 +1,60 @@
 /* eslint-disable no-use-before-define */
 /* eslint-disable no-unused-vars */
-/*** Interfaces ***/
+export interface Props {
+  [key: string]: any;
+}
 
 export interface DomElement extends Element {
   [key: string]: any;
 }
 
-export interface Props {
-  key?: string | number;
-  state?: any;
-  oncreate?: { (vnode: IVnode): never };
-  onupdate?: { (vnode: IVnode, oldVnode: IVnode): never };
-  onremove?: { (oldVnode: IVnode): never };
-  shouldupdate?: { (vnode: IVnode, oldVnode: IVnode): undefined | boolean };
-  [key: string | number | symbol]: any;
-}
-
-export interface Children extends Array<IVnode | any> {}
-
-export interface IVnode {
-  new (tag: string, props: Props, children: Children): IVnode;
+export interface VnodeInterface {
+  new (tag: string, props: Props, children: Children): VnodeInterface;
   tag: string;
   props: Props;
   children: Children;
-  dom?: DomElement;
-  isSVG?: boolean;
-  processed?: boolean;
-  component?: ValyrianComponent;
+  view?: Component;
   nodeValue?: string;
-  [key: string | number | symbol]: any;
+  dom?: DomElement;
+
+  processed?: boolean;
+
+  [key: string]: any;
 }
 
-export interface Component {
-  (props?: Record<string, any> | null, children?: Children): any | IVnode | Children;
-  [key: string | number | symbol]: any;
+export interface VnodeTextInterface {
+  new (nodeValue: string): VnodeTextInterface;
+  dom?: DomElement;
+  nodeValue: string;
 }
 
-export interface POJOComponent {
-  view: Component;
-  [key: string | number | symbol]: any;
-}
-
-export type ValyrianComponent = Component | POJOComponent;
-
-export interface VnodeComponent extends IVnode {
-  tag: "__component__";
-  component: ValyrianComponent;
-}
-
-export interface VnodeWithDom extends IVnode {
+export interface VnodeWithDom extends VnodeInterface {
   dom: DomElement;
 }
 
-export interface Directive {
-  (value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+export interface Component {
+  (props?: Props | null, ...children: any[]): VnodeInterface | Children | any;
+  [key: string]: any;
 }
 
-export interface Current {
-  component?: ValyrianComponent;
-  vnode?: VnodeWithDom;
-  oldVnode?: VnodeWithDom;
+export interface ValyrianComponent {
+  view: Component;
+  props?: Props | null;
+  children?: any[];
+  [key: string]: any;
+}
+
+export interface VnodeComponentInterface {
+  new (component: Component | ValyrianComponent, props: Props, children: Children): VnodeComponentInterface;
+  component: Component | ValyrianComponent;
+  props: Props;
+  children: Children;
+}
+
+export interface Children extends Array<VnodeInterface | VnodeComponentInterface | any> {}
+
+export interface Directive {
+  (value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void | boolean;
 }
 
 export interface Directives {
@@ -70,50 +65,49 @@ export interface ReservedProps {
   [key: string]: true;
 }
 
+export interface Current {
+  component?: Component | ValyrianComponent | null;
+  vnode?: VnodeWithDom | null;
+  oldVnode?: VnodeWithDom | null;
+}
+
 export interface Plugin {
   (valyrian: Valyrian, options?: Record<string | string | symbol, any>): void | any;
 }
 
 export interface Valyrian {
-  (tagOrComponent: string | ValyrianComponent, props: Props, ...children: Children): IVnode | VnodeComponent;
-  fragment: (props: Props, ...children: Children) => Children;
+  patch: (newParentVnode: VnodeWithDom, oldParentVnode?: VnodeWithDom | undefined) => void;
+  isVnodeComponent: (object?: unknown) => object is VnodeComponentInterface;
+  isValyrianComponent: (component?: unknown) => component is ValyrianComponent;
+  (tagOrComponent: string | Component | ValyrianComponent, props: Props | null, ...children: Children): VnodeInterface | VnodeComponentInterface;
+  fragment: (_: any, ...children: Children) => Children;
 
   isNodeJs: boolean;
   isMounted: boolean;
-  current: Current;
-  container?: DomElement;
-  mainVnode?: VnodeWithDom;
-  component?: null | VnodeComponent;
+  component: Component | ValyrianComponent | null;
+  mainVnode: VnodeWithDom | null;
 
   directives: Directives;
   reservedProps: ReservedProps;
+  current: Current;
 
-  isVnode: (object?: unknown | IVnode) => object is IVnode;
-  isComponent: (component?: unknown | ValyrianComponent) => component is ValyrianComponent;
-  isVnodeComponent: (vnode?: unknown | VnodeComponent) => vnode is VnodeComponent;
   trust: (htmlString: string) => Children;
+
+  isVnode: (object?: unknown | VnodeInterface) => object is VnodeInterface;
+  isComponent: (component?: unknown | Component | ValyrianComponent) => component is ValyrianComponent;
 
   onCleanup: (fn: Function) => void;
   onUnmount: (fn: Function) => void;
   onMount: (fn: Function) => void;
   onUpdate: (fn: Function) => void;
 
-  mount: (container: DomElement | string, component: ValyrianComponent | IVnode) => void | string;
+  mount: (container: string | Element, normalComponent: Component | ValyrianComponent) => void | string;
   update: () => void | string;
   unmount: () => void | string;
 
-  setAttribute: (name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) => void;
+  setAttribute: (name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom, isSVG?: boolean) => void;
   directive: (name: string, directive: Directive) => void;
   use: (plugin: Plugin, options?: Record<string | number | symbol, any>) => void | any;
 
   [key: string | number | symbol]: any;
-}
-
-declare global {
-  namespace JSX {
-    type Element = IVnode;
-    interface IntrinsicElements {
-      [elemName: string]: any;
-    }
-  }
 }
