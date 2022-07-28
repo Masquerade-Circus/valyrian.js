@@ -99,3 +99,4 @@ export interface Valyrian {
     use: (plugin: Plugin, options?: Record<string | number | symbol, any>) => void | any;
     [key: string | number | symbol]: any;
 }
+//# sourceMappingURL=interfaces.d.ts.map

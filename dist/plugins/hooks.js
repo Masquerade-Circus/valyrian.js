@@ -1,112 +1,111 @@
-let v = {
-  current: {}
+"use strict";
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
 };
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-function createHook({ onCreate, onUpdate, onRemove, onCleanup, returnValue }) {
+// plugins/hooks.ts
+var hooks_exports = {};
+__export(hooks_exports, {
+  createHook: () => createHook,
+  default: () => hooks_default,
+  useCallback: () => useCallback,
+  useEffect: () => useEffect,
+  useMemo: () => useMemo,
+  useRef: () => useRef,
+  useState: () => useState
+});
+module.exports = __toCommonJS(hooks_exports);
+var localValyrian = {
+  current: {
+    component: null,
+    vnode: null,
+    oldVnode: null
+  },
+  onUnmount: () => {
+  },
+  onCleanup: () => {
+  },
+  onMount: () => {
+  },
+  onUpdate: () => {
+  }
+};
+var createHook = function createHook2({ onCreate, onUpdate, onCleanup, onRemove, returnValue }) {
   return (...args) => {
-    let { component, vnode, oldVnode } = v.current;
-
-    // Init the components array for the current vnode
+    let { component, vnode, oldVnode } = localValyrian.current;
     if (!vnode.components) {
       vnode.components = [];
-      v.onUnmount(() => Reflect.deleteProperty(vnode, "components"));
+      localValyrian.onUnmount(() => Reflect.deleteProperty(vnode, "components"));
     }
-
-    // Add the component to the components array if it's not already there
     if (vnode.components.indexOf(component) === -1) {
       vnode.components.push(component);
     }
-
-    // Init the component hooks array
     if (!component.hooks) {
       component.hooks = [];
-      v.onUnmount(() => Reflect.deleteProperty(component, "hooks"));
+      localValyrian.onUnmount(() => Reflect.deleteProperty(component, "hooks"));
     }
-
-    let hook;
-
-    // if no old vnode or old vnode has no components or old vnode's last component is not the current component
-    // we are mounting the component for the first time so we create a new hook
+    let hook = void 0;
     if (!oldVnode || !oldVnode.components || oldVnode.components[vnode.components.length - 1] !== component) {
-      // create a new hook
       hook = onCreate(...args);
-
-      // add the hook to the component's hooks array
       component.hooks.push(hook);
-
-      // if we have a onRemove hook, add it to the onRemove array
       if (onRemove) {
-        // Add the hook to the onRemove array
-        v.onUnmount(() => onRemove(hook));
+        localValyrian.onUnmount(() => onRemove(hook));
       }
     } else {
-      // old vnode has components, we are updating the component
-
-      // Set the calls property to the current component if it's not already set
       if ("calls" in component === false) {
         component.calls = -1;
-        v.onUnmount(() => Reflect.deleteProperty(component, "calls"));
+        localValyrian.onUnmount(() => Reflect.deleteProperty(component, "calls"));
       }
-
-      // Reset the calls property to -1 on cleanup so we can detect if the component is updated again
-      v.onCleanup(() => (component.calls = -1));
-
-      // Increment the calls property
+      localValyrian.onCleanup(() => component.calls = -1);
       component.calls++;
-
-      // Get the current hook from the component's hooks array
       hook = component.hooks[component.calls];
-
-      // If we have an onUpdate hook, call it
       if (onUpdate) {
         onUpdate(hook, ...args);
       }
     }
-
-    // If we have an onCleanup function, add it to the cleanup array
     if (onCleanup) {
-      // Add the hook to the onCleanup array
-      v.onCleanup(() => onCleanup(hook));
+      localValyrian.onCleanup(() => onCleanup(hook));
     }
-
-    // If we have a returnValue function, call it and return the result instead of the hook
     if (returnValue) {
       return returnValue(hook);
     }
-
-    // Return the hook
     return hook;
   };
-}
-
-// Use state hook
-const useState = createHook({
+};
+var useState = createHook({
   onCreate: (value) => {
-    let stateObj = Object.create(null);
+    let stateObj = /* @__PURE__ */ Object.create(null);
     stateObj.value = value;
-    stateObj.toJSON = stateObj.toString = stateObj.valueOf = () => (typeof stateObj.value === "function" ? stateObj.value() : stateObj.value);
-
-    return [stateObj, (value) => (stateObj.value = value)];
+    stateObj.toJSON = stateObj.toString = stateObj.valueOf = () => typeof stateObj.value === "function" ? stateObj.value() : stateObj.value;
+    return [stateObj, (value2) => stateObj.value = value2];
   }
 });
-
-// Effect hook
-const useEffect = createHook({
+var useEffect = createHook({
   onCreate: (effect, changes) => {
     let hook = { effect, prev: [] };
-    // on unmount
     if (changes === null) {
       hook.onRemove = effect;
       return hook;
     }
-
-    // on create
     hook.prev = changes;
     hook.onCleanup = hook.effect();
     return hook;
   },
   onUpdate: (hook, effect, changes) => {
-    // on update
     if (typeof changes === "undefined") {
       hook.prev = changes;
       if (typeof hook.onCleanup === "function") {
@@ -115,8 +114,6 @@ const useEffect = createHook({
       hook.onCleanup = hook.effect();
       return;
     }
-
-    // on update if there are changes
     if (Array.isArray(changes)) {
       for (let i = 0, l = changes.length; i < l; i++) {
         if (changes[i] !== hook.prev[i]) {
@@ -139,17 +136,15 @@ const useEffect = createHook({
     }
   }
 });
-
-const useRef = createHook({
+var useRef = createHook({
   onCreate: (initialValue) => {
-    v.directive("ref", (ref, vnode) => {
+    localValyrian.directive("ref", (ref, vnode) => {
       ref.current = vnode.dom;
     });
     return { current: initialValue };
   }
 });
-
-const useCallback = createHook({
+var useCallback = createHook({
   onCreate: (callback, changes) => {
     callback();
     return { callback, changes };
@@ -164,8 +159,7 @@ const useCallback = createHook({
     }
   }
 });
-
-const useMemo = createHook({
+var useMemo = createHook({
   onCreate: (callback, changes) => {
     return { callback, changes, value: callback() };
   },
@@ -182,17 +176,7 @@ const useMemo = createHook({
     return hook.value;
   }
 });
-
-function plugin(vInstance) {
-  v = vInstance;
+function plugin(v) {
+  localValyrian = v;
 }
-
-plugin.createHook = createHook;
-plugin.useState = useState;
-plugin.useEffect = useEffect;
-plugin.useRef = useRef;
-plugin.useCallback = useCallback;
-plugin.useMemo = useMemo;
-
-plugin.default = plugin;
-module.exports = plugin;
+var hooks_default = plugin;

@@ -18,6 +18,8 @@ import {
   VnodeWithDom
 } from "./interfaces";
 
+export * from "./interfaces";
+
 const current: Current = {};
 const onCleanupList: Function[] = [];
 const onMountList: Function[] = [];

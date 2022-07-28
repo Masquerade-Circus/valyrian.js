@@ -8,7 +8,7 @@ import v from "../lib/index";
 v.use(nodePlugin);
 v.use(plugin);
 
-describe("Hooks", () => {
+describe.only("Hooks", () => {
   describe("State hook", () => {
     it("should handle a component state", async () => {
       let Counter = () => {
