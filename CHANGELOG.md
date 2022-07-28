@@ -1,11 +1,17 @@
 
 
-### [6.0.9](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.8...6.0.9) (2022-05-06)
+### [6.0.10](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.9...6.0.10) (2022-07-28)
 
+
+### Miscellaneous Chores
+
+* Improve v6 ([#26](https://github.com/Masquerade-Circus/valyrian.js/issues/26)) ([2a846d6](https://github.com/Masquerade-Circus/valyrian.js/commit/2a846d6f633c4dd01e502d4a7560cf42933cafe1))
+
+### [6.0.9](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.8...6.0.9) (2022-05-06)
 
 ### Code Refactoring
 
-* minor refactor ([38e21ce](https://github.com/Masquerade-Circus/valyrian.js/commit/38e21ce12bdfe67383cce14fb578b2aca2892eea))
+*   minor refactor ([38e21ce](https://github.com/Masquerade-Circus/valyrian.js/commit/38e21ce12bdfe67383cce14fb578b2aca2892eea))
 
 ### [6.0.8](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.7...6.0.8) (2022-04-19)
 
