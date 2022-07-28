@@ -1,6 +1,6 @@
 import expect from "expect";
 import nodePlugin from "../plugins/node";
-import v from "../lib";
+import v from "../lib/index";
 
 v.use(nodePlugin);
 
@@ -93,7 +93,12 @@ describe("Hyperscript", () => {
           id: "unique",
           class: "unique"
         },
-        children: [expect.objectContaining({ nodeValue: "Hola mundo", dom: expect.anything() })],
+        children: [
+          {
+            nodeValue: "Hola mundo",
+            dom: expect.anything()
+          }
+        ],
         dom: expect.anything()
       }
     ]);

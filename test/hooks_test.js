@@ -1,11 +1,12 @@
 import plugin, { useCallback, useEffect, useMemo, useRef, useState } from "../plugins/hooks";
 
+/* eslint-disable max-lines-per-function */
 import expect from "expect";
 import nodePlugin from "../plugins/node";
 import v from "../lib/index";
 
-v.use(plugin);
 v.use(nodePlugin);
+v.use(plugin);
 
 describe("Hooks", () => {
   describe("State hook", () => {
@@ -44,6 +45,8 @@ describe("Hooks", () => {
         );
       };
 
+      v.unmount();
+
       let result = v.mount("div", Counter);
       expect(result).toEqual("<div>0 <div>ok</div></div>");
       await new Promise((resolve) => setTimeout(() => resolve(), 25));
@@ -52,19 +55,48 @@ describe("Hooks", () => {
       v.unmount();
     });
 
-    it("array getter-setter based state", async () => {
+    it("should handle change of components", async () => {
+      let change = false;
       let Counter = () => {
         let [count, setCount] = useState(0);
+        let [name, setName] = useState("Hello");
         let interval = setInterval(() => setCount(count + 1), 10);
         v.onCleanup(() => clearInterval(interval));
-        return <div>{count}</div>;
+        return (
+          <div>
+            {count} {name}
+          </div>
+        );
       };
 
-      let result = v.mount("div", Counter);
-      expect(result).toEqual("<div>0</div>");
+      let OtherCounter = () => {
+        let [count, setCount] = useState(10);
+        let [name, setName] = useState("World");
+        let interval = setInterval(() => setCount(count + 1), 10);
+        v.onCleanup(() => clearInterval(interval));
+        return (
+          <div>
+            {count} {name}
+          </div>
+        );
+      };
+
+      function Component() {
+        return change ? <OtherCounter /> : <Counter />;
+      }
+
+      let result = v.mount("div", Component);
+      expect(result).toEqual("<div>0 Hello</div>");
+      await new Promise((resolve) => setTimeout(() => resolve(), 25));
+      change = true;
+      result = v.update();
+      expect(result).toEqual("<div>10 World</div>");
       await new Promise((resolve) => setTimeout(() => resolve(), 25));
       result = v.update();
-      expect(result).toEqual("<div>2</div>");
+      expect(result).toEqual("<div>12 World</div>");
+      await new Promise((resolve) => setTimeout(() => resolve(), 25));
+      result = v.update();
+      expect(result).toEqual("<div>14 World</div>");
       v.unmount();
     });
   });
@@ -73,11 +105,13 @@ describe("Hooks", () => {
     it("should call the effect at first render", () => {
       let count = 0;
       let Component = function () {
-        useEffect(() => count++);
+        useEffect(() => count++, []);
         return <div>{count}</div>;
       };
 
       let response = v.mount("body", Component);
+      expect(response).toEqual("<div>1</div>");
+      response = v.update();
       expect(response).toEqual("<div>1</div>");
     });
 
@@ -354,6 +388,43 @@ describe("Hooks", () => {
       let response3 = v.update();
       expect(response3).toEqual('<div class="blue"></div>');
       expect(computedTimes).toEqual(2);
+    });
+
+    it("Update class with hooks vs shouldupdate property", () => {
+      let updateClass = "";
+      let Component = () => (
+        <div>
+          {
+            <div class={updateClass === "test" ? "test" : false} shouldupdate={(vnode, oldVnode) => vnode.props.class !== oldVnode.props.class}>
+              test
+            </div>
+          }
+        </div>
+      );
+
+      let Component2 = () => (
+        <div>
+          {useMemo(
+            () => (
+              <div class={updateClass === "test" ? "test" : false}>test</div>
+            ),
+            [updateClass]
+          )}
+        </div>
+      );
+
+      let before = v.mount("body", Component);
+      expect(before).toEqual("<div><div>test</div></div>");
+      updateClass = "test";
+      let after = v.update();
+      expect(after).toEqual('<div><div class="test">test</div></div>');
+
+      updateClass = "";
+      let before2 = v.mount("body", Component2);
+      expect(before2).toEqual("<div><div>test</div></div>");
+      updateClass = "test";
+      let after2 = v.update();
+      expect(after2).toEqual('<div><div class="test">test</div></div>');
     });
   });
 });

@@ -290,14 +290,10 @@ icons.options = {
   }
 };
 
-let mount = () => {};
-let unmount = () => {};
-let isInUse = false;
+let localValyrian = null;
 
 function plugin(v) {
-  mount = v.mount;
-  unmount = v.unmount;
-  isInUse = true;
+  localValyrian = v;
   global.fetch = fetch;
   global.FormData = FormData;
   global.document = treeAdapter.createDocument();
@@ -311,13 +307,13 @@ plugin.domToHtml = treeAdapter.domToHtml;
 plugin.domToHyperscript = treeAdapter.domToHyperscript;
 plugin.htmlToHyperscript = treeAdapter.htmlToHyperscript;
 plugin.render = (...args) => {
-  if (!isInUse) {
+  if (!localValyrian) {
     throw new Error("This plugin is not in use. Please invoke `v.use(nodePlugin)`");
   }
 
   let Component = () => args;
-  let result = mount("div", Component);
-  unmount(Component);
+  let result = localValyrian.mount("div", Component);
+  localValyrian.unmount();
   return result;
 };
 

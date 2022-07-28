@@ -42,9 +42,9 @@
     "node": ">=11.0.0"
   },
   "scripts": {
-    "dev:source": "cross-env NODE_ENV=development nodemon -e js,ts,json,css -w ./test -w ./lib -w ./plugins source.js",
-    "dev:test": "cross-env NODE_ENV=development nodemon -e js,ts,json,css,tsx -w ./test -w ./lib -w ./plugins --exec 'mocha --bail --timeout 15000 --slow 0 --require ./register'",
-    "dev:test:nyc": "cross-env NODE_ENV=development nodemon -w ./test -w ./lib -w ./plugins --exec 'nyc --reporter=text --reporter=lcov mocha --timeout 15000 --slow 0 --require ./register \"test/**/*_test.js\"'",
+    "dev:source": "nodemon --enable-source-maps -e js,ts,json,css -w ./test -w ./lib -w ./plugins source.js",
+    "dev:test": "nodemon --enable-source-maps -e js,ts,json,css,tsx -w ./test -w ./lib -w ./plugins --exec 'mocha --bail --timeout 15000 --slow 0 --require ./register --enable-source-maps'",
+    "dev:test:nyc": "nodemon --enable-source-maps -w ./test -w ./lib -w ./plugins --exec 'nyc --reporter=text --reporter=lcov mocha --timeout 15000 --slow 0 --require ./register \"test/**/*_test.js\"'",
     "build": "yarn build:source && yarn remark",
     "build:source": "cross-env NODE_ENV=production node source.js",
     "test": "cross-env NODE_ENV=development nyc mocha --forbid-only --timeout 15000 --require ./register \"test/**/*_test.js\"",
@@ -53,18 +53,18 @@
     "commit": "git add . && git-cz",
     "release": "release-it --verbose",
     "release-test": "release-it --dry-run --verbose",
-    "bench": "nodemon -e js,ts,json,css,tsx -w ./bench -w ./lib -w ./plugins --exec 'buffalo-test --require ./register'"
+    "bench": "nodemon -e js,ts,json,css,tsx -w ./bench -w ./lib -w ./plugins --exec 'NODE_OPTIONS=--enable-source-maps buffalo-test --require ./register'"
   },
   "dependencies": {
     "clean-css": "^5.2.4",
-    "esbuild": "^0.14.22",
+    "esbuild": "^0.14.49",
     "favicons": "^7.0.0-beta.4",
     "form-data": "^4.0.0",
     "node-fetch": "2.6.7",
     "parse5": "^6.0.1",
     "pirates": "^4.0.5",
     "purgecss": "4.1.3",
-    "terser": "^5.10.0",
+    "terser": "^5.14.2",
     "ts-node": "^10.5.0",
     "tsc-prog": "^2.2.1",
     "tslib": "^2.3.1",
@@ -73,6 +73,7 @@
   "devDependencies": {
     "@release-it/conventional-changelog": "^4.1.0",
     "@types/node": "^17.0.18",
+    "@types/sharp": "^0.30.4",
     "@typescript-eslint/eslint-plugin": "^5.12.0",
     "@typescript-eslint/parser": "^5.12.0",
     "buffalo-test": "^2.0.0",

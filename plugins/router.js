@@ -108,7 +108,7 @@ async function searchComponent(router, middlewares) {
   for (; i < middlewares.length; i++) {
     response = await middlewares[i](req, response);
 
-    if (response !== undefined && (router.v.isComponent(response) || router.v.isVnodeComponent(response))) {
+    if (response !== undefined && router.v.isComponent(response)) {
       return response;
     }
 
@@ -191,8 +191,8 @@ class Router {
     }
 
     if (parentComponent) {
-      let childComponent = v.isVnodeComponent(component) ? component : v(component, {});
-      if (v.isVnodeComponent(parentComponent)) {
+      let childComponent = v.isValyrianComponent(component) ? component : v(component, {});
+      if (v.isValyrianComponent(parentComponent)) {
         parentComponent.children.push(childComponent);
       } else {
         parentComponent = v(parentComponent, {}, childComponent);

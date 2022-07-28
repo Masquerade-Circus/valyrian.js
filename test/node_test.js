@@ -165,15 +165,9 @@ span.hello{display: inline-block}
   });
 
   it("should inline js", async () => {
-    let { raw: indexTs } = await inline("./lib/index.ts", { compact: true });
+    let { raw: indexTs } = await inline("./lib/index.ts", { compact: true, noValidate: true });
     let { raw: indexOld } = await inline("./bench/index-old.js", { compact: true });
     console.log(indexTs.length);
-    // console.log(inline.ts()[1].raw.length);
     console.log(indexOld.length);
-
-    // console.log(inline.ts()[1].raw);
-    // fs.writeFileSync("./dist/valyrian.lite.js", inline.ts()[1].raw);
-
-    // expect(inline.ts()[0].raw.length).toBeLessThan(5115);
   });
 });

@@ -27,9 +27,9 @@ describe("Mount and update", () => {
   });
 
   it("Mount and update with functional stateful component", () => {
-    let Component = function () {
+    function Component() {
       return <div id={this.id}>Hello {this.world}</div>;
-    };
+    }
     Component.world = "World";
     Component.id = "example";
 
@@ -85,6 +85,31 @@ describe("Mount and update", () => {
         </Component>
       )
     ).toEqual('<div id="example"><span>Hello World</span><span>Hello world</span><span>Hello John</span><span>Hello Jane</span></div>');
+  });
+
+  it("Mount with class component", () => {
+    class Component {
+      constructor() {
+        this.id = "example";
+        this.world = "World";
+      }
+      view() {
+        return <div id={this.id}>Hello {this.world}</div>;
+      }
+    }
+
+    let ComponentInstance = new Component();
+
+    let result = {};
+
+    result.before = v.mount("body", ComponentInstance);
+    ComponentInstance.world = "John Doe";
+    result.after = v.update();
+
+    expect(result).toEqual({
+      before: '<div id="example">Hello World</div>',
+      after: '<div id="example">Hello John Doe</div>'
+    });
   });
 
   it("Handle multiple update calls", () => {

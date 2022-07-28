@@ -189,6 +189,10 @@ class Text extends Node {
   get nodeValue() {
     return this.node_value;
   }
+
+  cloneNode() {
+    return new Text(this.node_value);
+  }
 }
 
 class Element extends Node {
@@ -367,10 +371,23 @@ class Element extends Node {
     return elementFound;
   }
 
-  cloneNode() {
-    let div = document.createElement("div");
-    div.innerHTML = this.outerHTML;
-    return div.firstChild;
+  cloneNode(cloneChildren = true) {
+    if (cloneChildren === false) {
+      let element = new Element(this.nodeType, this.nodeName);
+
+      for (let i = 0, l = this.attributes.length; i < l; i++) {
+        element.setAttribute(this.attributes[i].nodeName, this.attributes[i].nodeValue);
+      }
+
+      return element;
+    }
+
+    let result = [...htmlToDom(this.outerHTML, { treeAdapter: TreeAdapter })];
+    let element = result[0];
+
+    element.childNodes = [];
+
+    return element;
   }
 
   get firstChild() {

@@ -1,7 +1,7 @@
 const expect = require("expect");
 const dayjs = require("dayjs");
 
-import v from "../lib";
+import v from "../lib/index";
 
 const plugin = require("../plugins/node");
 v.use(plugin);
@@ -102,7 +102,6 @@ describe("Directives", () => {
         // Try to change u property
         vnode.props.u = "property changed";
         if (update) {
-          console.log(v);
           v.setAttribute("u", "property changed", vnode, oldVnode);
         }
 
@@ -455,7 +454,7 @@ describe("Directives", () => {
   describe("reserved word state", () => {
     it("should not render an attribute", () => {
       let state = { hello: "world" };
-      let Component = () => <div state={state} shouldupdate={(oldVnode, newVnode) => oldVnode.props.state.hello !== newVnode.props.state.hello} />;
+      let Component = () => <div state={state} shouldupdate={(newVnode, oldVnode) => oldVnode.props.state.hello !== newVnode.props.state.hello} />;
 
       let result = v.mount("body", Component);
       expect(result).toEqual("<div></div>");

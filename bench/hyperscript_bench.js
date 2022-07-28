@@ -1,6 +1,6 @@
 const { before, benchmark, compare } = require("buffalo-test");
 
-import VNext from "../lib";
+import VNext from "../lib/index";
 const expect = require("expect");
 const nodePlugin = require("../plugins/node");
 const { v: vOld } = require("./index-old.ts");
@@ -8,8 +8,8 @@ const { v: vOld } = require("./index-old.ts");
 compare("hyperscript", () => {
   let date = new Date();
   before(async () => {
-    let { raw: newTs } = await nodePlugin.inline("./lib/index.ts", { compact: true, bundle: false });
-    let { raw: oldjs } = await nodePlugin.inline("./bench/index-old.ts", { compact: true, bundle: false });
+    let { raw: newTs } = await nodePlugin.inline("./lib/index.ts", { compact: true, noValidate: true });
+    let { raw: oldjs } = await nodePlugin.inline("./bench/index-old.ts", { compact: true, noValidate: true });
     console.log(oldjs.length);
     console.log(newTs.length);
 
