@@ -17,12 +17,15 @@ var __copyProps = (to, from, except, desc) => {
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// lib/index2.ts
-var index2_exports = {};
-__export(index2_exports, {
-  default: () => index2_default
+// lib/index.ts
+var lib_exports = {};
+__export(lib_exports, {
+  Vnode: () => Vnode,
+  VnodeComponent: () => VnodeComponent,
+  VnodeText: () => VnodeText,
+  default: () => lib_default
 });
-module.exports = __toCommonJS(index2_exports);
+module.exports = __toCommonJS(lib_exports);
 var current = {};
 var onCleanupList = [];
 var onMountList = [];
@@ -210,7 +213,7 @@ var callRemove = (vnode) => {
   }
   vnode.props.onremove && vnode.props.onremove(vnode);
 };
-function patch(newParentVnode, oldParentVnode) {
+v.patch = (newParentVnode, oldParentVnode) => {
   let oldTree = oldParentVnode?.children || [];
   let newTree = newParentVnode.children;
   let oldTreeLength = oldTree.length;
@@ -254,7 +257,7 @@ function patch(newParentVnode, oldParentVnode) {
         oldTree[i] && !newKeyedList[oldTree[i].props.key] && callRemove(oldTree[i]);
         newParentVnode.dom.replaceChild(childVnode.dom, newParentVnode.dom.childNodes[i]);
       }
-      shouldPatch && patch(childVnode, oldChildVnode);
+      shouldPatch && v.patch(childVnode, oldChildVnode);
     }
     for (let i = newTreeLength2; i < oldTreeLength; i++) {
       if (!newKeyedList[oldTree[i].props.key]) {
@@ -274,7 +277,7 @@ function patch(newParentVnode, oldParentVnode) {
         childVnode.dom = createDomElement(childVnode.tag, childVnode.isSVG);
         setAttributes(childVnode);
         childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
-        patch(childVnode);
+        v.patch(childVnode);
         newParentVnode.dom.appendChild(childVnode.dom);
         continue;
       }
@@ -290,7 +293,7 @@ function patch(newParentVnode, oldParentVnode) {
         } else {
           childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
         }
-        patch(childVnode, oldChildVnode2);
+        v.patch(childVnode, oldChildVnode2);
         continue;
       }
       childVnode.dom = createDomElement(childVnode.tag, childVnode.isSVG);
@@ -298,7 +301,7 @@ function patch(newParentVnode, oldParentVnode) {
       childVnode.props.oncreate && childVnode.props.oncreate(childVnode);
       oldChildVnode2 instanceof Vnode && callRemove(oldChildVnode2);
       newParentVnode.dom.replaceChild(childVnode.dom, oldChildVnode2.dom);
-      patch(childVnode);
+      v.patch(childVnode);
       continue;
     }
     if (childVnode === null || childVnode === void 0) {
@@ -316,6 +319,12 @@ function patch(newParentVnode, oldParentVnode) {
     }
     if (childVnode instanceof VnodeText === false) {
       newTree[i] = childVnode = new VnodeText(String(childVnode));
+    }
+    if (newTree[i - 1] instanceof VnodeText) {
+      newTree[i - 1].dom.nodeValue += childVnode.nodeValue;
+      newTree[i - 1].nodeValue += childVnode.nodeValue;
+      newTree.splice(i--, 1);
+      continue;
     }
     let oldChildVnode = oldTree[i];
     if (!oldChildVnode) {
@@ -346,7 +355,7 @@ function patch(newParentVnode, oldParentVnode) {
     oldTree[i] instanceof Vnode && callRemove(oldTree[i]);
     oldTree[i].dom.parentNode && oldTree[i].dom.parentNode.removeChild(oldTree[i].dom);
   }
-}
+};
 v.update = () => {
   if (v.mainVnode) {
     onCleanupList.length && callCallbackList(onCleanupList);
@@ -357,7 +366,7 @@ v.update = () => {
     newMainVnode.dom = oldMainVnode.dom;
     newMainVnode.isSVG = oldMainVnode.isSVG;
     v.mainVnode = newMainVnode;
-    patch(newMainVnode, oldMainVnode);
+    v.patch(newMainVnode, oldMainVnode);
     if (v.isMounted === false) {
       onMountList.length && callCallbackList(onMountList);
       v.isMounted = true;
@@ -535,4 +544,4 @@ v.directives = directives;
 v.reservedProps = reservedProps;
 v.current = current;
 v.setAttribute = setAttribute;
-var index2_default = v;
+var lib_default = v;

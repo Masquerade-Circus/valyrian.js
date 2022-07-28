@@ -1,7 +1,13 @@
 /* eslint-disable no-use-before-define */
 /* eslint-disable no-unused-vars */
 export interface Props {
-  [key: string]: any;
+  key?: string | number;
+  state?: any;
+  oncreate?: { (vnode: VnodeInterface): never };
+  onupdate?: { (vnode: VnodeInterface, oldVnode: VnodeInterface): never };
+  onremove?: { (oldVnode: VnodeInterface): never };
+  shouldupdate?: { (vnode: VnodeInterface, oldVnode: VnodeInterface): undefined | boolean };
+  [key: string | number | symbol]: any;
 }
 
 export interface DomElement extends Element {
@@ -13,13 +19,12 @@ export interface VnodeInterface {
   tag: string;
   props: Props;
   children: Children;
-  view?: Component;
-  nodeValue?: string;
+  isSVG?: boolean;
   dom?: DomElement;
 
   processed?: boolean;
 
-  [key: string]: any;
+  [key: string | number | symbol]: any;
 }
 
 export interface VnodeTextInterface {
@@ -51,7 +56,7 @@ export interface VnodeComponentInterface {
   children: Children;
 }
 
-export interface Children extends Array<VnodeInterface | VnodeComponentInterface | any> {}
+export interface Children extends Array<VnodeInterface | VnodeTextInterface | VnodeComponentInterface | any> {}
 
 export interface Directive {
   (value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void | boolean;
@@ -76,9 +81,6 @@ export interface Plugin {
 }
 
 export interface Valyrian {
-  patch: (newParentVnode: VnodeWithDom, oldParentVnode?: VnodeWithDom | undefined) => void;
-  isVnodeComponent: (object?: unknown) => object is VnodeComponentInterface;
-  isValyrianComponent: (component?: unknown) => component is ValyrianComponent;
   (tagOrComponent: string | Component | ValyrianComponent, props: Props | null, ...children: Children): VnodeInterface | VnodeComponentInterface;
   fragment: (_: any, ...children: Children) => Children;
 
@@ -94,18 +96,21 @@ export interface Valyrian {
   trust: (htmlString: string) => Children;
 
   isVnode: (object?: unknown | VnodeInterface) => object is VnodeInterface;
+  isVnodeComponent: (object?: unknown) => object is VnodeComponentInterface;
   isComponent: (component?: unknown | Component | ValyrianComponent) => component is ValyrianComponent;
+  isValyrianComponent: (component?: unknown) => component is ValyrianComponent;
 
   onCleanup: (fn: Function) => void;
   onUnmount: (fn: Function) => void;
   onMount: (fn: Function) => void;
   onUpdate: (fn: Function) => void;
 
+  patch: (newParentVnode: VnodeWithDom, oldParentVnode?: VnodeWithDom | undefined) => void;
   mount: (container: string | Element, normalComponent: Component | ValyrianComponent) => void | string;
   update: () => void | string;
   unmount: () => void | string;
 
-  setAttribute: (name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom, isSVG?: boolean) => void;
+  setAttribute: (name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) => void;
   directive: (name: string, directive: Directive) => void;
   use: (plugin: Plugin, options?: Record<string | number | symbol, any>) => void | any;
 

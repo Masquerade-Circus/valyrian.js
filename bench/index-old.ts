@@ -49,6 +49,7 @@ interface Vnode {
   dom?: DomElement;
   isSVG?: boolean;
   processed?: boolean;
+  [key: string]: any;
 }
 
 class Vnode implements Vnode {
@@ -180,6 +181,30 @@ function valyrian(): Valyrian {
   const plugins = new Map();
 
   v.use = (plugin: Plugin, options: Record<string, any> = {}) => !plugins.has(plugin) && plugins.set(plugin, true) && plugin(v as Valyrian, options);
+
+  let vnodesToCleanup: Vnode[] = [];
+
+  v.onCleanup = (callback: FunctionConstructor) => {
+    let parentVnode = v.current.parentVnode as Vnode;
+    if (!parentVnode.onCleanup) {
+      parentVnode.onCleanup = [] as FunctionConstructor[];
+    }
+
+    parentVnode.onCleanup.push(callback);
+
+    if (vnodesToCleanup.indexOf(parentVnode) === -1) {
+      vnodesToCleanup.push(parentVnode);
+    }
+  };
+
+  let cleanupVnodes = () => {
+    for (let l = vnodesToCleanup.length; l--; ) {
+      for (let callback of vnodesToCleanup[l].onCleanup as FunctionConstructor[]) {
+        callback();
+      }
+    }
+    vnodesToCleanup = [];
+  };
 
   let mainContainer: DomElement | null = null;
   let emptyComponent: ValyrianComponent = () => "";
@@ -454,6 +479,7 @@ function valyrian(): Valyrian {
 
   v.update = (props, ...children) => {
     if (mainVnode) {
+      cleanupVnodes();
       oldMainVnode = mainVnode;
       mainVnode = new Vnode(mainVnode.name, mainVnode.props, [v(mountedComponent, props, ...children)]);
       mainVnode.dom = oldMainVnode.dom;
