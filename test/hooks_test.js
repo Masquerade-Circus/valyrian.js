@@ -1,4 +1,4 @@
-import plugin, { useCallback, useEffect, useMemo, useRef, useState } from "../plugins/hooks";
+import plugin, { useCallback, useEffect, useMemo, useRef, useState } from "../lib/hooks";
 
 /* eslint-disable max-lines-per-function */
 import expect from "expect";
@@ -8,7 +8,7 @@ import v from "../lib/index";
 v.use(nodePlugin);
 v.use(plugin);
 
-describe.only("Hooks", () => {
+describe("Hooks", () => {
   describe("State hook", () => {
     it("should handle a component state", async () => {
       let Counter = () => {

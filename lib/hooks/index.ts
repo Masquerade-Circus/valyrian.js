@@ -1,4 +1,4 @@
-import { Component, Valyrian, ValyrianComponent, VnodeWithDom } from "../lib";
+import { Component, Valyrian, ValyrianComponent, VnodeWithDom } from "../index";
 
 type LocalValyrian =
   | Valyrian

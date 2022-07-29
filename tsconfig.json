@@ -1,18 +1,18 @@
 {
   "compilerOptions": {
-    "target": "ESNEXT",
-    "module": "ESNEXT",
+    "target": "ES2022",
+    "module": "ES2022",
     "strict": true,
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "esModuleInterop": true,
     "inlineSourceMap": true,
-    "allowJs": false,
+    "allowJs": true,
     "resolveJsonModule": true,
     "removeComments": false,
     "jsx": "react",
     "jsxFragmentFactory": "v.fragment",
     "jsxFactory": "v"
   },
-  "include": ["./lib", "./plugins"],
+  "include": ["./lib"],
   "exclude": ["test*/**/*", "**/*.test.ts", "**/*.spec.ts"]
 }

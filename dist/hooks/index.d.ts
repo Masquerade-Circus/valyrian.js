@@ -1,4 +1,4 @@
-import { Valyrian } from "../lib";
+import { Valyrian } from "../index";
 export declare type Hook = any;
 export interface HookDefinition {
     onCreate: (...args: any[]) => any;
@@ -18,4 +18,4 @@ export declare const useCallback: (...args: any[]) => any;
 export declare const useMemo: (...args: any[]) => any;
 declare function plugin(v: Valyrian): void;
 export default plugin;
-//# sourceMappingURL=hooks.d.ts.map
+//# sourceMappingURL=index.d.ts.map

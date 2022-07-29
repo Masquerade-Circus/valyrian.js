@@ -3,6 +3,7 @@ const esbuild = require("esbuild");
 const terser = require("terser");
 const fs = require("fs");
 const zlib = require("zlib");
+const { hrtime } = require("process");
 
 function convertToUMD(text, globalName) {
   // HACK: convert to UMD - only supports cjs and global var
@@ -166,71 +167,35 @@ async function build({
 }
 
 (async () => {
+  let isDev = process.env.NODE_ENV === "development";
+  let libCheck = !isDev;
+  let emitDeclarations = !isDev;
+  let clean = !isDev;
+
+  let buildStart = hrtime();
+
   await build({
     globalName: "Valyrian",
     entryPoint: "./lib/index.ts",
     outfileName: "./dist/index",
-    clean: true,
+    clean,
     minify: true,
-    libCheck: true,
-    emitDeclarations: true,
+    libCheck,
+    emitDeclarations,
     minifyAs: "esm"
   });
 
   await build({
     globalName: "ValyrianHooks",
-    entryPoint: "./plugins/hooks.ts",
-    outfileName: "./dist/plugins/hooks",
+    entryPoint: "./lib/hooks/index.ts",
+    outfileName: "./dist/hooks/index",
     clean: false,
-    minify: false
+    minify: false,
+    libCheck
   });
 
-  // await build({
-  //   globalName: "ValyrianRequest",
-  //   entryPoint: "./plugins/request.js",
-  //   outfileName: "./dist/request",
-  //   clean: false,
-  //   minify: false
-  // });
+  const buildEnd = hrtime(buildStart);
 
-  // await build({
-  //   globalName: "ValyrianRouter",
-  //   entryPoint: "./plugins/router.js",
-  //   outfileName: "./dist/router",
-  //   clean: false,
-  //   minify: false
-  // });
-
-  // await build({
-  //   globalName: "ValyrianSignals",
-  //   entryPoint: "./plugins/signals.js",
-  //   outfileName: "./dist/signals",
-  //   clean: false,
-  //   minify: false
-  // });
-
-  // await build({
-  //   globalName: "ValyrianStore",
-  //   entryPoint: "./plugins/store.js",
-  //   outfileName: "./dist/store",
-  //   clean: false,
-  //   minify: false
-  // });
-
-  // await build({
-  //   globalName: "ValyrianSw",
-  //   entryPoint: "./plugins/sw.js",
-  //   outfileName: "./dist/sw",
-  //   clean: false,
-  //   minify: false
-  // });
-
-  // await build({
-  //   globalName: 'ValyrianSignals',
-  //   entryPoint: './plugins/signals.js',
-  //   outfileName: './dist/signals',
-  //   clean: false,
-  //   minify: false,
-  //   external: ['child_process', 'fs', 'os', 'path']
-  // });
+  // Log the build time in seconds with two decimal places
+  console.log(`Build time: ${(buildEnd[0] + buildEnd[1] / 1e9).toFixed(2)} seconds`);
 })();
