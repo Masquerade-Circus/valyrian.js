@@ -156,6 +156,7 @@ async function build({ globalName, entryPoint, outfileName, clean = false, emitD
   }
 }
 
+// eslint-disable-next-line no-unused-vars
 async function copy({ entryPoint, outfileName }) {
   let outdir = outfileName.split("/").slice(0, -1).join("/");
   let outfile = outfileName.split("/").pop();
@@ -213,6 +214,15 @@ async function copy({ entryPoint, outfileName }) {
     outfileName: "./dist/sw/index",
     clean: false,
     minify: false,
+    libCheck
+  });
+
+  await build({
+    globalName: "ValyrianStore",
+    entryPoint: "./lib/store/index.ts",
+    outfileName: "./dist/store/index",
+    clean: false,
+    minify: "esm",
     libCheck
   });
 

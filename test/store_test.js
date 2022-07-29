@@ -1,4 +1,4 @@
-import plugin, { Store } from "../plugins/store";
+import plugin, { Store } from "../lib/store";
 
 import expect from "expect";
 import v from "../lib/index";
@@ -31,7 +31,7 @@ function getNewStore() {
           setTimeout(() => {
             context.commit("pushB", payload);
             resolve();
-          }, 1000);
+          }, 10);
         });
       }
     },
