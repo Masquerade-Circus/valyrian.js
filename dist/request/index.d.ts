@@ -1,4 +1,4 @@
-import { Valyrian } from "../index";
+import { Valyrian } from "Valyrian";
 interface UrlOptions {
     base: string;
     node: string | null;
@@ -31,7 +31,7 @@ interface RequestInterface {
     options?: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
     [key: string | number | symbol]: any;
 }
-declare module "../index" {
+declare module "Valyrian" {
     interface Valyrian {
         request?: RequestInterface;
     }

@@ -1,4 +1,4 @@
-import { Valyrian } from "../index";
+import { Valyrian } from "Valyrian";
 export declare type Hook = any;
 export interface HookDefinition {
     onCreate: (...args: any[]) => any;

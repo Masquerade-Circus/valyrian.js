@@ -207,6 +207,15 @@ async function copy({ entryPoint, outfileName }) {
     libCheck
   });
 
+  await build({
+    globalName: "ValyrianSw",
+    entryPoint: "./lib/sw/index.ts",
+    outfileName: "./dist/sw/index",
+    clean: false,
+    minify: false,
+    libCheck
+  });
+
   const buildEnd = hrtime(buildStart);
 
   // Log the build time in seconds with two decimal places

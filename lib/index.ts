@@ -1,6 +1,8 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable complexity */
 
+/// <reference path="interfaces.ts" />
+
 import {
   Children,
   Component,
@@ -16,9 +18,7 @@ import {
   VnodeInterface,
   VnodeTextInterface,
   VnodeWithDom
-} from "./interfaces";
-
-export * from "./interfaces";
+} from "Valyrian";
 
 const current: Current = {};
 const onCleanupList: Function[] = [];

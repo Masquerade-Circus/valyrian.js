@@ -1,4 +1,4 @@
-import { Valyrian } from "../index";
+import { Valyrian } from "Valyrian";
 
 interface UrlOptions {
   base: string; // Used to prefix the url for scoped requests.
@@ -48,7 +48,7 @@ interface RequestInterface {
   [key: string | number | symbol]: any;
 }
 
-declare module "../index" {
+declare module "Valyrian" {
   // eslint-disable-next-line no-unused-vars
   interface Valyrian {
     request?: RequestInterface;
