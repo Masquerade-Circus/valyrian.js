@@ -27,17 +27,7 @@ function convertToUMD(text, globalName) {
   return code;
 }
 
-async function build({
-  globalName,
-  entryPoint,
-  outfileName,
-  clean = false,
-  emitDeclarations = false,
-  libCheck = false,
-  minify = true,
-  minifyAs = "cjs",
-  external = []
-}) {
+async function build({ globalName, entryPoint, outfileName, clean = false, emitDeclarations = false, libCheck = false, minify = "cjs", external = [] }) {
   try {
     let header = `\n/*** ${entryPoint} ***/`;
     console.log(header);
@@ -121,7 +111,7 @@ async function build({
 
     let result2;
     if (minify) {
-      let codeToMinify = minifyAs === "esm" ? esm : minifyAs === "cjs" ? cjs : null;
+      let codeToMinify = minify === "esm" ? esm : minify === "cjs" ? cjs : "cjs";
       if (codeToMinify) {
         let code = convertToUMD(codeToMinify.outputFiles[1].text, globalName);
         result2 = await terser.minify(code, {
@@ -166,6 +156,21 @@ async function build({
   }
 }
 
+async function copy({ entryPoint, outfileName }) {
+  let outdir = outfileName.split("/").slice(0, -1).join("/");
+  let outfile = outfileName.split("/").pop();
+  console.log(`\Coping ${entryPoint} to ${outfileName}`);
+  console.log(`Using ${outdir} as output directory`);
+  console.log(`Using ${outfile} as output file`);
+
+  if (!fs.existsSync(outdir)) {
+    fs.mkdirSync(outdir, { recursive: true });
+  }
+  // Copy the file to the outdir
+  fs.copyFileSync(entryPoint, `${outdir}/${outfile}`);
+  console.log(`Moved ${entryPoint} to ${outfileName}`);
+}
+
 (async () => {
   let isDev = process.env.NODE_ENV === "development";
   let libCheck = !isDev;
@@ -179,10 +184,9 @@ async function build({
     entryPoint: "./lib/index.ts",
     outfileName: "./dist/index",
     clean,
-    minify: true,
+    minify: "esm",
     libCheck,
-    emitDeclarations,
-    minifyAs: "esm"
+    emitDeclarations
   });
 
   await build({
@@ -191,6 +195,15 @@ async function build({
     outfileName: "./dist/hooks/index",
     clean: false,
     minify: false,
+    libCheck
+  });
+
+  await build({
+    globalName: "ValyrianRequest",
+    entryPoint: "./lib/request/index.ts",
+    outfileName: "./dist/request/index",
+    clean: false,
+    minify: "esm",
     libCheck
   });
 

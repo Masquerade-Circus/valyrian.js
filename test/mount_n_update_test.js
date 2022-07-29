@@ -264,15 +264,35 @@ describe("Mount and update", () => {
   });
 
   it("should allow to use fragments", () => {
-    let component = () => (
+    let Component = () => (
       <>
         <span>Hello</span>
         <span>World</span>
       </>
     );
 
-    let result = v.mount("body", component);
+    let result = v.mount("body", Component);
     expect(result).toEqual("<span>Hello</span><span>World</span>");
+  });
+
+  it("should allow to use fragments in subcomponents", () => {
+    let SubComponent = () => (
+      <>
+        <span>Hello</span>
+        <span>World</span>
+      </>
+    );
+
+    let Component = () => (
+      <>
+        <div>
+          Simon says <SubComponent />
+        </div>
+      </>
+    );
+
+    let result = v.mount("body", Component);
+    expect(result).toEqual("<div>Simon says <span>Hello</span><span>World</span></div>");
   });
 });
 

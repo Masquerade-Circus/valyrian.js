@@ -1,46 +1,67 @@
-const isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
+"use strict";
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-function serialize(obj, prefix) {
-  return Object.keys(obj)
-    .map((p) => {
-      let k = prefix ? `${prefix}[${p}]` : p;
-      return typeof obj[p] === "object" ? serialize(obj[p], k) : `${encodeURIComponent(k)}=${encodeURIComponent(obj[p])}`;
-    })
-    .join("&");
+// lib/request/index.ts
+var request_exports = {};
+__export(request_exports, {
+  default: () => request_default,
+  request: () => request
+});
+module.exports = __toCommonJS(request_exports);
+var localValyrian = {
+  isNodeJs: Boolean(typeof process !== "undefined" && process.versions && process.versions.node)
+};
+function serialize(obj, prefix = "") {
+  return Object.keys(obj).map((prop) => {
+    let k = prefix ? `${prefix}[${prop}]` : prop;
+    return typeof obj[prop] === "object" ? serialize(obj[prop], k) : `${encodeURIComponent(k)}=${encodeURIComponent(obj[prop])}`;
+  }).join("&");
 }
-
-function parseUrl(url, options = {}) {
+function parseUrl(url, options) {
   let u = /^https?/gi.test(url) ? url : options.urls.base + url;
-
   let parts = u.split("?");
   u = parts[0].trim().replace(/^\/\//, "/").replace(/\/$/, "").trim();
-
   if (parts[1]) {
     u += `?${parts[1]}`;
   }
-
-  if (isNodeJs && typeof options.urls.node === "string") {
+  if (localValyrian.isNodeJs && typeof options.urls.node === "string") {
     options.urls.node = options.urls.node;
-
     if (typeof options.urls.api === "string") {
       options.urls.api = options.urls.api.replace(/\/$/gi, "").trim();
       u = u.replace(options.urls.api, options.urls.node);
     }
-
     if (!/^https?/gi.test(u)) {
       u = options.urls.node + u;
     }
   }
-
   return u;
 }
-
-// eslint-disable-next-line sonarjs/cognitive-complexity
-function Request(baseUrl = "", options = {}) {
+function Requester(baseUrl = "", options = { allowedMethods: ["get", "post", "put", "patch", "delete"] }) {
   let url = baseUrl.replace(/\/$/gi, "").trim();
-  options.urls = options.urls || {};
+  if (!options.urls) {
+    options.urls = {
+      base: "",
+      node: null,
+      api: null
+    };
+  }
   let opts = {
-    methods: ["get", "post", "put", "patch", "delete"],
     ...options,
     urls: {
       node: options.urls.node || null,
@@ -48,32 +69,26 @@ function Request(baseUrl = "", options = {}) {
       base: options.urls.base ? options.urls.base + url : url
     }
   };
-
-  async function request(method, url, data, options = {}) {
+  const request2 = async function request3(method, url2, data, options2 = {}) {
     let innerOptions = {
       method: method.toLowerCase(),
       headers: {},
       resolveWithFullResponse: false,
       ...opts,
-      ...options
+      ...options2
     };
-
     if (!innerOptions.headers.Accept) {
       innerOptions.headers.Accept = "application/json";
     }
-
     let acceptType = innerOptions.headers.Accept;
     let contentType = innerOptions.headers["Content-Type"] || innerOptions.headers["content-type"] || "";
-
-    if (innerOptions.methods.indexOf(method) === -1) {
+    if (innerOptions.allowedMethods.indexOf(method) === -1) {
       throw new Error("Method not allowed");
     }
-
     if (data) {
       if (innerOptions.method === "get" && typeof data === "object") {
-        url += `?${serialize(data)}`;
+        url2 += `?${serialize(data)}`;
       }
-
       if (innerOptions.method !== "get") {
         if (/json/gi.test(contentType)) {
           innerOptions.body = JSON.stringify(data);
@@ -91,8 +106,7 @@ function Request(baseUrl = "", options = {}) {
         }
       }
     }
-
-    let response = await fetch(parseUrl(url, opts), innerOptions);
+    let response = await fetch(parseUrl(url2, opts), innerOptions);
     let body = null;
     if (!response.ok) {
       let err = new Error(response.statusText);
@@ -100,81 +114,84 @@ function Request(baseUrl = "", options = {}) {
       if (/text/gi.test(acceptType)) {
         err.body = await response.text();
       }
-
       if (/json/gi.test(acceptType)) {
         try {
           err.body = await response.json();
         } catch (error) {
-          // ignore
         }
       }
-
       throw err;
     }
-
     if (innerOptions.resolveWithFullResponse) {
       return response;
     }
-
     if (/text/gi.test(acceptType)) {
       body = await response.text();
       return body;
     }
-
     if (/json/gi.test(acceptType)) {
       try {
         body = await response.json();
         return body;
       } catch (error) {
-        // ignore
       }
     }
-
     return response;
-  }
-
-  request.new = (baseUrl, options) => Request(baseUrl, { ...opts, ...options });
-
-  request.options = (key, value) => {
+  };
+  request2.new = (baseUrl2, options2) => Requester(baseUrl2, { ...opts, ...options2 });
+  request2.setOption = (key, value) => {
     let result = opts;
-
-    if (typeof key === "undefined") {
-      return result;
-    }
-
     let parsed = key.split(".");
     let next;
-
     while (parsed.length) {
       next = parsed.shift();
-
       let nextIsArray = next.indexOf("[") > -1;
       if (nextIsArray) {
         let idx = next.replace(/\D/gi, "");
         next = next.split("[")[0];
         parsed.unshift(idx);
       }
-
       if (parsed.length > 0 && typeof result[next] !== "object") {
         result[next] = nextIsArray ? [] : {};
       }
-
       if (parsed.length === 0 && typeof value !== "undefined") {
         result[next] = value;
       }
-
       result = result[next];
     }
-
     return result;
   };
-
-  opts.methods.forEach((method) => (request[method] = (url, data, options) => request(method, url, data, options)));
-
-  return request;
+  request2.getOptions = (key) => {
+    if (!key) {
+      return opts;
+    }
+    let result = opts;
+    let parsed = key.split(".");
+    let next;
+    while (parsed.length) {
+      next = parsed.shift();
+      let nextIsArray = next.indexOf("[") > -1;
+      if (nextIsArray) {
+        let idx = next.replace(/\D/gi, "");
+        next = next.split("[")[0];
+        parsed.unshift(idx);
+      }
+      if (parsed.length > 0 && typeof result[next] !== "object") {
+        return null;
+      }
+      if (parsed.length === 0) {
+        return result[next];
+      }
+      result = result[next];
+    }
+  };
+  opts.allowedMethods.forEach((method) => request2[method] = (url2, data, options2) => request2(method, url2, data, options2));
+  return request2;
 }
-
-const request = Request();
-
-request.default = request;
-module.exports = request;
+var request = Requester();
+var plugin = (v) => {
+  localValyrian = v;
+  v.request = request;
+  return request;
+};
+var request_default = plugin;

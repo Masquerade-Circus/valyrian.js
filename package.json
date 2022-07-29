@@ -57,7 +57,7 @@
   },
   "scripts": {
     "dev:source": "NODE_ENV=development nodemon --enable-source-maps -e js,ts,json,css -w ./lib -w ./plugins source.js",
-    "dev:test": "nodemon --enable-source-maps -e mjs,js,ts,json,css,tsx,jsx -w ./test -w ./dist --exec 'mocha --bail --timeout 15000 --slow 0 --require ./register --enable-source-maps'",
+    "dev:test": "nodemon --enable-source-maps -e mjs,js,ts,json,css,tsx,jsx -w ./lib -w ./test -w ./dist --exec 'mocha --bail --timeout 15000 --slow 0 --require ./register --enable-source-maps'",
     "dev:test:nyc": "nodemon --enable-source-maps -w ./test -w ./lib -w ./plugins --exec 'nyc --reporter=text --reporter=lcov mocha --timeout 15000 --slow 0 --require ./register \"test/**/*_test.js\"'",
     "build": "yarn build:source && yarn remark",
     "build:source": "cross-env NODE_ENV=production node source.js",
