@@ -1,26 +1,43 @@
-let v;
+"use strict";
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
+// lib/router/index.ts
+var router_exports = {};
+__export(router_exports, {
+  Router: () => Router,
+  default: () => router_default
+});
+module.exports = __toCommonJS(router_exports);
+var localValyrian;
 function flat(array) {
   return Array.isArray(array) ? array.flat(Infinity) : [array];
 }
-
-let addPath = (router, method, path, middlewares, i) => {
+var addPath = (router, method, path, middlewares) => {
   if (middlewares.length === 0) {
     return;
   }
-
   let realpath = path.replace(/(\S)(\/+)$/, "$1");
-
-  // Find the express like params
   let params = realpath.match(/:(\w+)?/gi) || [];
-
-  // Set the names of the params found
-  for (i in params) {
-    params[i] = params[i].slice(1);
+  for (let param in params) {
+    params[param] = params[param].slice(1);
   }
-
   let regexpPath = "^" + realpath.replace(/:(\w+)/gi, "([^\\/\\s]+)") + "$";
-
   router.paths.push({
     method,
     path: realpath,
@@ -29,21 +46,17 @@ let addPath = (router, method, path, middlewares, i) => {
     regexp: new RegExp(regexpPath, "i")
   });
 };
-
 function parseQuery(queryParts) {
   let parts = queryParts ? queryParts.split("&", 20) : [];
   let query = {};
   let i = 0;
   let nameValue;
-
   for (; i < parts.length; i++) {
     nameValue = parts[i].split("=", 2);
     query[nameValue[0]] = nameValue[1];
   }
-
   return query;
 }
-
 function searchMiddlewares(router, path) {
   let i;
   let k;
@@ -56,40 +69,29 @@ function searchMiddlewares(router, path) {
   router.params = {};
   router.path = "";
   router.matches = [];
-
-  // Search for middlewares
   for (i = 0; i < router.paths.length; i++) {
     item = router.paths[i];
-
     match = item.regexp.exec(path);
-    // If we found middlewares
     if (Array.isArray(match)) {
-      middlewares.push.apply(middlewares, item.middlewares);
+      middlewares.push(...item.middlewares);
       match.shift();
-
-      // Parse params
       for (k = 0; k < item.params.length; k++) {
         key = item.params[k];
         params[key] = match.shift();
       }
-
       while (match.length) {
         matches.push(match.shift());
       }
-
       if (item.method === "add") {
         router.path = item.path;
         break;
       }
     }
   }
-
   router.params = params;
   router.matches = matches;
-
   return middlewares;
 }
-
 async function searchComponent(router, middlewares) {
   let response;
   let req = {
@@ -98,41 +100,35 @@ async function searchComponent(router, middlewares) {
     url: router.url,
     path: router.path,
     matches: router.matches,
-    redirect: (...args) => {
-      router.go(...args);
+    redirect: (path, parentComponent) => {
+      router.go(path, parentComponent);
       return false;
     }
   };
   let i = 0;
-
   for (; i < middlewares.length; i++) {
     response = await middlewares[i](req, response);
-
-    if (response !== undefined && router.v.isComponent(response)) {
+    if (response !== void 0 && localValyrian.isComponent(response)) {
       return response;
     }
-
     if (response === false) {
       return false;
     }
   }
 }
-
-class Router {
+var Router = class {
   paths = [];
   container = null;
-  url = "";
   query = {};
   options = {};
-  current = "";
+  url = "";
+  path = "";
   params = {};
   matches = [];
-
   add(path, ...args) {
     addPath(this, "add", path, args);
     return this;
   }
-
   use(...args) {
     let path = typeof args[0] === "string" ? args.shift() : "/";
     let i;
@@ -140,7 +136,6 @@ class Router {
     let subrouter;
     let item;
     let subpath;
-
     for (i = 0; i < args.length; i++) {
       subrouter = args[i];
       if (typeof subrouter === "function") {
@@ -153,10 +148,8 @@ class Router {
         }
       }
     }
-
     return this;
   }
-
   routes() {
     let routes = [];
     this.paths.forEach((path) => {
@@ -166,97 +159,71 @@ class Router {
     });
     return routes;
   }
-
   async go(path, parentComponent) {
     if (!path) {
       throw new Error("router.url.required");
     }
-
     let parts = path.split("?", 2);
     let urlParts = parts[0].replace(/(.+)\/$/, "$1");
     let queryParts = parts[1];
     this.url = path;
     this.query = parseQuery(queryParts);
-
     let middlewares = searchMiddlewares(this, urlParts);
-
     let component = await searchComponent(this, middlewares);
-
     if (component === false) {
       return;
     }
-
     if (!component) {
       throw new Error(`The url ${path} requested wasn't found`);
     }
-
-    if (parentComponent) {
-      let childComponent = v.isValyrianComponent(component) ? component : v(component, {});
-      if (v.isValyrianComponent(parentComponent)) {
+    if (localValyrian.isComponent(parentComponent)) {
+      let childComponent = localValyrian.isVnodeComponent(component) ? component : localValyrian(component, {});
+      if (localValyrian.isVnodeComponent(parentComponent)) {
         parentComponent.children.push(childComponent);
+        component = parentComponent;
       } else {
-        parentComponent = v(parentComponent, {}, childComponent);
+        component = localValyrian(parentComponent, {}, childComponent);
       }
-      component = parentComponent;
     }
-
-    if (!v.isNodeJs) {
-      window.history.pushState(null, null, path);
+    if (!localValyrian.isNodeJs) {
+      window.history.pushState(null, "", path);
     }
-
-    if (v.isMounted && v.component.component === component) {
-      return v.update();
+    if (localValyrian.isMounted && localValyrian.component === component) {
+      return localValyrian.update();
     }
-
-    return v.mount(this.container, component);
+    if (this.container) {
+      return localValyrian.mount(this.container, component);
+    }
   }
-}
-
-function plugin(vInstance) {
-  v = vInstance;
-  const mount = v.mount;
-  v.mount = (elementContainer, routerOrComponent) => {
-    if (routerOrComponent instanceof Router === false) {
-      return mount(elementContainer, routerOrComponent);
-    }
-
-    routerOrComponent.container = elementContainer;
-    routerOrComponent.v = v;
-    v.redirect = routerOrComponent.go.bind(routerOrComponent);
-
-    // Activate the use of the router
-    if (!v.isNodeJs) {
-      function onPopStateGoToRoute() {
-        routerOrComponent.go(document.location.pathname);
+  getOnClickHandler(url) {
+    return (e) => {
+      if (typeof url === "string" && url.length > 0) {
+        this.go(url);
       }
-      window.addEventListener("popstate", onPopStateGoToRoute, false);
-      onPopStateGoToRoute();
+      e.preventDefault();
+    };
+  }
+};
+function plugin(v) {
+  localValyrian = v;
+  localValyrian.mountRouter = (elementContainer, routerOrComponent) => {
+    if (routerOrComponent instanceof Router) {
+      routerOrComponent.container = elementContainer;
+      localValyrian.redirect = routerOrComponent.go.bind(routerOrComponent);
+      if (!localValyrian.isNodeJs) {
+        let onPopStateGoToRoute2 = function() {
+          routerOrComponent.go(document.location.pathname);
+        };
+        var onPopStateGoToRoute = onPopStateGoToRoute2;
+        window.addEventListener("popstate", onPopStateGoToRoute2, false);
+        onPopStateGoToRoute2();
+      }
+      localValyrian.directive("route", (url, vnode, oldnode) => {
+        localValyrian.setAttribute("href", url, vnode, oldnode);
+        localValyrian.setAttribute("onclick", routerOrComponent.getOnClickHandler(url), vnode, oldnode);
+      });
     }
-
-    v.directive("route", (url, vnode, oldnode) => {
-      v.setAttribute("href", url, vnode, oldnode);
-      v.setAttribute(
-        "onclick",
-        (e) => {
-          if (typeof url === "string" && url.length > 0) {
-            if (url.charAt(0) !== "/") {
-              let current = routerOrComponent.current.split("?", 2).shift().split("/");
-              current.pop();
-              url = `${current.join("/")}/${url}`;
-            }
-
-            routerOrComponent.go(url);
-          }
-          e.preventDefault();
-        },
-        vnode,
-        oldnode
-      );
-    });
   };
+  return Router;
 }
-
-plugin.Router = Router;
-
-plugin.default = plugin;
-module.exports = plugin;
+var router_default = plugin;

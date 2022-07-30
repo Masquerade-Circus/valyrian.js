@@ -83,37 +83,37 @@ declare module "Valyrian" {
 
   export interface Valyrian {
     (tagOrComponent: string | Component | ValyrianComponent, props: Props | null, ...children: Children): VnodeInterface | VnodeComponentInterface;
-    fragment: (_: any, ...children: Children) => Children;
+    fragment(_: any, ...children: Children): Children;
 
     isNodeJs: boolean;
     isMounted: boolean;
-    component: Component | ValyrianComponent | null;
+    component: Component | ValyrianComponent | VnodeComponentInterface | null;
     mainVnode: VnodeWithDom | null;
 
     directives: Directives;
     reservedProps: ReservedProps;
     current: Current;
 
-    trust: (htmlString: string) => Children;
+    trust(htmlString: string): Children;
 
-    isVnode: (object?: unknown | VnodeInterface) => object is VnodeInterface;
-    isVnodeComponent: (object?: unknown) => object is VnodeComponentInterface;
-    isComponent: (component?: unknown | Component | ValyrianComponent) => component is ValyrianComponent;
-    isValyrianComponent: (component?: unknown) => component is ValyrianComponent;
+    isVnode(object?: unknown | VnodeInterface): object is VnodeInterface;
+    isVnodeComponent(object?: unknown): object is VnodeComponentInterface;
+    isComponent(component?: unknown | Component | ValyrianComponent): component is ValyrianComponent;
+    isValyrianComponent(component?: unknown): component is ValyrianComponent;
 
-    onCleanup: (fn: Function) => void;
-    onUnmount: (fn: Function) => void;
-    onMount: (fn: Function) => void;
-    onUpdate: (fn: Function) => void;
+    onCleanup(fn: Function): void;
+    onUnmount(fn: Function): void;
+    onMount(fn: Function): void;
+    onUpdate(fn: Function): void;
 
-    patch: (newParentVnode: VnodeWithDom, oldParentVnode?: VnodeWithDom | undefined) => void;
-    mount: (container: string | Element, normalComponent: Component | ValyrianComponent) => void | string;
-    update: () => void | string;
-    unmount: () => void | string;
+    patch(newParentVnode: VnodeWithDom, oldParentVnode?: VnodeWithDom | undefined): void;
+    mount(container: string | Element, normalComponent: Component | ValyrianComponent | VnodeComponentInterface): void | string;
+    update(): void | string;
+    unmount(): void | string;
 
-    setAttribute: (name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom) => void;
-    directive: (name: string, directive: Directive) => void;
-    use: (plugin: Plugin, options?: Record<string | number | symbol, any>) => void | any;
+    setAttribute(name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+    directive(name: string, directive: Directive): void;
+    use(plugin: Plugin, options?: Record<string | number | symbol, any>): void | any;
 
     [key: string | number | symbol]: any;
   }

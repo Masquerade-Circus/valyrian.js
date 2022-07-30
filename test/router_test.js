@@ -1,4 +1,5 @@
-import plugin, { Router } from "../plugins/router";
+/* eslint-disable no-console */
+import plugin, { Router } from "../lib/router";
 
 import expect from "expect";
 import nodePlugin from "../plugins/node";
@@ -9,7 +10,7 @@ v.use(nodePlugin);
 
 // eslint-disable-next-line max-lines-per-function
 describe("Router", () => {
-  it("Dev test", async () => {
+  it("Hard test", async () => {
     let Component = () => <div>Hello world</div>;
     let router = new Router();
     router
@@ -54,7 +55,7 @@ describe("Router", () => {
     router.use("/ok", subrouter);
     router.use(() => () => "Not found");
 
-    v.mount("body", router);
+    v.mountRouter("body", router);
     expect(await router.go("/ok/not/found/url?hello=world")).toEqual("Not ok");
     expect(await router.go("/not/found/url?hello=world")).toEqual("Not found");
   });
@@ -71,7 +72,7 @@ describe("Router", () => {
     let result = {};
     let router = new Router();
     router.add("/", () => Component);
-    v.mount("body", router);
+    v.mountRouter("body", router);
 
     result.before = await router.go("/");
     Component.world = "John Doe";
@@ -97,7 +98,7 @@ describe("Router", () => {
     let result = {};
     let router = new Router();
     router.add("/", () => Component);
-    v.mount("body", router);
+    v.mountRouter("body", router);
 
     result.before = await router.go("/");
     Component.world = "John Doe";
@@ -125,7 +126,7 @@ describe("Router", () => {
     let result = {};
     let router = new Router();
     router.add("/", () => Component);
-    v.mount("body", router);
+    v.mountRouter("body", router);
 
     result.before = await router.go("/");
     state.world = "John Doe";
@@ -150,7 +151,7 @@ describe("Router", () => {
     let result = {};
     let router = new Router();
     router.add("/", () => <Component {...props} />);
-    v.mount("body", router);
+    v.mountRouter("body", router);
 
     result.before = await router.go("/");
     props.world = "John Doe";
@@ -173,7 +174,7 @@ describe("Router", () => {
     router.add("/", () => Hello);
     router.use(() => NotFound);
 
-    v.mount("body", router);
+    v.mountRouter("body", router);
 
     let result = {};
     result.found = await router.go("/");
@@ -206,7 +207,7 @@ describe("Router", () => {
     );
     router.add("/hello/:world/whats/:up", [({ params }) => Object.assign(Hello, params), () => Hello]);
 
-    v.mount("body", router);
+    v.mountRouter("body", router);
 
     let result = {};
     result.before = await router.go("/hello");
@@ -240,7 +241,7 @@ describe("Router", () => {
       // This is the final response
       () => Hello
     );
-    v.mount("body", router);
+    v.mountRouter("body", router);
 
     let result = await router.go("/");
 
@@ -281,7 +282,7 @@ describe("Router", () => {
 
     let router = new Router();
     router.use("/hello/:world", subrouter);
-    v.mount("body", router);
+    v.mountRouter("body", router);
 
     let result = {};
     result.before = await router.go("/hello/Mike");
@@ -304,7 +305,7 @@ describe("Router", () => {
 
     let router = new Router();
     router.add("/", () => Component);
-    v.mount("body", router);
+    v.mountRouter("body", router);
 
     let result = await router.go("/", ParentComponent);
 
@@ -316,7 +317,7 @@ describe("Router", () => {
 
     let router = new Router();
     router.add("/", () => Component);
-    v.mount("body", router);
+    v.mountRouter("body", router);
 
     let err;
     try {
@@ -333,7 +334,7 @@ describe("Router", () => {
     router.add("/", () => {
       // Component is not returned
     });
-    v.mount("body", router);
+    v.mountRouter("body", router);
 
     let err;
     try {
@@ -353,8 +354,81 @@ describe("Router", () => {
     let router = new Router();
     router.use("/hello/:world", subrouter).add("/", () => Component);
 
-    v.mount("body", router);
+    v.mountRouter("body", router);
 
     expect(router.routes()).toEqual(["/hello/:world/from/:country", "/hello/:world", "/"]);
+  });
+
+  it("Test the onClick handler for a single route", async () => {
+    let Component = () => <div>Hello World</div>;
+    let OtherComponent = () => <div>Hello Other World</div>;
+
+    let router = new Router();
+    router.add("/", () => Component);
+    router.add("/other", () => OtherComponent);
+    v.mountRouter("body", router);
+    let result = {
+      before: await router.go("/")
+    };
+
+    let handler = router.getOnClickHandler("/other");
+    handler({ preventDefault: () => {} });
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    result.after = v.update();
+
+    expect(result).toEqual({
+      before: "<div>Hello World</div>",
+      after: "<div>Hello Other World</div>"
+    });
+  });
+
+  it("Test the onClick handler for a route with params", async () => {
+    let Component = ({ world }) => <div>Hello {world}</div>;
+    let OtherComponent = () => <div>Hello Other World</div>;
+
+    let router = new Router();
+    router.add("/other", () => OtherComponent);
+    router.add("/:world", (req) => <Component world={req.params.world} />);
+    v.mountRouter("body", router);
+    let result = {
+      before: await router.go("/other")
+    };
+
+    let handler = router.getOnClickHandler("/Mike");
+    handler({ preventDefault: () => {} });
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    result.after = v.update();
+
+    expect(result).toEqual({
+      before: "<div>Hello Other World</div>",
+      after: "<div>Hello Mike</div>"
+    });
+  });
+
+  it("Test the onClick handler from a route with query params (?param=value) to another route with query params (?param=value)", async () => {
+    let Component = ({ world }) => <div>Hello {world}</div>;
+
+    let router = new Router();
+    router.add("/world", (req) => <Component world={req.query.world} />);
+    v.mountRouter("body", router);
+    let result = {
+      before: await router.go("/world?world=world")
+    };
+
+    let handler = router.getOnClickHandler("/world?world=Mike");
+    handler({ preventDefault: () => {} });
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    result.after = v.update();
+
+    expect(result).toEqual({
+      before: "<div>Hello world</div>",
+      after: "<div>Hello Mike</div>"
+    });
   });
 });

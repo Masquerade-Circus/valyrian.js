@@ -226,6 +226,14 @@ async function copy({ entryPoint, outfileName }) {
     libCheck
   });
 
+  await build({
+    globalName: "ValyrianRouter",
+    entryPoint: "./lib/router/index.ts",
+    outfileName: "./dist/router/index",
+    clean: false,
+    libCheck
+  });
+
   const buildEnd = hrtime(buildStart);
 
   // Log the build time in seconds with two decimal places
