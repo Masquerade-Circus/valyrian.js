@@ -4,14 +4,12 @@ let { compare, benchmark, before, afterCycle } = require("buffalo-test");
 import v from "../lib/index";
 
 const expect = require("expect");
-const nodePlugin = require("../lib/node/node");
+const { default: nodePlugin } = require("../lib/node");
 const { v: vOld } = require("./index-old.ts");
-const plugin = require("../plugins/hooks");
+const { useEffect, useMemo, default: plugin } = require("../lib/hooks");
 
 v.use(plugin);
 v.use(nodePlugin);
-const useEffect = plugin.useEffect;
-const useMemo = plugin.useMemo;
 
 let data = {
   before: [],

@@ -225,9 +225,9 @@ export class Node implements Node {
   // NOTATION_NODE!: number;
   // PROCESSING_INSTRUCTION_NODE!: number;
   // TEXT_NODE!: number;
-  // addEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions | undefined): void {
-  //   throw new Error("Method not implemented.");
-  // }
+  addEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions | undefined): void {
+    // throw new Error("Method not implemented.");
+  }
   // dispatchEvent(event: Event): boolean {
   //   throw new Error("Method not implemented.");
   // }
