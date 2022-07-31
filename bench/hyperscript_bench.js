@@ -2,7 +2,7 @@ const { before, benchmark, compare } = require("buffalo-test");
 
 import VNext from "../lib/index";
 const expect = require("expect");
-const nodePlugin = require("../plugins/node");
+const nodePlugin = require("../lib/node/node");
 const { v: vOld } = require("./index-old.ts");
 
 compare("hyperscript", () => {

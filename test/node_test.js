@@ -1,4 +1,4 @@
-import plugin, { htmlToHyperscript, icons, inline, render, sw } from "../plugins/node";
+import plugin, { htmlToHyperscript, icons, inline, render, sw } from "../lib/node";
 
 import expect from "expect";
 import fs from "fs";
@@ -26,12 +26,8 @@ describe("Node test", () => {
 
     expect(dom).toEqual(`[
   v("html", {}, [
-    v("head", {}, [
-      v("link", {"rel":"shortcult icon","href":"/icons/favicon.ico"}, [])
-    ]),
-    v("body", {}, [
-      "Hello world"
-    ])
+    v("link", {"rel":"shortcult icon","href":"/icons/favicon.ico"}, []),
+    "Hello world"
   ])
 ]`);
 
@@ -42,12 +38,8 @@ describe("Node test", () => {
     expect(dom).toEqual(`[
   "<!DOCTYPE html>",
   v("html", {}, [
-    v("head", {}, [
-      v("link", {"rel":"shortcult icon","href":"/icons/favicon.ico"}, [])
-    ]),
-    v("body", {}, [
-      "Hello world"
-    ])
+    v("link", {"rel":"shortcult icon","href":"/icons/favicon.ico"}, []),
+    "Hello world"
   ])
 ]`);
 
@@ -57,7 +49,8 @@ describe("Node test", () => {
 
     expect(dom).toEqual(`[
   v("head", {}, [
-    v("link", {"rel":"shortcult icon","href":"/icons/favicon.ico"}, [])
+    v("link", {"rel":"shortcult icon","href":"/icons/favicon.ico"}, []),
+    "Hello world"
   ])
 ]`);
 

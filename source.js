@@ -234,6 +234,27 @@ async function copy({ entryPoint, outfileName }) {
     libCheck
   });
 
+  await build({
+    globalName: "ValyrianNode",
+    entryPoint: "./lib/node/index.ts",
+    outfileName: "./dist/node/index",
+    clean: false,
+    minify: false,
+    bundle: true,
+    libCheck,
+    external: ["fs", "path", "esbuild", "terser", "favicons", "purgecss", "tsc-prog", "sharp", "clean-css"]
+  });
+
+  copy({
+    entryPoint: "./lib/node/utils/node.sw.tpl",
+    outfileName: "./dist/node/utils/node.sw.tpl"
+  });
+
+  copy({
+    entryPoint: "./lib/node/utils/node.sw.tpl",
+    outfileName: "./dist/node/node.sw.tpl"
+  });
+
   const buildEnd = hrtime(buildStart);
 
   // Log the build time in seconds with two decimal places

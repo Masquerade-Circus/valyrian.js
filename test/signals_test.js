@@ -1,6 +1,6 @@
 import Signal from "../plugins/signals";
 import expect from "expect";
-import nodePlugin from "../plugins/node";
+import nodePlugin from "../lib/node";
 import v from "../lib/index";
 
 v.use(nodePlugin);

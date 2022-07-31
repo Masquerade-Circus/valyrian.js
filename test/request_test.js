@@ -2,7 +2,7 @@ import requestPlugin, { request as exportedRequest } from "../lib/request";
 
 import expect from "expect";
 import fastify from "fastify";
-import nodePlugin from "../plugins/node";
+import nodePlugin from "../lib/node";
 import v from "../lib/index";
 
 v.use(nodePlugin);

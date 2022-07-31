@@ -1,9 +1,7 @@
-const expect = require("expect");
-const dayjs = require("dayjs");
-
+import dayjs from "dayjs";
+import expect from "expect";
+import plugin from "../lib/node";
 import v from "../lib/index";
-
-const plugin = require("../plugins/node");
 v.use(plugin);
 
 // eslint-disable-next-line max-lines-per-function
