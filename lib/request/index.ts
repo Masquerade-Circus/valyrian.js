@@ -116,7 +116,7 @@ function Requester(baseUrl = "", options: RequestOptions = { allowedMethods: ["g
 
   const request = async function request(method: string, url: string, data?: Record<string, any>, options = {}) {
     let innerOptions: SendOptions = {
-      method: method.toLowerCase(),
+      method: method.toUpperCase(),
       headers: {},
       resolveWithFullResponse: false,
       ...opts,
@@ -135,11 +135,11 @@ function Requester(baseUrl = "", options: RequestOptions = { allowedMethods: ["g
     }
 
     if (data) {
-      if (innerOptions.method === "get" && typeof data === "object") {
+      if (innerOptions.method === "GET" && typeof data === "object") {
         url += `?${serialize(data)}`;
       }
 
-      if (innerOptions.method !== "get") {
+      if (innerOptions.method !== "GET") {
         if (/json/gi.test(contentType)) {
           innerOptions.body = JSON.stringify(data);
         } else {

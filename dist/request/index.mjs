@@ -46,7 +46,7 @@ function Requester(baseUrl = "", options = { allowedMethods: ["get", "post", "pu
   };
   const request2 = async function request3(method, url2, data, options2 = {}) {
     let innerOptions = {
-      method: method.toLowerCase(),
+      method: method.toUpperCase(),
       headers: {},
       resolveWithFullResponse: false,
       ...opts,
@@ -61,10 +61,10 @@ function Requester(baseUrl = "", options = { allowedMethods: ["get", "post", "pu
       throw new Error("Method not allowed");
     }
     if (data) {
-      if (innerOptions.method === "get" && typeof data === "object") {
+      if (innerOptions.method === "GET" && typeof data === "object") {
         url2 += `?${serialize(data)}`;
       }
-      if (innerOptions.method !== "get") {
+      if (innerOptions.method !== "GET") {
         if (/json/gi.test(contentType)) {
           innerOptions.body = JSON.stringify(data);
         } else {
@@ -160,7 +160,9 @@ function Requester(baseUrl = "", options = { allowedMethods: ["get", "post", "pu
       result = result[next];
     }
   };
-  opts.allowedMethods.forEach((method) => request2[method] = (url2, data, options2) => request2(method, url2, data, options2));
+  opts.allowedMethods.forEach(
+    (method) => request2[method] = (url2, data, options2) => request2(method, url2, data, options2)
+  );
   return request2;
 }
 var request = Requester();

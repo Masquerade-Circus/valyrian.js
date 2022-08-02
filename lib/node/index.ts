@@ -2,16 +2,16 @@ import { document, domToHtml, domToHyperscript, htmlToDom, htmlToHyperscript } f
 
 import FormData from "form-data";
 import { Valyrian } from "Valyrian";
-import fetch from "node-fetch";
+// import fetch from "node-fetch";
 import { icons } from "./utils/icons";
 import { inline } from "./utils/inline";
 import { sw } from "./utils/sw";
 
 let localValyrian: Valyrian;
 
-function plugin(v: Valyrian) {
+async function plugin(v: Valyrian) {
   localValyrian = v;
-  global.fetch = fetch as any;
+  // global.fetch = fetch as any;
   global.FormData = FormData as any;
   global.document = document as any;
 }

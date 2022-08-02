@@ -287,7 +287,14 @@ v.patch = (newParentVnode, oldParentVnode) => {
     }
     if (childVnode instanceof VnodeComponent) {
       current.component = childVnode.component;
-      newTree.splice(i--, 1, (childVnode.component.view ? childVnode.component.view.bind(childVnode.component) : childVnode.component.bind(childVnode.component))(childVnode.props, ...childVnode.children));
+      newTree.splice(
+        i--,
+        1,
+        (childVnode.component.view ? childVnode.component.view.bind(childVnode.component) : childVnode.component.bind(childVnode.component))(
+          childVnode.props,
+          ...childVnode.children
+        )
+      );
       continue;
     }
     if (childVnode instanceof VnodeText === false) {

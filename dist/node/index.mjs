@@ -15,39 +15,15 @@ var __copyProps = (to, from, except, desc) => {
   }
   return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target, mod));
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
 
 // node_modules/form-data/lib/browser.js
 var require_browser = __commonJS({
   "node_modules/form-data/lib/browser.js"(exports, module) {
     module.exports = typeof self == "object" ? self.FormData : window.FormData;
-  }
-});
-
-// node_modules/node-fetch/browser.js
-var require_browser2 = __commonJS({
-  "node_modules/node-fetch/browser.js"(exports, module) {
-    "use strict";
-    var getGlobal = function() {
-      if (typeof self !== "undefined") {
-        return self;
-      }
-      if (typeof window !== "undefined") {
-        return window;
-      }
-      if (typeof global2 !== "undefined") {
-        return global2;
-      }
-      throw new Error("unable to locate global object");
-    };
-    var global2 = getGlobal();
-    module.exports = exports = global2.fetch;
-    if (global2.fetch) {
-      exports.default = global2.fetch.bind(global2);
-    }
-    exports.Headers = global2.Headers;
-    exports.Request = global2.Request;
-    exports.Response = global2.Response;
   }
 });
 
@@ -236,19 +212,22 @@ var Element = class extends Node {
     this.attributes = [];
     this.childNodes = [];
   }
-  style = new Proxy({}, {
-    get: (state, prop) => state[prop],
-    set: (state, prop, value) => {
-      state[prop] = value;
-      updateElementStyles(this, state);
-      return true;
-    },
-    deleteProperty: (state, prop) => {
-      Reflect.deleteProperty(state, prop);
-      updateElementStyles(this, state);
-      return true;
+  style = new Proxy(
+    {},
+    {
+      get: (state, prop) => state[prop],
+      set: (state, prop, value) => {
+        state[prop] = value;
+        updateElementStyles(this, state);
+        return true;
+      },
+      deleteProperty: (state, prop) => {
+        Reflect.deleteProperty(state, prop);
+        updateElementStyles(this, state);
+        return true;
+      }
     }
-  });
+  );
   classList = {
     toggle: (item, force) => {
       if (item) {
@@ -589,7 +568,6 @@ var document = new Document();
 
 // lib/node/index.ts
 var import_form_data = __toESM(require_browser());
-var import_node_fetch = __toESM(require_browser2());
 
 // lib/node/utils/icons.ts
 import fs from "fs";
@@ -806,12 +784,15 @@ import path from "path";
 function sw(file, options = {}) {
   let swfiletemplate = path.resolve(__dirname, "./node.sw.tpl");
   let swTpl = fs3.readFileSync(swfiletemplate, "utf8");
-  let opt = Object.assign({
-    version: "v1::",
-    name: "Valyrian.js",
-    urls: ["/"],
-    debug: false
-  }, options);
+  let opt = Object.assign(
+    {
+      version: "v1::",
+      name: "Valyrian.js",
+      urls: ["/"],
+      debug: false
+    },
+    options
+  );
   let contents = swTpl.replace("v1::", "v" + opt.version + "::").replace("Valyrian.js", opt.name).replace("['/']", '["' + opt.urls.join('","') + '"]');
   if (!opt.debug) {
     contents = contents.replace("console.log", "() => {}");
@@ -821,9 +802,8 @@ function sw(file, options = {}) {
 
 // lib/node/index.ts
 var localValyrian;
-function plugin(v) {
+async function plugin(v) {
   localValyrian = v;
-  global.fetch = import_node_fetch.default;
   global.FormData = import_form_data.default;
   global.document = document;
 }

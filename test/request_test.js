@@ -54,7 +54,7 @@ let createServer = async () => {
   return server;
 };
 
-describe("Request", () => {
+describe.only("Request", () => {
   let tests = [
     {
       name: 'Exported request `import request from "valyrian.js/request"`',
@@ -148,7 +148,7 @@ describe("Request", () => {
           },
           {
             headers: {
-              "Content-Type": "application/json; charset=UTF-8"
+              "Content-Type": "application/json"
             }
           }
         );
