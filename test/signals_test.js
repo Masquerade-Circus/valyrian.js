@@ -1,4 +1,4 @@
-import Signal from "../plugins/signals";
+import { Signal } from "../lib/signal";
 import expect from "expect";
 import nodePlugin from "../lib/node";
 import v from "../lib/index";

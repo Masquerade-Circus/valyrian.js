@@ -245,6 +245,15 @@ async function copy({ entryPoint, outfileName }) {
     external: ["fs", "path", "esbuild", "terser", "favicons", "purgecss", "tsc-prog", "sharp", "clean-css"]
   });
 
+  await build({
+    globalName: "ValyrianSignal",
+    entryPoint: "./lib/signal/index.ts",
+    outfileName: "./dist/signal/index",
+    clean: false,
+    minify: "esm",
+    libCheck
+  });
+
   copy({
     entryPoint: "./lib/node/utils/node.sw.tpl",
     outfileName: "./dist/node/utils/node.sw.tpl"

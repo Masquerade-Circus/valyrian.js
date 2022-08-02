@@ -30,6 +30,7 @@ export declare class Node implements Node {
     getAttribute(name: string): string | null | undefined;
     removeAttribute(name: string): void;
     getElementById(id: string): Node | null;
+    addEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions | undefined): void;
 }
 export declare class Text extends Node {
     constructor(text: any);

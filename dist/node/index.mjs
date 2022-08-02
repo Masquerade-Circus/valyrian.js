@@ -204,6 +204,8 @@ var Node = class {
     }
     return elementFound || null;
   }
+  addEventListener(type, callback, options) {
+  }
 };
 var Text = class extends Node {
   constructor(text) {
