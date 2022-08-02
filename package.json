@@ -27,8 +27,6 @@
   "files": [
     "dist",
     "lib",
-    "plugins",
-    "register.js",
     "package-lock.json",
     "LICENSE",
     "tsconfig.json"
