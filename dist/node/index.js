@@ -655,11 +655,11 @@ icons.options = {
 };
 
 // lib/node/utils/inline.ts
+var tsc = __toESM(require("tsc-prog"));
 var import_clean_css = __toESM(require("clean-css"));
 var import_purgecss = require("purgecss");
 var import_esbuild = __toESM(require("esbuild"));
 var import_fs2 = __toESM(require("fs"));
-var import_tsc_prog = __toESM(require("tsc-prog"));
 async function inline(file, options = {}) {
   if (typeof file === "string") {
     let ext = file.split(".").pop();
@@ -696,7 +696,7 @@ async function inline(file, options = {}) {
           jsxFragment: "v.fragment"
         };
         console.log("tsc", tscProgOptions);
-        import_tsc_prog.default.build(tscProgOptions);
+        tsc.build(tscProgOptions);
       }
       let esbuildOptions = {
         entryPoints: [file],
@@ -708,7 +708,12 @@ async function inline(file, options = {}) {
         target: "esnext",
         jsxFactory: "v",
         jsxFragment: "v.fragment",
-        loader: { ".js": "jsx", ".ts": "tsx", ".mjs": "jsx" },
+        loader: {
+          ".js": "jsx",
+          ".cjs": "jsx",
+          ".mjs": "jsx",
+          ".ts": "tsx"
+        },
         ...options.esbuild || {}
       };
       let result = await import_esbuild.default.build(esbuildOptions);
@@ -724,7 +729,7 @@ async function inline(file, options = {}) {
           output: {
             wrap_func_args: false
           },
-          ecma: 2020,
+          ecma: 2022,
           ...options.terser || {}
         });
         let mapBase64 = Buffer.from(result2.map.toString()).toString("base64");

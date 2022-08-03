@@ -615,11 +615,11 @@ icons.options = {
 };
 
 // lib/node/utils/inline.ts
+import * as tsc from "tsc-prog";
 import CleanCSS from "clean-css";
 import { PurgeCSS } from "purgecss";
 import esbuild from "esbuild";
 import fs2 from "fs";
-import tsc from "tsc-prog";
 async function inline(file, options = {}) {
   if (typeof file === "string") {
     let ext = file.split(".").pop();
@@ -668,7 +668,12 @@ async function inline(file, options = {}) {
         target: "esnext",
         jsxFactory: "v",
         jsxFragment: "v.fragment",
-        loader: { ".js": "jsx", ".ts": "tsx", ".mjs": "jsx" },
+        loader: {
+          ".js": "jsx",
+          ".cjs": "jsx",
+          ".mjs": "jsx",
+          ".ts": "tsx"
+        },
         ...options.esbuild || {}
       };
       let result = await esbuild.build(esbuildOptions);
@@ -684,7 +689,7 @@ async function inline(file, options = {}) {
           output: {
             wrap_func_args: false
           },
-          ecma: 2020,
+          ecma: 2022,
           ...options.terser || {}
         });
         let mapBase64 = Buffer.from(result2.map.toString()).toString("base64");
