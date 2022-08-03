@@ -163,4 +163,28 @@ span.hello{display: inline-block}
     console.log(indexTs.length);
     console.log(indexOld.length);
   });
+
+  it("should convert tsx to hyperscript by default", async () => {
+    let { raw: component } = await inline("./test/utils/component.tsx", { compact: false, noValidate: true });
+    let { raw: component2 } = await inline("./test/utils/component.tsx", { compact: true });
+
+    expect(component).toMatch(`
+  function Button() {
+    return /* @__PURE__ */ lib_default("button", null, "Hello");
+  }`);
+
+    expect(component2).toMatch(`x.mount("div",function(){return x("button",null,"Hello")})`);
+  });
+
+  it("should convert jsx to hyperscript by default", async () => {
+    let { raw: component } = await inline("./test/utils/component.jsx", { compact: false });
+    let { raw: component2 } = await inline("./test/utils/component.jsx", { compact: true });
+
+    expect(component).toMatch(`
+  function Button() {
+    return /* @__PURE__ */ lib_default("button", null, "Hello");
+  }`);
+
+    expect(component2).toMatch(`x.mount("div",function(){return x("button",null,"Hello")})`);
+  });
 });

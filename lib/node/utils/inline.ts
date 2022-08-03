@@ -1,9 +1,10 @@
+import * as tsc from "tsc-prog";
+
 import CleanCSS from "clean-css";
 import { PurgeCSS } from "purgecss";
 import esbuild from "esbuild";
 /* eslint-disable sonarjs/cognitive-complexity */
 import fs from "fs";
-import tsc from "tsc-prog";
 
 export async function inline(file: string | { raw: string; map?: string | null; file: string }, options: Record<string, any> = {}) {
   if (typeof file === "string") {
@@ -58,7 +59,12 @@ export async function inline(file: string | { raw: string; map?: string | null; 
         target: "esnext",
         jsxFactory: "v",
         jsxFragment: "v.fragment",
-        loader: { ".js": "jsx", ".ts": "tsx", ".mjs": "jsx" },
+        loader: {
+          ".js": "jsx",
+          ".cjs": "jsx",
+          ".mjs": "jsx",
+          ".ts": "tsx"
+        },
         ...(options.esbuild || {})
       };
 
@@ -76,7 +82,7 @@ export async function inline(file: string | { raw: string; map?: string | null; 
           output: {
             wrap_func_args: false
           },
-          ecma: 2020,
+          ecma: 2022,
           ...(options.terser || {})
         });
 
