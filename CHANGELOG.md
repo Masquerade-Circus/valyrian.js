@@ -1,3 +1,12 @@
+
+
+### [6.0.12](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.11...6.0.12) (2022-08-03)
+
+
+### Build System
+
+* set form-data as an external dependency for nodejs ([851e5b7](https://github.com/Masquerade-Circus/valyrian.js/commit/851e5b7ac1c5a33f068f6aedc45cf3749d19d7ae))
+
 ### [6.0.11](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.10...6.0.11) (2022-08-03)
 
 ### Code Refactoring
