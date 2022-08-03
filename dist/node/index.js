@@ -5,9 +5,6 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-};
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
@@ -25,13 +22,6 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// node_modules/form-data/lib/browser.js
-var require_browser = __commonJS({
-  "node_modules/form-data/lib/browser.js"(exports, module2) {
-    module2.exports = typeof self == "object" ? self.FormData : window.FormData;
-  }
-});
 
 // lib/node/index.ts
 var node_exports = {};
@@ -588,7 +578,7 @@ function htmlToHyperscript(html) {
 var document = new Document();
 
 // lib/node/index.ts
-var import_form_data = __toESM(require_browser());
+var import_form_data = __toESM(require("form-data"));
 
 // lib/node/utils/icons.ts
 var import_fs = __toESM(require("fs"));

@@ -242,7 +242,7 @@ async function copy({ entryPoint, outfileName }) {
     minify: false,
     bundle: true,
     libCheck,
-    external: ["fs", "path", "esbuild", "terser", "favicons", "purgecss", "tsc-prog", "sharp", "clean-css"]
+    external: ["fs", "path", "esbuild", "terser", "favicons", "purgecss", "tsc-prog", "sharp", "clean-css", "form-data"]
   });
 
   await build({

@@ -1,32 +1,27 @@
-
-
 ### [6.0.11](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.10...6.0.11) (2022-08-03)
-
 
 ### Code Refactoring
 
-* **implement signals with typescript:** implement signals with typescript ([c51b180](https://github.com/Masquerade-Circus/valyrian.js/commit/c51b18025176e69206d7d347dbea3306a8d64460))
-* implement store plugin with typescript ([f88f368](https://github.com/Masquerade-Circus/valyrian.js/commit/f88f36826cfb8a7dc0be9cace36460c8f66b0ca9))
-* **node:** implement node plugin in typescript ([f79445f](https://github.com/Masquerade-Circus/valyrian.js/commit/f79445fbc3032a117f4aff0642625e3db8925526))
-* **plugin/hooks:** refactor hooks.js to hooks.ts ([9f0437b](https://github.com/Masquerade-Circus/valyrian.js/commit/9f0437b86d91a29ad73385b3e9b0c71d12c92c3a))
-* **request:** implement request plguin with typescript ([8133505](https://github.com/Masquerade-Circus/valyrian.js/commit/81335056efad83b782b1753240cbbb7b692ab466))
-* **router:** implement rotuer with typescript ([11e915a](https://github.com/Masquerade-Circus/valyrian.js/commit/11e915ac6ab824d53cb08382631e279999891726))
-* **sw:** implement service worker plugin in typescript ([8b214eb](https://github.com/Masquerade-Circus/valyrian.js/commit/8b214eb9d8c2f220670d8e5067d83236151ee626))
-
+*   **implement signals with typescript:** implement signals with typescript ([c51b180](https://github.com/Masquerade-Circus/valyrian.js/commit/c51b18025176e69206d7d347dbea3306a8d64460))
+*   implement store plugin with typescript ([f88f368](https://github.com/Masquerade-Circus/valyrian.js/commit/f88f36826cfb8a7dc0be9cace36460c8f66b0ca9))
+*   **node:** implement node plugin in typescript ([f79445f](https://github.com/Masquerade-Circus/valyrian.js/commit/f79445fbc3032a117f4aff0642625e3db8925526))
+*   **plugin/hooks:** refactor hooks.js to hooks.ts ([9f0437b](https://github.com/Masquerade-Circus/valyrian.js/commit/9f0437b86d91a29ad73385b3e9b0c71d12c92c3a))
+*   **request:** implement request plguin with typescript ([8133505](https://github.com/Masquerade-Circus/valyrian.js/commit/81335056efad83b782b1753240cbbb7b692ab466))
+*   **router:** implement rotuer with typescript ([11e915a](https://github.com/Masquerade-Circus/valyrian.js/commit/11e915ac6ab824d53cb08382631e279999891726))
+*   **sw:** implement service worker plugin in typescript ([8b214eb](https://github.com/Masquerade-Circus/valyrian.js/commit/8b214eb9d8c2f220670d8e5067d83236151ee626))
 
 ### Build System
 
-* change package.json exports and build.js system ([fdcf09c](https://github.com/Masquerade-Circus/valyrian.js/commit/fdcf09c34c9ed00069ccb3491b869b24bc51575f))
-* remove register.js and plugins from file list ([b3e1dfe](https://github.com/Masquerade-Circus/valyrian.js/commit/b3e1dfebba49872a072b1df8809b3a86a4e5a28f))
-* update dependencies. Remove node-fetch, now we will use the built in fetch api for nodejs ([32b21ca](https://github.com/Masquerade-Circus/valyrian.js/commit/32b21ca4c580cf6d6141bb237e396d619148bd2a))
-* update dev dependendies ([a5f1f91](https://github.com/Masquerade-Circus/valyrian.js/commit/a5f1f91b7d18453494a97e55b1f8b92cbf318ee2))
-* update release-it and release-it-changelog dependencies ([d9c33c7](https://github.com/Masquerade-Circus/valyrian.js/commit/d9c33c7e864fcd5e15c79db37d88ba44404b3dbe))
-
+*   change package.json exports and build.js system ([fdcf09c](https://github.com/Masquerade-Circus/valyrian.js/commit/fdcf09c34c9ed00069ccb3491b869b24bc51575f))
+*   remove register.js and plugins from file list ([b3e1dfe](https://github.com/Masquerade-Circus/valyrian.js/commit/b3e1dfebba49872a072b1df8809b3a86a4e5a28f))
+*   update dependencies. Remove node-fetch, now we will use the built in fetch api for nodejs ([32b21ca](https://github.com/Masquerade-Circus/valyrian.js/commit/32b21ca4c580cf6d6141bb237e396d619148bd2a))
+*   update dev dependendies ([a5f1f91](https://github.com/Masquerade-Circus/valyrian.js/commit/a5f1f91b7d18453494a97e55b1f8b92cbf318ee2))
+*   update release-it and release-it-changelog dependencies ([d9c33c7](https://github.com/Masquerade-Circus/valyrian.js/commit/d9c33c7e864fcd5e15c79db37d88ba44404b3dbe))
 
 ### Tests
 
-* **fix failing benchmarks:** fix failing benchmarks ([a60022b](https://github.com/Masquerade-Circus/valyrian.js/commit/a60022b612445a87151f6663aa1d0bfe28d168d5))
-* remove dot only ([dac4ac0](https://github.com/Masquerade-Circus/valyrian.js/commit/dac4ac08eedb4d8ae46c373c338719827a0223e0))
+*   **fix failing benchmarks:** fix failing benchmarks ([a60022b](https://github.com/Masquerade-Circus/valyrian.js/commit/a60022b612445a87151f6663aa1d0bfe28d168d5))
+*   remove dot only ([dac4ac0](https://github.com/Masquerade-Circus/valyrian.js/commit/dac4ac08eedb4d8ae46c373c338719827a0223e0))
 
 ### [6.0.10](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.9...6.0.10) (2022-07-28)
 
