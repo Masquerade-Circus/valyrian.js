@@ -21,7 +21,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var store_exports = {};
 __export(store_exports, {
   Store: () => Store,
-  default: () => store_default
+  plugin: () => plugin
 });
 module.exports = __toCommonJS(store_exports);
 var localValyrian = {
@@ -101,4 +101,3 @@ function plugin(v, optionsOrStore) {
   }
   return Store;
 }
-var store_default = plugin;

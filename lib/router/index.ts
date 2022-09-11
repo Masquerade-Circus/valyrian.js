@@ -280,7 +280,7 @@ declare module "Valyrian" {
   }
 }
 
-function plugin(v: Valyrian) {
+export function plugin(v: Valyrian) {
   localValyrian = v;
   localValyrian.mountRouter = (elementContainer, routerOrComponent) => {
     if (routerOrComponent instanceof Router) {
@@ -304,5 +304,3 @@ function plugin(v: Valyrian) {
   };
   return Router;
 }
-
-export default plugin;

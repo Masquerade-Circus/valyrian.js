@@ -1,9 +1,9 @@
-import plugin, { htmlToHyperscript, icons, inline, render, sw } from "../lib/node";
+import { htmlToHyperscript, icons, inline, plugin, render, sw } from "../lib/node";
 
 import expect from "expect";
 import fs from "fs";
 import packageJson from "../package.json";
-import v from "../lib/index";
+import { v } from "../lib/index";
 
 v.use(plugin);
 
@@ -170,10 +170,10 @@ span.hello{display: inline-block}
 
     expect(component).toMatch(`
   function Button() {
-    return /* @__PURE__ */ lib_default("button", null, "Hello");
+    return /* @__PURE__ */ v("button", null, "Hello");
   }`);
 
-    expect(component2).toMatch(`x.mount("div",function(){return x("button",null,"Hello")})`);
+    expect(component2).toMatch(`f.mount("div",function(){return f("button",null,"Hello")})`);
   });
 
   it("should convert jsx to hyperscript by default", async () => {
@@ -182,9 +182,9 @@ span.hello{display: inline-block}
 
     expect(component).toMatch(`
   function Button() {
-    return /* @__PURE__ */ lib_default("button", null, "Hello");
+    return /* @__PURE__ */ v("button", null, "Hello");
   }`);
 
-    expect(component2).toMatch(`x.mount("div",function(){return x("button",null,"Hello")})`);
+    expect(component2).toMatch(`f.mount("div",function(){return f("button",null,"Hello")})`);
   });
 });

@@ -23,7 +23,7 @@ __export(lib_exports, {
   Vnode: () => Vnode,
   VnodeComponent: () => VnodeComponent,
   VnodeText: () => VnodeText,
-  default: () => lib_default
+  v: () => v
 });
 module.exports = __toCommonJS(lib_exports);
 var current = {};
@@ -551,4 +551,3 @@ v.directives = directives;
 v.reservedProps = reservedProps;
 v.current = current;
 v.setAttribute = setAttribute;
-var lib_default = v;

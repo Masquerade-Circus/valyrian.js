@@ -76,8 +76,7 @@ function plugin(v, optionsOrStore) {
   }
   return Store;
 }
-var store_default = plugin;
 export {
   Store,
-  store_default as default
+  plugin
 };

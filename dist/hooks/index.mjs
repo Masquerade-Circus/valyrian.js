@@ -149,10 +149,9 @@ var useMemo = createHook({
 function plugin(v) {
   localValyrian = v;
 }
-var hooks_default = plugin;
 export {
   createHook,
-  hooks_default as default,
+  plugin,
   useCallback,
   useEffect,
   useMemo,

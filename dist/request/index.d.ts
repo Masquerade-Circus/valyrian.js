@@ -37,6 +37,6 @@ declare module "Valyrian" {
     }
 }
 export declare const request: RequestInterface;
-declare const plugin: (v: Valyrian) => RequestInterface;
-export default plugin;
+export declare const plugin: (v: Valyrian) => RequestInterface;
+export {};
 //# sourceMappingURL=index.d.ts.map

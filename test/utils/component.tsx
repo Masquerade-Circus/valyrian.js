@@ -1,4 +1,4 @@
-import v from "valyrian.js";
+import { v } from "valyrian.js";
 
 export default function Button() {
   return <button>Hello</button>;

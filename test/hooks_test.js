@@ -1,12 +1,12 @@
-import plugin, { useCallback, useEffect, useMemo, useRef, useState } from "../lib/hooks";
+import { plugin as hooksPlugin, useCallback, useEffect, useMemo, useRef, useState } from "../lib/hooks";
 
 /* eslint-disable max-lines-per-function */
 import expect from "expect";
-import nodePlugin from "../lib/node";
-import v from "../lib/index";
+import { plugin as nodePlugin } from "../lib/node";
+import { v } from "../lib/index";
 
 v.use(nodePlugin);
-v.use(plugin);
+v.use(hooksPlugin);
 
 describe("Hooks", () => {
   describe("State hook", () => {

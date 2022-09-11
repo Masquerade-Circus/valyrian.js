@@ -21,7 +21,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var router_exports = {};
 __export(router_exports, {
   Router: () => Router,
-  default: () => router_default
+  plugin: () => plugin
 });
 module.exports = __toCommonJS(router_exports);
 var localValyrian;
@@ -226,4 +226,3 @@ function plugin(v) {
   };
   return Router;
 }
-var router_default = plugin;

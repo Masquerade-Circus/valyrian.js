@@ -524,10 +524,9 @@ v.directives = directives;
 v.reservedProps = reservedProps;
 v.current = current;
 v.setAttribute = setAttribute;
-var lib_default = v;
 export {
   Vnode,
   VnodeComponent,
   VnodeText,
-  lib_default as default
+  v
 };

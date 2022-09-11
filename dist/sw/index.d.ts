@@ -5,6 +5,5 @@ declare module "Valyrian" {
     }
 }
 export declare function registerSw(file?: string, options?: RegistrationOptions): Promise<ServiceWorkerContainer | undefined>;
-declare const plugin: (v: Valyrian) => typeof registerSw;
-export default plugin;
+export declare const plugin: (v: Valyrian) => typeof registerSw;
 //# sourceMappingURL=index.d.ts.map

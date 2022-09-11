@@ -14,8 +14,7 @@ var plugin = (v) => {
   v.registerSw = registerSw;
   return registerSw;
 };
-var sw_default = plugin;
 export {
-  sw_default as default,
+  plugin,
   registerSw
 };

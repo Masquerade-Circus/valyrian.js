@@ -20,7 +20,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // lib/sw/index.ts
 var sw_exports = {};
 __export(sw_exports, {
-  default: () => sw_default,
+  plugin: () => plugin,
   registerSw: () => registerSw
 });
 module.exports = __toCommonJS(sw_exports);
@@ -39,4 +39,3 @@ var plugin = (v) => {
   v.registerSw = registerSw;
   return registerSw;
 };
-var sw_default = plugin;

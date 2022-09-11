@@ -27,4 +27,4 @@ function render(...args: any[]) {
   return result;
 }
 
-export { domToHtml, domToHyperscript, htmlToDom, htmlToHyperscript, inline, sw, icons, render, plugin as default };
+export { domToHtml, domToHyperscript, htmlToDom, htmlToHyperscript, inline, sw, icons, render, plugin };

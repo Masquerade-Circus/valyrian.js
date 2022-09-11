@@ -1,9 +1,9 @@
-import requestPlugin, { request as exportedRequest } from "../lib/request";
+import { request as exportedRequest, plugin as requestPlugin } from "../lib/request";
 
 import expect from "expect";
 import fastify from "fastify";
-import nodePlugin from "../lib/node";
-import v from "../lib/index";
+import { plugin as nodePlugin } from "../lib/node";
+import { v } from "../lib/index";
 
 v.use(nodePlugin);
 let usePluginRequest = v.use(requestPlugin);

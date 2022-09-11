@@ -21,7 +21,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var hooks_exports = {};
 __export(hooks_exports, {
   createHook: () => createHook,
-  default: () => hooks_default,
+  plugin: () => plugin,
   useCallback: () => useCallback,
   useEffect: () => useEffect,
   useMemo: () => useMemo,
@@ -179,4 +179,3 @@ var useMemo = createHook({
 function plugin(v) {
   localValyrian = v;
 }
-var hooks_default = plugin;

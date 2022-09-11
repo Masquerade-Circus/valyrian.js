@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import expect from "expect";
-import plugin from "../lib/node";
-import v from "../lib/index";
+import { plugin } from "../lib/node";
+import { v } from "../lib/index";
 v.use(plugin);
 
 // eslint-disable-next-line max-lines-per-function

@@ -3,6 +3,5 @@ import { Valyrian, VnodeComponentInterface, VnodeInterface, VnodeTextInterface }
 export declare const Vnode: VnodeInterface;
 export declare const VnodeText: VnodeTextInterface;
 export declare const VnodeComponent: VnodeComponentInterface;
-declare const v: Valyrian;
-export default v;
+export declare const v: Valyrian;
 //# sourceMappingURL=index.d.ts.map

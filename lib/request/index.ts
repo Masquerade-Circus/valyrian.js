@@ -269,10 +269,8 @@ function Requester(baseUrl = "", options: RequestOptions = { allowedMethods: ["g
 }
 
 export const request = Requester();
-const plugin = (v: Valyrian): RequestInterface => {
+export const plugin = (v: Valyrian): RequestInterface => {
   localValyrian = v;
   v.request = request;
   return request;
 };
-
-export default plugin;

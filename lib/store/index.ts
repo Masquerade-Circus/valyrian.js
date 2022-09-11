@@ -57,6 +57,12 @@ function deepFreeze(obj: any) {
   return obj;
 }
 
+let updateTimeout: any;
+function delayedUpdate() {
+  clearTimeout(updateTimeout);
+  updateTimeout = setTimeout(localValyrian.update);
+}
+
 export const Store = function Store(this: StoreInstance, { state = {}, getters = {}, actions = {}, mutations = {} }: StoreOptions = {}) {
   let frozen = true;
 
@@ -97,7 +103,7 @@ export const Store = function Store(this: StoreInstance, { state = {}, getters =
     frozen = false;
     mutations[mutation](this.state, ...args);
     frozen = true;
-    localValyrian.update();
+    delayedUpdate();
   };
 
   this.dispatch = (action, ...args) => {
@@ -106,7 +112,7 @@ export const Store = function Store(this: StoreInstance, { state = {}, getters =
   };
 } as unknown as StoreInstance;
 
-function plugin(v: Valyrian, optionsOrStore?: StoreOptions | StoreInstance) {
+export function plugin(v: Valyrian, optionsOrStore?: StoreOptions | StoreInstance) {
   localValyrian = v;
   if (optionsOrStore) {
     v.store = optionsOrStore instanceof Store ? optionsOrStore : new Store(optionsOrStore);
@@ -117,5 +123,3 @@ function plugin(v: Valyrian, optionsOrStore?: StoreOptions | StoreInstance) {
   }
   return Store;
 }
-
-export default plugin;

@@ -2,13 +2,13 @@ import { Component, Valyrian, ValyrianComponent, VnodeWithDom } from "Valyrian";
 
 type LocalValyrian =
   | Valyrian
-  | Valyrian
   | {
       current: Valyrian["current"];
       onUnmount: Valyrian["onUnmount"];
       onCleanup: Valyrian["onCleanup"];
       onMount: Valyrian["onMount"];
       onUpdate: Valyrian["onUpdate"];
+      update: Valyrian["update"];
     };
 
 let localValyrian: LocalValyrian = {
@@ -17,10 +17,11 @@ let localValyrian: LocalValyrian = {
     vnode: null,
     oldVnode: null
   },
-  onUnmount: () => {},
-  onCleanup: () => {},
-  onMount: () => {},
-  onUpdate: () => {}
+  onUnmount() {},
+  onCleanup() {},
+  onMount() {},
+  onUpdate() {},
+  update() {}
 };
 
 interface CurrentOnPatch {
@@ -126,6 +127,12 @@ export const createHook = function createHook({ onCreate, onUpdate, onCleanup, o
   };
 } as unknown as CreateHook;
 
+let updateTimeout: any;
+function delayedUpdate() {
+  clearTimeout(updateTimeout);
+  updateTimeout = setTimeout(localValyrian.update);
+}
+
 // Use state hook
 export const useState = createHook({
   onCreate: (value) => {
@@ -133,7 +140,15 @@ export const useState = createHook({
     stateObj.value = value;
     stateObj.toJSON = stateObj.toString = stateObj.valueOf = () => (typeof stateObj.value === "function" ? stateObj.value() : stateObj.value);
 
-    return [stateObj, (value: any) => (stateObj.value = value)];
+    return [
+      stateObj,
+      (value: any) => {
+        if (stateObj.value !== value) {
+          stateObj.value = value;
+          delayedUpdate();
+        }
+      }
+    ];
   }
 });
 
@@ -235,8 +250,6 @@ export const useMemo = createHook({
   }
 });
 
-function plugin(v: Valyrian) {
+export function plugin(v: Valyrian) {
   localValyrian = v;
 }
-
-export default plugin;

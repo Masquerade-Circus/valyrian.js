@@ -20,10 +20,8 @@ export async function registerSw(file = "./sw.js", options: RegistrationOptions 
   return navigator.serviceWorker;
 }
 
-const plugin = (v: Valyrian) => {
+export const plugin = (v: Valyrian) => {
   localValyrian = v;
   v.registerSw = registerSw;
   return registerSw;
 };
-
-export default plugin;

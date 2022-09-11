@@ -201,8 +201,7 @@ function plugin(v) {
   };
   return Router;
 }
-var router_default = plugin;
 export {
   Router,
-  router_default as default
+  plugin
 };

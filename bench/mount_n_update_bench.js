@@ -1,14 +1,14 @@
 /* eslint-disable indent */
 let { compare, benchmark, before, afterCycle } = require("buffalo-test");
 
-import v from "../lib/index";
+import { v } from "../lib/index";
 
 const expect = require("expect");
-const { default: nodePlugin } = require("../lib/node");
+const { plugin: nodePlugin } = require("../lib/node");
 const { v: vOld } = require("./index-old.ts");
-const { useEffect, useMemo, default: plugin } = require("../lib/hooks");
+const { useEffect, useMemo, plugin: hooksPlugin } = require("../lib/hooks");
 
-v.use(plugin);
+v.use(hooksPlugin);
 v.use(nodePlugin);
 
 let data = {

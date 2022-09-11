@@ -53,6 +53,6 @@ declare module "Valyrian" {
         mountRouter?(container: Element | string, router: Router): string | void;
     }
 }
-declare function plugin(v: Valyrian): typeof Router;
-export default plugin;
+export declare function plugin(v: Valyrian): typeof Router;
+export {};
 //# sourceMappingURL=index.d.ts.map

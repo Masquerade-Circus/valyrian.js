@@ -1,11 +1,8 @@
-
-
 ### [6.0.13](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.12...6.0.13) (2022-08-03)
-
 
 ### Bug Fixes
 
-* fix tsc not converting tsx files ([44c2b7b](https://github.com/Masquerade-Circus/valyrian.js/commit/44c2b7b772afaacfb33d8f15548a8f3ad6f846cd))
+*   fix tsc not converting tsx files ([44c2b7b](https://github.com/Masquerade-Circus/valyrian.js/commit/44c2b7b772afaacfb33d8f15548a8f3ad6f846cd))
 
 ### [6.0.12](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.11...6.0.12) (2022-08-03)
 

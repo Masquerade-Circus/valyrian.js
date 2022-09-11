@@ -26,13 +26,13 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // lib/node/index.ts
 var node_exports = {};
 __export(node_exports, {
-  default: () => plugin,
   domToHtml: () => domToHtml,
   domToHyperscript: () => domToHyperscript,
   htmlToDom: () => htmlToDom,
   htmlToHyperscript: () => htmlToHyperscript,
   icons: () => icons,
   inline: () => inline,
+  plugin: () => plugin,
   render: () => render,
   sw: () => sw
 });

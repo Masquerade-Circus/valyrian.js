@@ -20,7 +20,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // lib/request/index.ts
 var request_exports = {};
 __export(request_exports, {
-  default: () => request_default,
+  plugin: () => plugin,
   request: () => request
 });
 module.exports = __toCommonJS(request_exports);
@@ -196,4 +196,3 @@ var plugin = (v) => {
   v.request = request;
   return request;
 };
-var request_default = plugin;

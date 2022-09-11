@@ -1,8 +1,8 @@
 import { describe } from "mocha";
 import expect from "expect";
 import { htmlToDom } from "../../lib/node/utils/tree-adapter";
-import nodePlugin from "../../lib/node";
-import v from "../../lib/index";
+import { plugin as nodePlugin } from "../../lib/node";
+import { v } from "../../lib/index";
 
 v.use(nodePlugin);
 

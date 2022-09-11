@@ -793,13 +793,13 @@ function render(...args) {
   return result;
 }
 export {
-  plugin as default,
   domToHtml,
   domToHyperscript,
   htmlToDom,
   htmlToHyperscript,
   icons,
   inline,
+  plugin,
   render,
   sw
 };

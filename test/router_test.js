@@ -1,9 +1,9 @@
 /* eslint-disable no-console */
-import plugin, { Router } from "../lib/router";
+import { Router, plugin } from "../lib/router";
 
 import expect from "expect";
-import nodePlugin from "../lib/node";
-import v from "../lib/index";
+import { plugin as nodePlugin } from "../lib/node";
+import { v } from "../lib/index";
 
 v.use(plugin);
 v.use(nodePlugin);

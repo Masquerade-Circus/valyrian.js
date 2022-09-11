@@ -5,5 +5,5 @@ import { inline } from "./utils/inline";
 import { sw } from "./utils/sw";
 declare function plugin(v: Valyrian): Promise<void>;
 declare function render(...args: any[]): string | void;
-export { domToHtml, domToHyperscript, htmlToDom, htmlToHyperscript, inline, sw, icons, render, plugin as default };
+export { domToHtml, domToHyperscript, htmlToDom, htmlToHyperscript, inline, sw, icons, render, plugin };
 //# sourceMappingURL=index.d.ts.map

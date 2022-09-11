@@ -1,3 +1,5 @@
+import { Valyrian } from "Valyrian";
+
 /* eslint-disable no-use-before-define */
 interface Cleanup {
   (): void;
@@ -67,6 +69,16 @@ function createSubscription(signal: Signal, subscriptions: Subscriptions, handle
   return subscriptions.get(handler);
 }
 
+let localValyrian: Valyrian = {
+  update: () => {}
+} as unknown as Valyrian;
+
+let updateTimeout: any;
+function delayedUpdate() {
+  clearTimeout(updateTimeout);
+  updateTimeout = setTimeout(localValyrian.update);
+}
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function Signal(value: any): Signal {
   let subscriptions = new Map();
@@ -124,6 +136,7 @@ export function Signal(value: any): Signal {
               let cleanup = handler(val);
               makeUnsubscribe(subscriptions, computed, handler, cleanup);
             }
+            delayedUpdate();
           }
           return true;
         }

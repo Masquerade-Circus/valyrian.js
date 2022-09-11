@@ -116,7 +116,7 @@ function domToVnode(dom: any): VnodeWithDom {
   return vnode as VnodeWithDom;
 }
 
-const v: Valyrian = (tagOrComponent, props, ...children) => {
+export const v: Valyrian = (tagOrComponent, props, ...children) => {
   if (typeof tagOrComponent === "string") {
     return new Vnode(tagOrComponent, props || {}, children);
   }
@@ -644,5 +644,3 @@ v.reservedProps = reservedProps;
 v.current = current;
 
 v.setAttribute = setAttribute;
-
-export default v;

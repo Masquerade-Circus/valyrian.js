@@ -16,6 +16,5 @@ export declare const useEffect: (...args: any[]) => any;
 export declare const useRef: (...args: any[]) => any;
 export declare const useCallback: (...args: any[]) => any;
 export declare const useMemo: (...args: any[]) => any;
-declare function plugin(v: Valyrian): void;
-export default plugin;
+export declare function plugin(v: Valyrian): void;
 //# sourceMappingURL=index.d.ts.map

@@ -171,8 +171,7 @@ var plugin = (v) => {
   v.request = request;
   return request;
 };
-var request_default = plugin;
 export {
-  request_default as default,
+  plugin,
   request
 };

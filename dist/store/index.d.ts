@@ -22,6 +22,6 @@ declare module "Valyrian" {
     }
 }
 export declare const Store: StoreInstance;
-declare function plugin(v: Valyrian, optionsOrStore?: StoreOptions | StoreInstance): StoreInstance;
-export default plugin;
+export declare function plugin(v: Valyrian, optionsOrStore?: StoreOptions | StoreInstance): StoreInstance;
+export {};
 //# sourceMappingURL=index.d.ts.map
