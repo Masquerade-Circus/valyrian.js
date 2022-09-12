@@ -7,16 +7,18 @@ interface UrlOptions {
 }
 
 interface RequestOptions {
-  allowedMethods: string[];
+  allowedMethods?: string[];
   urls?: UrlOptions;
   [key: string | number | symbol]: any;
 }
 
 interface RequestOptionsWithUrls extends RequestOptions {
   urls: UrlOptions;
+  allowedMethods: string[];
 }
 
 interface SendOptions extends RequestOptionsWithUrls, RequestInit {
+  allowedMethods: string[];
   method: string;
   headers: Record<string, string>;
   resolveWithFullResponse?: boolean;
@@ -95,8 +97,10 @@ function parseUrl(url: string, options: RequestOptionsWithUrls) {
   return u;
 }
 
+const defaultOptions: RequestOptions = { allowedMethods: ["get", "post", "put", "patch", "delete"] };
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
-function Requester(baseUrl = "", options: RequestOptions = { allowedMethods: ["get", "post", "put", "patch", "delete"] }) {
+function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
   let url = baseUrl.replace(/\/$/gi, "").trim();
   if (!options.urls) {
     options.urls = {
@@ -105,8 +109,13 @@ function Requester(baseUrl = "", options: RequestOptions = { allowedMethods: ["g
       api: null
     };
   }
+
+  if (!options.allowedMethods) {
+    options.allowedMethods = defaultOptions.allowedMethods;
+  }
+
   let opts: RequestOptionsWithUrls = {
-    ...options,
+    ...(options as RequestOptionsWithUrls),
     urls: {
       node: options.urls.node || null,
       api: options.urls.api || null,

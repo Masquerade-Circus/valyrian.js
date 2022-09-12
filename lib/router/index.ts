@@ -21,7 +21,12 @@ interface Request {
 
 interface Middleware {
   // eslint-disable-next-line no-unused-vars
-  (req: Request, res?: any): Promise<any | Component | ValyrianComponent | VnodeComponentInterface>;
+  (req: Request, res?: any):
+    | Promise<any | Component | ValyrianComponent | VnodeComponentInterface>
+    | any
+    | Component
+    | ValyrianComponent
+    | VnodeComponentInterface;
 }
 
 interface Middlewares extends Array<Middleware> {}

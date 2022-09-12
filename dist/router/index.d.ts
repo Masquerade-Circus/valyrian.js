@@ -15,7 +15,7 @@ interface Request {
     redirect: (path: string, parentComponent?: Component | ValyrianComponent | VnodeComponentInterface) => false;
 }
 interface Middleware {
-    (req: Request, res?: any): Promise<any | Component | ValyrianComponent | VnodeComponentInterface>;
+    (req: Request, res?: any): Promise<any | Component | ValyrianComponent | VnodeComponentInterface> | any | Component | ValyrianComponent | VnodeComponentInterface;
 }
 interface Middlewares extends Array<Middleware> {
 }

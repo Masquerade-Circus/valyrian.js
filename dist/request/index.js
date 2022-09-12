@@ -52,7 +52,8 @@ function parseUrl(url, options) {
   }
   return u;
 }
-function Requester(baseUrl = "", options = { allowedMethods: ["get", "post", "put", "patch", "delete"] }) {
+var defaultOptions = { allowedMethods: ["get", "post", "put", "patch", "delete"] };
+function Requester(baseUrl = "", options = defaultOptions) {
   let url = baseUrl.replace(/\/$/gi, "").trim();
   if (!options.urls) {
     options.urls = {
@@ -60,6 +61,9 @@ function Requester(baseUrl = "", options = { allowedMethods: ["get", "post", "pu
       node: null,
       api: null
     };
+  }
+  if (!options.allowedMethods) {
+    options.allowedMethods = defaultOptions.allowedMethods;
   }
   let opts = {
     ...options,

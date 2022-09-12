@@ -5,14 +5,16 @@ interface UrlOptions {
     api: string | null;
 }
 interface RequestOptions {
-    allowedMethods: string[];
+    allowedMethods?: string[];
     urls?: UrlOptions;
     [key: string | number | symbol]: any;
 }
 interface RequestOptionsWithUrls extends RequestOptions {
     urls: UrlOptions;
+    allowedMethods: string[];
 }
 interface SendOptions extends RequestOptionsWithUrls, RequestInit {
+    allowedMethods: string[];
     method: string;
     headers: Record<string, string>;
     resolveWithFullResponse?: boolean;
