@@ -1,16 +1,21 @@
 
 
-### [6.0.14](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.13...6.0.14) (2022-09-12)
+### [6.0.15](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.14...6.0.15) (2022-09-12)
 
 
 ### Code Refactoring
 
-* call update after hook/commit/signal change ([f37a442](https://github.com/Masquerade-Circus/valyrian.js/commit/f37a442c4de6637e6d8ff086c669caddf02865ee))
+* update type definitions. Minor refactor to request plugin ([e52e9a5](https://github.com/Masquerade-Circus/valyrian.js/commit/e52e9a549ea41e531f20aa6ab34d7edb28c920bd))
 
+### [6.0.14](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.13...6.0.14) (2022-09-12)
+
+### Code Refactoring
+
+*   call update after hook/commit/signal change ([f37a442](https://github.com/Masquerade-Circus/valyrian.js/commit/f37a442c4de6637e6d8ff086c669caddf02865ee))
 
 ### Build System
 
-* update dependencies ([716333c](https://github.com/Masquerade-Circus/valyrian.js/commit/716333cd1062a93f06396c31efc759cb95e670aa))
+*   update dependencies ([716333c](https://github.com/Masquerade-Circus/valyrian.js/commit/716333cd1062a93f06396c31efc759cb95e670aa))
 
 ### [6.0.13](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.12...6.0.13) (2022-08-03)
 
