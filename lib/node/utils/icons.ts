@@ -48,28 +48,21 @@ export async function icons(source: string, configuration?: IconsOptions) {
 
   const { favicons } = await import("favicons");
 
-  return new Promise((resolve, reject) => {
-    favicons(source, options, (err: Error & { status: any }, response: any) => {
-      if (err) {
-        process.stdout.write(err.status + "\n"); // HTTP error code (e.g. `200`) or `null`
-        process.stdout.write(err.name + "\n"); // Error name e.g. "API Error"
-        process.stdout.write(err.message + "\n"); // Error description e.g. "An unknown error has occurred"
+  try {
+    let response = await favicons(source, options);
 
-        return reject(err);
+    if (options.iconsPath) {
+      for (let i in response.images) {
+        fs.writeFileSync(options.iconsPath + response.images[i].name, response.images[i].contents);
       }
 
-      if (options.iconsPath) {
-        for (let i in response.images) {
-          fs.writeFileSync(options.iconsPath + response.images[i].name, response.images[i].contents);
-        }
-
-        for (let i in response.files) {
-          fs.writeFileSync(options.iconsPath + response.files[i].name, response.files[i].contents);
-        }
+      for (let i in response.files) {
+        fs.writeFileSync(options.iconsPath + response.files[i].name, response.files[i].contents);
       }
+    }
 
-      if (options.linksViewPath) {
-        let html = `
+    if (options.linksViewPath) {
+      let html = `
   function Links(){
     return ${htmlToHyperscript(response.html.join(""))};
   }
@@ -78,11 +71,13 @@ export async function icons(source: string, configuration?: IconsOptions) {
   module.exports = Links;
         `;
 
-        fs.writeFileSync(`${options.linksViewPath}/links.js`, html);
-      }
-      resolve(void 0);
-    });
-  });
+      fs.writeFileSync(`${options.linksViewPath}/links.js`, html);
+    }
+  } catch (err) {
+    process.stdout.write((err as any).status + "\n"); // HTTP error code (e.g. `200`) or `null`
+    process.stdout.write((err as any).name + "\n"); // Error name e.g. "API Error"
+    process.stdout.write((err as any).message + "\n"); // Error description e.g. "An unknown error has occurred"
+  }
 }
 
 icons.options = {

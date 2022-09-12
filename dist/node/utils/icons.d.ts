@@ -26,7 +26,7 @@ interface IconsOptions {
         yandex: boolean;
     };
 }
-export declare function icons(source: string, configuration?: IconsOptions): Promise<unknown>;
+export declare function icons(source: string, configuration?: IconsOptions): Promise<void>;
 export declare namespace icons {
     var options: IconsOptions;
 }

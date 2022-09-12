@@ -41,6 +41,15 @@ function createSubscription(signal, subscriptions, handler) {
   }
   return subscriptions.get(handler);
 }
+var localValyrian = {
+  update: () => {
+  }
+};
+var updateTimeout;
+function delayedUpdate() {
+  clearTimeout(updateTimeout);
+  updateTimeout = setTimeout(localValyrian.update);
+}
 function Signal(value) {
   let subscriptions = /* @__PURE__ */ new Map();
   let getters = {};
@@ -87,6 +96,7 @@ function Signal(value) {
               let cleanup = handler(val);
               makeUnsubscribe(subscriptions, computed, handler, cleanup);
             }
+            delayedUpdate();
           }
           return true;
         }

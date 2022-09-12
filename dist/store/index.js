@@ -49,6 +49,11 @@ function deepFreeze(obj) {
   }
   return obj;
 }
+var updateTimeout;
+function delayedUpdate() {
+  clearTimeout(updateTimeout);
+  updateTimeout = setTimeout(localValyrian.update);
+}
 var Store = function Store2({ state = {}, getters = {}, actions = {}, mutations = {} } = {}) {
   let frozen = true;
   function isUnfrozen() {
@@ -83,7 +88,7 @@ var Store = function Store2({ state = {}, getters = {}, actions = {}, mutations 
     frozen = false;
     mutations[mutation](this.state, ...args);
     frozen = true;
-    localValyrian.update();
+    delayedUpdate();
   };
   this.dispatch = (action, ...args) => {
     keyExists("action", actions, action);

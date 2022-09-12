@@ -594,24 +594,18 @@ async function icons(source, configuration) {
     options.linksViewPath = options.linksViewPath.replace(/\/$/gi, "") + "/";
   }
   const { favicons } = await import("favicons");
-  return new Promise((resolve, reject) => {
-    favicons(source, options, (err, response) => {
-      if (err) {
-        process.stdout.write(err.status + "\n");
-        process.stdout.write(err.name + "\n");
-        process.stdout.write(err.message + "\n");
-        return reject(err);
+  try {
+    let response = await favicons(source, options);
+    if (options.iconsPath) {
+      for (let i in response.images) {
+        import_fs.default.writeFileSync(options.iconsPath + response.images[i].name, response.images[i].contents);
       }
-      if (options.iconsPath) {
-        for (let i in response.images) {
-          import_fs.default.writeFileSync(options.iconsPath + response.images[i].name, response.images[i].contents);
-        }
-        for (let i in response.files) {
-          import_fs.default.writeFileSync(options.iconsPath + response.files[i].name, response.files[i].contents);
-        }
+      for (let i in response.files) {
+        import_fs.default.writeFileSync(options.iconsPath + response.files[i].name, response.files[i].contents);
       }
-      if (options.linksViewPath) {
-        let html = `
+    }
+    if (options.linksViewPath) {
+      let html = `
   function Links(){
     return ${htmlToHyperscript(response.html.join(""))};
   }
@@ -619,11 +613,13 @@ async function icons(source, configuration) {
   Links.default = Links;
   module.exports = Links;
         `;
-        import_fs.default.writeFileSync(`${options.linksViewPath}/links.js`, html);
-      }
-      resolve(void 0);
-    });
-  });
+      import_fs.default.writeFileSync(`${options.linksViewPath}/links.js`, html);
+    }
+  } catch (err) {
+    process.stdout.write(err.status + "\n");
+    process.stdout.write(err.name + "\n");
+    process.stdout.write(err.message + "\n");
+  }
 }
 icons.options = {
   iconsPath: null,

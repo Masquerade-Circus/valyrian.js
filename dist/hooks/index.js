@@ -35,13 +35,15 @@ var localValyrian = {
     vnode: null,
     oldVnode: null
   },
-  onUnmount: () => {
+  onUnmount() {
   },
-  onCleanup: () => {
+  onCleanup() {
   },
-  onMount: () => {
+  onMount() {
   },
-  onUpdate: () => {
+  onUpdate() {
+  },
+  update() {
   }
 };
 var createHook = function createHook2({ onCreate, onUpdate, onCleanup, onRemove, returnValue }) {
@@ -86,12 +88,25 @@ var createHook = function createHook2({ onCreate, onUpdate, onCleanup, onRemove,
     return hook;
   };
 };
+var updateTimeout;
+function delayedUpdate() {
+  clearTimeout(updateTimeout);
+  updateTimeout = setTimeout(localValyrian.update);
+}
 var useState = createHook({
   onCreate: (value) => {
     let stateObj = /* @__PURE__ */ Object.create(null);
     stateObj.value = value;
     stateObj.toJSON = stateObj.toString = stateObj.valueOf = () => typeof stateObj.value === "function" ? stateObj.value() : stateObj.value;
-    return [stateObj, (value2) => stateObj.value = value2];
+    return [
+      stateObj,
+      (value2) => {
+        if (stateObj.value !== value2) {
+          stateObj.value = value2;
+          delayedUpdate();
+        }
+      }
+    ];
   }
 });
 var useEffect = createHook({
