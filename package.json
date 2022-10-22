@@ -16,10 +16,12 @@
   "types": "dist/**/*.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
     "./*": {
+      "types": "./dist/*.d.ts",
       "import": "./dist/*/index.mjs",
       "require": "./dist/*/index.js"
     }

@@ -10,13 +10,11 @@
     "esModuleInterop": true,
     "jsxFactory": "v",
     "jsxFragmentFactory": "v.fragment",
-    "rootDir": "./lib",
+    "rootDir": "lib",
     "paths": {
-      "valyrian.js": ["./lib/index.ts"],
-      "valyrian.js/*": ["./lib/*"],
       "node_modules/*": ["./node_modules/*"]
     }
   },
-  "include": ["./lib"],
+  "include": ["./lib/**"],
   "exclude": ["./dist/**"]
 }
