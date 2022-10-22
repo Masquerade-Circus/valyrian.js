@@ -1,11 +1,23 @@
 
 
-### [7.0.1](https://github.com/Masquerade-Circus/valyrian.js/compare/7.0.0...7.0.1) (2022-10-22)
+### [7.0.2](https://github.com/Masquerade-Circus/valyrian.js/compare/7.0.1...7.0.2) (2022-10-22)
 
+
+### Build System
+
+* update package.json and tsconfig.json ([19f8e17](https://github.com/Masquerade-Circus/valyrian.js/commit/19f8e1752ced64f1b1637ec699cc3e3bf5ddc2eb))
+
+### [7.0.2](https://github.com/Masquerade-Circus/valyrian.js/compare/7.0.1...7.0.2) (2022-10-22)
+
+### Build System
+
+*   update package.json and tsconfig.json ([19f8e17](https://github.com/Masquerade-Circus/valyrian.js/commit/19f8e1752ced64f1b1637ec699cc3e3bf5ddc2eb))
+
+### [7.0.1](https://github.com/Masquerade-Circus/valyrian.js/compare/7.0.0...7.0.1) (2022-10-22)
 
 ### Bug Fixes
 
-* declare the interfaces in the main lib ([d348a6d](https://github.com/Masquerade-Circus/valyrian.js/commit/d348a6d04f54475a09ee50342aab54402eb0d642))
+*   declare the interfaces in the main lib ([d348a6d](https://github.com/Masquerade-Circus/valyrian.js/commit/d348a6d04f54475a09ee50342aab54402eb0d642))
 
 ## [7.0.0](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.15...7.0.0) (2022-10-22)
 
