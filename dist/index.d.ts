@@ -1,5 +1,71 @@
-import { Component, Current, Directive, Directives, DomElement, V, VnodeComponentInterface, VnodeInterface, VnodeWithDom } from "valyrian.js";
-export * from "valyrian.js";
+export interface Props {
+    key?: string | number;
+    state?: any;
+    oncreate?: {
+        (vnode: VnodeInterface): never;
+    };
+    onupdate?: {
+        (vnode: VnodeInterface, oldVnode: VnodeInterface): never;
+    };
+    onremove?: {
+        (oldVnode: VnodeInterface): never;
+    };
+    shouldupdate?: {
+        (vnode: VnodeInterface, oldVnode: VnodeInterface): undefined | boolean;
+    };
+    [key: string | number | symbol]: any;
+}
+export interface DomElement extends Element {
+    [key: string]: any;
+}
+export interface VnodeInterface {
+    new (tag: string | Component | POJOComponent, props: Props, children: Children): VnodeInterface;
+    tag: string | Component | POJOComponent;
+    props: Props;
+    children: Children;
+    isSVG?: boolean;
+    dom?: DomElement;
+    processed?: boolean;
+    [key: string | number | symbol]: any;
+}
+export interface VnodeWithDom extends VnodeInterface {
+    dom: DomElement;
+}
+export interface Component {
+    (props?: Props | null, ...children: any[]): VnodeInterface | Children | any;
+    [key: string]: any;
+}
+export interface POJOComponent {
+    view: Component;
+    props?: Props | null;
+    children?: any[];
+    [key: string]: any;
+}
+export interface VnodeComponentInterface extends VnodeInterface {
+    tag: Component | POJOComponent;
+    props: Props;
+    children: Children;
+}
+export interface Children extends Array<VnodeInterface | VnodeComponentInterface | any> {
+}
+export interface Directive {
+    (value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void | boolean;
+}
+export interface Directives {
+    [key: string]: Directive;
+}
+export interface ReservedProps {
+    [key: string]: true;
+}
+export interface Current {
+    component: Component | POJOComponent | null;
+    vnode: VnodeWithDom | null;
+    oldVnode?: VnodeWithDom | null;
+}
+export interface V {
+    (tagOrComponent: string | Component | POJOComponent, props: Props | null, ...children: Children): VnodeInterface | VnodeComponentInterface;
+    fragment(_: any, ...children: Children): Children;
+}
 export declare let isNodeJs: boolean;
 export declare function createDomElement(tag: string, isSVG?: boolean): DomElement;
 export declare const Vnode: VnodeInterface;

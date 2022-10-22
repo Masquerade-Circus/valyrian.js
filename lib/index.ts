@@ -2,21 +2,87 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable complexity */
 
-import {
-  Children,
-  Component,
-  Current,
-  Directive,
-  Directives,
-  DomElement,
-  Props,
-  V,
-  VnodeComponentInterface,
-  VnodeInterface,
-  VnodeWithDom
-} from "valyrian.js";
-
-export * from "valyrian.js";
+export interface Props {
+  key?: string | number;
+  state?: any;
+  oncreate?: {
+    // eslint-disable-next-line no-unused-vars, no-use-before-define
+    (vnode: VnodeInterface): never;
+  };
+  onupdate?: {
+    // eslint-disable-next-line no-unused-vars, no-use-before-define
+    (vnode: VnodeInterface, oldVnode: VnodeInterface): never;
+  };
+  onremove?: {
+    // eslint-disable-next-line no-unused-vars, no-use-before-define
+    (oldVnode: VnodeInterface): never;
+  };
+  shouldupdate?: {
+    // eslint-disable-next-line no-unused-vars, no-use-before-define
+    (vnode: VnodeInterface, oldVnode: VnodeInterface): undefined | boolean;
+  };
+  [key: string | number | symbol]: any;
+}
+export interface DomElement extends Element {
+  [key: string]: any;
+}
+export interface VnodeInterface {
+  // eslint-disable-next-line no-unused-vars, no-use-before-define
+  new (tag: string | Component | POJOComponent, props: Props, children: Children): VnodeInterface;
+  // eslint-disable-next-line no-unused-vars, no-use-before-define
+  tag: string | Component | POJOComponent;
+  props: Props;
+  // eslint-disable-next-line no-unused-vars, no-use-before-define
+  children: Children;
+  isSVG?: boolean;
+  dom?: DomElement;
+  processed?: boolean;
+  [key: string | number | symbol]: any;
+}
+export interface VnodeWithDom extends VnodeInterface {
+  dom: DomElement;
+}
+export interface Component {
+  // eslint-disable-next-line no-unused-vars, no-use-before-define
+  (props?: Props | null, ...children: any[]): VnodeInterface | Children | any;
+  [key: string]: any;
+}
+export interface POJOComponent {
+  view: Component;
+  props?: Props | null;
+  children?: any[];
+  [key: string]: any;
+}
+export interface VnodeComponentInterface extends VnodeInterface {
+  tag: Component | POJOComponent;
+  props: Props;
+  // eslint-disable-next-line no-unused-vars, no-use-before-define
+  children: Children;
+}
+export interface Children extends Array<VnodeInterface | VnodeComponentInterface | any> {}
+export interface Directive {
+  // eslint-disable-next-line no-unused-vars, no-use-before-define
+  (value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void | boolean;
+}
+export interface Directives {
+  [key: string]: Directive;
+}
+export interface ReservedProps {
+  [key: string]: true;
+}
+export interface Current {
+  component: Component | POJOComponent | null;
+  vnode: VnodeWithDom | null;
+  oldVnode?: VnodeWithDom | null;
+}
+export interface V {
+  // eslint-disable-next-line no-unused-vars, no-use-before-define
+  (tagOrComponent: string | Component | POJOComponent, props: Props | null, ...children: Children):
+    | VnodeInterface
+    | VnodeComponentInterface;
+  // eslint-disable-next-line no-unused-vars, no-use-before-define
+  fragment(_: any, ...children: Children): Children;
+}
 
 const textTag = "#text";
 
