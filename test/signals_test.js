@@ -5,6 +5,8 @@ import { mount, unmount, update, v } from "valyrian.js";
 import { Signal } from "../lib/signal";
 import expect from "expect";
 
+// TODO: onremove lifecycle has been removed, so this test is broken because does not clear timeouts and intervals
+
 describe("Signals", () => {
   it("should create a signal", async () => {
     // Create signal
@@ -73,11 +75,11 @@ describe("Signals", () => {
     expect(count()).toEqual(1);
     expect(count.value).toEqual(1);
     delay(5);
-    await new Promise((resolve) => setTimeout(() => resolve(), 18));
+    await new Promise((resolve) => setTimeout(() => resolve(), 20));
     expect(count()).toEqual(4);
     expect(count.value).toEqual(4);
     effectInterval.cleanup();
-    await new Promise((resolve) => setTimeout(() => resolve(), 18));
+    await new Promise((resolve) => setTimeout(() => resolve(), 20));
     expect(count()).toEqual(4);
     expect(count.value).toEqual(4);
     delay.cleanup();
@@ -100,11 +102,11 @@ describe("Signals", () => {
     expect(state()).toEqual({ count: 1, delay: 10 });
     expect(state.value).toEqual({ count: 1, delay: 10 });
     state("delay", 5);
-    await new Promise((resolve) => setTimeout(() => resolve(), 18));
+    await new Promise((resolve) => setTimeout(() => resolve(), 20));
     expect(state()).toEqual({ count: 4, delay: 5 });
     expect(state.value).toEqual({ count: 4, delay: 5 });
     effectInterval2.cleanup();
-    await new Promise((resolve) => setTimeout(() => resolve(), 18));
+    await new Promise((resolve) => setTimeout(() => resolve(), 20));
     expect(state()).toEqual({ count: 4, delay: 5 });
     expect(state.value).toEqual({ count: 4, delay: 5 });
   });
@@ -124,7 +126,7 @@ describe("Hooks like pattern", () => {
 
     let result = mount("div", Component);
     expect(result).toEqual("<div>0</div>");
-    await new Promise((resolve) => setTimeout(() => resolve(), 22));
+    await new Promise((resolve) => setTimeout(() => resolve(), 25));
     result = update();
     expect(result).toEqual("<div>2</div>");
     unmount();
@@ -172,7 +174,7 @@ describe("Hooks like pattern", () => {
 
     let result = mount("div", Component);
     expect(result).toEqual("<div>0</div>");
-    await new Promise((resolve) => setTimeout(() => resolve(), 22));
+    await new Promise((resolve) => setTimeout(() => resolve(), 25));
     result = update();
     expect(result).toEqual("<div>2</div>");
     unmount();

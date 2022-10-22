@@ -1,16 +1,22 @@
 
 
-## [7.0.0](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.15...7.0.0) (2022-10-22)
+### [7.0.1](https://github.com/Masquerade-Circus/valyrian.js/compare/7.0.0...7.0.1) (2022-10-22)
 
+
+### Bug Fixes
+
+* declare the interfaces in the main lib ([d348a6d](https://github.com/Masquerade-Circus/valyrian.js/commit/d348a6d04f54475a09ee50342aab54402eb0d642))
+
+## [7.0.0](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.15...7.0.0) (2022-10-22)
 
 ### ⚠ BREAKING CHANGES
 
-* There are no plugins now. All utils use the main exports from the lib. And removed
-the dom lifecycle (its use is very low and can be replaced with other techniques).
+*   There are no plugins now. All utils use the main exports from the lib. And removed
+    the dom lifecycle (its use is very low and can be replaced with other techniques).
 
 ### Code Refactoring
 
-* refactor whole lib ([e74ed3a](https://github.com/Masquerade-Circus/valyrian.js/commit/e74ed3a20d11b956e5d89f71465a05193344254a))
+*   refactor whole lib ([e74ed3a](https://github.com/Masquerade-Circus/valyrian.js/commit/e74ed3a20d11b956e5d89f71465a05193344254a))
 
 ### [6.0.15](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.14...6.0.15) (2022-09-12)
 
