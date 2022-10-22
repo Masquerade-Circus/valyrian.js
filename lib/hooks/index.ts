@@ -1,31 +1,7 @@
-import { Component, Valyrian, ValyrianComponent, VnodeWithDom } from "Valyrian";
-
-type LocalValyrian =
-  | Valyrian
-  | {
-      current: Valyrian["current"];
-      onUnmount: Valyrian["onUnmount"];
-      onCleanup: Valyrian["onCleanup"];
-      onMount: Valyrian["onMount"];
-      onUpdate: Valyrian["onUpdate"];
-      update: Valyrian["update"];
-    };
-
-let localValyrian: LocalValyrian = {
-  current: {
-    component: null,
-    vnode: null,
-    oldVnode: null
-  },
-  onUnmount() {},
-  onCleanup() {},
-  onMount() {},
-  onUpdate() {},
-  update() {}
-};
+import { Component, POJOComponent, VnodeWithDom, current, directive, onCleanup, onUnmount, update } from "valyrian.js";
 
 interface CurrentOnPatch {
-  component: Component | ValyrianComponent;
+  component: Component | POJOComponent;
   vnode: VnodeWithDom;
   oldVnode: VnodeWithDom;
 }
@@ -50,14 +26,20 @@ export interface CreateHook {
   (HookDefinition: HookDefinition): (...args: any[]) => any;
 }
 
-export const createHook = function createHook({ onCreate, onUpdate, onCleanup, onRemove, returnValue }: HookDefinition): Hook {
+export const createHook = function createHook({
+  onCreate,
+  onUpdate: onUpdateHook,
+  onCleanup: onCleanupHook,
+  onRemove,
+  returnValue
+}: HookDefinition): Hook {
   return (...args: any[]) => {
-    let { component, vnode, oldVnode } = localValyrian.current as CurrentOnPatch;
+    let { component, vnode, oldVnode } = current as CurrentOnPatch;
 
     // Init the components array for the current vnode
     if (!vnode.components) {
       vnode.components = [];
-      localValyrian.onUnmount(() => Reflect.deleteProperty(vnode, "components"));
+      onUnmount(() => Reflect.deleteProperty(vnode, "components"));
     }
 
     // Add the component to the components array if it's not already there
@@ -68,7 +50,7 @@ export const createHook = function createHook({ onCreate, onUpdate, onCleanup, o
     // Init the component hooks array
     if (!component.hooks) {
       component.hooks = [];
-      localValyrian.onUnmount(() => Reflect.deleteProperty(component, "hooks"));
+      onUnmount(() => Reflect.deleteProperty(component, "hooks"));
     }
 
     let hook: Hook = undefined;
@@ -82,10 +64,10 @@ export const createHook = function createHook({ onCreate, onUpdate, onCleanup, o
       // add the hook to the component's hooks array
       component.hooks.push(hook);
 
-      // if we have a onRemove hook, add it to the onRemove array
+      // if we have a onRemove hook, add it to the onUnmount set
       if (onRemove) {
         // Add the hook to the onRemove array
-        localValyrian.onUnmount(() => onRemove(hook));
+        onUnmount(() => onRemove(hook));
       }
     } else {
       // old vnode has components, we are updating the component
@@ -93,11 +75,11 @@ export const createHook = function createHook({ onCreate, onUpdate, onCleanup, o
       // Set the calls property to the current component if it's not already set
       if ("calls" in component === false) {
         component.calls = -1;
-        localValyrian.onUnmount(() => Reflect.deleteProperty(component, "calls"));
+        onUnmount(() => Reflect.deleteProperty(component, "calls"));
       }
 
       // Reset the calls property to -1 on cleanup so we can detect if the component is updated again
-      localValyrian.onCleanup(() => (component.calls = -1));
+      onCleanup(() => (component.calls = -1));
 
       // Increment the calls property
       component.calls++;
@@ -106,15 +88,15 @@ export const createHook = function createHook({ onCreate, onUpdate, onCleanup, o
       hook = component.hooks[component.calls];
 
       // If we have an onUpdate hook, call it
-      if (onUpdate) {
-        onUpdate(hook, ...args);
+      if (onUpdateHook) {
+        onUpdateHook(hook, ...args);
       }
     }
 
-    // If we have an onCleanup function, add it to the cleanup array
-    if (onCleanup) {
-      // Add the hook to the onCleanup array
-      localValyrian.onCleanup(() => onCleanup(hook));
+    // If we have an onCleanup function, add it to the cleanup set
+    if (onCleanupHook) {
+      // Add the hook to the onCleanup set
+      onCleanup(() => onCleanupHook(hook));
     }
 
     // If we have a returnValue function, call it and return the result instead of the hook
@@ -130,7 +112,7 @@ export const createHook = function createHook({ onCreate, onUpdate, onCleanup, o
 let updateTimeout: any;
 function delayedUpdate() {
   clearTimeout(updateTimeout);
-  updateTimeout = setTimeout(localValyrian.update);
+  updateTimeout = setTimeout(update);
 }
 
 // Use state hook
@@ -138,7 +120,10 @@ export const useState = createHook({
   onCreate: (value) => {
     let stateObj = Object.create(null);
     stateObj.value = value;
-    stateObj.toJSON = stateObj.toString = stateObj.valueOf = () => (typeof stateObj.value === "function" ? stateObj.value() : stateObj.value);
+    stateObj.toJSON =
+      stateObj.toString =
+      stateObj.valueOf =
+        () => (typeof stateObj.value === "function" ? stateObj.value() : stateObj.value);
 
     return [
       stateObj,
@@ -209,7 +194,7 @@ export const useEffect = createHook({
 
 export const useRef = createHook({
   onCreate: (initialValue) => {
-    (localValyrian as Valyrian).directive("ref", (ref, vnode) => {
+    directive("ref", (ref, vnode) => {
       ref.current = vnode.dom;
     });
     return { current: initialValue };
@@ -249,7 +234,3 @@ export const useMemo = createHook({
     return hook.value;
   }
 });
-
-export function plugin(v: Valyrian) {
-  localValyrian = v;
-}

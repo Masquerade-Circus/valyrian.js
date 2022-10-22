@@ -1,13 +1,8 @@
-import { request as exportedRequest, plugin as requestPlugin } from "../lib/request";
+import "valyrian.js/node";
 
 import expect from "expect";
+import { request as exportedRequest } from "valyrian.js/request";
 import fastify from "fastify";
-import { plugin as nodePlugin } from "../lib/node";
-import { v } from "../lib/index";
-
-v.use(nodePlugin);
-let usePluginRequest = v.use(requestPlugin);
-let vRequest = v.request;
 
 let posts = [];
 for (let i = 10; i--; ) {
@@ -59,14 +54,6 @@ describe("Request", () => {
     {
       name: 'Exported request `import request from "valyrian.js/request"`',
       request: exportedRequest
-    },
-    {
-      name: "Valyrian request `v.request`",
-      request: vRequest
-    },
-    {
-      name: "Use plugin request `let request = v.use(requestPlugin)`",
-      request: usePluginRequest
     }
   ];
 

@@ -1,4 +1,3 @@
-"use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -20,13 +19,10 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // lib/request/index.ts
 var request_exports = {};
 __export(request_exports, {
-  plugin: () => plugin,
   request: () => request
 });
 module.exports = __toCommonJS(request_exports);
-var localValyrian = {
-  isNodeJs: Boolean(typeof process !== "undefined" && process.versions && process.versions.node)
-};
+var import_valyrian = require("valyrian.js");
 function serialize(obj, prefix = "") {
   return Object.keys(obj).map((prop) => {
     let k = prefix ? `${prefix}[${prop}]` : prop;
@@ -40,7 +36,7 @@ function parseUrl(url, options) {
   if (parts[1]) {
     u += `?${parts[1]}`;
   }
-  if (localValyrian.isNodeJs && typeof options.urls.node === "string") {
+  if (import_valyrian.isNodeJs && typeof options.urls.node === "string") {
     options.urls.node = options.urls.node;
     if (typeof options.urls.api === "string") {
       options.urls.api = options.urls.api.replace(/\/$/gi, "").trim();
@@ -195,8 +191,3 @@ function Requester(baseUrl = "", options = defaultOptions) {
   return request2;
 }
 var request = Requester();
-var plugin = (v) => {
-  localValyrian = v;
-  v.request = request;
-  return request;
-};

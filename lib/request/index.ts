@@ -1,4 +1,4 @@
-import { Valyrian } from "Valyrian";
+import { isNodeJs } from "valyrian.js";
 
 interface UrlOptions {
   base: string; // Used to prefix the url for scoped requests.
@@ -50,23 +50,14 @@ interface RequestInterface {
   [key: string | number | symbol]: any;
 }
 
-declare module "Valyrian" {
-  // eslint-disable-next-line no-unused-vars
-  interface Valyrian {
-    request?: RequestInterface;
-  }
-}
-
-let localValyrian: Valyrian = {
-  isNodeJs: Boolean(typeof process !== "undefined" && process.versions && process.versions.node)
-} as unknown as Valyrian;
-
 // This method is used to serialize an object into a query string.
 function serialize(obj: Record<string, any>, prefix: string = ""): string {
   return Object.keys(obj)
     .map((prop: string) => {
       let k = prefix ? `${prefix}[${prop}]` : prop;
-      return typeof obj[prop] === "object" ? serialize(obj[prop], k) : `${encodeURIComponent(k)}=${encodeURIComponent(obj[prop])}`;
+      return typeof obj[prop] === "object"
+        ? serialize(obj[prop], k)
+        : `${encodeURIComponent(k)}=${encodeURIComponent(obj[prop])}`;
     })
     .join("&");
 }
@@ -81,7 +72,7 @@ function parseUrl(url: string, options: RequestOptionsWithUrls) {
     u += `?${parts[1]}`;
   }
 
-  if (localValyrian.isNodeJs && typeof options.urls.node === "string") {
+  if (isNodeJs && typeof options.urls.node === "string") {
     options.urls.node = options.urls.node;
 
     if (typeof options.urls.api === "string") {
@@ -271,15 +262,12 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
   };
 
   opts.allowedMethods.forEach(
-    (method) => (request[method] = (url: string, data?: Record<string, any>, options?: Record<string, any>) => request(method, url, data, options))
+    (method) =>
+      (request[method] = (url: string, data?: Record<string, any>, options?: Record<string, any>) =>
+        request(method, url, data, options))
   );
 
   return request;
 }
 
 export const request = Requester();
-export const plugin = (v: Valyrian): RequestInterface => {
-  localValyrian = v;
-  v.request = request;
-  return request;
-};

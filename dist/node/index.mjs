@@ -153,6 +153,8 @@ var Node = class {
   }
   addEventListener(type, callback, options) {
   }
+  removeEventListener(type, callback, options) {
+  }
 };
 var Text = class extends Node {
   constructor(text) {
@@ -284,7 +286,23 @@ var Document = class extends Element {
     return new Text(text);
   }
 };
-var selfClosingTags = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr", "!doctype"];
+var selfClosingTags = [
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+  "!doctype"
+];
 function domToHtml(dom) {
   if (dom.nodeType === 3) {
     return dom.textContent;
@@ -538,6 +556,7 @@ function htmlToHyperscript(html) {
 var document = new Document();
 
 // lib/node/index.ts
+import { mount, unmount } from "valyrian.js";
 import FormData from "form-data";
 
 // lib/node/utils/icons.ts
@@ -773,19 +792,12 @@ function sw(file, options = {}) {
 }
 
 // lib/node/index.ts
-var localValyrian;
-async function plugin(v) {
-  localValyrian = v;
-  global.FormData = FormData;
-  global.document = document;
-}
+global.FormData = FormData;
+global.document = document;
 function render(...args) {
-  if (!localValyrian) {
-    throw new Error("This plugin is not in use. Please invoke `v.use(nodePlugin)`");
-  }
   let Component = () => args;
-  let result = localValyrian.mount("div", Component);
-  localValyrian.unmount();
+  let result = mount("div", Component);
+  unmount();
   return result;
 }
 export {
@@ -795,7 +807,6 @@ export {
   htmlToHyperscript,
   icons,
   inline,
-  plugin,
   render,
   sw
 };

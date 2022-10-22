@@ -1,120 +1,95 @@
-declare module "Valyrian" {
-  /* eslint-disable no-use-before-define */
-  /* eslint-disable no-unused-vars */
+/* eslint-disable no-use-before-define */
+/* eslint-disable no-unused-vars */
+declare module "valyrian.js" {
   export interface Props {
     key?: string | number;
     state?: any;
-    oncreate?: { (vnode: VnodeInterface): never };
-    onupdate?: { (vnode: VnodeInterface, oldVnode: VnodeInterface): never };
-    onremove?: { (oldVnode: VnodeInterface): never };
-    shouldupdate?: { (vnode: VnodeInterface, oldVnode: VnodeInterface): undefined | boolean };
+    oncreate?: {
+      (vnode: VnodeInterface): never;
+    };
+    onupdate?: {
+      (vnode: VnodeInterface, oldVnode: VnodeInterface): never;
+    };
+    onremove?: {
+      (oldVnode: VnodeInterface): never;
+    };
+    shouldupdate?: {
+      (vnode: VnodeInterface, oldVnode: VnodeInterface): undefined | boolean;
+    };
     [key: string | number | symbol]: any;
   }
-
   export interface DomElement extends Element {
     [key: string]: any;
   }
-
   export interface VnodeInterface {
-    new (tag: string, props: Props, children: Children): VnodeInterface;
-    tag: string;
+    new (tag: string | Component | POJOComponent, props: Props, children: Children): VnodeInterface;
+    tag: string | Component | POJOComponent;
     props: Props;
     children: Children;
     isSVG?: boolean;
     dom?: DomElement;
-
     processed?: boolean;
-
     [key: string | number | symbol]: any;
   }
-
-  export interface VnodeTextInterface {
-    new (nodeValue: string): VnodeTextInterface;
-    dom?: DomElement;
-    nodeValue: string;
-  }
-
   export interface VnodeWithDom extends VnodeInterface {
     dom: DomElement;
   }
-
   export interface Component {
     (props?: Props | null, ...children: any[]): VnodeInterface | Children | any;
     [key: string]: any;
   }
-
-  export interface ValyrianComponent {
+  export interface POJOComponent {
     view: Component;
     props?: Props | null;
     children?: any[];
     [key: string]: any;
   }
-
-  export interface VnodeComponentInterface {
-    new (component: Component | ValyrianComponent, props: Props, children: Children): VnodeComponentInterface;
-    component: Component | ValyrianComponent;
+  export interface VnodeComponentInterface extends VnodeInterface {
+    tag: Component | POJOComponent;
     props: Props;
     children: Children;
   }
-
-  export interface Children extends Array<VnodeInterface | VnodeTextInterface | VnodeComponentInterface | any> {}
-
+  export interface Children extends Array<VnodeInterface | VnodeComponentInterface | any> {}
   export interface Directive {
     (value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void | boolean;
   }
-
   export interface Directives {
     [key: string]: Directive;
   }
-
   export interface ReservedProps {
     [key: string]: true;
   }
-
   export interface Current {
-    component?: Component | ValyrianComponent | null;
-    vnode?: VnodeWithDom | null;
+    component: Component | POJOComponent | null;
+    vnode: VnodeWithDom | null;
     oldVnode?: VnodeWithDom | null;
   }
-
-  export interface Plugin {
-    (valyrian: Valyrian, options?: Record<string | string | symbol, any>): void | any;
-  }
-
-  export interface Valyrian {
-    (tagOrComponent: string | Component | ValyrianComponent, props: Props | null, ...children: Children): VnodeInterface | VnodeComponentInterface;
+  export interface V {
+    (tagOrComponent: string | Component | POJOComponent, props: Props | null, ...children: Children):
+      | VnodeInterface
+      | VnodeComponentInterface;
     fragment(_: any, ...children: Children): Children;
-
-    isNodeJs: boolean;
-    isMounted: boolean;
-    component: Component | ValyrianComponent | VnodeComponentInterface | null;
-    mainVnode: VnodeWithDom | null;
-
-    directives: Directives;
-    reservedProps: ReservedProps;
-    current: Current;
-
-    trust(htmlString: string): Children;
-
-    isVnode(object?: unknown | VnodeInterface): object is VnodeInterface;
-    isVnodeComponent(object?: unknown): object is VnodeComponentInterface;
-    isComponent(component?: unknown | Component | ValyrianComponent): component is ValyrianComponent;
-    isValyrianComponent(component?: unknown): component is ValyrianComponent;
-
-    onCleanup(fn: Function): void;
-    onUnmount(fn: Function): void;
-    onMount(fn: Function): void;
-    onUpdate(fn: Function): void;
-
-    patch(newParentVnode: VnodeWithDom, oldParentVnode?: VnodeWithDom | undefined): void;
-    mount(container: string | Element, normalComponent: Component | ValyrianComponent | VnodeComponentInterface): void | string;
-    update(): void | string;
-    unmount(): void | string;
-
-    setAttribute(name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
-    directive(name: string, directive: Directive): void;
-    use(plugin: Plugin, options?: Record<string | number | symbol, any>): void | any;
-
-    [key: string | number | symbol]: any;
   }
+  export let isNodeJs: boolean;
+  export function createDomElement(tag: string, isSVG?: boolean): DomElement;
+  export const Vnode: VnodeInterface;
+  export function isComponent(component: any): component is Component;
+  export const isVnode: (object?: unknown | VnodeInterface) => object is VnodeInterface;
+  export const isVnodeComponent: (object?: unknown | VnodeComponentInterface) => object is VnodeComponentInterface;
+  export function trust(htmlString: string): any;
+  export const current: Current;
+  export const reservedProps: Record<string, true>;
+  export function onMount(callback: any): void;
+  export function onUpdate(callback: any): void;
+  export function onCleanup(callback: any): void;
+  export function onUnmount(callback: any): void;
+  export const directives: Directives;
+  export function directive(name: string, directive: Directive): void;
+  export function setAttribute(name: string, value: any, newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+  export function updateAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+  export function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+  export function update(): void | string;
+  export function unmount(): string | void;
+  export function mount(dom: any, component: any): string | void;
+  export const v: V;
 }

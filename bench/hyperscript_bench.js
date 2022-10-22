@@ -1,8 +1,8 @@
 const { before, benchmark, compare } = require("buffalo-test");
 
-import {v as VNext} from "../lib/index";
-const expect = require("expect");
-const { inline } = require("../lib/node");
+import { v as VNext } from "valyrian.js";
+import { inline } from "valyrian.js/node";
+const { expect } = require("expect");
 const { v: vOld } = require("./index-old.ts");
 
 compare("hyperscript", () => {

@@ -1,7 +1,7 @@
-import { v } from "valyrian.js";
+import { mount, v } from "valyrian.js";
 
 export default function Button() {
   return <button>Hello</button>;
 }
 
-v.mount("div", Button);
+mount("div", Button);

@@ -1,4 +1,3 @@
-"use strict";
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -32,7 +31,6 @@ __export(node_exports, {
   htmlToHyperscript: () => htmlToHyperscript,
   icons: () => icons,
   inline: () => inline,
-  plugin: () => plugin,
   render: () => render,
   sw: () => sw
 });
@@ -193,6 +191,8 @@ var Node = class {
   }
   addEventListener(type, callback, options) {
   }
+  removeEventListener(type, callback, options) {
+  }
 };
 var Text = class extends Node {
   constructor(text) {
@@ -324,7 +324,23 @@ var Document = class extends Element {
     return new Text(text);
   }
 };
-var selfClosingTags = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr", "!doctype"];
+var selfClosingTags = [
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+  "!doctype"
+];
 function domToHtml(dom) {
   if (dom.nodeType === 3) {
     return dom.textContent;
@@ -578,6 +594,7 @@ function htmlToHyperscript(html) {
 var document = new Document();
 
 // lib/node/index.ts
+var import_valyrian = require("valyrian.js");
 var import_form_data = __toESM(require("form-data"));
 
 // lib/node/utils/icons.ts
@@ -813,18 +830,11 @@ function sw(file, options = {}) {
 }
 
 // lib/node/index.ts
-var localValyrian;
-async function plugin(v) {
-  localValyrian = v;
-  global.FormData = import_form_data.default;
-  global.document = document;
-}
+global.FormData = import_form_data.default;
+global.document = document;
 function render(...args) {
-  if (!localValyrian) {
-    throw new Error("This plugin is not in use. Please invoke `v.use(nodePlugin)`");
-  }
   let Component = () => args;
-  let result = localValyrian.mount("div", Component);
-  localValyrian.unmount();
+  let result = (0, import_valyrian.mount)("div", Component);
+  (0, import_valyrian.unmount)();
   return result;
 }

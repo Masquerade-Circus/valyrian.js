@@ -1,11 +1,8 @@
-
-
 ### [6.0.15](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.14...6.0.15) (2022-09-12)
-
 
 ### Code Refactoring
 
-* update type definitions. Minor refactor to request plugin ([e52e9a5](https://github.com/Masquerade-Circus/valyrian.js/commit/e52e9a549ea41e531f20aa6ab34d7edb28c920bd))
+*   update type definitions. Minor refactor to request plugin ([e52e9a5](https://github.com/Masquerade-Circus/valyrian.js/commit/e52e9a549ea41e531f20aa6ab34d7edb28c920bd))
 
 ### [6.0.14](https://github.com/Masquerade-Circus/valyrian.js/compare/6.0.13...6.0.14) (2022-09-12)
 

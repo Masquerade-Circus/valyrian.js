@@ -1,9 +1,5 @@
-import { Store, plugin } from "../lib/store";
-
+import { Store } from "../lib/store";
 import expect from "expect";
-import { v } from "../lib/index";
-
-v.use(plugin);
 
 function getNewStore() {
   let mainModule = {

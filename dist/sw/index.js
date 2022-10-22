@@ -1,4 +1,3 @@
-"use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -20,22 +19,14 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // lib/sw/index.ts
 var sw_exports = {};
 __export(sw_exports, {
-  plugin: () => plugin,
   registerSw: () => registerSw
 });
 module.exports = __toCommonJS(sw_exports);
-var localValyrian = {
-  isNodeJs: Boolean(typeof process !== "undefined" && process.versions && process.versions.node)
-};
+var import_valyrian = require("valyrian.js");
 async function registerSw(file = "./sw.js", options = { scope: "/" }) {
-  if (localValyrian.isNodeJs) {
+  if (import_valyrian.isNodeJs) {
     return;
   }
   await navigator.serviceWorker.register(file, options);
   return navigator.serviceWorker;
 }
-var plugin = (v) => {
-  localValyrian = v;
-  v.registerSw = registerSw;
-  return registerSw;
-};

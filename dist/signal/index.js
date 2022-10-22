@@ -1,4 +1,3 @@
-"use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -23,6 +22,7 @@ __export(signal_exports, {
   Signal: () => Signal
 });
 module.exports = __toCommonJS(signal_exports);
+var import_valyrian = require("valyrian.js");
 function makeUnsubscribe(subscriptions, computed, handler, cleanup) {
   if (typeof cleanup === "function") {
     computed.cleanup = cleanup;
@@ -41,14 +41,10 @@ function createSubscription(signal, subscriptions, handler) {
   }
   return subscriptions.get(handler);
 }
-var localValyrian = {
-  update: () => {
-  }
-};
 var updateTimeout;
 function delayedUpdate() {
   clearTimeout(updateTimeout);
-  updateTimeout = setTimeout(localValyrian.update);
+  updateTimeout = setTimeout(import_valyrian.update);
 }
 function Signal(value) {
   let subscriptions = /* @__PURE__ */ new Map();

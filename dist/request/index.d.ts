@@ -1,4 +1,3 @@
-import { Valyrian } from "Valyrian";
 interface UrlOptions {
     base: string;
     node: string | null;
@@ -33,12 +32,6 @@ interface RequestInterface {
     options?: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
     [key: string | number | symbol]: any;
 }
-declare module "Valyrian" {
-    interface Valyrian {
-        request?: RequestInterface;
-    }
-}
 export declare const request: RequestInterface;
-export declare const plugin: (v: Valyrian) => RequestInterface;
 export {};
 //# sourceMappingURL=index.d.ts.map

@@ -1,4 +1,3 @@
-"use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -21,10 +20,11 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var router_exports = {};
 __export(router_exports, {
   Router: () => Router,
-  plugin: () => plugin
+  mountRouter: () => mountRouter,
+  redirect: () => redirect
 });
 module.exports = __toCommonJS(router_exports);
-var localValyrian;
+var import_valyrian = require("valyrian.js");
 function flat(array) {
   return Array.isArray(array) ? array.flat(Infinity) : [array];
 }
@@ -108,7 +108,7 @@ async function searchComponent(router, middlewares) {
   let i = 0;
   for (; i < middlewares.length; i++) {
     response = await middlewares[i](req, response);
-    if (response !== void 0 && localValyrian.isComponent(response)) {
+    if (response !== void 0 && ((0, import_valyrian.isComponent)(response) || (0, import_valyrian.isVnodeComponent)(response))) {
       return response;
     }
     if (response === false) {
@@ -176,23 +176,20 @@ var Router = class {
     if (!component) {
       throw new Error(`The url ${path} requested wasn't found`);
     }
-    if (localValyrian.isComponent(parentComponent)) {
-      let childComponent = localValyrian.isVnodeComponent(component) ? component : localValyrian(component, {});
-      if (localValyrian.isVnodeComponent(parentComponent)) {
+    if ((0, import_valyrian.isComponent)(parentComponent) || (0, import_valyrian.isVnodeComponent)(parentComponent)) {
+      let childComponent = (0, import_valyrian.isVnodeComponent)(component) ? component : (0, import_valyrian.v)(component, {});
+      if ((0, import_valyrian.isVnodeComponent)(parentComponent)) {
         parentComponent.children.push(childComponent);
         component = parentComponent;
       } else {
-        component = localValyrian(parentComponent, {}, childComponent);
+        component = (0, import_valyrian.v)(parentComponent, {}, childComponent);
       }
     }
-    if (!localValyrian.isNodeJs) {
+    if (!import_valyrian.isNodeJs) {
       window.history.pushState(null, "", path);
     }
-    if (localValyrian.isMounted && localValyrian.component === component) {
-      return localValyrian.update();
-    }
     if (this.container) {
-      return localValyrian.mount(this.container, component);
+      return (0, import_valyrian.mount)(this.container, component);
     }
   }
   getOnClickHandler(url) {
@@ -204,25 +201,25 @@ var Router = class {
     };
   }
 };
-function plugin(v) {
-  localValyrian = v;
-  localValyrian.mountRouter = (elementContainer, routerOrComponent) => {
-    if (routerOrComponent instanceof Router) {
-      routerOrComponent.container = elementContainer;
-      localValyrian.redirect = routerOrComponent.go.bind(routerOrComponent);
-      if (!localValyrian.isNodeJs) {
-        let onPopStateGoToRoute2 = function() {
-          routerOrComponent.go(document.location.pathname);
-        };
-        var onPopStateGoToRoute = onPopStateGoToRoute2;
-        window.addEventListener("popstate", onPopStateGoToRoute2, false);
-        onPopStateGoToRoute2();
-      }
-      localValyrian.directive("route", (url, vnode, oldnode) => {
-        localValyrian.setAttribute("href", url, vnode, oldnode);
-        localValyrian.setAttribute("onclick", routerOrComponent.getOnClickHandler(url), vnode, oldnode);
-      });
-    }
-  };
-  return Router;
+var localRedirect;
+function redirect(url) {
+  if (!localRedirect) {
+    throw new Error("router.redirect.not.found");
+  }
+  return localRedirect(url);
+}
+function mountRouter(elementContainer, router) {
+  router.container = elementContainer;
+  localRedirect = router.go.bind(router);
+  if (!import_valyrian.isNodeJs) {
+    let onPopStateGoToRoute = function() {
+      router.go(document.location.pathname);
+    };
+    window.addEventListener("popstate", onPopStateGoToRoute, false);
+    onPopStateGoToRoute();
+  }
+  (0, import_valyrian.directive)("route", (url, vnode, oldnode) => {
+    (0, import_valyrian.setAttribute)("href", url, vnode, oldnode);
+    (0, import_valyrian.setAttribute)("onclick", router.getOnClickHandler(url), vnode, oldnode);
+  });
 }

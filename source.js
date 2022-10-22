@@ -12,7 +12,9 @@ function convertToUMD(text, globalName) {
 
   code = code.replace(/export\s*\{([^{}]+)\}/, (_, inner) => {
     const defaultExport = inner.match(/^(\w+) as default$/);
-    return defaultExport != null ? `var ${varName}=${defaultExport[1]}` : `var ${varName}={${inner.replace(/(\w+) as (\w+)/g, "$2:$1")}}`;
+    return defaultExport != null
+      ? `var ${varName}=${defaultExport[1]}`
+      : `var ${varName}={${inner.replace(/(\w+) as (\w+)/g, "$2:$1")}}`;
   });
 
   code = code.replace(/export\s*default\s*(\w+)/, (_, name) => {
@@ -23,11 +25,24 @@ function convertToUMD(text, globalName) {
     return `var ${varName}=${name}`;
   });
 
-  code = `(()=>{${code};typeof module!=='undefined'?module.exports=${varName}:self.${globalName}=${varName}})()`;
+  if (code.includes("__EXPORTS__")) {
+    code = `(()=>{${code};typeof module!=='undefined'?module.exports=${varName}:self.${globalName}=${varName}})()`;
+  }
   return code;
 }
 
-async function build({ globalName, entryPoint, outfileName, clean = false, emitDeclarations = false, libCheck = false, minify = "cjs", external = [] }) {
+// eslint-disable-next-line sonarjs/cognitive-complexity
+async function build({
+  globalName,
+  entryPoint,
+  outfileName,
+  clean = false,
+  emitDeclarations = false,
+  libCheck = false,
+  minify = "cjs",
+  embedSourceMap = false,
+  external = []
+}) {
   try {
     let header = `\n/*** ${entryPoint} ***/`;
     console.log(header);
@@ -100,7 +115,8 @@ async function build({ globalName, entryPoint, outfileName, clean = false, emitD
     // HACK: simulate __dirname and __filename for esm
     if (esmContent.indexOf("__dirname") !== -1 || esmContent.indexOf("__filename") !== -1) {
       esmContent =
-        `import { fileURLToPath } from 'url';const __filename = fileURLToPath(import.meta.url);const __dirname = path.dirname(__filename);` + esmContent;
+        `import { fileURLToPath } from 'url';const __filename = fileURLToPath(import.meta.url);const __dirname = path.dirname(__filename);` +
+        esmContent;
       if (esmContent.indexOf("import path from") === -1) {
         esmContent = `import path from 'path';` + esmContent;
       }
@@ -111,7 +127,7 @@ async function build({ globalName, entryPoint, outfileName, clean = false, emitD
 
     let result2;
     if (minify) {
-      let codeToMinify = minify === "esm" ? esm : minify === "cjs" ? cjs : "cjs";
+      let codeToMinify = minify === "esm" ? esm : cjs;
       if (codeToMinify) {
         let code = convertToUMD(codeToMinify.outputFiles[1].text, globalName);
         result2 = await terser.minify(code, {
@@ -129,8 +145,12 @@ async function build({ globalName, entryPoint, outfileName, clean = false, emitD
 
         let mapBase64 = Buffer.from(result2.map.toString()).toString("base64");
         let map = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
-        fs.writeFileSync(`${outfileName}.min.js`, result2.code + `//# sourceMappingURL=${outfile}.min.js.map`);
-        fs.writeFileSync(`${outfileName}.min.js.map`, map);
+        if (embedSourceMap) {
+          fs.writeFileSync(`${outfileName}.min.js`, result2.code + map);
+        } else {
+          fs.writeFileSync(`${outfileName}.min.js`, result2.code + `//# sourceMappingURL=${outfile}.min.js.map`);
+          fs.writeFileSync(`${outfileName}.min.js.map`, map);
+        }
       }
     }
 
@@ -178,6 +198,9 @@ async function copy({ entryPoint, outfileName }) {
   let emitDeclarations = !isDev;
   let clean = !isDev;
 
+  const args = process.argv.slice(2);
+  const onlyMain = args.includes("--only-main");
+
   let buildStart = hrtime();
 
   await build({
@@ -190,79 +213,130 @@ async function copy({ entryPoint, outfileName }) {
     emitDeclarations
   });
 
-  await build({
-    globalName: "ValyrianHooks",
-    entryPoint: "./lib/hooks/index.ts",
-    outfileName: "./dist/hooks/index",
-    clean: false,
-    minify: false,
-    libCheck
-  });
+  if (!onlyMain) {
+    await build({
+      globalName: "ValyrianHooks",
+      entryPoint: "./lib/hooks/index.ts",
+      outfileName: "./dist/hooks/index",
+      clean: false,
+      minify: false,
+      libCheck,
+      external: ["valyrian.js"]
+    });
 
-  await build({
-    globalName: "ValyrianRequest",
-    entryPoint: "./lib/request/index.ts",
-    outfileName: "./dist/request/index",
-    clean: false,
-    minify: "esm",
-    libCheck
-  });
+    await build({
+      globalName: "ValyrianRequest",
+      entryPoint: "./lib/request/index.ts",
+      outfileName: "./dist/request/index",
+      clean: false,
+      minify: false,
+      libCheck,
+      external: ["valyrian.js"]
+    });
 
-  await build({
-    globalName: "ValyrianSw",
-    entryPoint: "./lib/sw/index.ts",
-    outfileName: "./dist/sw/index",
-    clean: false,
-    minify: false,
-    libCheck
-  });
+    await build({
+      globalName: "ValyrianSw",
+      entryPoint: "./lib/sw/index.ts",
+      outfileName: "./dist/sw/index",
+      clean: false,
+      minify: false,
+      libCheck,
+      external: ["valyrian.js"]
+    });
 
-  await build({
-    globalName: "ValyrianStore",
-    entryPoint: "./lib/store/index.ts",
-    outfileName: "./dist/store/index",
-    clean: false,
-    minify: "esm",
-    libCheck
-  });
+    await build({
+      globalName: "ValyrianStore",
+      entryPoint: "./lib/store/index.ts",
+      outfileName: "./dist/store/index",
+      clean: false,
+      minify: false,
+      libCheck,
+      external: ["valyrian.js"]
+    });
 
-  await build({
-    globalName: "ValyrianRouter",
-    entryPoint: "./lib/router/index.ts",
-    outfileName: "./dist/router/index",
-    clean: false,
-    libCheck
-  });
+    await build({
+      globalName: "ValyrianRouter",
+      entryPoint: "./lib/router/index.ts",
+      outfileName: "./dist/router/index",
+      clean: false,
+      minify: false,
+      libCheck,
+      external: ["valyrian.js"]
+    });
 
-  await build({
-    globalName: "ValyrianNode",
-    entryPoint: "./lib/node/index.ts",
-    outfileName: "./dist/node/index",
-    clean: false,
-    minify: false,
-    bundle: true,
-    libCheck,
-    external: ["fs", "path", "esbuild", "terser", "favicons", "purgecss", "tsc-prog", "sharp", "clean-css", "form-data"]
-  });
+    await build({
+      globalName: "ValyrianNode",
+      entryPoint: "./lib/node/index.ts",
+      outfileName: "./dist/node/index",
+      clean: false,
+      minify: false,
+      bundle: true,
+      libCheck,
+      external: [
+        "fs",
+        "path",
+        "esbuild",
+        "terser",
+        "favicons",
+        "purgecss",
+        "tsc-prog",
+        "sharp",
+        "clean-css",
+        "form-data",
+        "valyrian.js"
+      ]
+    });
 
-  await build({
-    globalName: "ValyrianSignal",
-    entryPoint: "./lib/signal/index.ts",
-    outfileName: "./dist/signal/index",
-    clean: false,
-    minify: "esm",
-    libCheck
-  });
+    await build({
+      globalName: "ValyrianSignal",
+      entryPoint: "./lib/signal/index.ts",
+      outfileName: "./dist/signal/index",
+      clean: false,
+      minify: false,
+      libCheck,
+      external: ["valyrian.js"]
+    });
 
-  copy({
-    entryPoint: "./lib/node/utils/node.sw.tpl",
-    outfileName: "./dist/node/utils/node.sw.tpl"
-  });
+    await build({
+      globalName: "ValyrianDataSet",
+      entryPoint: "./lib/dataset/index.ts",
+      outfileName: "./dist/dataset/index",
+      clean: false,
+      minify: false,
+      libCheck,
+      external: ["valyrian.js"]
+    });
 
-  copy({
-    entryPoint: "./lib/node/utils/node.sw.tpl",
-    outfileName: "./dist/node/node.sw.tpl"
-  });
+    copy({
+      entryPoint: "./lib/node/utils/node.sw.tpl",
+      outfileName: "./dist/node/utils/node.sw.tpl"
+    });
+
+    copy({
+      entryPoint: "./lib/node/utils/node.sw.tpl",
+      outfileName: "./dist/node/node.sw.tpl"
+    });
+
+    // await build({
+    //   globalName: "Valyrian",
+    //   entryPoint: "./www/lib.tsx",
+    //   outfileName: "./www/js/index",
+    //   clean: false,
+    //   minify: "esm",
+    //   embedSourceMap: true,
+    //   libCheck
+    // });
+
+    // await build({
+    //   globalName: "Valyrian",
+    //   entryPoint: "./www/implementation/v.ts",
+    //   outfileName: "./www/js/v",
+    //   clean: false,
+    //   minify: "esm",
+    //   embedSourceMap: true,
+    //   libCheck
+    // });
+  }
 
   const buildEnd = hrtime(buildStart);
 

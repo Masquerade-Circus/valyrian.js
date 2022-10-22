@@ -1,4 +1,5 @@
 // lib/signal/index.ts
+import { update } from "valyrian.js";
 function makeUnsubscribe(subscriptions, computed, handler, cleanup) {
   if (typeof cleanup === "function") {
     computed.cleanup = cleanup;
@@ -17,14 +18,10 @@ function createSubscription(signal, subscriptions, handler) {
   }
   return subscriptions.get(handler);
 }
-var localValyrian = {
-  update: () => {
-  }
-};
 var updateTimeout;
 function delayedUpdate() {
   clearTimeout(updateTimeout);
-  updateTimeout = setTimeout(localValyrian.update);
+  updateTimeout = setTimeout(update);
 }
 function Signal(value) {
   let subscriptions = /* @__PURE__ */ new Map();

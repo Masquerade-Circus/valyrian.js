@@ -1,8 +1,8 @@
-import expect from "expect";
-import { plugin as nodePlugin } from "../lib/node";
-import { v } from "../lib/index";
+import "valyrian.js/node";
 
-v.use(nodePlugin);
+import { mount, update, v } from "valyrian.js";
+
+import expect from "expect";
 
 describe("Keyed lists", () => {
   let set = [1, 2, 3, 4, 5];
@@ -46,9 +46,9 @@ describe("Keyed lists", () => {
         </ul>
       );
 
-      let before = v.mount("body", component);
+      let before = mount("body", component);
       keys = [...test.set];
-      let after = v.update();
+      let after = update();
 
       let afterString = getString(test.set);
 
@@ -71,15 +71,15 @@ describe("Keyed lists", () => {
       </ul>
     );
 
-    let before = v.mount("body", component);
+    let before = mount("body", component);
 
     useStrings = false;
-    let after = v.update();
+    let after = update();
 
     let afterString = getString(keys);
 
     useStrings = true;
-    let afterUpdate = v.update();
+    let afterUpdate = update();
 
     expect(before).toEqual("<ul>12345</ul>");
     expect(after).toEqual(afterString);
@@ -99,15 +99,15 @@ describe("Keyed lists", () => {
       </ul>
     );
 
-    let before = v.mount("body", component);
+    let before = mount("body", component);
 
     keys = [6, 7, 8, 9, , 10];
-    let after = v.update();
+    let after = update();
 
     let afterString = getString(keys);
 
     keys = [1, 2, 3, 4, 5];
-    let afterUpdate = v.update();
+    let afterUpdate = update();
 
     let afterUpdateString = getString(keys);
 

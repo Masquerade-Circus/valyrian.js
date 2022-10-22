@@ -1,18 +1,22 @@
 {
   "compilerOptions": {
+    "jsx": "react",
     "target": "ES2022",
     "module": "ES2022",
-    "strict": true,
-    "moduleResolution": "nodenext",
-    "esModuleInterop": true,
-    "inlineSourceMap": true,
-    "allowJs": true,
+    "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
-    "removeComments": false,
-    "jsx": "react",
+    "allowSyntheticDefaultImports": true,
+    "allowJs": false,
+    "esModuleInterop": true,
+    "jsxFactory": "v",
     "jsxFragmentFactory": "v.fragment",
-    "jsxFactory": "v"
+    "rootDir": "./lib",
+    "paths": {
+      "valyrian.js": ["./lib/index.ts"],
+      "valyrian.js/*": ["./lib/*"],
+      "node_modules/*": ["./node_modules/*"]
+    }
   },
   "include": ["./lib"],
-  "exclude": ["test*/**/*", "**/*.test.ts", "**/*.spec.ts"]
+  "exclude": ["./dist/**"]
 }

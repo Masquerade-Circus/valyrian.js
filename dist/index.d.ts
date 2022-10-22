@@ -1,7 +1,25 @@
-/// <reference path="interfaces.d.ts" />
-import { Valyrian, VnodeComponentInterface, VnodeInterface, VnodeTextInterface } from "Valyrian";
+import { Component, Current, Directive, Directives, DomElement, V, VnodeComponentInterface, VnodeInterface, VnodeWithDom } from "valyrian.js";
+export * from "valyrian.js";
+export declare let isNodeJs: boolean;
+export declare function createDomElement(tag: string, isSVG?: boolean): DomElement;
 export declare const Vnode: VnodeInterface;
-export declare const VnodeText: VnodeTextInterface;
-export declare const VnodeComponent: VnodeComponentInterface;
-export declare const v: Valyrian;
+export declare function isComponent(component: any): component is Component;
+export declare const isVnode: (object?: unknown | VnodeInterface) => object is VnodeInterface;
+export declare const isVnodeComponent: (object?: unknown | VnodeComponentInterface) => object is VnodeComponentInterface;
+export declare function trust(htmlString: string): any;
+export declare const current: Current;
+export declare const reservedProps: Record<string, true>;
+export declare function onMount(callback: any): void;
+export declare function onUpdate(callback: any): void;
+export declare function onCleanup(callback: any): void;
+export declare function onUnmount(callback: any): void;
+export declare const directives: Directives;
+export declare function directive(name: string, directive: Directive): void;
+export declare function setAttribute(name: string, value: any, newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+export declare function updateAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+export declare function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+export declare function update(): void | string;
+export declare function unmount(): string | void;
+export declare function mount(dom: any, component: any): string | void;
+export declare const v: V;
 //# sourceMappingURL=index.d.ts.map

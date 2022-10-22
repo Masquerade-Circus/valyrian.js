@@ -1,4 +1,4 @@
-import { Component, Valyrian, ValyrianComponent, VnodeComponentInterface } from "Valyrian";
+import { Component, POJOComponent, VnodeComponentInterface } from "valyrian.js";
 interface Path {
     method: string;
     path: string;
@@ -12,10 +12,10 @@ interface Request {
     url: string;
     path: string;
     matches: string[];
-    redirect: (path: string, parentComponent?: Component | ValyrianComponent | VnodeComponentInterface) => false;
+    redirect: (path: string, parentComponent?: Component | POJOComponent | VnodeComponentInterface) => false;
 }
 interface Middleware {
-    (req: Request, res?: any): Promise<any | Component | ValyrianComponent | VnodeComponentInterface> | any | Component | ValyrianComponent | VnodeComponentInterface;
+    (req: Request, res?: any): Promise<any | Component | POJOComponent | VnodeComponentInterface> | any | Component | POJOComponent | VnodeComponentInterface;
 }
 interface Middlewares extends Array<Middleware> {
 }
@@ -31,7 +31,7 @@ interface RouterInterface {
     add(method: string, ...args: Middlewares): Router;
     use(...args: Middlewares | Router[]): Router;
     routes(): string[];
-    go(path: string, parentComponent?: Component | ValyrianComponent | VnodeComponentInterface): Promise<string | void>;
+    go(path: string, parentComponent?: Component | POJOComponent | VnodeComponentInterface): Promise<string | void>;
 }
 export declare class Router implements RouterInterface {
     paths: Path[];
@@ -45,14 +45,10 @@ export declare class Router implements RouterInterface {
     add(path: string, ...args: Middlewares): Router;
     use(...args: Middlewares | Router[]): Router;
     routes(): string[];
-    go(path: string, parentComponent?: Component | ValyrianComponent): Promise<string | void>;
+    go(path: string, parentComponent?: Component): Promise<string | void>;
     getOnClickHandler(url: string): (e: MouseEvent) => void;
 }
-declare module "Valyrian" {
-    interface Valyrian {
-        mountRouter?(container: Element | string, router: Router): string | void;
-    }
-}
-export declare function plugin(v: Valyrian): typeof Router;
+export declare function redirect(url: string): any;
+export declare function mountRouter(elementContainer: any, router: any): void;
 export {};
 //# sourceMappingURL=index.d.ts.map

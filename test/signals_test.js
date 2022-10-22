@@ -1,9 +1,9 @@
+import "valyrian.js/node";
+
+import { mount, unmount, update, v } from "valyrian.js";
+
 import { Signal } from "../lib/signal";
 import expect from "expect";
-import { plugin as nodePlugin } from "../lib/node";
-import { v } from "../lib/index";
-
-v.use(nodePlugin);
 
 describe("Signals", () => {
   it("should create a signal", async () => {
@@ -122,12 +122,12 @@ describe("Hooks like pattern", () => {
 
     let Component = Counter(10);
 
-    let result = v.mount("div", Component);
+    let result = mount("div", Component);
     expect(result).toEqual("<div>0</div>");
     await new Promise((resolve) => setTimeout(() => resolve(), 22));
-    result = v.update();
+    result = update();
     expect(result).toEqual("<div>2</div>");
-    v.unmount();
+    unmount();
   });
 
   it("should create a counter with delay change", async () => {
@@ -145,12 +145,12 @@ describe("Hooks like pattern", () => {
 
     let Component = Counter(10);
 
-    let result = v.mount("div", Component);
+    let result = mount("div", Component);
     expect(result).toEqual("<div>0</div>");
     await new Promise((resolve) => setTimeout(() => resolve(), 22));
-    result = v.update();
+    result = update();
     expect(result).toEqual("<div>2</div>");
-    v.unmount();
+    unmount();
   });
 
   it("should create a counter with deep state", async () => {
@@ -170,11 +170,11 @@ describe("Hooks like pattern", () => {
 
     let Component = Counter(10);
 
-    let result = v.mount("div", Component);
+    let result = mount("div", Component);
     expect(result).toEqual("<div>0</div>");
     await new Promise((resolve) => setTimeout(() => resolve(), 22));
-    result = v.update();
+    result = update();
     expect(result).toEqual("<div>2</div>");
-    v.unmount();
+    unmount();
   });
 });

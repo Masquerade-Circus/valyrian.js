@@ -1,14 +1,17 @@
 /* eslint-disable eqeqeq */
-let { compare, benchmark, before, beforeEach } = require("buffalo-test");
+let { compare, benchmark, before, beforeEach, beforeCycle } = require("buffalo-test");
 
 import expect from "expect";
 
-compare.skip("Set.has vs [].indexOf", () => {
+// Fastest key in object
+compare.skip("Set.has vs [].indexOf vs Object[key] vs key in Object", () => {
   let set = new Set();
   set.add("hello");
   set.add("world");
 
   let arr = ["hello", "world"];
+
+  let obj = { hello: true, world: true };
 
   before(() => {
     expect(set.has("hello")).toEqual(true);
@@ -18,6 +21,14 @@ compare.skip("Set.has vs [].indexOf", () => {
     expect(arr.indexOf("hello") !== -1).toEqual(true);
     expect(arr.indexOf("world") !== -1).toEqual(true);
     expect(arr.indexOf("hola") !== -1).toEqual(false);
+
+    expect(obj.hello).toEqual(true);
+    expect(obj.world).toEqual(true);
+    expect(obj.hola).toEqual(undefined);
+
+    expect("hello" in obj).toEqual(true);
+    expect("world" in obj).toEqual(true);
+    expect("hola" in obj).toEqual(false);
   });
 
   benchmark("Set.has", () => {
@@ -30,6 +41,152 @@ compare.skip("Set.has vs [].indexOf", () => {
     arr.indexOf("hello") !== -1;
     arr.indexOf("world") !== -1;
     arr.indexOf("hola") !== -1;
+  });
+
+  benchmark("Object[key]", () => {
+    obj.hello === true;
+    obj.world === true;
+    obj.hola === true;
+  });
+
+  benchmark("key in Object", () => {
+    "hello" in obj;
+    "world" in obj;
+    "hola" in obj;
+  });
+});
+
+// Fastest is arr.indexOf(func)
+compare.skip("Function in Set vs Array", () => {
+  let namedFunction = function namedFunction() {};
+  let set = new Set();
+  set.add(() => {});
+  set.add(() => {});
+  set.add(namedFunction);
+
+  let arr = [() => {}, () => {}, namedFunction];
+
+  before(() => {
+    expect(set.has(() => {})).toEqual(false);
+    expect(set.has(namedFunction)).toEqual(true);
+    expect(arr.indexOf(() => {}) !== -1).toEqual(false);
+    expect(arr.indexOf(namedFunction) !== -1).toEqual(true);
+  });
+
+  benchmark("Set.has", () => {
+    set.has(() => {}) === true;
+    set.has(() => {}) === true;
+    set.has(namedFunction) === true;
+  });
+
+  benchmark("[].indexOf", () => {
+    arr.indexOf(() => {}) !== -1;
+    arr.indexOf(() => {}) !== -1;
+    arr.indexOf(namedFunction) !== -1;
+  });
+});
+
+compare.skip("Add function to set vs add function to array and cycle through them", () => {
+  let set = new Set();
+  let arr = [];
+  let func = () => {};
+  let namedFunction = function namedFunction() {};
+
+  before(() => {
+    expect(set.has(func)).toEqual(false);
+    expect(set.has(namedFunction)).toEqual(false);
+    set.add(func);
+    // eslint-disable-next-line sonarjs/no-element-overwrite
+    set.add(func);
+    set.add(namedFunction);
+    // eslint-disable-next-line sonarjs/no-element-overwrite
+    set.add(namedFunction);
+    set.add(() => {});
+    set.add(() => {});
+    expect(set.has(func)).toEqual(true);
+    expect(set.has(namedFunction)).toEqual(true);
+    expect(set.size).toEqual(4);
+
+    expect(arr.indexOf(func) !== -1).toEqual(false);
+    expect(arr.indexOf(namedFunction) !== -1).toEqual(false);
+    arr.indexOf(func) === -1 && arr.push(func);
+    arr.indexOf(func) === -1 && arr.push(func);
+    arr.indexOf(namedFunction) === -1 && arr.push(namedFunction);
+    arr.indexOf(namedFunction) === -1 && arr.push(namedFunction);
+    arr.indexOf(() => {}) === -1 && arr.push(() => {});
+    arr.indexOf(() => {}) === -1 && arr.push(() => {});
+    expect(arr.indexOf(func) !== -1).toEqual(true);
+    expect(arr.indexOf(namedFunction) !== -1).toEqual(true);
+    expect(arr.length).toEqual(4);
+  });
+
+  beforeCycle(() => {
+    set.clear();
+    arr = [];
+  });
+
+  benchmark("Set.add", () => {
+    set.add(func);
+    // eslint-disable-next-line sonarjs/no-element-overwrite
+    set.add(func);
+    set.add(() => {});
+    set.add(() => {});
+    set.add(namedFunction);
+    // eslint-disable-next-line sonarjs/no-element-overwrite
+    set.add(namedFunction);
+
+    for (let f of set) {
+      f();
+    }
+
+    set.clear();
+  });
+
+  benchmark("Array.push", () => {
+    arr.indexOf(func) === -1 && arr.push(func);
+    arr.indexOf(func) === -1 && arr.push(func);
+    arr.indexOf(() => {}) === -1 && arr.push(() => {});
+    arr.indexOf(() => {}) === -1 && arr.push(() => {});
+    arr.indexOf(namedFunction) === -1 && arr.push(namedFunction);
+    arr.indexOf(namedFunction) === -1 && arr.push(namedFunction);
+
+    for (let i = 0, l = arr.length; i < l; i++) {
+      arr[i]();
+    }
+
+    arr = [];
+  });
+
+  benchmark("Set.add 2", () => {
+    set.add(func);
+    // eslint-disable-next-line sonarjs/no-element-overwrite
+    set.add(func);
+    set.add(() => {});
+    set.add(() => {});
+    set.add(namedFunction);
+    // eslint-disable-next-line sonarjs/no-element-overwrite
+    set.add(namedFunction);
+
+    for (let f of set) {
+      f();
+    }
+
+    set.clear();
+  });
+
+  benchmark("Array.push 2", () => {
+    arr.indexOf(func) === -1 && arr.push(func);
+    arr.indexOf(func) === -1 && arr.push(func);
+    arr.indexOf(() => {}) === -1 && arr.push(() => {});
+    arr.indexOf(() => {}) === -1 && arr.push(() => {});
+    arr.indexOf(namedFunction) === -1 && arr.push(namedFunction);
+    arr.indexOf(namedFunction) === -1 && arr.push(namedFunction);
+
+    for (let i = 0, l = arr.length; i < l; i++) {
+      arr[i]();
+    }
+
+    arr = [];
   });
 });
 
@@ -162,60 +319,6 @@ compare.skip("string comparison vs instance comparison vs property comparison", 
   });
 });
 
-compare.skip("Object with property equals true vs set vs map vs string array", () => {
-  let obj = {
-    alpha: true,
-    beta: true,
-    gamma: true,
-    delta: true,
-    epsilon: true,
-    zeta: true
-  };
-
-  let set = new Set();
-  let map = new Map();
-  let arr = [];
-
-  for (let key in obj) {
-    set.add(key);
-    map.set(key, true);
-    arr.push(key);
-  }
-
-  let prop = "alpha";
-
-  beforeEach(() => {
-    expect(obj.alpha).toEqual(true);
-    expect(obj.capa).toBeUndefined();
-    expect(set.has("alpha")).toEqual(true);
-    expect(set.has("capa")).toEqual(false);
-    expect(map.has("alpha")).toEqual(true);
-    expect(map.has("capa")).toEqual(false);
-    expect(arr.indexOf("alpha") !== -1).toEqual(true);
-    expect(arr.indexOf("capa") !== -1).toEqual(false);
-  });
-
-  benchmark("Object with property equals true", () => {
-    obj[prop] === true;
-  });
-
-  benchmark("key in object", () => {
-    prop in obj === true;
-  });
-
-  benchmark("set", () => {
-    set.has(prop) === true;
-  });
-
-  benchmark("map", () => {
-    map.has(prop) === true;
-  });
-
-  benchmark("string array", () => {
-    arr.indexOf(prop) !== -1;
-  });
-});
-
 compare.skip("For loop if/continue vs if/else", () => {
   let arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -247,7 +350,18 @@ compare.skip("For loop if/continue vs if/else", () => {
 });
 
 compare.skip("map array of strings vs reduce with object keys equals index", () => {
-  let objects = [{ key: "a" }, { key: "b" }, { key: "c" }, { key: "d" }, { key: "e" }, { key: "f" }, { key: "g" }, { key: "h" }, { key: "i" }, { key: "j" }];
+  let objects = [
+    { key: "a" },
+    { key: "b" },
+    { key: "c" },
+    { key: "d" },
+    { key: "e" },
+    { key: "f" },
+    { key: "g" },
+    { key: "h" },
+    { key: "i" },
+    { key: "j" }
+  ];
 
   beforeEach(() => {
     let arrayByMap = objects.map((obj) => obj.key);
@@ -491,5 +605,22 @@ compare.skip("Symbol access vs direct access", () => {
     for (let i = 1000; i--; ) {
       Reflect.deleteProperty(Component2, symbol);
     }
+  });
+});
+
+compare.skip("Object.assign vs spreed", () => {
+  let obj = {
+    a: 1,
+    b: 2,
+    c: 3,
+    d: 4
+  };
+
+  benchmark("Object.assign", () => {
+    Object.assign(obj, { d: 5 });
+  });
+
+  benchmark("spreed", () => {
+    obj = { ...obj, ...{ d: 5 } };
   });
 });

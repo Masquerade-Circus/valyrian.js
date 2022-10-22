@@ -1,11 +1,10 @@
-import { htmlToHyperscript, icons, inline, plugin, render, sw } from "../lib/node";
+import { htmlToHyperscript, icons, inline, render, sw } from "valyrian.js/node";
 
 import expect from "expect";
 import fs from "fs";
 import packageJson from "../package.json";
-import { v } from "../lib/index";
-
-v.use(plugin);
+// eslint-disable-next-line no-unused-vars
+import { v } from "valyrian.js";
 
 describe("Node test", () => {
   it("Get hyperscript string from html", () => {
@@ -160,7 +159,9 @@ span.hello{display: inline-block}
   it("should inline js", async () => {
     let { raw: indexTs } = await inline("./lib/index.ts", { compact: true, noValidate: true });
     let { raw: indexOld } = await inline("./bench/index-old.js", { compact: true });
+    // eslint-disable-next-line no-console
     console.log(indexTs.length);
+    // eslint-disable-next-line no-console
     console.log(indexOld.length);
   });
 
@@ -173,7 +174,7 @@ span.hello{display: inline-block}
     return /* @__PURE__ */ v("button", null, "Hello");
   }`);
 
-    expect(component2).toMatch(`f.mount("div",function(){return f("button",null,"Hello")})`);
+    expect(component2).toMatch(`function(){return b("button",null,"Hello")}`);
   });
 
   it("should convert jsx to hyperscript by default", async () => {
@@ -185,6 +186,6 @@ span.hello{display: inline-block}
     return /* @__PURE__ */ v("button", null, "Hello");
   }`);
 
-    expect(component2).toMatch(`f.mount("div",function(){return f("button",null,"Hello")})`);
+    expect(component2).toMatch(`function(){return b("button",null,"Hello")}`);
   });
 });

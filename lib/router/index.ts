@@ -1,5 +1,16 @@
 /* eslint-disable no-use-before-define */
-import { Component, Valyrian, ValyrianComponent, VnodeComponentInterface } from "Valyrian";
+import {
+  Component,
+  POJOComponent,
+  VnodeComponentInterface,
+  directive,
+  isComponent,
+  isNodeJs,
+  isVnodeComponent,
+  mount,
+  setAttribute,
+  v
+} from "valyrian.js";
 
 interface Path {
   method: string;
@@ -16,16 +27,16 @@ interface Request {
   path: string;
   matches: string[];
   // eslint-disable-next-line no-unused-vars
-  redirect: (path: string, parentComponent?: Component | ValyrianComponent | VnodeComponentInterface) => false;
+  redirect: (path: string, parentComponent?: Component | POJOComponent | VnodeComponentInterface) => false;
 }
 
 interface Middleware {
   // eslint-disable-next-line no-unused-vars
   (req: Request, res?: any):
-    | Promise<any | Component | ValyrianComponent | VnodeComponentInterface>
+    | Promise<any | Component | POJOComponent | VnodeComponentInterface>
     | any
     | Component
-    | ValyrianComponent
+    | POJOComponent
     | VnodeComponentInterface;
 }
 
@@ -46,10 +57,8 @@ interface RouterInterface {
   use(...args: Middlewares | Router[]): Router;
   routes(): string[];
   // eslint-disable-next-line no-unused-vars
-  go(path: string, parentComponent?: Component | ValyrianComponent | VnodeComponentInterface): Promise<string | void>;
+  go(path: string, parentComponent?: Component | POJOComponent | VnodeComponentInterface): Promise<string | void>;
 }
-
-let localValyrian: Valyrian;
 
 function flat(array: any) {
   return Array.isArray(array) ? array.flat(Infinity) : [array];
@@ -144,7 +153,7 @@ function searchMiddlewares(router: RouterInterface, path: string): Middlewares {
 async function searchComponent(
   router: RouterInterface,
   middlewares: Middlewares
-): Promise<Component | ValyrianComponent | VnodeComponentInterface | false | void> {
+): Promise<Component | VnodeComponentInterface | false | void> {
   let response;
   let req: Request = {
     params: router.params,
@@ -152,7 +161,7 @@ async function searchComponent(
     url: router.url,
     path: router.path,
     matches: router.matches,
-    redirect: (path: string, parentComponent?: Component | ValyrianComponent | VnodeComponentInterface) => {
+    redirect: (path: string, parentComponent?: Component) => {
       router.go(path, parentComponent);
       return false;
     }
@@ -162,7 +171,7 @@ async function searchComponent(
   for (; i < middlewares.length; i++) {
     response = await middlewares[i](req, response);
 
-    if (response !== undefined && localValyrian.isComponent(response)) {
+    if (response !== undefined && (isComponent(response) || isVnodeComponent(response))) {
       return response;
     }
 
@@ -221,7 +230,7 @@ export class Router implements RouterInterface {
     return routes;
   }
 
-  async go(path: string, parentComponent?: Component | ValyrianComponent): Promise<string | void> {
+  async go(path: string, parentComponent?: Component): Promise<string | void> {
     if (!path) {
       throw new Error("router.url.required");
     }
@@ -244,26 +253,22 @@ export class Router implements RouterInterface {
       throw new Error(`The url ${path} requested wasn't found`);
     }
 
-    if (localValyrian.isComponent(parentComponent)) {
-      let childComponent = localValyrian.isVnodeComponent(component) ? component : localValyrian(component, {});
-      if (localValyrian.isVnodeComponent(parentComponent)) {
+    if (isComponent(parentComponent) || isVnodeComponent(parentComponent)) {
+      let childComponent = isVnodeComponent(component) ? component : v(component as Component, {});
+      if (isVnodeComponent(parentComponent)) {
         parentComponent.children.push(childComponent);
         component = parentComponent;
       } else {
-        component = localValyrian(parentComponent, {}, childComponent) as VnodeComponentInterface;
+        component = v(parentComponent, {}, childComponent) as VnodeComponentInterface;
       }
     }
 
-    if (!localValyrian.isNodeJs) {
+    if (!isNodeJs) {
       window.history.pushState(null, "", path);
     }
 
-    if (localValyrian.isMounted && localValyrian.component === component) {
-      return localValyrian.update();
-    }
-
     if (this.container) {
-      return localValyrian.mount(this.container, component);
+      return mount(this.container, component);
     }
   }
 
@@ -277,35 +282,29 @@ export class Router implements RouterInterface {
   }
 }
 
-declare module "Valyrian" {
-  // eslint-disable-next-line no-unused-vars
-  interface Valyrian {
-    // eslint-disable-next-line no-unused-vars
-    mountRouter?(container: Element | string, router: Router): string | void;
+let localRedirect;
+export function redirect(url: string) {
+  if (!localRedirect) {
+    throw new Error("router.redirect.not.found");
   }
+  return localRedirect(url);
 }
 
-export function plugin(v: Valyrian) {
-  localValyrian = v;
-  localValyrian.mountRouter = (elementContainer, routerOrComponent) => {
-    if (routerOrComponent instanceof Router) {
-      routerOrComponent.container = elementContainer;
-      localValyrian.redirect = routerOrComponent.go.bind(routerOrComponent);
+export function mountRouter(elementContainer, router) {
+  router.container = elementContainer;
+  localRedirect = router.go.bind(router);
 
-      // Activate the use of the router
-      if (!localValyrian.isNodeJs) {
-        function onPopStateGoToRoute() {
-          (routerOrComponent as unknown as Router).go(document.location.pathname);
-        }
-        window.addEventListener("popstate", onPopStateGoToRoute, false);
-        onPopStateGoToRoute();
-      }
-
-      localValyrian.directive("route", (url, vnode, oldnode) => {
-        localValyrian.setAttribute("href", url, vnode, oldnode);
-        localValyrian.setAttribute("onclick", routerOrComponent.getOnClickHandler(url), vnode, oldnode);
-      });
+  // Activate the use of the router
+  if (!isNodeJs) {
+    function onPopStateGoToRoute() {
+      (router as unknown as Router).go(document.location.pathname);
     }
-  };
-  return Router;
+    window.addEventListener("popstate", onPopStateGoToRoute, false);
+    onPopStateGoToRoute();
+  }
+
+  directive("route", (url, vnode, oldnode) => {
+    setAttribute("href", url, vnode, oldnode);
+    setAttribute("onclick", router.getOnClickHandler(url), vnode, oldnode);
+  });
 }

@@ -1,8 +1,5 @@
 // lib/store/index.ts
-var localValyrian = {
-  update: () => {
-  }
-};
+import { update } from "valyrian.js";
 function keyExists(typeOfKey, object, key) {
   if (key in object === false) {
     throw new Error(`The ${typeOfKey} "${key}" does not exists.`);
@@ -27,7 +24,7 @@ function deepFreeze(obj) {
 var updateTimeout;
 function delayedUpdate() {
   clearTimeout(updateTimeout);
-  updateTimeout = setTimeout(localValyrian.update);
+  updateTimeout = setTimeout(update);
 }
 var Store = function Store2({ state = {}, getters = {}, actions = {}, mutations = {} } = {}) {
   let frozen = true;
@@ -70,18 +67,6 @@ var Store = function Store2({ state = {}, getters = {}, actions = {}, mutations 
     return Promise.resolve(actions[action](this, ...args));
   };
 };
-function plugin(v, optionsOrStore) {
-  localValyrian = v;
-  if (optionsOrStore) {
-    v.store = optionsOrStore instanceof Store ? optionsOrStore : new Store(optionsOrStore);
-    v.commit = v.store.commit.bind(v.store);
-    v.dispatch = v.store.dispatch.bind(v.store);
-    v.state = v.store.state;
-    v.getters = v.store.getters;
-  }
-  return Store;
-}
 export {
-  Store,
-  plugin
+  Store
 };

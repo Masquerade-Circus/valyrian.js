@@ -1,56 +1,46 @@
 // lib/hooks/index.ts
-var localValyrian = {
-  current: {
-    component: null,
-    vnode: null,
-    oldVnode: null
-  },
-  onUnmount() {
-  },
-  onCleanup() {
-  },
-  onMount() {
-  },
-  onUpdate() {
-  },
-  update() {
-  }
-};
-var createHook = function createHook2({ onCreate, onUpdate, onCleanup, onRemove, returnValue }) {
+import { current, directive, onCleanup, onUnmount, update } from "valyrian.js";
+var createHook = function createHook2({
+  onCreate,
+  onUpdate: onUpdateHook,
+  onCleanup: onCleanupHook,
+  onRemove,
+  returnValue
+}) {
   return (...args) => {
-    let { component, vnode, oldVnode } = localValyrian.current;
+    let { component, vnode, oldVnode } = current;
     if (!vnode.components) {
       vnode.components = [];
-      localValyrian.onUnmount(() => Reflect.deleteProperty(vnode, "components"));
+      onUnmount(() => Reflect.deleteProperty(vnode, "components"));
     }
     if (vnode.components.indexOf(component) === -1) {
       vnode.components.push(component);
     }
     if (!component.hooks) {
       component.hooks = [];
-      localValyrian.onUnmount(() => Reflect.deleteProperty(component, "hooks"));
+      onUnmount(() => Reflect.deleteProperty(component, "hooks"));
     }
     let hook = void 0;
     if (!oldVnode || !oldVnode.components || oldVnode.components[vnode.components.length - 1] !== component) {
       hook = onCreate(...args);
       component.hooks.push(hook);
       if (onRemove) {
-        localValyrian.onUnmount(() => onRemove(hook));
+        onUnmount(() => onRemove(hook));
       }
     } else {
       if ("calls" in component === false) {
         component.calls = -1;
-        localValyrian.onUnmount(() => Reflect.deleteProperty(component, "calls"));
+        onUnmount(() => Reflect.deleteProperty(component, "calls"));
       }
-      localValyrian.onCleanup(() => component.calls = -1);
+      onCleanup(() => component.calls = -1);
       component.calls++;
       hook = component.hooks[component.calls];
-      if (onUpdate) {
-        onUpdate(hook, ...args);
+      if (onUpdateHook) {
+        onUpdateHook(hook, ...args);
       }
     }
-    if (onCleanup) {
-      localValyrian.onCleanup(() => onCleanup(hook));
+    if (onCleanupHook) {
+      onCleanup(() => onCleanupHook(hook));
     }
     if (returnValue) {
       return returnValue(hook);
@@ -61,7 +51,7 @@ var createHook = function createHook2({ onCreate, onUpdate, onCleanup, onRemove,
 var updateTimeout;
 function delayedUpdate() {
   clearTimeout(updateTimeout);
-  updateTimeout = setTimeout(localValyrian.update);
+  updateTimeout = setTimeout(update);
 }
 var useState = createHook({
   onCreate: (value) => {
@@ -123,7 +113,7 @@ var useEffect = createHook({
 });
 var useRef = createHook({
   onCreate: (initialValue) => {
-    localValyrian.directive("ref", (ref, vnode) => {
+    directive("ref", (ref, vnode) => {
       ref.current = vnode.dom;
     });
     return { current: initialValue };
@@ -161,12 +151,8 @@ var useMemo = createHook({
     return hook.value;
   }
 });
-function plugin(v) {
-  localValyrian = v;
-}
 export {
   createHook,
-  plugin,
   useCallback,
   useEffect,
   useMemo,

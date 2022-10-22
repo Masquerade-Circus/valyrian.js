@@ -1,8 +1,8 @@
-import expect from "expect";
-import { plugin as nodePlugin } from "../lib/node";
-import { v } from "../lib/index";
+import "valyrian.js/node";
 
-v.use(nodePlugin);
+import { trust, v } from "valyrian.js";
+
+import expect from "expect";
 
 describe("Hyperscript", () => {
   it("should create a div element", () => {
@@ -86,7 +86,7 @@ describe("Hyperscript", () => {
   });
 
   it("should create a div element from string", () => {
-    expect(v.trust('<div id="unique" class="unique">Hola mundo</div>')).toEqual([
+    expect(trust('<div id="unique" class="unique">Hola mundo</div>')).toEqual([
       {
         tag: "div",
         props: {
@@ -95,7 +95,9 @@ describe("Hyperscript", () => {
         },
         children: [
           {
-            nodeValue: "Hola mundo",
+            tag: "#text",
+            props: {},
+            children: [],
             dom: expect.anything()
           }
         ],

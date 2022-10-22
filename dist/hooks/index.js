@@ -1,4 +1,3 @@
-"use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -21,7 +20,6 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var hooks_exports = {};
 __export(hooks_exports, {
   createHook: () => createHook,
-  plugin: () => plugin,
   useCallback: () => useCallback,
   useEffect: () => useEffect,
   useMemo: () => useMemo,
@@ -29,58 +27,48 @@ __export(hooks_exports, {
   useState: () => useState
 });
 module.exports = __toCommonJS(hooks_exports);
-var localValyrian = {
-  current: {
-    component: null,
-    vnode: null,
-    oldVnode: null
-  },
-  onUnmount() {
-  },
-  onCleanup() {
-  },
-  onMount() {
-  },
-  onUpdate() {
-  },
-  update() {
-  }
-};
-var createHook = function createHook2({ onCreate, onUpdate, onCleanup, onRemove, returnValue }) {
+var import_valyrian = require("valyrian.js");
+var createHook = function createHook2({
+  onCreate,
+  onUpdate: onUpdateHook,
+  onCleanup: onCleanupHook,
+  onRemove,
+  returnValue
+}) {
   return (...args) => {
-    let { component, vnode, oldVnode } = localValyrian.current;
+    let { component, vnode, oldVnode } = import_valyrian.current;
     if (!vnode.components) {
       vnode.components = [];
-      localValyrian.onUnmount(() => Reflect.deleteProperty(vnode, "components"));
+      (0, import_valyrian.onUnmount)(() => Reflect.deleteProperty(vnode, "components"));
     }
     if (vnode.components.indexOf(component) === -1) {
       vnode.components.push(component);
     }
     if (!component.hooks) {
       component.hooks = [];
-      localValyrian.onUnmount(() => Reflect.deleteProperty(component, "hooks"));
+      (0, import_valyrian.onUnmount)(() => Reflect.deleteProperty(component, "hooks"));
     }
     let hook = void 0;
     if (!oldVnode || !oldVnode.components || oldVnode.components[vnode.components.length - 1] !== component) {
       hook = onCreate(...args);
       component.hooks.push(hook);
       if (onRemove) {
-        localValyrian.onUnmount(() => onRemove(hook));
+        (0, import_valyrian.onUnmount)(() => onRemove(hook));
       }
     } else {
       if ("calls" in component === false) {
         component.calls = -1;
-        localValyrian.onUnmount(() => Reflect.deleteProperty(component, "calls"));
+        (0, import_valyrian.onUnmount)(() => Reflect.deleteProperty(component, "calls"));
       }
-      localValyrian.onCleanup(() => component.calls = -1);
+      (0, import_valyrian.onCleanup)(() => component.calls = -1);
       component.calls++;
       hook = component.hooks[component.calls];
-      if (onUpdate) {
-        onUpdate(hook, ...args);
+      if (onUpdateHook) {
+        onUpdateHook(hook, ...args);
       }
     }
-    if (onCleanup) {
-      localValyrian.onCleanup(() => onCleanup(hook));
+    if (onCleanupHook) {
+      (0, import_valyrian.onCleanup)(() => onCleanupHook(hook));
     }
     if (returnValue) {
       return returnValue(hook);
@@ -91,7 +79,7 @@ var createHook = function createHook2({ onCreate, onUpdate, onCleanup, onRemove,
 var updateTimeout;
 function delayedUpdate() {
   clearTimeout(updateTimeout);
-  updateTimeout = setTimeout(localValyrian.update);
+  updateTimeout = setTimeout(import_valyrian.update);
 }
 var useState = createHook({
   onCreate: (value) => {
@@ -153,7 +141,7 @@ var useEffect = createHook({
 });
 var useRef = createHook({
   onCreate: (initialValue) => {
-    localValyrian.directive("ref", (ref, vnode) => {
+    (0, import_valyrian.directive)("ref", (ref, vnode) => {
       ref.current = vnode.dom;
     });
     return { current: initialValue };
@@ -191,6 +179,3 @@ var useMemo = createHook({
     return hook.value;
   }
 });
-function plugin(v) {
-  localValyrian = v;
-}

@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 /* eslint-disable complexity */
 interface ChildNodes extends Array<Node | Element | Text | DocumentFragment> {}
 
@@ -225,15 +226,29 @@ export class Node implements Node {
   // NOTATION_NODE!: number;
   // PROCESSING_INSTRUCTION_NODE!: number;
   // TEXT_NODE!: number;
-  addEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions | undefined): void {
+  addEventListener(
+    // eslint-disable-next-line no-unused-vars
+    type: string,
+    // eslint-disable-next-line no-unused-vars
+    callback: EventListenerOrEventListenerObject | null,
+    // eslint-disable-next-line no-unused-vars
+    options?: boolean | AddEventListenerOptions | undefined
+  ): void {
     // throw new Error("Method not implemented.");
   }
   // dispatchEvent(event: Event): boolean {
   //   throw new Error("Method not implemented.");
   // }
-  // removeEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: boolean | EventListenerOptions | undefined): void {
-  //   throw new Error("Method not implemented.");
-  // }
+  removeEventListener(
+    // eslint-disable-next-line no-unused-vars
+    type: string,
+    // eslint-disable-next-line no-unused-vars
+    callback: EventListenerOrEventListenerObject | null,
+    // eslint-disable-next-line no-unused-vars
+    options?: boolean | EventListenerOptions | undefined
+  ): void {
+    // throw new Error("Method not implemented.");
+  }
 }
 
 export class Text extends Node {
@@ -385,7 +400,23 @@ export class Document extends Element {
   }
 }
 
-let selfClosingTags = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr", "!doctype"];
+let selfClosingTags = [
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+  "!doctype"
+];
 
 export function domToHtml(dom: Element): string {
   if (dom.nodeType === 3) {
@@ -582,7 +613,9 @@ function convertToDom<T extends Node>(item: ObjectIndexItemWithContent): T {
   if (item.tagName === "#text") {
     node = document.createTextNode(item.nodeValue as string) as unknown as T;
   } else {
-    node = (item.tagName === "#document-fragment" ? document.createDocumentFragment() : document.createElement(item.tagName)) as unknown as T;
+    node = (item.tagName === "#document-fragment"
+      ? document.createDocumentFragment()
+      : document.createElement(item.tagName)) as unknown as T;
 
     for (let key in item.attributes) {
       node.setAttribute(key, item.attributes[key]);

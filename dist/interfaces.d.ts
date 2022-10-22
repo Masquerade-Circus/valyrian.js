@@ -1,4 +1,4 @@
-declare module "Valyrian" {
+declare module "valyrian.js" {
     interface Props {
         key?: string | number;
         state?: any;
@@ -20,19 +20,14 @@ declare module "Valyrian" {
         [key: string]: any;
     }
     interface VnodeInterface {
-        new (tag: string, props: Props, children: Children): VnodeInterface;
-        tag: string;
+        new (tag: string | Component | POJOComponent, props: Props, children: Children): VnodeInterface;
+        tag: string | Component | POJOComponent;
         props: Props;
         children: Children;
         isSVG?: boolean;
         dom?: DomElement;
         processed?: boolean;
         [key: string | number | symbol]: any;
-    }
-    interface VnodeTextInterface {
-        new (nodeValue: string): VnodeTextInterface;
-        dom?: DomElement;
-        nodeValue: string;
     }
     interface VnodeWithDom extends VnodeInterface {
         dom: DomElement;
@@ -41,19 +36,18 @@ declare module "Valyrian" {
         (props?: Props | null, ...children: any[]): VnodeInterface | Children | any;
         [key: string]: any;
     }
-    interface ValyrianComponent {
+    interface POJOComponent {
         view: Component;
         props?: Props | null;
         children?: any[];
         [key: string]: any;
     }
-    interface VnodeComponentInterface {
-        new (component: Component | ValyrianComponent, props: Props, children: Children): VnodeComponentInterface;
-        component: Component | ValyrianComponent;
+    interface VnodeComponentInterface extends VnodeInterface {
+        tag: Component | POJOComponent;
         props: Props;
         children: Children;
     }
-    interface Children extends Array<VnodeInterface | VnodeTextInterface | VnodeComponentInterface | any> {
+    interface Children extends Array<VnodeInterface | VnodeComponentInterface | any> {
     }
     interface Directive {
         (value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void | boolean;
@@ -65,40 +59,35 @@ declare module "Valyrian" {
         [key: string]: true;
     }
     interface Current {
-        component?: Component | ValyrianComponent | null;
-        vnode?: VnodeWithDom | null;
+        component: Component | POJOComponent | null;
+        vnode: VnodeWithDom | null;
         oldVnode?: VnodeWithDom | null;
     }
-    interface Plugin {
-        (valyrian: Valyrian, options?: Record<string | string | symbol, any>): void | any;
-    }
-    interface Valyrian {
-        (tagOrComponent: string | Component | ValyrianComponent, props: Props | null, ...children: Children): VnodeInterface | VnodeComponentInterface;
+    interface V {
+        (tagOrComponent: string | Component | POJOComponent, props: Props | null, ...children: Children): VnodeInterface | VnodeComponentInterface;
         fragment(_: any, ...children: Children): Children;
-        isNodeJs: boolean;
-        isMounted: boolean;
-        component: Component | ValyrianComponent | VnodeComponentInterface | null;
-        mainVnode: VnodeWithDom | null;
-        directives: Directives;
-        reservedProps: ReservedProps;
-        current: Current;
-        trust(htmlString: string): Children;
-        isVnode(object?: unknown | VnodeInterface): object is VnodeInterface;
-        isVnodeComponent(object?: unknown): object is VnodeComponentInterface;
-        isComponent(component?: unknown | Component | ValyrianComponent): component is ValyrianComponent;
-        isValyrianComponent(component?: unknown): component is ValyrianComponent;
-        onCleanup(fn: Function): void;
-        onUnmount(fn: Function): void;
-        onMount(fn: Function): void;
-        onUpdate(fn: Function): void;
-        patch(newParentVnode: VnodeWithDom, oldParentVnode?: VnodeWithDom | undefined): void;
-        mount(container: string | Element, normalComponent: Component | ValyrianComponent | VnodeComponentInterface): void | string;
-        update(): void | string;
-        unmount(): void | string;
-        setAttribute(name: string, value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
-        directive(name: string, directive: Directive): void;
-        use(plugin: Plugin, options?: Record<string | number | symbol, any>): void | any;
-        [key: string | number | symbol]: any;
     }
+    let isNodeJs: boolean;
+    function createDomElement(tag: string, isSVG?: boolean): DomElement;
+    const Vnode: VnodeInterface;
+    function isComponent(component: any): component is Component;
+    const isVnode: (object?: unknown | VnodeInterface) => object is VnodeInterface;
+    const isVnodeComponent: (object?: unknown | VnodeComponentInterface) => object is VnodeComponentInterface;
+    function trust(htmlString: string): any;
+    const current: Current;
+    const reservedProps: Record<string, true>;
+    function onMount(callback: any): void;
+    function onUpdate(callback: any): void;
+    function onCleanup(callback: any): void;
+    function onUnmount(callback: any): void;
+    const directives: Directives;
+    function directive(name: string, directive: Directive): void;
+    function setAttribute(name: string, value: any, newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+    function updateAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+    function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+    function update(): void | string;
+    function unmount(): string | void;
+    function mount(dom: any, component: any): string | void;
+    const v: V;
 }
 //# sourceMappingURL=interfaces.d.ts.map

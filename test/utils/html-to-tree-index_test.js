@@ -1,10 +1,8 @@
+import "valyrian.js/node";
+
 import { describe } from "mocha";
 import expect from "expect";
-import { htmlToDom } from "../../lib/node/utils/tree-adapter";
-import { plugin as nodePlugin } from "../../lib/node";
-import { v } from "../../lib/index";
-
-v.use(nodePlugin);
+import { htmlToDom } from "valyrian.js/node";
 
 describe("Html to Tree index", () => {
   it("should create a document fragment with multiple children and attributes for a complex tree", () => {

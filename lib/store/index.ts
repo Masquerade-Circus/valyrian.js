@@ -1,4 +1,4 @@
-import { Valyrian } from "Valyrian";
+import { update } from "valyrian.js";
 
 interface StoreOptions {
   state?: Record<string, unknown> | (() => Record<string, unknown>);
@@ -17,21 +17,6 @@ interface StoreInstance {
   // eslint-disable-next-line no-unused-vars
   dispatch: (type: string, ...payload: any[]) => void;
 }
-
-declare module "Valyrian" {
-  // eslint-disable-next-line no-unused-vars
-  interface Valyrian {
-    store?: StoreInstance;
-    commit?: StoreInstance["commit"];
-    dispatch?: StoreInstance["dispatch"];
-    state?: StoreInstance["state"];
-    getters?: StoreInstance["getters"];
-  }
-}
-
-let localValyrian: Valyrian = {
-  update: () => {}
-} as unknown as Valyrian;
 
 function keyExists(typeOfKey: string, object: Record<string, unknown>, key: string) {
   if (key in object === false) {
@@ -60,10 +45,13 @@ function deepFreeze(obj: any) {
 let updateTimeout: any;
 function delayedUpdate() {
   clearTimeout(updateTimeout);
-  updateTimeout = setTimeout(localValyrian.update);
+  updateTimeout = setTimeout(update);
 }
 
-export const Store = function Store(this: StoreInstance, { state = {}, getters = {}, actions = {}, mutations = {} }: StoreOptions = {}) {
+export const Store = function Store(
+  this: StoreInstance,
+  { state = {}, getters = {}, actions = {}, mutations = {} }: StoreOptions = {}
+) {
   let frozen = true;
 
   function isUnfrozen() {
@@ -111,15 +99,3 @@ export const Store = function Store(this: StoreInstance, { state = {}, getters =
     return Promise.resolve(actions[action](this, ...args));
   };
 } as unknown as StoreInstance;
-
-export function plugin(v: Valyrian, optionsOrStore?: StoreOptions | StoreInstance) {
-  localValyrian = v;
-  if (optionsOrStore) {
-    v.store = optionsOrStore instanceof Store ? optionsOrStore : new Store(optionsOrStore);
-    v.commit = v.store.commit.bind(v.store);
-    v.dispatch = v.store.dispatch.bind(v.store);
-    v.state = v.store.state;
-    v.getters = v.store.getters;
-  }
-  return Store;
-}

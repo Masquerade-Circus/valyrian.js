@@ -1,7 +1,5 @@
 // lib/request/index.ts
-var localValyrian = {
-  isNodeJs: Boolean(typeof process !== "undefined" && process.versions && process.versions.node)
-};
+import { isNodeJs } from "valyrian.js";
 function serialize(obj, prefix = "") {
   return Object.keys(obj).map((prop) => {
     let k = prefix ? `${prefix}[${prop}]` : prop;
@@ -15,7 +13,7 @@ function parseUrl(url, options) {
   if (parts[1]) {
     u += `?${parts[1]}`;
   }
-  if (localValyrian.isNodeJs && typeof options.urls.node === "string") {
+  if (isNodeJs && typeof options.urls.node === "string") {
     options.urls.node = options.urls.node;
     if (typeof options.urls.api === "string") {
       options.urls.api = options.urls.api.replace(/\/$/gi, "").trim();
@@ -170,12 +168,6 @@ function Requester(baseUrl = "", options = defaultOptions) {
   return request2;
 }
 var request = Requester();
-var plugin = (v) => {
-  localValyrian = v;
-  v.request = request;
-  return request;
-};
 export {
-  plugin,
   request
 };

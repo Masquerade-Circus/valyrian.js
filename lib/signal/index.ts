@@ -1,4 +1,4 @@
-import { Valyrian } from "Valyrian";
+import { update } from "valyrian.js";
 
 /* eslint-disable no-use-before-define */
 interface Cleanup {
@@ -69,14 +69,10 @@ function createSubscription(signal: Signal, subscriptions: Subscriptions, handle
   return subscriptions.get(handler);
 }
 
-let localValyrian: Valyrian = {
-  update: () => {}
-} as unknown as Valyrian;
-
 let updateTimeout: any;
 function delayedUpdate() {
   clearTimeout(updateTimeout);
-  updateTimeout = setTimeout(localValyrian.update);
+  updateTimeout = setTimeout(update);
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
