@@ -187,12 +187,6 @@ var directives = {
     vnode.children = [trust(html)];
   },
   "v-model": ([model, property, event], vnode, oldVnode) => {
-    if (oldVnode && oldVnode.dom === vnode.dom) {
-      let [oldModel, oldProperty, oldEvent] = oldVnode.props["v-model"] || [];
-      if (oldModel === model && oldProperty === property && oldEvent === event) {
-        return;
-      }
-    }
     let value;
     let handler = (e) => model[property] = e.target.value;
     if (vnode.tag === "input") {

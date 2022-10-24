@@ -269,16 +269,6 @@ export const directives: Directives = {
     vnode.children = [trust(html)];
   },
   "v-model": ([model, property, event]: any[], vnode: VnodeWithDom, oldVnode?: VnodeWithDom) => {
-    // We try to identify if the old vnode has the v-model directive initialized or not
-    // If it is, we don't need to reinitialize it
-    if (oldVnode && oldVnode.dom === vnode.dom) {
-      let [oldModel, oldProperty, oldEvent] = oldVnode.props["v-model"] || [];
-
-      if (oldModel === model && oldProperty === property && oldEvent === event) {
-        return;
-      }
-    }
-
     let value;
     let handler = (e: Event) => (model[property] = (e.target as DomElement & Record<string, any>).value);
     if (vnode.tag === "input") {
