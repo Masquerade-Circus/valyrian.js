@@ -74,7 +74,9 @@ var onMountSet = /* @__PURE__ */ new Set();
 var onUpdateSet = /* @__PURE__ */ new Set();
 var onUnmountSet = /* @__PURE__ */ new Set();
 function onMount(callback) {
-  onMountSet.add(callback);
+  if (!isMounted) {
+    onMountSet.add(callback);
+  }
 }
 function onUpdate(callback) {
   onUpdateSet.add(callback);
@@ -83,7 +85,9 @@ function onCleanup(callback) {
   onCleanupSet.add(callback);
 }
 function onUnmount(callback) {
-  onUnmountSet.add(callback);
+  if (!isMounted) {
+    onUnmountSet.add(callback);
+  }
 }
 function callSet(set) {
   for (let callback of set) {
@@ -234,12 +238,18 @@ var directives = {
   },
   "v-create": (callback, vnode, oldVnode) => {
     if (!oldVnode) {
-      callback(vnode);
+      let cleanup = callback(vnode);
+      if (typeof cleanup === "function") {
+        onCleanup(cleanup);
+      }
     }
   },
   "v-update": (callback, vnode, oldVnode) => {
     if (oldVnode) {
-      callback(vnode, oldVnode);
+      let cleanup = callback(vnode, oldVnode);
+      if (typeof cleanup === "function") {
+        onCleanup(cleanup);
+      }
     }
   },
   "v-cleanup": (callback, vnode, oldVnode) => {
@@ -475,7 +485,7 @@ function mount(dom, component) {
 var v = (tagOrComponent, props = {}, ...children) => {
   return new Vnode(tagOrComponent, props || {}, children);
 };
-v.fragment = (props, ...children) => children;
+v.fragment = (_, ...children) => children;
 export {
   Vnode,
   createDomElement,

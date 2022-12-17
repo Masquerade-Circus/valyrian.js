@@ -1,11 +1,8 @@
-
-
 ### [7.0.3](https://github.com/Masquerade-Circus/valyrian.js/compare/7.0.2...7.0.3) (2022-10-24)
-
 
 ### Bug Fixes
 
-* **v-model:** fix v-model not updating the value ([cc358a1](https://github.com/Masquerade-Circus/valyrian.js/commit/cc358a1a7c4f4e62c42f10df42a2d1b197bccee3))
+*   **v-model:** fix v-model not updating the value ([cc358a1](https://github.com/Masquerade-Circus/valyrian.js/commit/cc358a1a7c4f4e62c42f10df42a2d1b197bccee3))
 
 ### [7.0.2](https://github.com/Masquerade-Circus/valyrian.js/compare/7.0.1...7.0.2) (2022-10-22)
 

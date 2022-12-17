@@ -29,7 +29,7 @@ interface RouterInterface {
     params: Record<string, string | number | any>;
     matches: string[];
     add(method: string, ...args: Middlewares): Router;
-    use(...args: Middlewares | Router[]): Router;
+    use(...args: string[] | Middlewares | Router[]): Router;
     routes(): string[];
     go(path: string, parentComponent?: Component | POJOComponent | VnodeComponentInterface): Promise<string | void>;
 }

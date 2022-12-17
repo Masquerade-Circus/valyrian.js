@@ -1,27 +1,15 @@
-export interface Props {
+export interface VnodeProperties {
     key?: string | number;
     state?: any;
-    oncreate?: {
-        (vnode: VnodeInterface): never;
-    };
-    onupdate?: {
-        (vnode: VnodeInterface, oldVnode: VnodeInterface): never;
-    };
-    onremove?: {
-        (oldVnode: VnodeInterface): never;
-    };
-    shouldupdate?: {
-        (vnode: VnodeInterface, oldVnode: VnodeInterface): undefined | boolean;
-    };
     [key: string | number | symbol]: any;
 }
 export interface DomElement extends Element {
     [key: string]: any;
 }
 export interface VnodeInterface {
-    new (tag: string | Component | POJOComponent, props: Props, children: Children): VnodeInterface;
+    new (tag: string | Component | POJOComponent, props: VnodeProperties, children: Children): VnodeInterface;
     tag: string | Component | POJOComponent;
-    props: Props;
+    props: VnodeProperties;
     children: Children;
     isSVG?: boolean;
     dom?: DomElement;
@@ -32,18 +20,18 @@ export interface VnodeWithDom extends VnodeInterface {
     dom: DomElement;
 }
 export interface Component {
-    (props?: Props | null, ...children: any[]): VnodeInterface | Children | any;
+    (props?: VnodeProperties | null, ...children: any[]): VnodeInterface | Children | any;
     [key: string]: any;
 }
 export interface POJOComponent {
     view: Component;
-    props?: Props | null;
+    props?: VnodeProperties | null;
     children?: any[];
     [key: string]: any;
 }
 export interface VnodeComponentInterface extends VnodeInterface {
     tag: Component | POJOComponent;
-    props: Props;
+    props: VnodeProperties;
     children: Children;
 }
 export interface Children extends Array<VnodeInterface | VnodeComponentInterface | any> {
@@ -63,7 +51,7 @@ export interface Current {
     oldVnode?: VnodeWithDom | null;
 }
 export interface V {
-    (tagOrComponent: string | Component | POJOComponent, props: Props | null, ...children: Children): VnodeInterface | VnodeComponentInterface;
+    (tagOrComponent: string | Component | POJOComponent, props: VnodeProperties | null, ...children: Children): VnodeInterface | VnodeComponentInterface;
     fragment(_: any, ...children: Children): Children;
 }
 export declare let isNodeJs: boolean;

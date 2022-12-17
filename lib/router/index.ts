@@ -54,7 +54,8 @@ interface RouterInterface {
   // eslint-disable-next-line no-unused-vars
   add(method: string, ...args: Middlewares): Router;
   // eslint-disable-next-line no-unused-vars
-  use(...args: Middlewares | Router[]): Router;
+  use(...args: string[] | Middlewares | Router[]): Router;
+
   routes(): string[];
   // eslint-disable-next-line no-unused-vars
   go(path: string, parentComponent?: Component | POJOComponent | VnodeComponentInterface): Promise<string | void>;
@@ -241,9 +242,9 @@ export class Router implements RouterInterface {
     this.url = path;
     this.query = parseQuery(queryParts);
 
-    let middlewares = searchMiddlewares(this, urlParts);
+    let middlewares = searchMiddlewares(this as RouterInterface, urlParts);
 
-    let component = await searchComponent(this, middlewares);
+    let component = await searchComponent(this as RouterInterface, middlewares);
 
     if (component === false) {
       return;
