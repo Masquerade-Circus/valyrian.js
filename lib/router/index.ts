@@ -193,7 +193,7 @@ export class Router implements RouterInterface {
   matches: string[] = [];
   pathPrefix: string = "";
 
-  constructor(pathPrefix: string) {
+  constructor(pathPrefix: string = "") {
     this.pathPrefix = pathPrefix;
   }
 

@@ -125,27 +125,30 @@ var Router = class {
   path = "";
   params = {};
   matches = [];
+  pathPrefix = "";
+  constructor(pathPrefix = "") {
+    this.pathPrefix = pathPrefix;
+  }
   add(path, ...args) {
-    addPath(this, "add", path, args);
+    addPath(this, "add", `${this.pathPrefix}${path}`, args);
     return this;
   }
   use(...args) {
-    let path = typeof args[0] === "string" ? args.shift() : "/";
-    let i;
-    let k;
-    let subrouter;
+    let path = `${this.pathPrefix}${typeof args[0] === "string" ? args.shift() : "/"}`;
     let item;
     let subpath;
-    for (i = 0; i < args.length; i++) {
-      subrouter = args[i];
-      if (typeof subrouter === "function") {
-        addPath(this, "use", `${path}.*`, [subrouter]);
-      } else if (subrouter.paths) {
-        for (k = 0; k < subrouter.paths.length; k++) {
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] instanceof Router) {
+        let subrouter = args[i];
+        for (let k = 0; k < subrouter.paths.length; k++) {
           item = subrouter.paths[k];
           subpath = `${path}${item.path}`.replace(/^\/\//, "/");
           addPath(this, item.method, subpath, item.middlewares);
         }
+        continue;
+      }
+      if (typeof args[i] === "function") {
+        addPath(this, "use", `${path}.*`, [args[i]]);
       }
     }
     return this;
@@ -163,10 +166,11 @@ var Router = class {
     if (!path) {
       throw new Error("router.url.required");
     }
-    let parts = path.split("?", 2);
+    let constructedPath = `${this.pathPrefix}${path}`;
+    let parts = constructedPath.split("?", 2);
     let urlParts = parts[0].replace(/(.+)\/$/, "$1");
     let queryParts = parts[1];
-    this.url = path;
+    this.url = constructedPath;
     this.query = parseQuery(queryParts);
     let middlewares = searchMiddlewares(this, urlParts);
     let component = await searchComponent(this, middlewares);
@@ -174,7 +178,7 @@ var Router = class {
       return;
     }
     if (!component) {
-      throw new Error(`The url ${path} requested wasn't found`);
+      throw new Error(`The url ${constructedPath} requested wasn't found`);
     }
     if ((0, import_valyrian.isComponent)(parentComponent) || (0, import_valyrian.isVnodeComponent)(parentComponent)) {
       let childComponent = (0, import_valyrian.isVnodeComponent)(component) ? component : (0, import_valyrian.v)(component, {});
@@ -186,7 +190,7 @@ var Router = class {
       }
     }
     if (!import_valyrian.isNodeJs) {
-      window.history.pushState(null, "", path);
+      window.history.pushState(null, "", constructedPath);
     }
     if (this.container) {
       return (0, import_valyrian.mount)(this.container, component);

@@ -42,8 +42,10 @@ export declare class Router implements RouterInterface {
     path: string;
     params: Record<string, string | number | any>;
     matches: string[];
+    pathPrefix: string;
+    constructor(pathPrefix?: string);
     add(path: string, ...args: Middlewares): Router;
-    use(...args: Middlewares | Router[]): Router;
+    use(...args: Middlewares | Router[] | string[]): Router;
     routes(): string[];
     go(path: string, parentComponent?: Component): Promise<string | void>;
     getOnClickHandler(url: string): (e: MouseEvent) => void;
