@@ -191,30 +191,35 @@ export class Router implements RouterInterface {
   path: string = "";
   params: Record<string, string | number | any> = {};
   matches: string[] = [];
+  pathPrefix: string = "";
+
+  constructor(pathPrefix: string) {
+    this.pathPrefix = pathPrefix;
+  }
 
   add(path: string, ...args: Middlewares): Router {
-    addPath(this, "add", path, args);
+    addPath(this, "add", `${this.pathPrefix}${path}`, args);
     return this;
   }
 
-  use(...args: Middlewares | Router[]): Router {
-    let path = typeof args[0] === "string" ? args.shift() : "/";
-    let i;
-    let k;
-    let subrouter;
+  use(...args: Middlewares | Router[] | string[]): Router {
+    let path = `${this.pathPrefix}${typeof args[0] === "string" ? args.shift() : "/"}`;
     let item;
     let subpath;
 
-    for (i = 0; i < args.length; i++) {
-      subrouter = args[i];
-      if (typeof subrouter === "function") {
-        addPath(this, "use", `${path}.*`, [subrouter]);
-      } else if (subrouter.paths) {
-        for (k = 0; k < subrouter.paths.length; k++) {
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] instanceof Router) {
+        let subrouter = args[i] as Router;
+        for (let k = 0; k < subrouter.paths.length; k++) {
           item = subrouter.paths[k];
           subpath = `${path}${item.path}`.replace(/^\/\//, "/");
           addPath(this, item.method, subpath, item.middlewares);
         }
+        continue;
+      }
+
+      if (typeof args[i] === "function") {
+        addPath(this, "use", `${path}.*`, [args[i]]);
       }
     }
 
@@ -236,10 +241,11 @@ export class Router implements RouterInterface {
       throw new Error("router.url.required");
     }
 
-    let parts = path.split("?", 2);
+    let constructedPath = `${this.pathPrefix}${path}`;
+    let parts = constructedPath.split("?", 2);
     let urlParts = parts[0].replace(/(.+)\/$/, "$1");
     let queryParts = parts[1];
-    this.url = path;
+    this.url = constructedPath;
     this.query = parseQuery(queryParts);
 
     let middlewares = searchMiddlewares(this as RouterInterface, urlParts);
@@ -251,7 +257,7 @@ export class Router implements RouterInterface {
     }
 
     if (!component) {
-      throw new Error(`The url ${path} requested wasn't found`);
+      throw new Error(`The url ${constructedPath} requested wasn't found`);
     }
 
     if (isComponent(parentComponent) || isVnodeComponent(parentComponent)) {
@@ -265,7 +271,7 @@ export class Router implements RouterInterface {
     }
 
     if (!isNodeJs) {
-      window.history.pushState(null, "", path);
+      window.history.pushState(null, "", constructedPath);
     }
 
     if (this.container) {
