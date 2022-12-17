@@ -1,3 +1,12 @@
+
+
+### [7.0.4](https://github.com/Masquerade-Circus/valyrian.js/compare/7.0.3...7.0.4) (2022-12-17)
+
+
+### Styles
+
+* add comments to main and improve RouterInterface ([4e40a35](https://github.com/Masquerade-Circus/valyrian.js/commit/4e40a35ade8f4776f5c9218017d50a6f18d2e0b8))
+
 ### [7.0.3](https://github.com/Masquerade-Circus/valyrian.js/compare/7.0.2...7.0.3) (2022-10-24)
 
 ### Bug Fixes

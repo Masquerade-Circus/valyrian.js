@@ -174,7 +174,7 @@ span.hello{display: inline-block}
     return /* @__PURE__ */ v("button", null, "Hello");
   }`);
 
-    expect(component2).toMatch(`function(){return b("button",null,"Hello")}`);
+    expect(component2).toMatch(`function(){return G("button",null,"Hello")}`);
   });
 
   it("should convert jsx to hyperscript by default", async () => {
@@ -186,6 +186,6 @@ span.hello{display: inline-block}
     return /* @__PURE__ */ v("button", null, "Hello");
   }`);
 
-    expect(component2).toMatch(`function(){return b("button",null,"Hello")}`);
+    expect(component2).toMatch(`function(){return G("button",null,"Hello")}`);
   });
 });
