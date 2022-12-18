@@ -1,3 +1,17 @@
+
+
+### [7.1.2](https://github.com/Masquerade-Circus/valyrian.js/compare/7.1.1...7.1.2) (2022-12-18)
+
+
+### Bug Fixes
+
+* **router:** fix not found home because last slash ([1766052](https://github.com/Masquerade-Circus/valyrian.js/commit/1766052406113cb4bbbac98a9adbfdf6d73384c4))
+
+
+### Code Refactoring
+
+* **router:** refactor router path to be the local app path instead of the full url ([2e3c3f3](https://github.com/Masquerade-Circus/valyrian.js/commit/2e3c3f34a6cbc7f51f068ad346edac0db3cc2128))
+
 ### [7.1.1](https://github.com/Masquerade-Circus/valyrian.js/compare/7.1.0...7.1.1) (2022-12-18)
 
 ### Code Refactoring
