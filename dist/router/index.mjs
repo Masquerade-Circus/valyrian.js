@@ -12,11 +12,14 @@ function flat(array) {
   return Array.isArray(array) ? array.flat(Infinity) : [array];
 }
 function getPathWithoutPrefix(path, prefix) {
-  let pathWithoutPrefix = path.replace(new RegExp(`^${prefix}`), "").replace(/\/$/, "");
-  if (pathWithoutPrefix === "") {
-    pathWithoutPrefix = "/";
+  return getPathWithoutLastSlash(path.replace(new RegExp(`^${prefix}`), ""));
+}
+function getPathWithoutLastSlash(path) {
+  let pathWithoutLastSlash = path.replace(/\/$/, "");
+  if (pathWithoutLastSlash === "") {
+    pathWithoutLastSlash = "/";
   }
-  return pathWithoutPrefix;
+  return pathWithoutLastSlash;
 }
 var addPath = ({
   router,
@@ -107,14 +110,14 @@ var Router = class {
     this.pathPrefix = pathPrefix;
   }
   add(path, ...middlewares) {
-    addPath({ router: this, method: "add", path: `${this.pathPrefix}${path}`.replace(/\/$/, ""), middlewares });
+    let pathWithoutLastSlash = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
+    addPath({ router: this, method: "add", path: pathWithoutLastSlash, middlewares });
     return this;
   }
   use(...middlewares) {
-    let path = `${this.pathPrefix}${typeof middlewares[0] === "string" ? middlewares.shift() : "/"}`.replace(/\/$/, "");
-    if (path === "") {
-      path = "/";
-    }
+    let path = getPathWithoutLastSlash(
+      `${this.pathPrefix}${typeof middlewares[0] === "string" ? middlewares.shift() : "/"}`
+    );
     for (const item of middlewares) {
       if (item instanceof Router) {
         const subrouter = item;
@@ -141,10 +144,7 @@ var Router = class {
     if (!path) {
       throw new Error("router.url.required");
     }
-    let constructedPath = `${this.pathPrefix}${path}`.replace(/\/$/, "");
-    if (constructedPath === "") {
-      constructedPath = "/";
-    }
+    let constructedPath = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
     const parts = constructedPath.split("?", 2);
     this.url = constructedPath;
     this.query = parseQuery(parts[1]);

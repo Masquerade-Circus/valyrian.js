@@ -1,11 +1,8 @@
-
-
 ### [7.1.1](https://github.com/Masquerade-Circus/valyrian.js/compare/7.1.0...7.1.1) (2022-12-18)
-
 
 ### Code Refactoring
 
-* **router:** refactor router ([19a51e0](https://github.com/Masquerade-Circus/valyrian.js/commit/19a51e058ff017bb13c024be5f6a1f69d9d9b8df))
+*   **router:** refactor router ([19a51e0](https://github.com/Masquerade-Circus/valyrian.js/commit/19a51e058ff017bb13c024be5f6a1f69d9d9b8df))
 
 ## [7.1.0](https://github.com/Masquerade-Circus/valyrian.js/compare/7.0.4...7.1.0) (2022-12-17)
 

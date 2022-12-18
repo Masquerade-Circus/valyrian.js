@@ -28,8 +28,9 @@ interface RouterInterface {
     path: string;
     params: Record<string, string | number | any>;
     matches: string[];
+    pathPrefix: string;
     add(method: string, ...args: Middlewares): Router;
-    use(...args: string[] | Middlewares | Router[]): Router;
+    use(...args: (string | Middleware | Router)[]): Router;
     routes(): string[];
     go(path: string, parentComponent?: Component | POJOComponent | VnodeComponentInterface): Promise<string | void>;
 }
