@@ -456,19 +456,23 @@ describe("Router", () => {
     let res = await router.go("/");
     expect(res).toEqual("home");
     expect(router.pathPrefix).toEqual("/test");
-    expect(router.path).toEqual("/test");
+    expect(router.path).toEqual("/");
+    expect(router.url).toEqual("/test");
 
     let res2 = await router.go("/1");
     expect(res2).toEqual("1");
-    expect(router.path).toEqual("/test/1");
+    expect(router.path).toEqual("/1");
+    expect(router.url).toEqual("/test/1");
 
     let res3 = await router.go("/sub/2");
     expect(res3).toEqual("2");
-    expect(router.path).toEqual("/test/sub/2");
+    expect(router.path).toEqual("/sub/2");
+    expect(router.url).toEqual("/test/sub/2");
 
     let res4 = await router.go("/sub/3");
     // Because is a redirect, res4 is undefined
     expect(res4).toBeUndefined();
-    expect(router.path).toEqual("/test/1");
+    expect(router.path).toEqual("/1");
+    expect(router.url).toEqual("/test/1");
   });
 });

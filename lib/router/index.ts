@@ -52,10 +52,11 @@ interface RouterInterface {
   path: string;
   params: Record<string, string | number | any>;
   matches: string[];
+  pathPrefix: string;
   // eslint-disable-next-line no-unused-vars
   add(method: string, ...args: Middlewares): Router;
   // eslint-disable-next-line no-unused-vars
-  use(...args: string[] | Middlewares | Router[]): Router;
+  use(...args: (string | Middleware | Router)[]): Router;
 
   routes(): string[];
   // eslint-disable-next-line no-unused-vars
@@ -69,6 +70,14 @@ interface RedirectFunction {
 
 function flat(array: any) {
   return Array.isArray(array) ? array.flat(Infinity) : [array];
+}
+
+function getPathWithoutPrefix(path: string, prefix: string) {
+  let pathWithoutPrefix = path.replace(new RegExp(`^${prefix}`), "").replace(/\/$/, "");
+  if (pathWithoutPrefix === "") {
+    pathWithoutPrefix = "/";
+  }
+  return pathWithoutPrefix;
 }
 
 const addPath = ({
@@ -145,7 +154,7 @@ function searchMiddlewares(router: RouterInterface, path: string): Middlewares {
       matches.push(...match);
 
       if (item.method === "add") {
-        router.path = item.path;
+        router.path = getPathWithoutPrefix(item.path, router.pathPrefix);
         break;
       }
     }
@@ -211,12 +220,15 @@ export class Router implements RouterInterface {
   }
 
   add(path: string, ...middlewares: Middlewares): Router {
-    addPath({ router: this, method: "add", path: `${this.pathPrefix}${path}`, middlewares });
+    addPath({ router: this, method: "add", path: `${this.pathPrefix}${path}`.replace(/\/$/, ""), middlewares });
     return this;
   }
 
   use(...middlewares: Middlewares | Router[] | string[]): Router {
-    let path = `${this.pathPrefix}${typeof middlewares[0] === "string" ? middlewares.shift() : "/"}`;
+    let path = `${this.pathPrefix}${typeof middlewares[0] === "string" ? middlewares.shift() : "/"}`.replace(/\/$/, "");
+    if (path === "") {
+      path = "/";
+    }
 
     for (const item of middlewares) {
       if (item instanceof Router) {
@@ -249,7 +261,11 @@ export class Router implements RouterInterface {
       throw new Error("router.url.required");
     }
 
-    const constructedPath = `${this.pathPrefix}${path}`;
+    let constructedPath = `${this.pathPrefix}${path}`.replace(/\/$/, "");
+    if (constructedPath === "") {
+      constructedPath = "/";
+    }
+
     const parts = constructedPath.split("?", 2);
     this.url = constructedPath;
     this.query = parseQuery(parts[1]);
@@ -309,7 +325,7 @@ export function mountRouter(elementContainer: string | any, router: Router): voi
 
   if (!isNodeJs) {
     function onPopStateGoToRoute(): void {
-      let pathWithoutPrefix = document.location.pathname.replace(router.pathPrefix, "");
+      let pathWithoutPrefix = getPathWithoutPrefix(document.location.pathname, router.pathPrefix);
       (router as unknown as Router).go(pathWithoutPrefix, undefined, true);
     }
     window.addEventListener("popstate", onPopStateGoToRoute, false);
