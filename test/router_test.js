@@ -429,4 +429,46 @@ describe("Router", () => {
       after: "<div>Hello Mike</div>"
     });
   });
+
+  it("Test the initial prefix", async () => {
+    let subrouter = new Router();
+
+    subrouter.add("/1", () => () => "1");
+    subrouter.add("/2", () => () => "2");
+    subrouter.use("/3", async (req) => {
+      await req.redirect("/1");
+      return false;
+    });
+
+    let router = new Router("/test");
+    router.add("/", () => () => "home");
+    router.add("/1", () => () => "1");
+    router.add("/2", () => () => "2");
+    router.use("/sub", subrouter);
+
+    expect(router.pathPrefix).toEqual("/test");
+    expect(router.routes()).toEqual(["/test", "/test/1", "/test/2", "/test/sub/1", "/test/sub/2"]);
+    expect(router.url).toEqual("");
+    expect(router.path).toEqual("");
+
+    mountRouter("body", router);
+
+    let res = await router.go("/");
+    expect(res).toEqual("home");
+    expect(router.pathPrefix).toEqual("/test");
+    expect(router.path).toEqual("/test");
+
+    let res2 = await router.go("/1");
+    expect(res2).toEqual("1");
+    expect(router.path).toEqual("/test/1");
+
+    let res3 = await router.go("/sub/2");
+    expect(res3).toEqual("2");
+    expect(router.path).toEqual("/test/sub/2");
+
+    let res4 = await router.go("/sub/3");
+    // Because is a redirect, res4 is undefined
+    expect(res4).toBeUndefined();
+    expect(router.path).toEqual("/test/1");
+  });
 });

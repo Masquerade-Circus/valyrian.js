@@ -11,15 +11,17 @@ import {
 function flat(array) {
   return Array.isArray(array) ? array.flat(Infinity) : [array];
 }
-var addPath = (router, method, path, middlewares) => {
-  if (middlewares.length === 0) {
-    return;
+var addPath = ({
+  router,
+  method,
+  path,
+  middlewares
+}) => {
+  if (!method || !path || !Array.isArray(middlewares) || middlewares.length === 0) {
+    throw new Error(`Invalid route input: ${method} ${path} ${middlewares}`);
   }
   let realpath = path.replace(/(\S)(\/+)$/, "$1");
-  let params = realpath.match(/:(\w+)?/gi) || [];
-  for (let param in params) {
-    params[param] = params[param].slice(1);
-  }
+  let params = (realpath.match(/:(\w+)?/gi) || []).map((param) => param.slice(1));
   let regexpPath = "^" + realpath.replace(/:(\w+)/gi, "([^\\/\\s]+)") + "$";
   router.paths.push({
     method,
@@ -30,41 +32,27 @@ var addPath = (router, method, path, middlewares) => {
   });
 };
 function parseQuery(queryParts) {
-  let parts = queryParts ? queryParts.split("&", 20) : [];
+  let parts = queryParts ? queryParts.split("&") : [];
   let query = {};
-  let i = 0;
-  let nameValue;
-  for (; i < parts.length; i++) {
-    nameValue = parts[i].split("=", 2);
-    query[nameValue[0]] = nameValue[1];
+  for (let nameValue of parts) {
+    let [name, value] = nameValue.split("=", 2);
+    query[name] = value || "";
   }
   return query;
 }
 function searchMiddlewares(router, path) {
-  let i;
-  let k;
-  let item;
-  let match;
-  let key;
   let middlewares = [];
   let params = {};
   let matches = [];
-  router.params = {};
-  router.path = "";
-  router.matches = [];
-  for (i = 0; i < router.paths.length; i++) {
-    item = router.paths[i];
-    match = item.regexp.exec(path);
+  for (let item of router.paths) {
+    let match = item.regexp.exec(path);
     if (Array.isArray(match)) {
       middlewares.push(...item.middlewares);
       match.shift();
-      for (k = 0; k < item.params.length; k++) {
-        key = item.params[k];
-        params[key] = match.shift();
+      for (let [index, key] of item.params.entries()) {
+        params[key] = match[index];
       }
-      while (match.length) {
-        matches.push(match.shift());
-      }
+      matches.push(...match);
       if (item.method === "add") {
         router.path = item.path;
         break;
@@ -76,8 +64,7 @@ function searchMiddlewares(router, path) {
   return middlewares;
 }
 async function searchComponent(router, middlewares) {
-  let response;
-  let req = {
+  const request = {
     params: router.params,
     query: router.query,
     url: router.url,
@@ -88,9 +75,9 @@ async function searchComponent(router, middlewares) {
       return false;
     }
   };
-  let i = 0;
-  for (; i < middlewares.length; i++) {
-    response = await middlewares[i](req, response);
+  let response;
+  for (const middleware of middlewares) {
+    response = await middleware(request, response);
     if (response !== void 0 && (isComponent(response) || isVnodeComponent(response))) {
       return response;
     }
@@ -112,50 +99,43 @@ var Router = class {
   constructor(pathPrefix = "") {
     this.pathPrefix = pathPrefix;
   }
-  add(path, ...args) {
-    addPath(this, "add", `${this.pathPrefix}${path}`, args);
+  add(path, ...middlewares) {
+    addPath({ router: this, method: "add", path: `${this.pathPrefix}${path}`, middlewares });
     return this;
   }
-  use(...args) {
-    let path = `${this.pathPrefix}${typeof args[0] === "string" ? args.shift() : "/"}`;
-    let item;
-    let subpath;
-    for (let i = 0; i < args.length; i++) {
-      if (args[i] instanceof Router) {
-        let subrouter = args[i];
-        for (let k = 0; k < subrouter.paths.length; k++) {
-          item = subrouter.paths[k];
-          subpath = `${path}${item.path}`.replace(/^\/\//, "/");
-          addPath(this, item.method, subpath, item.middlewares);
+  use(...middlewares) {
+    let path = `${this.pathPrefix}${typeof middlewares[0] === "string" ? middlewares.shift() : "/"}`;
+    for (const item of middlewares) {
+      if (item instanceof Router) {
+        const subrouter = item;
+        for (const subpath of subrouter.paths) {
+          addPath({
+            router: this,
+            method: subpath.method,
+            path: `${path}${subpath.path}`.replace(/^\/\//, "/"),
+            middlewares: subpath.middlewares
+          });
         }
         continue;
       }
-      if (typeof args[i] === "function") {
-        addPath(this, "use", `${path}.*`, [args[i]]);
+      if (typeof item === "function") {
+        addPath({ router: this, method: "use", path: `${path}.*`, middlewares: [item] });
       }
     }
     return this;
   }
   routes() {
-    let routes = [];
-    this.paths.forEach((path) => {
-      if (path.method === "add") {
-        routes.push(path.path);
-      }
-    });
-    return routes;
+    return this.paths.filter((path) => path.method === "add").map((path) => path.path);
   }
-  async go(path, parentComponent) {
+  async go(path, parentComponent, preventPushState = false) {
     if (!path) {
       throw new Error("router.url.required");
     }
-    let constructedPath = `${this.pathPrefix}${path}`;
-    let parts = constructedPath.split("?", 2);
-    let urlParts = parts[0].replace(/(.+)\/$/, "$1");
-    let queryParts = parts[1];
+    const constructedPath = `${this.pathPrefix}${path}`;
+    const parts = constructedPath.split("?", 2);
     this.url = constructedPath;
-    this.query = parseQuery(queryParts);
-    let middlewares = searchMiddlewares(this, urlParts);
+    this.query = parseQuery(parts[1]);
+    const middlewares = searchMiddlewares(this, parts[0].replace(/(.+)\/$/, "$1"));
     let component = await searchComponent(this, middlewares);
     if (component === false) {
       return;
@@ -164,7 +144,7 @@ var Router = class {
       throw new Error(`The url ${constructedPath} requested wasn't found`);
     }
     if (isComponent(parentComponent) || isVnodeComponent(parentComponent)) {
-      let childComponent = isVnodeComponent(component) ? component : v(component, {});
+      const childComponent = isVnodeComponent(component) ? component : v(component, {});
       if (isVnodeComponent(parentComponent)) {
         parentComponent.children.push(childComponent);
         component = parentComponent;
@@ -172,7 +152,7 @@ var Router = class {
         component = v(parentComponent, {}, childComponent);
       }
     }
-    if (!isNodeJs) {
+    if (!isNodeJs && !preventPushState) {
       window.history.pushState(null, "", constructedPath);
     }
     if (this.container) {
@@ -189,18 +169,19 @@ var Router = class {
   }
 };
 var localRedirect;
-function redirect(url) {
+function redirect(url, parentComponent, preventPushState = false) {
   if (!localRedirect) {
     throw new Error("router.redirect.not.found");
   }
-  return localRedirect(url);
+  return localRedirect(url, parentComponent, preventPushState);
 }
 function mountRouter(elementContainer, router) {
   router.container = elementContainer;
   localRedirect = router.go.bind(router);
   if (!isNodeJs) {
     let onPopStateGoToRoute = function() {
-      router.go(document.location.pathname);
+      let pathWithoutPrefix = document.location.pathname.replace(router.pathPrefix, "");
+      router.go(pathWithoutPrefix, void 0, true);
     };
     window.addEventListener("popstate", onPopStateGoToRoute, false);
     onPopStateGoToRoute();
