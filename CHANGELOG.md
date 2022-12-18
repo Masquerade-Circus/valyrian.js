@@ -1,11 +1,17 @@
 
 
-## [7.1.0](https://github.com/Masquerade-Circus/valyrian.js/compare/7.0.4...7.1.0) (2022-12-17)
+### [7.1.1](https://github.com/Masquerade-Circus/valyrian.js/compare/7.1.0...7.1.1) (2022-12-18)
 
+
+### Code Refactoring
+
+* **router:** refactor router ([19a51e0](https://github.com/Masquerade-Circus/valyrian.js/commit/19a51e058ff017bb13c024be5f6a1f69d9d9b8df))
+
+## [7.1.0](https://github.com/Masquerade-Circus/valyrian.js/compare/7.0.4...7.1.0) (2022-12-17)
 
 ### Features
 
-* **router:** add a way to initialize the router with a prefix ([84770ef](https://github.com/Masquerade-Circus/valyrian.js/commit/84770efac1ce0b2a3a43526b43ae9d0a6d5de78f))
+*   **router:** add a way to initialize the router with a prefix ([84770ef](https://github.com/Masquerade-Circus/valyrian.js/commit/84770efac1ce0b2a3a43526b43ae9d0a6d5de78f))
 
 ### [7.0.4](https://github.com/Masquerade-Circus/valyrian.js/compare/7.0.3...7.0.4) (2022-12-17)
 

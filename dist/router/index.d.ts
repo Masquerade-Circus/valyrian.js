@@ -1,11 +1,4 @@
 import { Component, POJOComponent, VnodeComponentInterface } from "valyrian.js";
-interface Path {
-    method: string;
-    path: string;
-    middlewares: Middlewares;
-    params: string[];
-    regexp: RegExp;
-}
 interface Request {
     params: Record<string, any>;
     query: Record<string, any>;
@@ -18,6 +11,13 @@ interface Middleware {
     (req: Request, res?: any): Promise<any | Component | POJOComponent | VnodeComponentInterface> | any | Component | POJOComponent | VnodeComponentInterface;
 }
 interface Middlewares extends Array<Middleware> {
+}
+interface Path {
+    method: string;
+    path: string;
+    middlewares: Middlewares;
+    params: string[];
+    regexp: RegExp;
 }
 interface RouterInterface {
     paths: Path[];
@@ -44,13 +44,13 @@ export declare class Router implements RouterInterface {
     matches: string[];
     pathPrefix: string;
     constructor(pathPrefix?: string);
-    add(path: string, ...args: Middlewares): Router;
-    use(...args: Middlewares | Router[] | string[]): Router;
+    add(path: string, ...middlewares: Middlewares): Router;
+    use(...middlewares: Middlewares | Router[] | string[]): Router;
     routes(): string[];
-    go(path: string, parentComponent?: Component): Promise<string | void>;
+    go(path: string, parentComponent?: Component, preventPushState?: boolean): Promise<string | void>;
     getOnClickHandler(url: string): (e: MouseEvent) => void;
 }
-export declare function redirect(url: string): any;
-export declare function mountRouter(elementContainer: any, router: any): void;
+export declare function redirect(url: string, parentComponent?: Component, preventPushState?: boolean): string | void;
+export declare function mountRouter(elementContainer: string | any, router: Router): void;
 export {};
 //# sourceMappingURL=index.d.ts.map
