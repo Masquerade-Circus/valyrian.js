@@ -1,11 +1,17 @@
 
 
-### [7.2.1](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.0...7.2.1) (2022-12-23)
+### [7.2.2](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.1...7.2.2) (2022-12-23)
 
+
+### Performance Improvements
+
+* **signals and hooks:** improve signals and hooks performance ([71560da](https://github.com/Masquerade-Circus/valyrian.js/commit/71560da24c73b30011b94e070786f7c80e4c6d39))
+
+### [7.2.1](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.0...7.2.1) (2022-12-23)
 
 ### Miscellaneous Chores
 
-* **proxy-signal:** add d.ts files for proxy-signal ([49963ba](https://github.com/Masquerade-Circus/valyrian.js/commit/49963bacb3a542ca65f4af3ea9a51b2cbc57bb3e))
+*   **proxy-signal:** add d.ts files for proxy-signal ([49963ba](https://github.com/Masquerade-Circus/valyrian.js/commit/49963bacb3a542ca65f4af3ea9a51b2cbc57bb3e))
 
 ## [7.2.0](https://github.com/Masquerade-Circus/valyrian.js/compare/7.1.2...7.2.0) (2022-12-23)
 
