@@ -574,12 +574,15 @@ function sharedSetAttribute(name: string, value: any, newVnode: VnodeWithDom, ol
   // If the attribute value is a function, add an event listener for the attribute
   // name to the DOM element represented by mainVnode.
   if (typeof value === "function") {
+    // We change the name of the event to lowercase to avoid issues with case sensitivity.
+    // Ex "onClick" and "onclick" are the same event.
+    let lowercaseName = name.toLowerCase();
     // Only add the event listener if it hasn't been added yet.
-    if (name in eventListenerNames === false) {
-      (mainVnode as VnodeWithDom).dom.addEventListener(name.slice(2), eventListener);
-      eventListenerNames[name] = true;
+    if (lowercaseName in eventListenerNames === false) {
+      (mainVnode as VnodeWithDom).dom.addEventListener(lowercaseName.slice(2), eventListener);
+      eventListenerNames[lowercaseName] = true;
     }
-    newVnode.dom[`v-${name}`] = value;
+    newVnode.dom[`v-${lowercaseName}`] = value;
     return;
   }
 
@@ -742,69 +745,30 @@ export function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void {
   current.oldVnode = oldVnode;
 
   // Flatten the new tree
+  // Take into account that is necessary to flatten the tree before the patch process
+  // to let the hooks and signals work properly
   for (let i = 0; i < newTree.length; i++) {
     let newChild = newTree[i];
 
     // If the new child is a Vnode and is not a text node
     if (newChild instanceof Vnode && newChild.tag !== textTag) {
+      // If the new child tag is a string just continue the loop
+      if (typeof newChild.tag === "string") {
+        continue;
+      }
+
       // If the tag of the new child is not a string, it is a component
-      if (typeof newChild.tag !== "string") {
-        // Set the current component to the tag of the new child
-        current.component = newChild.tag;
-        // Replace the new child with the result of calling its view or bind method, passing in the props and children as arguments
-        newTree.splice(
-          i--,
-          1,
-          ("view" in newChild.tag ? newChild.tag.view.bind(newChild.tag) : newChild.tag.bind(newChild.tag))(
-            newChild.props,
-            ...newChild.children
-          )
-        );
-        continue;
-      }
-
-      // Set the isSVG flag for the new child if it is an SVG element or if the parent is an SVG element
-      newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
-
-      // If there is an old child at the same index
-      if (i < oldTreeLength) {
-        let oldChild = oldTree[i];
-        // If the tag of the new child is the same as the tag of the old child
-        if (newChild.tag === oldChild.tag) {
-          // Set the dom property of the new child to the dom property of the old child
-          newChild.dom = oldChild.dom;
-          // If the v-keep prop is the same for both the new and old child, set the children of the new child to the children of the old child
-          if ("v-keep" in newChild.props && newChild.props["v-keep"] === oldChild.props["v-keep"]) {
-            newChild.children = oldChild.children;
-            continue;
-          }
-
-          // Update the attributes of the new child based on the old child
-          updateAttributes(newChild as VnodeWithDom, oldChild);
-          // Recursively patch the new and old children
-          patch(newChild as VnodeWithDom, oldChild);
-          continue;
-        }
-
-        // Create a new dom element for the new child
-        newChild.dom = createDomElement(newChild.tag, newChild.isSVG);
-        // Update the attributes of the new child
-        updateAttributes(newChild as VnodeWithDom);
-        // Replace the old child in the dom with the new child
-        newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
-        // Recursively patch the new child
-        patch(newChild as VnodeWithDom);
-        continue;
-      }
-
-      // Create a new dom element for the new child
-      newChild.dom = createDomElement(newChild.tag, newChild.isSVG);
-      // Update the attributes of the new child
-      updateAttributes(newChild as VnodeWithDom);
-      // Append the new child to the dom
-      newVnode.dom.appendChild(newChild.dom);
-      // Recursively patch the new child
-      patch(newChild as VnodeWithDom);
+      // Set the current component to the tag of the new child
+      current.component = newChild.tag;
+      // Replace the new child with the result of calling its view or bind method, passing in the props and children as arguments
+      newTree.splice(
+        i--,
+        1,
+        ("view" in newChild.tag ? newChild.tag.view.bind(newChild.tag) : newChild.tag.bind(newChild.tag))(
+          newChild.props,
+          ...newChild.children
+        )
+      );
       continue;
     }
 
@@ -820,42 +784,96 @@ export function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void {
       continue;
     }
 
-    // If the new child is not a Vnode, wrap it in a text Vnode
-    newTree[i] = new Vnode(textTag, {}, []);
-    // If the new child is a Vnode, set the dom property of the text Vnode to the dom property of the new child
+    // If the new child is a Vnode, set the text of the Vnode to the text content of its dom property
     if (newChild instanceof Vnode) {
-      newTree[i].dom = newChild.dom;
       // Set the new child to the text content of its dom property
-      newChild = (newChild as VnodeWithDom).dom.textContent;
+      newChild.children[0] = (newChild as VnodeWithDom).dom.textContent;
+      continue;
     }
 
-    // If there is an old child at the same index
-    if (i < oldTreeLength) {
-      let oldChild = oldTree[i];
+    // If the new child is not a Vnode, wrap it in a text Vnode
+    newChild = newTree[i] = new Vnode(textTag, {}, [newChild]);
+  }
 
-      // If the old child is a text node
-      if (oldChild.tag === textTag) {
-        // Set the dom property of the text Vnode to the dom property of the old child
-        newTree[i].dom = oldChild.dom;
-        // If the text content of the old child is different from the new child, update the text content of the old child
-        // eslint-disable-next-line eqeqeq
-        if (newChild != oldChild.dom.textContent) {
-          oldChild.dom.textContent = newChild;
+  // Patch the the old tree
+  for (let i = 0; i < newTree.length; i++) {
+    let newChild = newTree[i];
+
+    // If the new child is a text vnode
+    if (newChild.tag === textTag) {
+      // If there is an old child at the same index
+      if (i < oldTreeLength) {
+        let oldChild = oldTree[i];
+
+        // If the old child is a text node
+        if (oldChild.tag === textTag) {
+          // Set the dom property of the text Vnode to the dom property of the old child
+          newChild.dom = oldChild.dom;
+          // If the text content of the old child is different from the new child, update the text content of the old child
+          // eslint-disable-next-line eqeqeq
+          if (newChild.children[0] != oldChild.dom.textContent) {
+            oldChild.dom.textContent = newChild.children[0];
+          }
+          continue;
         }
+
+        // Create a new text node for the new child
+        newChild.dom = document.createTextNode(newChild.children[0]);
+        // Replace the old child in the dom with the new text node
+        newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
         continue;
       }
 
       // Create a new text node for the new child
-      newTree[i].dom = document.createTextNode(newChild);
-      // Replace the old child in the dom with the new text node
-      newVnode.dom.replaceChild(newTree[i].dom, oldChild.dom);
+      newChild.dom = document.createTextNode(newChild.children[0]);
+      // Append the new text node to the dom
+      newVnode.dom.appendChild(newChild.dom);
       continue;
     }
 
-    // Create a new text node for the new child
-    newTree[i].dom = document.createTextNode(newChild);
-    // Append the new text node to the dom
-    newVnode.dom.appendChild(newTree[i].dom);
+    // If the new child is not a text node
+    // Set the isSVG flag for the new child if it is an SVG element or if the parent is an SVG element
+    newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
+
+    // If there is an old child at the same index
+    if (i < oldTreeLength) {
+      let oldChild = oldTree[i];
+      // If the tag of the new child is the same as the tag of the old child
+      if (newChild.tag === oldChild.tag) {
+        // Set the dom property of the new child to the dom property of the old child
+        newChild.dom = oldChild.dom;
+        // If the v-keep prop is the same for both the new and old child, set the children of the new child to the children of the old child
+        if ("v-keep" in newChild.props && newChild.props["v-keep"] === oldChild.props["v-keep"]) {
+          newChild.children = oldChild.children;
+          continue;
+        }
+
+        // Update the attributes of the new child based on the old child
+        updateAttributes(newChild as VnodeWithDom, oldChild);
+        // Recursively patch the new and old children
+        patch(newChild as VnodeWithDom, oldChild);
+        continue;
+      }
+
+      // Create a new dom element for the new child
+      newChild.dom = createDomElement(newChild.tag as string, newChild.isSVG);
+      // Update the attributes of the new child
+      updateAttributes(newChild as VnodeWithDom);
+      // Replace the old child in the dom with the new child
+      newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
+      // Recursively patch the new child
+      patch(newChild as VnodeWithDom);
+      continue;
+    }
+
+    // Create a new dom element for the new child
+    newChild.dom = createDomElement(newChild.tag as string, newChild.isSVG);
+    // Update the attributes of the new child
+    updateAttributes(newChild as VnodeWithDom);
+    // Append the new child to the dom
+    newVnode.dom.appendChild(newChild.dom);
+    // Recursively patch the new child
+    patch(newChild as VnodeWithDom);
   }
 
   // Remove any old children that are no longer present in the new tree
@@ -895,6 +913,40 @@ export function update(): void | string {
     if (isNodeJs) {
       return mainVnode.dom.innerHTML;
     }
+  }
+}
+
+// Update custom Vnode
+// It is assumed that a first mount has already occurred, so,
+// the oldVnode is not null and the dom property of the oldVnode is not null
+// You need to set the dom property of the newVnode to the dom property of the oldVnode
+// The same with the isSVG property
+// Prefer this function over patch to allow for cleanup, onUpdate and onMount sets to be called
+export function updateVnode(vnode: VnodeWithDom, oldVnode: VnodeWithDom): string | void {
+  // Call any cleanup functions that are registered with the onCleanupSet set
+  callSet(onCleanupSet);
+
+  // Recursively patch the new and old main Vnodes
+  patch(vnode, oldVnode);
+
+  // Set the vnode properties to the old vnode
+  oldVnode.tag = vnode.tag;
+  oldVnode.props = { ...vnode.props };
+  oldVnode.children = [...vnode.children];
+
+  // Call any update or mount functions that are registered with the onUpdateSet or onMountSet set
+  callSet(isMounted ? onUpdateSet : onMountSet);
+
+  // Set the isMounted flag to true
+  isMounted = true;
+
+  // Reset the current vnode, oldVnode, and component properties
+  current.vnode = null;
+  current.oldVnode = null;
+  current.component = null;
+
+  if (isNodeJs) {
+    return vnode.dom.innerHTML;
   }
 }
 

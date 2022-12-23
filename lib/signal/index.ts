@@ -1,182 +1,102 @@
-import { update } from "valyrian.js";
+import { VnodeWithDom, current, update, updateVnode, v } from "valyrian.js";
 
-/* eslint-disable no-use-before-define */
-interface Cleanup {
-  (): void;
-}
+export function Signal(initialValue) {
+  // Create a copy of the current context object
+  const context = { ...current };
 
-interface Subscription {
-  // eslint-disable-next-line no-unused-vars
-  (value: Signal["value"]): void | Cleanup;
-}
+  // Check if the context object has a vnode property
+  if (context.vnode) {
+    // Is first call
+    if (!context.vnode.signals) {
+      // Set the signals property to the signals property of the oldVnode object, or an empty array if that doesn't exist
+      context.vnode.signals = context.oldVnode?.signals || [];
+      // Set the calls property to -1
+      context.vnode.calls = -1;
+      // Set the subscribers property to the subscribers property of the oldVnode object, or an empty array if that doesn't exist
+      context.vnode.subscribers = context.oldVnode?.subscribers || [];
 
-interface Subscriptions extends Map<Subscription, Cleanup> {}
+      // Set the initialChildren property of the vnode object to a copy of the children array of the vnode object
+      context.vnode.initialChildren = [...context.vnode.children];
+    }
 
-interface Getter {
-  // eslint-disable-next-line no-unused-vars
-  (value: Signal["value"]): any;
-}
+    // Assign the signal variable to the signal stored at the index of the vnode object's calls property in the vnode's signals array
+    let signal = context.vnode.signals[++context.vnode.calls];
 
-interface Getters {
-  [key: string | symbol]: Getter;
-}
-
-interface Signal {
-  // Works as a getter of the value
-  (): Signal["value"];
-  // Works as a subscription to the value
-  // eslint-disable-next-line no-unused-vars
-  (value: Subscription): Signal;
-  // Works as a setter with a path and a handler
-  // eslint-disable-next-line no-unused-vars
-  (path: string, handler: (valueAtPathPosition: any) => any): Signal["value"];
-  // Works as a setter with a path and a value
-  // eslint-disable-next-line no-unused-vars
-  (path: string, value: any): Signal["value"];
-  // Works as a setter with a value
-  // eslint-disable-next-line no-unused-vars
-  (value: any): Signal["value"];
-  // Gets the current value of the signal.
-  value: any;
-  // Cleanup function to be called to remove all subscriptions.
-  cleanup: () => void;
-  // Creates a getter on the signal.
-  // eslint-disable-next-line no-unused-vars
-  getter: (name: string, handler: Getter) => any;
-  // To access the getters on the signal.
-  [key: string | number | symbol]: any;
-}
-
-function makeUnsubscribe(subscriptions: Subscriptions, computed: Signal, handler: Subscription, cleanup?: Cleanup) {
-  if (typeof cleanup === "function") {
-    computed.cleanup = cleanup;
+    // If a signal has already been assigned to the signal variable, return it
+    if (signal) {
+      return signal;
+    }
   }
-  computed.unsubscribe = () => {
-    subscriptions.delete(handler);
-    computed?.cleanup();
+
+  // Declare a variable to store the current value of the Signal
+  let value = initialValue;
+
+  // Create an array to store functions that have subscribed to changes to the Signal's value
+  const subscribers = [];
+
+  // Define a function that allows other parts of the code to subscribe to changes to the Signal's value
+  const subscribe = (callback) => {
+    // Add the callback function to the subscribers array
+    if (subscribers.indexOf(callback) === -1) {
+      subscribers.push(callback);
+    }
   };
-}
 
-function createSubscription(signal: Signal, subscriptions: Subscriptions, handler: Subscription) {
-  if (subscriptions.has(handler) === false) {
-    // eslint-disable-next-line no-use-before-define
-    let computed = Signal(() => handler(signal.value));
-    let cleanup = computed(); // Execute to register itself
-    makeUnsubscribe(subscriptions, computed, handler, cleanup);
-    subscriptions.set(handler, computed);
+  // Define a function that returns the current value of the Signal
+  function get() {
+    return value;
+  }
+  // Add value, toJSON, valueOf, and toString properties to the get function
+  get.value = value;
+  get.toJSON = get.valueOf = get;
+  get.toString = () => `${value}`;
+
+  // Define a function that allows the value of the Signal to be updated and notifies any subscribed functions of the change
+  const set = (newValue) => {
+    // Update the value of the Signal
+    value = newValue;
+    // Update the value property of the get function
+    get.value = value;
+    // Call each subscribed function with the new value of the Signal as an argument
+    for (let i = 0, l = subscribers.length; i < l; i++) {
+      subscribers[i](value);
+    }
+
+    // Check if the context object has a vnode property
+    if (context.vnode) {
+      // If it does, create a new vnode object based on the original vnode, its children, and its DOM and SVG properties
+      let newVnode = v(context.vnode.tag, context.vnode.props, ...context.vnode.initialChildren) as VnodeWithDom;
+      newVnode.dom = context.vnode.dom;
+      newVnode.isSVG = context.vnode.isSVG;
+
+      // Clear the subscribers array by setting the length property to 0
+      context.vnode.subscribers.forEach(
+        (subscribers) =>
+          // Setting the length property to 0 is faster than clearing the array with a loop
+          (subscribers.length = 0)
+      );
+
+      // Clear the subscribers array by setting it to an empty array
+      context.vnode.subscribers = [];
+
+      // Return the result of updating the original vnode with the new vnode
+      return updateVnode(newVnode, context.vnode);
+    }
+
+    // If the context object doesn't have a vnode property, return the result of calling the update function
+    return update();
+  };
+
+  // Assign the signal variable an array containing the get, set, and subscribe functions
+  let signal = [get, set, subscribe];
+
+  // If the context object has a vnode property, add the signal to the vnode's signals array
+  // and add the subscribers array to the vnode's subscribers array
+  if (context.vnode) {
+    context.vnode.signals.push(signal);
+    context.vnode.subscribers.push(subscribers);
   }
 
-  return subscriptions.get(handler);
-}
-
-let updateTimeout: any;
-function delayedUpdate() {
-  clearTimeout(updateTimeout);
-  updateTimeout = setTimeout(update);
-}
-
-// eslint-disable-next-line sonarjs/cognitive-complexity
-export function Signal(value: any): Signal {
-  let subscriptions = new Map();
-  let getters: Getters = {};
-
-  let forceUpdate = false;
-
-  let signal: Signal = new Proxy(
-    // eslint-disable-next-line no-unused-vars
-    function (valOrPath?: any | Subscription, handler?: (valueAtPathPosition: any) => any) {
-      // Works as a getter
-      if (typeof valOrPath === "undefined") {
-        return signal.value;
-      }
-
-      // Works as a subscription
-      if (typeof valOrPath === "function") {
-        return createSubscription(signal, subscriptions, valOrPath);
-      }
-
-      // Works as a setter with a path
-      if (typeof valOrPath === "string" && typeof handler !== "undefined") {
-        let parsed = valOrPath.split(".");
-        let result = signal.value;
-        let next;
-        while (parsed.length) {
-          next = parsed.shift() as string;
-          if (parsed.length > 0) {
-            if (typeof result[next] !== "object") {
-              result[next] = {};
-            }
-            result = result[next];
-          } else {
-            result[next] = typeof handler === "function" ? handler(result[next]) : handler;
-          }
-        }
-        forceUpdate = true;
-        signal.value = signal.value;
-        return signal.value;
-      }
-
-      // Works as a setter with a value
-      signal.value = valOrPath;
-      return signal.value;
-    } as Signal,
-    {
-      set(state, prop, val) {
-        if (prop === "value" || prop === "unsubscribe" || prop === "cleanup") {
-          let old = state[prop];
-          state[prop] = val;
-          if (prop === "value" && (forceUpdate || val !== old)) {
-            forceUpdate = false;
-            for (let [handler, computed] of subscriptions) {
-              computed.cleanup();
-              let cleanup = handler(val);
-              makeUnsubscribe(subscriptions, computed, handler, cleanup);
-            }
-            delayedUpdate();
-          }
-          return true;
-        }
-        return false;
-      },
-      get(state, prop) {
-        if (prop === "value") {
-          return typeof state.value === "function" ? state.value() : state.value;
-        }
-
-        if (prop === "cleanup" || prop === "unsubscribe" || prop === "getter") {
-          return state[prop];
-        }
-
-        if (prop in getters) {
-          return getters[prop](state.value);
-        }
-      }
-    }
-  );
-
-  Object.defineProperties(signal, {
-    value: { value, writable: true, enumerable: true },
-    cleanup: {
-      value() {
-        // eslint-disable-next-line no-unused-vars
-        for (let [handler, computed] of subscriptions) {
-          computed.unsubscribe();
-        }
-      },
-      writable: true,
-      enumerable: true
-    },
-    getter: {
-      value(name: string, handler: Getter) {
-        if (name in getters) {
-          throw new Error("Named computed already exists.");
-        }
-
-        getters[name] = handler;
-      },
-      enumerable: true
-    }
-  });
-
+  // Return the signal
   return signal;
 }

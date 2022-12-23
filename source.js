@@ -288,6 +288,16 @@ async function copy({ entryPoint, outfileName }) {
     });
 
     await build({
+      globalName: "ValyrianProxySignal",
+      entryPoint: "./lib/proxy-signal/index.ts",
+      outfileName: "./dist/proxy-signal/index",
+      clean: false,
+      minify: false,
+      libCheck,
+      external: ["valyrian.js"]
+    });
+
+    await build({
       globalName: "ValyrianSignal",
       entryPoint: "./lib/signal/index.ts",
       outfileName: "./dist/signal/index",

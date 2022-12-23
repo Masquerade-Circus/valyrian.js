@@ -1,182 +1,197 @@
+/* eslint-disable no-console */
 import "valyrian.js/node";
 
-import { mount, unmount, update, v } from "valyrian.js";
+import { describe, it } from "mocha";
+// eslint-disable-next-line no-unused-vars
+import { mount, update, v } from "valyrian.js";
 
-import { Signal } from "../lib/signal";
+import { Signal } from "valyrian.js/signal";
 import expect from "expect";
 
-// TODO: onremove lifecycle has been removed, so this test is broken because does not clear timeouts and intervals
-
-describe("Signals", () => {
-  it("should create a signal", async () => {
-    // Create signal
-    let counter = Signal(0);
-
-    // Read value
-    counter();
-    counter.value;
-
-    // Set value
-    counter(0);
-    counter.value = 0;
-    // Set deeply value with function
-    // counter('path', (current) => current);
-    // Set deeply value
-    // counter('path', 0)
-
-    // Effectful computed / Subscription
-    let effect = counter((val) => expect(val).toBeGreaterThanOrEqual(0));
-
-    // Named computed / Getter
-    counter.getter("hello", (val) => "hello " + val);
-
-    // Pure computed
-    let computed = counter((val) => "hello " + val);
-
-    // Unlinked Pure computed
-    let unlinked = Signal(() => "hello " + counter.value);
-
-    let interval = setInterval(() => (counter.value += 1), 10);
-    expect(counter.hello).toEqual("hello 0");
-    expect(computed()).toEqual("hello 0");
-    expect(computed.value).toEqual("hello 0");
-    expect(unlinked()).toEqual("hello 0");
-    expect(unlinked.value).toEqual("hello 0");
-
-    await new Promise((resolve) => setTimeout(() => resolve(), 22));
-    // effect.unsubscribe();
-    counter.cleanup();
-    expect(counter.hello).toEqual("hello 2");
-    expect(computed()).toEqual("hello 2");
-    expect(computed.value).toEqual("hello 2");
-    expect(unlinked()).toEqual("hello 2");
-    expect(unlinked.value).toEqual("hello 2");
-
-    await new Promise((resolve) => setTimeout(() => resolve(), 22));
-    clearInterval(interval);
-    expect(counter.hello).toEqual("hello 4");
-    expect(computed()).toEqual("hello 4");
-    expect(computed.value).toEqual("hello 4");
-    expect(unlinked()).toEqual("hello 4");
-    expect(unlinked.value).toEqual("hello 4");
-  });
-
-  it("should test effect cleanup", async () => {
-    let delay = Signal(10);
-    let count = Signal(0);
-    let effectInterval = delay((delay) => {
-      let interval = setInterval(() => {
-        count.value = count.value + 1;
-      }, delay);
-      return () => clearInterval(interval);
-    });
-
-    await new Promise((resolve) => setTimeout(() => resolve(), 10));
-    expect(count()).toEqual(1);
+describe("Signal", () => {
+  it("should test basic signal", () => {
+    let [count, setCount, subscribe] = Signal(0);
+    subscribe(() => console.log(`The count is now ${count}`));
+    expect(count()).toEqual(0);
+    setCount(1);
     expect(count.value).toEqual(1);
-    delay(5);
-    await new Promise((resolve) => setTimeout(() => resolve(), 20));
-    expect(count()).toEqual(4);
-    expect(count.value).toEqual(4);
-    effectInterval.cleanup();
-    await new Promise((resolve) => setTimeout(() => resolve(), 20));
-    expect(count()).toEqual(4);
-    expect(count.value).toEqual(4);
-    delay.cleanup();
-    count.cleanup();
+    expect(`${count}`).toEqual("1");
   });
 
-  it("should test deep state effect cleanup", async () => {
-    let state = Signal({
-      count: 0,
-      delay: 10
-    });
-    let effectInterval2 = state(() => {
-      let interval = setInterval(() => {
-        state("count", (current) => current + 1);
-      }, state.value.delay);
-      return () => clearInterval(interval);
-    });
+  it("should test basic signal inside a component", async () => {
+    let setCountOut = null;
+    let countOut = null;
 
-    await new Promise((resolve) => setTimeout(() => resolve(), 10));
-    expect(state()).toEqual({ count: 1, delay: 10 });
-    expect(state.value).toEqual({ count: 1, delay: 10 });
-    state("delay", 5);
-    await new Promise((resolve) => setTimeout(() => resolve(), 20));
-    expect(state()).toEqual({ count: 4, delay: 5 });
-    expect(state.value).toEqual({ count: 4, delay: 5 });
-    effectInterval2.cleanup();
-    await new Promise((resolve) => setTimeout(() => resolve(), 20));
-    expect(state()).toEqual({ count: 4, delay: 5 });
-    expect(state.value).toEqual({ count: 4, delay: 5 });
-  });
-});
+    function increment() {
+      setCountOut(countOut + 1);
+    }
 
-describe("Hooks like pattern", () => {
-  it("should create a simple counter", async () => {
-    let Counter = (ms) => {
-      let count = Signal(0);
-      let interval = setInterval(() => {
-        count.value = count.value + 1;
-      }, ms);
-      return () => <div onremove={() => clearInterval(interval)}>{count.value}</div>;
-    };
+    function decrement() {
+      setCountOut(countOut - 1);
+    }
 
-    let Component = Counter(10);
+    function Counter() {
+      const [count, setCount, subscribe] = Signal(0);
+      setCountOut = setCount;
+      countOut = count;
+      subscribe(() => console.log(`The count is now ${count}`));
+      return (
+        <div>
+          <button onClick={decrement}>-</button>
+          <span>{count}</span>
+          <button onClick={increment}>+</button>
+        </div>
+      );
+    }
 
-    let result = mount("div", Component);
-    expect(result).toEqual("<div>0</div>");
-    await new Promise((resolve) => setTimeout(() => resolve(), 25));
-    result = update();
-    expect(result).toEqual("<div>2</div>");
-    unmount();
+    let div = document.createElement("div");
+
+    let res = mount(div, <Counter />);
+    expect(res).toEqual("<div><button>-</button><span>0</span><button>+</button></div>");
+    increment();
+    expect(div.innerHTML).toEqual("<div><button>-</button><span>1</span><button>+</button></div>");
+    increment();
+    expect(div.innerHTML).toEqual("<div><button>-</button><span>2</span><button>+</button></div>");
+    res = update();
+    expect(res).toEqual("<div><button>-</button><span>2</span><button>+</button></div>");
   });
 
-  it("should create a counter with delay change", async () => {
-    let Counter = (ms) => {
-      let delay = Signal(ms);
-      let count = Signal(0);
-      let interval = delay((delay) => {
-        let interval = setInterval(() => {
-          count.value = count.value + 1;
-        }, delay);
-        return () => clearInterval(interval);
-      });
-      return () => <div onremove={interval.cleanup}>{count.value}</div>;
-    };
+  it("should test basic signal outside a component", async () => {
+    let [count, setCount, subscribe] = Signal(0);
+    subscribe(() => console.log(`The count is now ${count}`));
 
-    let Component = Counter(10);
+    function Counter() {
+      return (
+        <div>
+          <button onClick={() => setCount(count - 1)}>-</button>
+          <button onClick={() => setCount(count + 1)}>+</button>
+        </div>
+      );
+    }
 
-    let result = mount("div", Component);
-    expect(result).toEqual("<div>0</div>");
-    await new Promise((resolve) => setTimeout(() => resolve(), 22));
-    result = update();
-    expect(result).toEqual("<div>2</div>");
-    unmount();
+    function Display() {
+      return (
+        <div>
+          <span>{count}</span>
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <div>
+          <Counter />
+          <Display />
+        </div>
+      );
+    }
+
+    let div = document.createElement("div");
+
+    let res = mount(div, <App />);
+    expect(res).toEqual("<div><div><button>-</button><button>+</button></div><div><span>0</span></div></div>");
+    setCount(1);
+    expect(div.innerHTML).toEqual(
+      "<div><div><button>-</button><button>+</button></div><div><span>1</span></div></div>"
+    );
+    setCount(2);
+    expect(div.innerHTML).toEqual(
+      "<div><div><button>-</button><button>+</button></div><div><span>2</span></div></div>"
+    );
+    res = update();
+    expect(res).toEqual("<div><div><button>-</button><button>+</button></div><div><span>2</span></div></div>");
   });
 
-  it("should create a counter with deep state", async () => {
-    let Counter = (ms) => {
-      let state = Signal({
-        count: 0,
-        delay: ms
-      });
-      let interval = state(() => {
-        let interval = setInterval(() => {
-          state("count", (current) => current + 1);
-        }, state.value.delay);
-        return () => clearInterval(interval);
-      });
-      return () => <div onremove={interval.cleanup}>{state.value.count}</div>;
-    };
+  it("should test multiple signals", () => {
+    let setCountOut = null;
+    let setCount2Out = null;
+    function Counter() {
+      const [count, setCount, subscribe] = Signal(0);
+      const [count2, setCount2, subscribe2] = Signal(0);
+      setCountOut = setCount;
+      setCount2Out = setCount2;
+      subscribe(() => console.log(`The count is now ${count}`));
+      subscribe2(() => console.log(`The count2 is now ${count2}`));
+      return (
+        <div>
+          <button onClick={() => setCount(count - 1)}>-</button>
+          <span>{count}</span>
+          <button onClick={() => setCount(count + 1)}>+</button>
+          <button onClick={() => setCount2(count2 - 1)}>-</button>
+          <span>{count2}</span>
+          <button onClick={() => setCount2(count2 + 1)}>+</button>
+        </div>
+      );
+    }
 
-    let Component = Counter(10);
+    let div = document.createElement("div");
 
-    let result = mount("div", Component);
-    expect(result).toEqual("<div>0</div>");
-    await new Promise((resolve) => setTimeout(() => resolve(), 25));
-    result = update();
-    expect(result).toEqual("<div>2</div>");
-    unmount();
+    let res = mount(div, <Counter />);
+    expect(res).toEqual(
+      "<div><button>-</button><span>0</span><button>+</button><button>-</button><span>0</span><button>+</button></div>"
+    );
+    setCountOut(1);
+    expect(div.innerHTML).toEqual(
+      "<div><button>-</button><span>1</span><button>+</button><button>-</button><span>0</span><button>+</button></div>"
+    );
+    setCount2Out(1);
+    expect(div.innerHTML).toEqual(
+      "<div><button>-</button><span>1</span><button>+</button><button>-</button><span>1</span><button>+</button></div>"
+    );
+  });
+
+  it("should test signal inside a component with a signal outside the component", () => {
+    let setCount1Out = null;
+    let setCount2Out = null;
+    let setCount3Out = null;
+
+    function Counter() {
+      let [count, setCount, subscribe] = Signal(0);
+      if (!setCount1Out) {
+        setCount1Out = setCount;
+      } else if (!setCount2Out) {
+        setCount2Out = setCount;
+      }
+      subscribe(() => console.log(`The count is now ${count}`));
+      return (
+        <div id="counter">
+          <button onClick={() => setCount(count - 1)}>-</button>
+          <span>{count}</span>
+          <button onClick={() => setCount(count + 1)}>+</button>
+        </div>
+      );
+    }
+
+    function App() {
+      let [count, setCount, subscribe] = Signal(0);
+      setCount3Out = setCount;
+      subscribe(() => console.log(`The app count is now ${count}`));
+      return (
+        <div>
+          <Counter />
+          <Counter />
+          <div id="count">{count}</div>
+        </div>
+      );
+    }
+
+    let div = document.createElement("div");
+
+    let res = mount(div, <App />);
+    expect(res).toEqual(
+      '<div><div id="counter"><button>-</button><span>0</span><button>+</button></div><div id="counter"><button>-</button><span>0</span><button>+</button></div><div id="count">0</div></div>'
+    );
+    setCount1Out(1);
+    expect(div.innerHTML).toEqual(
+      '<div><div id="counter"><button>-</button><span>1</span><button>+</button></div><div id="counter"><button>-</button><span>0</span><button>+</button></div><div id="count">0</div></div>'
+    );
+    setCount2Out(1);
+    expect(div.innerHTML).toEqual(
+      '<div><div id="counter"><button>-</button><span>1</span><button>+</button></div><div id="counter"><button>-</button><span>1</span><button>+</button></div><div id="count">0</div></div>'
+    );
+    setCount3Out(1);
+    expect(div.innerHTML).toEqual(
+      '<div><div id="counter"><button>-</button><span>1</span><button>+</button></div><div id="counter"><button>-</button><span>1</span><button>+</button></div><div id="count">1</div></div>'
+    );
   });
 });

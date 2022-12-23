@@ -388,15 +388,12 @@ describe("Hooks", () => {
       expect(computedTimes).toEqual(2);
     });
 
-    it("Update class with hooks vs shouldupdate property", () => {
+    it("Update class with hooks vs v-keep", () => {
       let updateClass = "";
       let Component = () => (
         <div>
           {
-            <div
-              class={updateClass === "test" ? "test" : false}
-              shouldupdate={(vnode, oldVnode) => vnode.props.class !== oldVnode.props.class}
-            >
+            <div class={updateClass === "test" ? "test" : false} v-keep={updateClass}>
               test
             </div>
           }

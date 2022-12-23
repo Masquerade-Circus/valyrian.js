@@ -779,15 +779,12 @@ compare("Mount and update: Update class", () => {
   });
 });
 
-compare("Mount and update: Update class with hooks vs shouldupdate property", () => {
+compare("Mount and update: Update class with hooks vs v-keep", () => {
   let updateClass2 = "";
   let Component = () => (
     <div>
       {
-        <div
-          class={updateClass2 === "test" ? "test" : false}
-          shouldupdate={(vnode, oldVnode) => vnode.props.class !== oldVnode.props.class}
-        >
+        <div class={updateClass2 === "test" ? "test" : false} v-keep={updateClass2}>
           test
         </div>
       }

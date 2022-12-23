@@ -23,114 +23,55 @@ __export(signal_exports, {
 });
 module.exports = __toCommonJS(signal_exports);
 var import_valyrian = require("valyrian.js");
-function makeUnsubscribe(subscriptions, computed, handler, cleanup) {
-  if (typeof cleanup === "function") {
-    computed.cleanup = cleanup;
+function Signal(initialValue) {
+  const context = { ...import_valyrian.current };
+  if (context.vnode) {
+    if (!context.vnode.signals) {
+      context.vnode.signals = context.oldVnode?.signals || [];
+      context.vnode.calls = -1;
+      context.vnode.subscribers = context.oldVnode?.subscribers || [];
+      context.vnode.initialChildren = [...context.vnode.children];
+    }
+    let signal2 = context.vnode.signals[++context.vnode.calls];
+    if (signal2) {
+      return signal2;
+    }
   }
-  computed.unsubscribe = () => {
-    subscriptions.delete(handler);
-    computed?.cleanup();
+  let value = initialValue;
+  const subscribers = [];
+  const subscribe = (callback) => {
+    if (subscribers.indexOf(callback) === -1) {
+      subscribers.push(callback);
+    }
   };
-}
-function createSubscription(signal, subscriptions, handler) {
-  if (subscriptions.has(handler) === false) {
-    let computed = Signal(() => handler(signal.value));
-    let cleanup = computed();
-    makeUnsubscribe(subscriptions, computed, handler, cleanup);
-    subscriptions.set(handler, computed);
+  function get() {
+    return value;
   }
-  return subscriptions.get(handler);
-}
-var updateTimeout;
-function delayedUpdate() {
-  clearTimeout(updateTimeout);
-  updateTimeout = setTimeout(import_valyrian.update);
-}
-function Signal(value) {
-  let subscriptions = /* @__PURE__ */ new Map();
-  let getters = {};
-  let forceUpdate = false;
-  let signal = new Proxy(
-    function(valOrPath, handler) {
-      if (typeof valOrPath === "undefined") {
-        return signal.value;
-      }
-      if (typeof valOrPath === "function") {
-        return createSubscription(signal, subscriptions, valOrPath);
-      }
-      if (typeof valOrPath === "string" && typeof handler !== "undefined") {
-        let parsed = valOrPath.split(".");
-        let result = signal.value;
-        let next;
-        while (parsed.length) {
-          next = parsed.shift();
-          if (parsed.length > 0) {
-            if (typeof result[next] !== "object") {
-              result[next] = {};
-            }
-            result = result[next];
-          } else {
-            result[next] = typeof handler === "function" ? handler(result[next]) : handler;
-          }
-        }
-        forceUpdate = true;
-        signal.value = signal.value;
-        return signal.value;
-      }
-      signal.value = valOrPath;
-      return signal.value;
-    },
-    {
-      set(state, prop, val) {
-        if (prop === "value" || prop === "unsubscribe" || prop === "cleanup") {
-          let old = state[prop];
-          state[prop] = val;
-          if (prop === "value" && (forceUpdate || val !== old)) {
-            forceUpdate = false;
-            for (let [handler, computed] of subscriptions) {
-              computed.cleanup();
-              let cleanup = handler(val);
-              makeUnsubscribe(subscriptions, computed, handler, cleanup);
-            }
-            delayedUpdate();
-          }
-          return true;
-        }
-        return false;
-      },
-      get(state, prop) {
-        if (prop === "value") {
-          return typeof state.value === "function" ? state.value() : state.value;
-        }
-        if (prop === "cleanup" || prop === "unsubscribe" || prop === "getter") {
-          return state[prop];
-        }
-        if (prop in getters) {
-          return getters[prop](state.value);
-        }
-      }
+  get.value = value;
+  get.toJSON = get.valueOf = get;
+  get.toString = () => `${value}`;
+  const set = (newValue) => {
+    value = newValue;
+    get.value = value;
+    for (let i = 0, l = subscribers.length; i < l; i++) {
+      subscribers[i](value);
     }
-  );
-  Object.defineProperties(signal, {
-    value: { value, writable: true, enumerable: true },
-    cleanup: {
-      value() {
-        for (let [handler, computed] of subscriptions) {
-          computed.unsubscribe();
-        }
-      },
-      writable: true,
-      enumerable: true
-    },
-    getter: {
-      value(name, handler) {
-        if (name in getters) {
-          throw new Error("Named computed already exists.");
-        }
-        getters[name] = handler;
-      },
-      enumerable: true
+    if (context.vnode) {
+      let newVnode = (0, import_valyrian.v)(context.vnode.tag, context.vnode.props, ...context.vnode.initialChildren);
+      newVnode.dom = context.vnode.dom;
+      newVnode.isSVG = context.vnode.isSVG;
+      context.vnode.subscribers.forEach(
+        (subscribers2) => subscribers2.length = 0
+      );
+      context.vnode.subscribers = [];
+      return (0, import_valyrian.updateVnode)(newVnode, context.vnode);
     }
-  });
+    return (0, import_valyrian.update)();
+  };
+  let signal = [get, set, subscribe];
+  if (context.vnode) {
+    context.vnode.signals.push(signal);
+    context.vnode.subscribers.push(subscribers);
+  }
   return signal;
 }
