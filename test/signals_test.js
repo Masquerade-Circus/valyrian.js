@@ -1,14 +1,16 @@
 /* eslint-disable no-console */
 import "valyrian.js/node";
 
-import { describe, it } from "mocha";
+import { afterEach, describe, it } from "mocha";
 // eslint-disable-next-line no-unused-vars
-import { mount, update, v } from "valyrian.js";
+import { mount, onCleanup, unmount, update, v } from "valyrian.js";
 
 import { Signal } from "valyrian.js/signal";
 import expect from "expect";
 
 describe("Signal", () => {
+  afterEach(unmount);
+
   it("should test basic signal", () => {
     let [count, setCount, subscribe] = Signal(0);
     subscribe(() => console.log(`The count is now ${count}`));
@@ -140,6 +142,83 @@ describe("Signal", () => {
     );
   });
 
+  it("should test multiple component instances with signal inside component", () => {
+    let setCountOut = null;
+    function Counter() {
+      const [count, setCount, subscribe] = Signal(0);
+      setCountOut = setCount;
+      subscribe(() => console.log(`The count is now ${count}`));
+      return (
+        <div>
+          <button onClick={() => setCount(count - 1)}>-</button>
+          <span>{count}</span>
+          <button onClick={() => setCount(count + 1)}>+</button>
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <div>
+          <Counter />
+          <Counter />
+        </div>
+      );
+    }
+
+    let div = document.createElement("div");
+
+    let res = mount(div, <App />);
+    expect(res).toEqual(
+      "<div><div><button>-</button><span>0</span><button>+</button></div><div><button>-</button><span>0</span><button>+</button></div></div>"
+    );
+    setCountOut(1);
+    expect(div.innerHTML).toEqual(
+      "<div><div><button>-</button><span>0</span><button>+</button></div><div><button>-</button><span>1</span><button>+</button></div></div>"
+    );
+    setCountOut(2);
+    expect(div.innerHTML).toEqual(
+      "<div><div><button>-</button><span>0</span><button>+</button></div><div><button>-</button><span>2</span><button>+</button></div></div>"
+    );
+  });
+
+  it("should test multiple component instances with signal outside component", () => {
+    const [count, setCount] = Signal(0);
+    function Counter() {
+      return (
+        <div>
+          <button onClick={() => setCount(count - 1)}>-</button>
+          <span>{count}</span>
+          <button onClick={() => setCount(count + 1)}>+</button>
+        </div>
+      );
+    }
+
+    function App() {
+      return (
+        <div>
+          <Counter />
+          <Counter />
+        </div>
+      );
+    }
+
+    let div = document.createElement("div");
+
+    let res = mount(div, <App />);
+    expect(res).toEqual(
+      "<div><div><button>-</button><span>0</span><button>+</button></div><div><button>-</button><span>0</span><button>+</button></div></div>"
+    );
+    setCount(1);
+    expect(div.innerHTML).toEqual(
+      "<div><div><button>-</button><span>1</span><button>+</button></div><div><button>-</button><span>1</span><button>+</button></div></div>"
+    );
+    setCount(2);
+    expect(div.innerHTML).toEqual(
+      "<div><div><button>-</button><span>2</span><button>+</button></div><div><button>-</button><span>2</span><button>+</button></div></div>"
+    );
+  });
+
   it("should test signal inside a component with a signal outside the component", () => {
     let setCount1Out = null;
     let setCount2Out = null;
@@ -193,5 +272,53 @@ describe("Signal", () => {
     expect(div.innerHTML).toEqual(
       '<div><div id="counter"><button>-</button><span>1</span><button>+</button></div><div id="counter"><button>-</button><span>1</span><button>+</button></div><div id="count">1</div></div>'
     );
+  });
+
+  it("should handle change of components", async () => {
+    let change = false;
+    let Counter = () => {
+      let [count, setCount] = Signal(0);
+      let [name] = Signal("Hello");
+      let interval = setInterval(() => setCount(count + 1), 10);
+      onCleanup(() => clearInterval(interval));
+      return (
+        <div>
+          {count} {name}
+        </div>
+      );
+    };
+
+    let OtherCounter = () => {
+      let [count, setCount] = Signal(10);
+      let [name] = Signal("World");
+      let interval = setInterval(() => setCount(count + 1), 10);
+      onCleanup(() => clearInterval(interval));
+      return (
+        <div>
+          {count} {name}
+        </div>
+      );
+    };
+
+    function Component() {
+      return change ? <OtherCounter /> : <Counter />;
+    }
+
+    let result = mount("div", Component);
+    expect(result).toEqual("<div>0 Hello</div>");
+    await new Promise((resolve) => setTimeout(() => resolve(), 28));
+    change = true;
+    result = update();
+    expect(result).toEqual("<div>10 World</div>");
+    await new Promise((resolve) => setTimeout(() => resolve(), 28));
+    result = update();
+    expect(result).toEqual("<div>12 World</div>");
+    await new Promise((resolve) => setTimeout(() => resolve(), 28));
+    result = update();
+    expect(result).toEqual("<div>14 World</div>");
+    change = false;
+    result = update();
+    expect(result).toEqual("<div>2 Hello</div>");
+    unmount();
   });
 });

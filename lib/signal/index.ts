@@ -1,26 +1,38 @@
-import { VnodeWithDom, current, update, updateVnode, v } from "valyrian.js";
+import { VnodeWithDom, current, onUnmount, update, updateVnode, v } from "valyrian.js";
 
 export function Signal(initialValue) {
   // Create a copy of the current context object
-  const context = { ...current };
+  const { vnode, oldVnode, component } = { ...current };
 
   // Check if the context object has a vnode property
-  if (context.vnode) {
+  if (vnode) {
     // Is first call
-    if (!context.vnode.signals) {
-      // Set the signals property to the signals property of the oldVnode object, or an empty array if that doesn't exist
-      context.vnode.signals = context.oldVnode?.signals || [];
-      // Set the calls property to -1
-      context.vnode.calls = -1;
-      // Set the subscribers property to the subscribers property of the oldVnode object, or an empty array if that doesn't exist
-      context.vnode.subscribers = context.oldVnode?.subscribers || [];
+    if (!vnode.components) {
+      // Set the components property to an empty array
+      vnode.components = [];
+    }
 
+    if (vnode.components.indexOf(component) === -1) {
+      // Set the subscribers property to the subscribers property of the oldVnode object, or an empty array if that doesn't exist
+      vnode.subscribers = oldVnode?.subscribers || [];
       // Set the initialChildren property of the vnode object to a copy of the children array of the vnode object
-      context.vnode.initialChildren = [...context.vnode.children];
+      vnode.initialChildren = [...vnode.children];
+
+      // Set the calls property to -1
+      vnode.signal_calls = -1;
+      // Add the component to the components array
+      vnode.components.push(component);
+
+      if (!component.signals) {
+        // Set the signals property of the component object to an empty array
+        component.signals = [];
+        // Add a function to the cleanup stack that removes the signals property from the component object
+        onUnmount(() => Reflect.deleteProperty(component, "signals"));
+      }
     }
 
     // Assign the signal variable to the signal stored at the index of the vnode object's calls property in the vnode's signals array
-    let signal = context.vnode.signals[++context.vnode.calls];
+    let signal = component.signals[++vnode.signal_calls];
 
     // If a signal has already been assigned to the signal variable, return it
     if (signal) {
@@ -63,24 +75,24 @@ export function Signal(initialValue) {
     }
 
     // Check if the context object has a vnode property
-    if (context.vnode) {
+    if (vnode) {
       // If it does, create a new vnode object based on the original vnode, its children, and its DOM and SVG properties
-      let newVnode = v(context.vnode.tag, context.vnode.props, ...context.vnode.initialChildren) as VnodeWithDom;
-      newVnode.dom = context.vnode.dom;
-      newVnode.isSVG = context.vnode.isSVG;
+      let newVnode = v(vnode.tag, vnode.props, ...vnode.initialChildren) as VnodeWithDom;
+      newVnode.dom = vnode.dom;
+      newVnode.isSVG = vnode.isSVG;
 
       // Clear the subscribers array by setting the length property to 0
-      context.vnode.subscribers.forEach(
+      vnode.subscribers.forEach(
         (subscribers) =>
           // Setting the length property to 0 is faster than clearing the array with a loop
           (subscribers.length = 0)
       );
 
       // Clear the subscribers array by setting it to an empty array
-      context.vnode.subscribers = [];
+      vnode.subscribers = [];
 
       // Return the result of updating the original vnode with the new vnode
-      return updateVnode(newVnode, context.vnode);
+      return updateVnode(newVnode, vnode);
     }
 
     // If the context object doesn't have a vnode property, return the result of calling the update function
@@ -92,9 +104,9 @@ export function Signal(initialValue) {
 
   // If the context object has a vnode property, add the signal to the vnode's signals array
   // and add the subscribers array to the vnode's subscribers array
-  if (context.vnode) {
-    context.vnode.signals.push(signal);
-    context.vnode.subscribers.push(subscribers);
+  if (vnode) {
+    component.signals.push(signal);
+    vnode.subscribers.push(subscribers);
   }
 
   // Return the signal

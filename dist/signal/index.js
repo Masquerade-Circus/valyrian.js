@@ -24,15 +24,22 @@ __export(signal_exports, {
 module.exports = __toCommonJS(signal_exports);
 var import_valyrian = require("valyrian.js");
 function Signal(initialValue) {
-  const context = { ...import_valyrian.current };
-  if (context.vnode) {
-    if (!context.vnode.signals) {
-      context.vnode.signals = context.oldVnode?.signals || [];
-      context.vnode.calls = -1;
-      context.vnode.subscribers = context.oldVnode?.subscribers || [];
-      context.vnode.initialChildren = [...context.vnode.children];
+  const { vnode, oldVnode, component } = { ...import_valyrian.current };
+  if (vnode) {
+    if (!vnode.components) {
+      vnode.components = [];
     }
-    let signal2 = context.vnode.signals[++context.vnode.calls];
+    if (vnode.components.indexOf(component) === -1) {
+      vnode.subscribers = oldVnode?.subscribers || [];
+      vnode.initialChildren = [...vnode.children];
+      vnode.signal_calls = -1;
+      vnode.components.push(component);
+      if (!component.signals) {
+        component.signals = [];
+        (0, import_valyrian.onUnmount)(() => Reflect.deleteProperty(component, "signals"));
+      }
+    }
+    let signal2 = component.signals[++vnode.signal_calls];
     if (signal2) {
       return signal2;
     }
@@ -56,22 +63,22 @@ function Signal(initialValue) {
     for (let i = 0, l = subscribers.length; i < l; i++) {
       subscribers[i](value);
     }
-    if (context.vnode) {
-      let newVnode = (0, import_valyrian.v)(context.vnode.tag, context.vnode.props, ...context.vnode.initialChildren);
-      newVnode.dom = context.vnode.dom;
-      newVnode.isSVG = context.vnode.isSVG;
-      context.vnode.subscribers.forEach(
+    if (vnode) {
+      let newVnode = (0, import_valyrian.v)(vnode.tag, vnode.props, ...vnode.initialChildren);
+      newVnode.dom = vnode.dom;
+      newVnode.isSVG = vnode.isSVG;
+      vnode.subscribers.forEach(
         (subscribers2) => subscribers2.length = 0
       );
-      context.vnode.subscribers = [];
-      return (0, import_valyrian.updateVnode)(newVnode, context.vnode);
+      vnode.subscribers = [];
+      return (0, import_valyrian.updateVnode)(newVnode, vnode);
     }
     return (0, import_valyrian.update)();
   };
   let signal = [get, set, subscribe];
-  if (context.vnode) {
-    context.vnode.signals.push(signal);
-    context.vnode.subscribers.push(subscribers);
+  if (vnode) {
+    component.signals.push(signal);
+    vnode.subscribers.push(subscribers);
   }
   return signal;
 }

@@ -804,7 +804,7 @@ compare("(No memo) Mount and update: Update class", () => {
   });
 });
 
-compare.only("(No memo) Mount and update: Update class with hooks vs v-keep", () => {
+compare("(No memo) Mount and update: Update class with hooks vs v-keep", () => {
   let updateClass2 = "";
   let Component = () => (
     <div>

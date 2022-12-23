@@ -34,35 +34,37 @@ export const createHook = function createHook({
   returnValue
 }: HookDefinition): Hook {
   return (...args: any[]) => {
-    let { component, vnode, oldVnode } = current as CurrentOnPatch;
+    let { component, vnode } = current as CurrentOnPatch;
 
-    // Init the components array for the current vnode
-    if (!vnode.components) {
-      vnode.components = [];
-      onUnmount(() => Reflect.deleteProperty(vnode, "components"));
+    let hook = null;
+
+    if (vnode) {
+      // Init the components array for the current vnode
+      if (!vnode.components) {
+        vnode.components = [];
+      }
+
+      if (vnode.components.indexOf(component) === -1) {
+        vnode.hook_calls = -1;
+        vnode.components.push(component);
+        if (!component.hooks) {
+          component.hooks = [];
+          onUnmount(() => Reflect.deleteProperty(component, "hooks"));
+        }
+      }
+
+      hook = component.hooks[++vnode.hook_calls];
     }
 
-    // Add the component to the components array if it's not already there
-    if (vnode.components.indexOf(component) === -1) {
-      vnode.components.push(component);
-    }
-
-    // Init the component hooks array
-    if (!component.hooks) {
-      component.hooks = [];
-      onUnmount(() => Reflect.deleteProperty(component, "hooks"));
-    }
-
-    let hook: Hook = undefined;
-
-    // if no old vnode or old vnode has no components or old vnode's last component is not the current component
-    // we are mounting the component for the first time so we create a new hook
-    if (!oldVnode || !oldVnode.components || oldVnode.components[vnode.components.length - 1] !== component) {
+    // If the hook doesn't exist, create it
+    if (!hook) {
       // create a new hook
       hook = onCreate(...args);
 
-      // add the hook to the component's hooks array
-      component.hooks.push(hook);
+      if (vnode) {
+        // Add the hook to the component
+        component.hooks.push(hook);
+      }
 
       // if we have a onRemove hook, add it to the onUnmount set
       if (onRemove) {
@@ -70,24 +72,6 @@ export const createHook = function createHook({
         onUnmount(() => onRemove(hook));
       }
     } else {
-      // old vnode has components, we are updating the component
-
-      // Set the calls property to the current component if it's not already set
-      if ("calls" in component === false) {
-        component.calls = -1;
-        onUnmount(() => Reflect.deleteProperty(component, "calls"));
-      }
-
-      // Reset the calls property to -1 on cleanup so we can detect if the component is updated again
-      onCleanup(() => (component.calls = -1));
-
-      // Increment the calls property
-      component.calls++;
-
-      // Get the current hook from the component's hooks array
-      hook = component.hooks[component.calls];
-
-      // If we have an onUpdate hook, call it
       if (onUpdateHook) {
         onUpdateHook(hook, ...args);
       }
@@ -118,22 +102,22 @@ function delayedUpdate() {
 // Use state hook
 export const useState = createHook({
   onCreate: (value) => {
-    let stateObj = Object.create(null);
-    stateObj.value = value;
-    stateObj.toJSON =
-      stateObj.toString =
-      stateObj.valueOf =
-        () => (typeof stateObj.value === "function" ? stateObj.value() : stateObj.value);
+    function get() {
+      return value;
+    }
+    get.value = value;
+    get.toJSON = get.valueOf = get;
+    get.toString = () => `${value}`;
 
-    return [
-      stateObj,
-      (value: any) => {
-        if (stateObj.value !== value) {
-          stateObj.value = value;
-          delayedUpdate();
-        }
+    function set(newValue) {
+      if (value !== newValue) {
+        value = newValue;
+        get.value = newValue;
+        delayedUpdate();
       }
-    ];
+    }
+
+    return [get, set];
   }
 });
 

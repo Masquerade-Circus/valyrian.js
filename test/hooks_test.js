@@ -1,5 +1,6 @@
 import "valyrian.js/node";
 
+// eslint-disable-next-line no-unused-vars
 import { mount, onCleanup, unmount, update, v } from "valyrian.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "valyrian.js/hooks";
 
@@ -7,6 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "valyrian.js/h
 import expect from "expect";
 
 describe("Hooks", () => {
+  afterEach(unmount);
   describe("State hook", () => {
     it("should handle a component state", async () => {
       let Counter = () => {
@@ -57,7 +59,7 @@ describe("Hooks", () => {
       let change = false;
       let Counter = () => {
         let [count, setCount] = useState(0);
-        let [name, setName] = useState("Hello");
+        let [name] = useState("Hello");
         let interval = setInterval(() => setCount(count + 1), 10);
         onCleanup(() => clearInterval(interval));
         return (
@@ -69,7 +71,7 @@ describe("Hooks", () => {
 
       let OtherCounter = () => {
         let [count, setCount] = useState(10);
-        let [name, setName] = useState("World");
+        let [name] = useState("World");
         let interval = setInterval(() => setCount(count + 1), 10);
         onCleanup(() => clearInterval(interval));
         return (
@@ -95,6 +97,9 @@ describe("Hooks", () => {
       await new Promise((resolve) => setTimeout(() => resolve(), 28));
       result = update();
       expect(result).toEqual("<div>14 World</div>");
+      change = false;
+      result = update();
+      expect(result).toEqual("<div>2 Hello</div>");
       unmount();
     });
   });

@@ -8,33 +8,31 @@ var createHook = function createHook2({
   returnValue
 }) {
   return (...args) => {
-    let { component, vnode, oldVnode } = current;
-    if (!vnode.components) {
-      vnode.components = [];
-      onUnmount(() => Reflect.deleteProperty(vnode, "components"));
+    let { component, vnode } = current;
+    let hook = null;
+    if (vnode) {
+      if (!vnode.components) {
+        vnode.components = [];
+      }
+      if (vnode.components.indexOf(component) === -1) {
+        vnode.hook_calls = -1;
+        vnode.components.push(component);
+        if (!component.hooks) {
+          component.hooks = [];
+          onUnmount(() => Reflect.deleteProperty(component, "hooks"));
+        }
+      }
+      hook = component.hooks[++vnode.hook_calls];
     }
-    if (vnode.components.indexOf(component) === -1) {
-      vnode.components.push(component);
-    }
-    if (!component.hooks) {
-      component.hooks = [];
-      onUnmount(() => Reflect.deleteProperty(component, "hooks"));
-    }
-    let hook = void 0;
-    if (!oldVnode || !oldVnode.components || oldVnode.components[vnode.components.length - 1] !== component) {
+    if (!hook) {
       hook = onCreate(...args);
-      component.hooks.push(hook);
+      if (vnode) {
+        component.hooks.push(hook);
+      }
       if (onRemove) {
         onUnmount(() => onRemove(hook));
       }
     } else {
-      if ("calls" in component === false) {
-        component.calls = -1;
-        onUnmount(() => Reflect.deleteProperty(component, "calls"));
-      }
-      onCleanup(() => component.calls = -1);
-      component.calls++;
-      hook = component.hooks[component.calls];
       if (onUpdateHook) {
         onUpdateHook(hook, ...args);
       }
@@ -55,18 +53,20 @@ function delayedUpdate() {
 }
 var useState = createHook({
   onCreate: (value) => {
-    let stateObj = /* @__PURE__ */ Object.create(null);
-    stateObj.value = value;
-    stateObj.toJSON = stateObj.toString = stateObj.valueOf = () => typeof stateObj.value === "function" ? stateObj.value() : stateObj.value;
-    return [
-      stateObj,
-      (value2) => {
-        if (stateObj.value !== value2) {
-          stateObj.value = value2;
-          delayedUpdate();
-        }
+    function get() {
+      return value;
+    }
+    get.value = value;
+    get.toJSON = get.valueOf = get;
+    get.toString = () => `${value}`;
+    function set(newValue) {
+      if (value !== newValue) {
+        value = newValue;
+        get.value = newValue;
+        delayedUpdate();
       }
-    ];
+    }
+    return [get, set];
   }
 });
 var useEffect = createHook({
