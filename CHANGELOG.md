@@ -1,16 +1,26 @@
 
 
-### [7.1.2](https://github.com/Masquerade-Circus/valyrian.js/compare/7.1.1...7.1.2) (2022-12-18)
+## [7.2.0](https://github.com/Masquerade-Circus/valyrian.js/compare/7.1.2...7.2.0) (2022-12-23)
 
+
+### Features
+
+* **signal:** add a solid.js like create signal function ([7c4e8e3](https://github.com/Masquerade-Circus/valyrian.js/commit/7c4e8e3ee2cd06669851d05ee861ed6fd4859a2b))
+
+
+### Build System
+
+* update dependencies ([dc9312a](https://github.com/Masquerade-Circus/valyrian.js/commit/dc9312a9111ec701cdc2cddaed21c779b12608ba))
+
+### [7.1.2](https://github.com/Masquerade-Circus/valyrian.js/compare/7.1.1...7.1.2) (2022-12-18)
 
 ### Bug Fixes
 
-* **router:** fix not found home because last slash ([1766052](https://github.com/Masquerade-Circus/valyrian.js/commit/1766052406113cb4bbbac98a9adbfdf6d73384c4))
-
+*   **router:** fix not found home because last slash ([1766052](https://github.com/Masquerade-Circus/valyrian.js/commit/1766052406113cb4bbbac98a9adbfdf6d73384c4))
 
 ### Code Refactoring
 
-* **router:** refactor router path to be the local app path instead of the full url ([2e3c3f3](https://github.com/Masquerade-Circus/valyrian.js/commit/2e3c3f34a6cbc7f51f068ad346edac0db3cc2128))
+*   **router:** refactor router path to be the local app path instead of the full url ([2e3c3f3](https://github.com/Masquerade-Circus/valyrian.js/commit/2e3c3f34a6cbc7f51f068ad346edac0db3cc2128))
 
 ### [7.1.1](https://github.com/Masquerade-Circus/valyrian.js/compare/7.1.0...7.1.1) (2022-12-18)
 

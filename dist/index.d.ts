@@ -73,6 +73,7 @@ export declare function setAttribute(name: string, value: any, newVnode: VnodeWi
 export declare function updateAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
 export declare function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
 export declare function update(): void | string;
+export declare function updateVnode(vnode: VnodeWithDom, oldVnode: VnodeWithDom): string | void;
 export declare function unmount(): string | void;
 export declare function mount(dom: any, component: any): string | void;
 export declare const v: V;

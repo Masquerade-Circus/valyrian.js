@@ -86,6 +86,7 @@ declare module "valyrian.js" {
     function updateAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
     function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
     function update(): void | string;
+    function updateVnode(vnode: VnodeWithDom, oldVnode: VnodeWithDom): string | void;
     function unmount(): string | void;
     function mount(dom: any, component: any): string | void;
     const v: V;
