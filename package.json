@@ -62,7 +62,7 @@
     "dev:web": "browser-sync start --config 'www/bs-config.js'",
     "build": "npm run build:source && npm run remark",
     "build:source": "cross-env NODE_ENV=production node source.js",
-    "test": "cross-env NODE_ENV=development nyc mocha --forbid-only --timeout 15000 --require ./register --exit \"test/**/*_test.js\"",
+    "test": "cross-env NODE_ENV=development nyc mocha --forbid-only --timeout 15000 --slow 0 --require ./register --enable-source-maps --exit \"test/**/*_test.js\"",
     "coverage": "nyc report --reporter=lcov",
     "remark": "remark . -o",
     "commit": "git add . && git-cz",
