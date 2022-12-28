@@ -97,7 +97,7 @@ describe("Hyperscript", () => {
           {
             tag: "#text",
             props: {},
-            children: [],
+            children: ["Hola mundo"],
             dom: expect.anything()
           }
         ],

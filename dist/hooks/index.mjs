@@ -60,6 +60,9 @@ var useState = createHook({
     get.toJSON = get.valueOf = get;
     get.toString = () => `${value}`;
     function set(newValue) {
+      if (current.event) {
+        current.event.preventDefault();
+      }
       if (value !== newValue) {
         value = newValue;
         get.value = newValue;

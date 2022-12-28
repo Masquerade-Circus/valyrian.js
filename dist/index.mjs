@@ -23,7 +23,7 @@ function domToVnode(dom) {
   for (let i = 0, l = dom.childNodes.length; i < l; i++) {
     let childDom = dom.childNodes[i];
     if (childDom.nodeType === 3) {
-      let vnode2 = new Vnode(textTag, {}, []);
+      let vnode2 = new Vnode(textTag, {}, [childDom.nodeValue]);
       vnode2.dom = childDom;
       children.push(vnode2);
       continue;
@@ -52,7 +52,8 @@ var isMounted = false;
 var current = {
   vnode: null,
   oldVnode: null,
-  component: null
+  component: null,
+  event: null
 };
 var reservedProps = {
   key: true,
@@ -97,6 +98,7 @@ function callSet(set) {
 }
 var eventListenerNames = {};
 function eventListener(e) {
+  current.event = e;
   let dom = e.target;
   let name = `v-on${e.type}`;
   while (dom) {
@@ -109,6 +111,7 @@ function eventListener(e) {
     }
     dom = dom.parentNode;
   }
+  current.event = null;
 }
 var hideDirective = (test) => (bool, vnode, oldnode) => {
   let value = test ? bool : !bool;
@@ -263,12 +266,11 @@ function directive(name, directive2) {
 }
 function sharedSetAttribute(name, value, newVnode, oldVnode) {
   if (typeof value === "function") {
-    let lowercaseName = name.toLowerCase();
-    if (lowercaseName in eventListenerNames === false) {
-      mainVnode.dom.addEventListener(lowercaseName.slice(2), eventListener);
-      eventListenerNames[lowercaseName] = true;
+    if (name in eventListenerNames === false) {
+      mainVnode.dom.addEventListener(name.slice(2), eventListener);
+      eventListenerNames[name] = true;
     }
-    newVnode.dom[`v-${lowercaseName}`] = value;
+    newVnode.dom[`v-${name}`] = value;
     return;
   }
   if (name in newVnode.dom && newVnode.isSVG === false) {
@@ -315,6 +317,10 @@ function updateAttributes(newVnode, oldVnode) {
   }
 }
 function patch(newVnode, oldVnode) {
+  if (newVnode.children.length === 0) {
+    newVnode.dom.textContent = "";
+    return;
+  }
   let newTree = newVnode.children;
   let oldTree = oldVnode?.children || [];
   let oldTreeLength = oldTree.length;
@@ -366,19 +372,18 @@ function patch(newVnode, oldVnode) {
   current.oldVnode = oldVnode;
   for (let i = 0; i < newTree.length; i++) {
     let newChild = newTree[i];
-    if (newChild instanceof Vnode && newChild.tag !== textTag) {
-      if (typeof newChild.tag === "string") {
-        continue;
+    if (newChild instanceof Vnode) {
+      if (typeof newChild.tag !== "string") {
+        current.component = newChild.tag;
+        newTree.splice(
+          i--,
+          1,
+          ("view" in newChild.tag ? newChild.tag.view.bind(newChild.tag) : newChild.tag.bind(newChild.tag))(
+            newChild.props,
+            ...newChild.children
+          )
+        );
       }
-      current.component = newChild.tag;
-      newTree.splice(
-        i--,
-        1,
-        ("view" in newChild.tag ? newChild.tag.view.bind(newChild.tag) : newChild.tag.bind(newChild.tag))(
-          newChild.props,
-          ...newChild.children
-        )
-      );
       continue;
     }
     if (Array.isArray(newChild)) {
@@ -389,55 +394,51 @@ function patch(newVnode, oldVnode) {
       newTree.splice(i--, 1);
       continue;
     }
-    if (newChild instanceof Vnode) {
-      newChild.children[0] = newChild.dom.textContent;
-      continue;
-    }
-    newChild = newTree[i] = new Vnode(textTag, {}, [newChild]);
+    newTree[i] = new Vnode(textTag, {}, [newChild]);
   }
   for (let i = 0; i < newTree.length; i++) {
     let newChild = newTree[i];
     if (newChild.tag === textTag) {
-      if (i < oldTreeLength) {
-        let oldChild = oldTree[i];
-        if (oldChild.tag === textTag) {
-          newChild.dom = oldChild.dom;
-          if (newChild.children[0] != oldChild.dom.textContent) {
-            oldChild.dom.textContent = newChild.children[0];
-          }
-          continue;
-        }
+      if (i >= oldTreeLength) {
         newChild.dom = document.createTextNode(newChild.children[0]);
-        newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
+        newVnode.dom.appendChild(newChild.dom);
         continue;
       }
-      newChild.dom = document.createTextNode(newChild.children[0]);
-      newVnode.dom.appendChild(newChild.dom);
+      let oldChild2 = oldTree[i];
+      if (oldChild2.tag !== textTag) {
+        newChild.dom = document.createTextNode(newChild.children[0]);
+        newVnode.dom.replaceChild(newChild.dom, oldChild2.dom);
+        continue;
+      }
+      newChild.dom = oldChild2.dom;
+      if (newChild.children[0] != oldChild2.dom.textContent) {
+        oldChild2.dom.textContent = newChild.children[0];
+      }
       continue;
     }
     newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
-    if (i < oldTreeLength) {
-      let oldChild = oldTree[i];
-      if (newChild.tag === oldChild.tag) {
-        newChild.dom = oldChild.dom;
-        if ("v-keep" in newChild.props && newChild.props["v-keep"] === oldChild.props["v-keep"]) {
-          newChild.children = oldChild.children;
-          continue;
-        }
-        updateAttributes(newChild, oldChild);
-        patch(newChild, oldChild);
-        continue;
-      }
+    if (i >= oldTreeLength) {
+      newChild.dom = createDomElement(newChild.tag, newChild.isSVG);
+      updateAttributes(newChild);
+      newVnode.dom.appendChild(newChild.dom);
+      patch(newChild);
+      continue;
+    }
+    let oldChild = oldTree[i];
+    if (newChild.tag !== oldChild.tag) {
       newChild.dom = createDomElement(newChild.tag, newChild.isSVG);
       updateAttributes(newChild);
       newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
       patch(newChild);
       continue;
     }
-    newChild.dom = createDomElement(newChild.tag, newChild.isSVG);
-    updateAttributes(newChild);
-    newVnode.dom.appendChild(newChild.dom);
-    patch(newChild);
+    newChild.dom = oldChild.dom;
+    if ("v-keep" in newChild.props && newChild.props["v-keep"] === oldChild.props["v-keep"]) {
+      newChild.children = oldChild.children;
+      continue;
+    }
+    updateAttributes(newChild, oldChild);
+    patch(newChild, oldChild);
   }
   for (let i = newTree.length; i < oldTreeLength; i++) {
     newVnode.dom.removeChild(oldTree[i].dom);
@@ -467,6 +468,8 @@ function updateVnode(vnode, oldVnode) {
   oldVnode.tag = vnode.tag;
   oldVnode.props = { ...vnode.props };
   oldVnode.children = [...vnode.children];
+  oldVnode.dom = vnode.dom;
+  oldVnode.isSVG = vnode.isSVG;
   callSet(isMounted ? onUpdateSet : onMountSet);
   isMounted = true;
   current.vnode = null;

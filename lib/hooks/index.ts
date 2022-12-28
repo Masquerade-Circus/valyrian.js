@@ -110,6 +110,11 @@ export const useState = createHook({
     get.toString = () => `${value}`;
 
     function set(newValue) {
+      // Prevent default event if it exists
+      if (current.event) {
+        current.event.preventDefault();
+      }
+
       if (value !== newValue) {
         value = newValue;
         get.value = newValue;

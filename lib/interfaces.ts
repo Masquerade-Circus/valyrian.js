@@ -63,6 +63,7 @@ declare module "valyrian.js" {
     component: Component | POJOComponent | null;
     vnode: VnodeWithDom | null;
     oldVnode?: VnodeWithDom | null;
+    event: Event | null;
   }
   export interface V {
     (tagOrComponent: string | Component | POJOComponent, props: Props | null, ...children: Children):

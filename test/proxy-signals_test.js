@@ -41,7 +41,7 @@ describe("ProxySignals", () => {
     expect(unlinked()).toEqual("hello 0");
     expect(unlinked.value).toEqual("hello 0");
 
-    await new Promise((resolve) => setTimeout(() => resolve(), 22));
+    await new Promise((resolve) => setTimeout(() => resolve(), 23));
     // effect.unsubscribe();
     counter.cleanup();
     expect(counter.hello).toEqual("hello 2");
@@ -50,7 +50,7 @@ describe("ProxySignals", () => {
     expect(unlinked()).toEqual("hello 2");
     expect(unlinked.value).toEqual("hello 2");
 
-    await new Promise((resolve) => setTimeout(() => resolve(), 22));
+    await new Promise((resolve) => setTimeout(() => resolve(), 23));
     clearInterval(interval);
     expect(counter.hello).toEqual("hello 4");
     expect(computed()).toEqual("hello 4");
@@ -149,7 +149,7 @@ describe("Hooks like pattern", () => {
 
     let result = mount("div", Component);
     expect(result).toEqual("<div>0</div>");
-    await new Promise((resolve) => setTimeout(() => resolve(), 22));
+    await new Promise((resolve) => setTimeout(() => resolve(), 23));
     result = update();
     expect(result).toEqual("<div>2</div>");
     unmount();
