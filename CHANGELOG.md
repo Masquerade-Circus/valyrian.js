@@ -1,11 +1,22 @@
 
 
-### [7.2.2](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.1...7.2.2) (2022-12-23)
+### [7.2.3](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.2...7.2.3) (2022-12-28)
 
 
 ### Performance Improvements
 
-* **signals and hooks:** improve signals and hooks performance ([71560da](https://github.com/Masquerade-Circus/valyrian.js/commit/71560da24c73b30011b94e070786f7c80e4c6d39))
+* a little improvement ([9bc6b6a](https://github.com/Masquerade-Circus/valyrian.js/commit/9bc6b6aa8a0cb00544b33e8897f2a3bdc46f5df9))
+
+
+### Code Refactoring
+
+* **main/signals:** minor improvements ([dd13672](https://github.com/Masquerade-Circus/valyrian.js/commit/dd13672ff3219c45081705b792ecdd6fe1f517ce))
+
+### [7.2.2](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.1...7.2.2) (2022-12-23)
+
+### Performance Improvements
+
+*   **signals and hooks:** improve signals and hooks performance ([71560da](https://github.com/Masquerade-Circus/valyrian.js/commit/71560da24c73b30011b94e070786f7c80e4c6d39))
 
 ### [7.2.1](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.0...7.2.1) (2022-12-23)
 

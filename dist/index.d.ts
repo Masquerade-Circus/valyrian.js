@@ -49,6 +49,7 @@ export interface Current {
     component: Component | POJOComponent | null;
     vnode: VnodeWithDom | null;
     oldVnode?: VnodeWithDom | null;
+    event: Event | null;
 }
 export interface V {
     (tagOrComponent: string | Component | POJOComponent, props: VnodeProperties | null, ...children: Children): VnodeInterface | VnodeComponentInterface;
