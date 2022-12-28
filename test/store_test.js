@@ -1,4 +1,4 @@
-import { Store } from "../lib/store";
+import { Store } from "valyrian.js/store";
 import expect from "expect";
 
 function getNewStore() {

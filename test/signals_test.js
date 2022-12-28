@@ -6,7 +6,7 @@ import { afterEach, describe, it } from "mocha";
 // eslint-disable-next-line no-unused-vars
 import { mount, onCleanup, unmount, update, v } from "valyrian.js";
 
-import { Signal } from "../lib/signal";
+import { Signal } from "valyrian.js/signal";
 import expect from "expect";
 
 describe("Signal", () => {

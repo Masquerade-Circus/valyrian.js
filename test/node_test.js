@@ -142,7 +142,7 @@ describe("Node test", () => {
     await icons("./assets/icon.png", favicons);
     expect(fs.existsSync(".tmp/favicon.ico")).toBeTruthy();
     expect(fs.existsSync(".tmp/links.js")).toBeTruthy();
-    expect(fs.existsSync(".tmp/manifest.json")).toBeTruthy();
+    expect(fs.existsSync(".tmp/manifest.webmanifest")).toBeTruthy();
   });
 
   it("should remove unused css", async () => {

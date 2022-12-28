@@ -2,7 +2,7 @@ import "valyrian.js/node";
 
 import { mount, onUnmount, unmount, update, v } from "valyrian.js";
 
-import { ProxySignal } from "../lib/proxy-signal";
+import { ProxySignal } from "valyrian.js/proxy-signal";
 import expect from "expect";
 
 describe("ProxySignals", () => {

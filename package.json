@@ -115,8 +115,7 @@
   "nyc": {
     "exclude": [
       "test",
-      "plugins/utils",
-      "dist"
+      "register.js"
     ]
   },
   "remarkConfig": {
