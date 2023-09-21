@@ -1,16 +1,28 @@
 
 
-### [7.2.3](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.2...7.2.3) (2022-12-28)
+### [7.2.4](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.3...7.2.4) (2023-09-21)
 
+
+### Continuous Integration
+
+* **github-actions:** fix-failing-tests ([d2b7ed0](https://github.com/Masquerade-Circus/valyrian.js/commit/d2b7ed0eea3e63a4a980b055d2cc0a8f1ea02c95))
+* **github-actions:** install dependencies before test ([ba6bb9d](https://github.com/Masquerade-Circus/valyrian.js/commit/ba6bb9d18535671581b515852fbdc1e428e0b145))
+* **github-actions:** update github actions to use npm instead of yarn ([17f20a1](https://github.com/Masquerade-Circus/valyrian.js/commit/17f20a18034cb1d5296e1d94efcd55513967f283))
+
+
+### Build System
+
+* allow direct lib import ([bcbfe51](https://github.com/Masquerade-Circus/valyrian.js/commit/bcbfe5172539d5100980d0a07482c4a39389c214))
+
+### [7.2.3](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.2...7.2.3) (2022-12-28)
 
 ### Performance Improvements
 
-* a little improvement ([9bc6b6a](https://github.com/Masquerade-Circus/valyrian.js/commit/9bc6b6aa8a0cb00544b33e8897f2a3bdc46f5df9))
-
+*   a little improvement ([9bc6b6a](https://github.com/Masquerade-Circus/valyrian.js/commit/9bc6b6aa8a0cb00544b33e8897f2a3bdc46f5df9))
 
 ### Code Refactoring
 
-* **main/signals:** minor improvements ([dd13672](https://github.com/Masquerade-Circus/valyrian.js/commit/dd13672ff3219c45081705b792ecdd6fe1f517ce))
+*   **main/signals:** minor improvements ([dd13672](https://github.com/Masquerade-Circus/valyrian.js/commit/dd13672ff3219c45081705b792ecdd6fe1f517ce))
 
 ### [7.2.2](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.1...7.2.2) (2022-12-23)
 
