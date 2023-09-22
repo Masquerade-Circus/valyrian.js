@@ -1,18 +1,23 @@
 
 
-### [7.2.4](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.3...7.2.4) (2023-09-21)
+### [7.2.5](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.4...7.2.5) (2023-09-22)
 
+
+### Code Refactoring
+
+* export domToVnode and update Request interface ([346159f](https://github.com/Masquerade-Circus/valyrian.js/commit/346159f8b8edea6e705764de213a0fd1030e1228))
+
+### [7.2.4](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.3...7.2.4) (2023-09-21)
 
 ### Continuous Integration
 
-* **github-actions:** fix-failing-tests ([d2b7ed0](https://github.com/Masquerade-Circus/valyrian.js/commit/d2b7ed0eea3e63a4a980b055d2cc0a8f1ea02c95))
-* **github-actions:** install dependencies before test ([ba6bb9d](https://github.com/Masquerade-Circus/valyrian.js/commit/ba6bb9d18535671581b515852fbdc1e428e0b145))
-* **github-actions:** update github actions to use npm instead of yarn ([17f20a1](https://github.com/Masquerade-Circus/valyrian.js/commit/17f20a18034cb1d5296e1d94efcd55513967f283))
-
+*   **github-actions:** fix-failing-tests ([d2b7ed0](https://github.com/Masquerade-Circus/valyrian.js/commit/d2b7ed0eea3e63a4a980b055d2cc0a8f1ea02c95))
+*   **github-actions:** install dependencies before test ([ba6bb9d](https://github.com/Masquerade-Circus/valyrian.js/commit/ba6bb9d18535671581b515852fbdc1e428e0b145))
+*   **github-actions:** update github actions to use npm instead of yarn ([17f20a1](https://github.com/Masquerade-Circus/valyrian.js/commit/17f20a18034cb1d5296e1d94efcd55513967f283))
 
 ### Build System
 
-* allow direct lib import ([bcbfe51](https://github.com/Masquerade-Circus/valyrian.js/commit/bcbfe5172539d5100980d0a07482c4a39389c214))
+*   allow direct lib import ([bcbfe51](https://github.com/Masquerade-Circus/valyrian.js/commit/bcbfe5172539d5100980d0a07482c4a39389c214))
 
 ### [7.2.3](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.2...7.2.3) (2022-12-28)
 
