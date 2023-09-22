@@ -19,16 +19,15 @@ var isVnodeComponent = (object) => {
   return isVnode(object) && isComponent(object.tag);
 };
 function domToVnode(dom) {
+  if (dom.nodeType === 3) {
+    let vnode2 = new Vnode(textTag, {}, [dom.nodeValue]);
+    vnode2.dom = dom;
+    return vnode2;
+  }
   let children = [];
   for (let i = 0, l = dom.childNodes.length; i < l; i++) {
     let childDom = dom.childNodes[i];
-    if (childDom.nodeType === 3) {
-      let vnode2 = new Vnode(textTag, {}, [childDom.nodeValue]);
-      vnode2.dom = childDom;
-      children.push(vnode2);
-      continue;
-    }
-    if (childDom.nodeType === 1) {
+    if (childDom.nodeType === 1 || childDom.nodeType === 3) {
       children.push(domToVnode(childDom));
     }
   }
@@ -517,6 +516,7 @@ export {
   current,
   directive,
   directives,
+  domToVnode,
   isComponent,
   isNodeJs,
   isVnode,

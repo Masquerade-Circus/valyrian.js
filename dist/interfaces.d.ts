@@ -74,6 +74,7 @@ declare module "valyrian.js" {
     function isComponent(component: any): component is Component;
     const isVnode: (object?: unknown | VnodeInterface) => object is VnodeInterface;
     const isVnodeComponent: (object?: unknown | VnodeComponentInterface) => object is VnodeComponentInterface;
+    function domToVnode(dom: any): VnodeWithDom;
     function trust(htmlString: string): any;
     const current: Current;
     const reservedProps: Record<string, true>;

@@ -48,7 +48,7 @@ function parseUrl(url, options) {
   }
   return u;
 }
-var defaultOptions = { allowedMethods: ["get", "post", "put", "patch", "delete"] };
+var defaultOptions = { allowedMethods: ["get", "post", "put", "patch", "delete", "head", "options"] };
 function Requester(baseUrl = "", options = defaultOptions) {
   let url = baseUrl.replace(/\/$/gi, "").trim();
   if (!options.urls) {
@@ -138,7 +138,7 @@ function Requester(baseUrl = "", options = defaultOptions) {
     }
     return response;
   };
-  request2.new = (baseUrl2, options2) => Requester(baseUrl2, { ...opts, ...options2 });
+  request2.new = (baseUrl2, options2) => Requester(baseUrl2, { ...opts, ...options2 || {} });
   request2.setOption = (key, value) => {
     let result = opts;
     let parsed = key.split(".");

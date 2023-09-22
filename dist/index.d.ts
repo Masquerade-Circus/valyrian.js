@@ -61,6 +61,7 @@ export declare const Vnode: VnodeInterface;
 export declare function isComponent(component: any): component is Component;
 export declare const isVnode: (object?: unknown | VnodeInterface) => object is VnodeInterface;
 export declare const isVnodeComponent: (object?: unknown | VnodeComponentInterface) => object is VnodeComponentInterface;
+export declare function domToVnode(dom: any): VnodeWithDom;
 export declare function trust(htmlString: string): any;
 export declare const current: Current;
 export declare const reservedProps: Record<string, true>;

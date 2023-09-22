@@ -171,24 +171,23 @@ export const isVnodeComponent = (object?: unknown | VnodeComponentInterface): ob
 };
 
 // 'domToVnode' is a function that converts a DOM node to a 'Vnode' instance.
-function domToVnode(dom: any): VnodeWithDom {
+export function domToVnode(dom: any): VnodeWithDom {
+  // If the child node is a text node, create a 'Vnode' instance with the 'textTag' constant as the 'tag' property.
+  // Set the 'dom' property of the 'Vnode' instance to the child DOM node.
+  // Push the 'Vnode' instance to the 'children' array.
+  if (dom.nodeType === 3) {
+    let vnode = new Vnode(textTag, {}, [dom.nodeValue]);
+    vnode.dom = dom;
+    return vnode as VnodeWithDom;
+  }
+
   let children: VnodeWithDom[] = [];
   // Iterate through all child nodes of 'dom'.
   for (let i = 0, l = dom.childNodes.length; i < l; i++) {
     let childDom = dom.childNodes[i];
-    // If the child node is a text node, create a 'Vnode' instance with the 'textTag' constant as the 'tag' property.
-    // Set the 'dom' property of the 'Vnode' instance to the child DOM node.
-    // Push the 'Vnode' instance to the 'children' array.
-    if (childDom.nodeType === 3) {
-      let vnode = new Vnode(textTag, {}, [childDom.nodeValue]);
-      vnode.dom = childDom;
-      children.push(vnode as VnodeWithDom);
-      continue;
-    }
-
     // If the child node is an element node, recursively call 'domToVnode' to convert it to a 'Vnode' instance.
     // Push the 'Vnode' instance to the 'children' array.
-    if (childDom.nodeType === 1) {
+    if (childDom.nodeType === 1 || childDom.nodeType === 3) {
       children.push(domToVnode(childDom));
     }
   }

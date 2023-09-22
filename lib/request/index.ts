@@ -24,29 +24,29 @@ interface SendOptions extends RequestOptionsWithUrls, RequestInit {
   resolveWithFullResponse?: boolean;
 }
 
-interface RequestInterface {
+export interface RequestInterface {
   // eslint-disable-next-line no-unused-vars
   (method: string, url: string, data?: Record<string, any>, options?: Partial<SendOptions>): any | Response;
   // eslint-disable-next-line no-unused-vars
-  new: (baseUrl: string, options: RequestOptions) => RequestInterface;
+  new: (baseUrl: string, options?: RequestOptions) => RequestInterface;
   // eslint-disable-next-line no-unused-vars
   setOptions: (key: string, value: any) => void;
   // eslint-disable-next-line no-unused-vars
   getOptions: (key?: string) => RequestOptions | void;
   // eslint-disable-next-line no-unused-vars
-  get?: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  get: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
   // eslint-disable-next-line no-unused-vars
-  post?: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  post: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
   // eslint-disable-next-line no-unused-vars
-  put?: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  put: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
   // eslint-disable-next-line no-unused-vars
-  patch?: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  patch: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
   // eslint-disable-next-line no-unused-vars
-  delete?: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  delete: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
   // eslint-disable-next-line no-unused-vars
-  head?: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  head: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
   // eslint-disable-next-line no-unused-vars
-  options?: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  options: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
   [key: string | number | symbol]: any;
 }
 
@@ -88,7 +88,7 @@ function parseUrl(url: string, options: RequestOptionsWithUrls) {
   return u;
 }
 
-const defaultOptions: RequestOptions = { allowedMethods: ["get", "post", "put", "patch", "delete"] };
+const defaultOptions: RequestOptions = { allowedMethods: ["get", "post", "put", "patch", "delete", "head", "options"] };
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
@@ -198,7 +198,7 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
     return response;
   } as unknown as RequestInterface;
 
-  request.new = (baseUrl: string, options: RequestOptions) => Requester(baseUrl, { ...opts, ...options });
+  request.new = (baseUrl: string, options?: RequestOptions) => Requester(baseUrl, { ...opts, ...(options || {}) });
 
   request.setOption = (key: string, value: any) => {
     let result = opts;
