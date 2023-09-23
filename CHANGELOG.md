@@ -1,11 +1,17 @@
 
 
-### [7.2.5](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.4...7.2.5) (2023-09-22)
+### [7.2.6](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.5...7.2.6) (2023-09-23)
 
 
 ### Code Refactoring
 
-* export domToVnode and update Request interface ([346159f](https://github.com/Masquerade-Circus/valyrian.js/commit/346159f8b8edea6e705764de213a0fd1030e1228))
+* **router:** allow routes ending with #id ([08e010f](https://github.com/Masquerade-Circus/valyrian.js/commit/08e010fb3bcf7ae0c6050730f88e8ccb0d692f09))
+
+### [7.2.5](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.4...7.2.5) (2023-09-22)
+
+### Code Refactoring
+
+*   export domToVnode and update Request interface ([346159f](https://github.com/Masquerade-Circus/valyrian.js/commit/346159f8b8edea6e705764de213a0fd1030e1228))
 
 ### [7.2.4](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.3...7.2.4) (2023-09-21)
 
