@@ -430,6 +430,29 @@ describe("Router", () => {
     });
   });
 
+  it("Test the onClick handler from a route with # to another route with #", async () => {
+    let router = new Router();
+    let Component = () => <div>Hello {router.url}</div>;
+
+    router.add("/world", () => <Component />);
+    mountRouter("body", router);
+    let result = {
+      before: await router.go("/world#world")
+    };
+
+    let handler = router.getOnClickHandler("/world#Mike");
+    handler({ preventDefault: () => {} });
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    result.after = update();
+
+    expect(result).toEqual({
+      before: "<div>Hello /world#world</div>",
+      after: "<div>Hello /world#Mike</div>"
+    });
+  });
+
   it("Test the initial prefix", async () => {
     let subrouter = new Router();
 

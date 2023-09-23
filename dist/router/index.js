@@ -165,7 +165,7 @@ var Router = class {
     const parts = constructedPath.split("?", 2);
     this.url = constructedPath;
     this.query = parseQuery(parts[1]);
-    const middlewares = searchMiddlewares(this, parts[0].replace(/(.+)\/$/, "$1"));
+    const middlewares = searchMiddlewares(this, parts[0].replace(/(.+)\/$/, "$1").split("#")[0]);
     let component = await searchComponent(this, middlewares);
     if (component === false) {
       return;

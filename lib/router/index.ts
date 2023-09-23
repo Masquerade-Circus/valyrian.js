@@ -270,7 +270,7 @@ export class Router implements RouterInterface {
     this.url = constructedPath;
     this.query = parseQuery(parts[1]);
 
-    const middlewares = searchMiddlewares(this as RouterInterface, parts[0].replace(/(.+)\/$/, "$1"));
+    const middlewares = searchMiddlewares(this as RouterInterface, parts[0].replace(/(.+)\/$/, "$1").split("#")[0]);
     let component = await searchComponent(this as RouterInterface, middlewares);
 
     if (component === false) {
