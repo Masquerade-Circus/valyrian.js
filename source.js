@@ -123,7 +123,9 @@ async function build({
     }
 
     fs.writeFileSync(`${outfileName}.mjs`, esmContent);
+    fs.writeFileSync(`${outfileName}.mjs.map`, esm.outputFiles[0].text);
     fs.writeFileSync(`${outfileName}.js`, cjs.outputFiles[1].text);
+    fs.writeFileSync(`${outfileName}.js.map`, cjs.outputFiles[0].text);
 
     let result2;
     if (minify) {

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../lib/sw/index.ts"],
+  "sourcesContent": ["import { isNodeJs } from \"valyrian.js\";\n\nexport async function registerSw(file = \"./sw.js\", options: RegistrationOptions = { scope: \"/\" }) {\n  if (isNodeJs) {\n    return;\n  }\n  await navigator.serviceWorker.register(file, options);\n  return navigator.serviceWorker;\n}\n"],
+  "mappings": ";AAAA,SAAS,gBAAgB;AAEzB,eAAsB,WAAW,OAAO,WAAW,UAA+B,EAAE,OAAO,IAAI,GAAG;AAChG,MAAI,UAAU;AACZ;AAAA,EACF;AACA,QAAM,UAAU,cAAc,SAAS,MAAM,OAAO;AACpD,SAAO,UAAU;AACnB;",
+  "names": []
+}
