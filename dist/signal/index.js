@@ -1,3 +1,4 @@
+"use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -25,7 +26,7 @@ module.exports = __toCommonJS(signal_exports);
 var import_valyrian = require("valyrian.js");
 function Signal(initialValue) {
   const { vnode, component } = { ...import_valyrian.current };
-  if (vnode) {
+  if (vnode && component) {
     if (!vnode.components) {
       vnode.components = [];
     }
@@ -87,7 +88,7 @@ function Signal(initialValue) {
     }
   };
   let signal = [get, set, subscribe, subscriptions];
-  if (vnode) {
+  if (vnode && component) {
     component.signals.push(signal);
   }
   return signal;

@@ -65,7 +65,11 @@ interface RouterInterface {
 
 interface RedirectFunction {
   // eslint-disable-next-line no-unused-vars
-  (url: string, parentComponent?: Component, preventPushState?: boolean): string | void;
+  (
+    path: string,
+    parentComponent?: Component | POJOComponent | VnodeComponentInterface,
+    preventPushState?: boolean
+  ): Promise<string | void>;
 }
 
 function flat(array: any) {
@@ -181,7 +185,7 @@ async function searchComponent(
     url: router.url,
     path: router.path,
     matches: router.matches,
-    redirect: (path: string, parentComponent?: Component) => {
+    redirect: (path: string, parentComponent?: Component | POJOComponent | VnodeComponentInterface) => {
       router.go(path, parentComponent);
       // Return false to stop the middleware chain
       return false;
@@ -260,7 +264,11 @@ export class Router implements RouterInterface {
     return this.paths.filter((path) => path.method === "add").map((path) => path.path);
   }
 
-  async go(path: string, parentComponent?: Component, preventPushState = false): Promise<string | void> {
+  async go(
+    path: string,
+    parentComponent?: Component | POJOComponent | VnodeComponentInterface,
+    preventPushState = false
+  ): Promise<string | void> {
     if (!path) {
       throw new Error("router.url.required");
     }
@@ -312,7 +320,11 @@ export class Router implements RouterInterface {
 
 let localRedirect: RedirectFunction;
 
-export function redirect(url: string, parentComponent?: Component, preventPushState = false): string | void {
+export function redirect(
+  url: string,
+  parentComponent?: Component | POJOComponent | VnodeComponentInterface,
+  preventPushState = false
+): Promise<string | void> {
   if (!localRedirect) {
     throw new Error("router.redirect.not.found");
   }

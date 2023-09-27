@@ -1,3 +1,4 @@
+"use strict";
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -56,7 +57,9 @@ var Vnode = function Vnode2(tag, props, children) {
   this.children = children;
 };
 function isComponent(component) {
-  return component && (typeof component === "function" || typeof component === "object" && "view" in component);
+  return Boolean(
+    component && (typeof component === "function" || typeof component === "object" && "view" in component)
+  );
 }
 var isVnode = (object) => {
   return object instanceof Vnode;

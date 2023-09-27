@@ -1,0 +1,141 @@
+/* eslint-disable no-use-before-define */
+/* eslint-disable no-unused-vars */
+declare module "valyrian.js" {
+  interface DefaultRecord extends Record<string | number | symbol, any> {}
+
+  // The VnodeProperties interface represents properties that can be passed to a virtual node.
+  export interface VnodeProperties extends DefaultRecord {
+    // A unique key for the virtual node, which can be a string or a number.
+    // This is useful for optimizing updates in a list of nodes.
+    key?: string | number;
+    // A state object that is associated with the virtual node.
+    state?: any;
+  }
+
+  // The DomElement interface extends the Element interface with an index signature.
+  // This allows for any additional properties to be added to DOM elements.
+  export interface DomElement extends Element, DefaultRecord {}
+
+  // The VnodeInterface represents a virtual node. It has a number of optional fields,
+  // including a tag, props, children, and a DOM element.
+  export interface VnodeInterface extends DefaultRecord {
+    // The constructor for the virtual node. It takes a tag, props, and children as arguments.
+    // The tag can be a string, a component, or a POJO component.
+    // eslint-disable-next-line no-unused-vars
+    new (tag: string | Component | POJOComponent, props: VnodeProperties, children: Children): VnodeInterface;
+    // The tag for the virtual node. It can be a string, a component, or a POJO component.
+    tag: string | Component | POJOComponent;
+    // The props for the virtual node.
+    props: VnodeProperties;
+    // The children for the virtual node.
+    children: Children;
+    // A boolean indicating whether the virtual node is an SVG element.
+    isSVG?: boolean;
+    // The DOM element that corresponds to the virtual node.
+    dom?: DomElement;
+    // A boolean indicating whether the virtual node has been processed in the keyed diffing algorithm.
+    processed?: boolean;
+  }
+
+  // The VnodeWithDom interface represents a virtual node that has a DOM element associated with it.
+  export interface VnodeWithDom extends VnodeInterface {
+    dom: DomElement;
+  }
+
+  // The Component interface represents a function that returns a virtual node or a list of virtual nodes.
+  // It can also have additional properties.
+  export interface Component extends DefaultRecord {
+    // The function that returns a virtual node or a list of virtual nodes.
+    // It can take props and children as arguments.
+    // eslint-disable-next-line no-unused-vars
+    (props?: VnodeProperties | null, ...children: any[]): VnodeInterface | Children | any;
+  }
+
+  // The POJOComponent interface represents a "plain old JavaScript object" (POJO) component.
+  // It has a view function that returns a virtual node or a list of virtual nodes,
+  // as well as optional props and children.
+  // It can be used also to identify class instance components.
+  export interface POJOComponent extends DefaultRecord {
+    // The view function that returns a virtual node or a list of virtual nodes.
+    view: Component;
+    // The props for the component.
+    props?: VnodeProperties | null;
+    // The children for the component.
+    children?: any[];
+  }
+
+  // The VnodeComponentInterface represents a virtual node that has a component as its tag.
+  // It has props and children, just like a regular virtual node.
+  export interface VnodeComponentInterface extends VnodeInterface {
+    tag: Component | POJOComponent;
+    props: VnodeProperties;
+    children: Children;
+  }
+
+  // The Children interface represents a list of virtual nodes or other values.
+  export interface Children extends Array<VnodeInterface | VnodeComponentInterface | any> {}
+
+  // The Directive interface represents a function that can be applied to a virtual node.
+  // It receives the value, virtual node, and old virtual node as arguments, and can return a boolean value.
+  // If only the virtual node is passed, it means its the on create phase for the v-node.
+  // If the old virtual node is also passed, it means its the on update phase for the v-node.
+  export interface Directive {
+    // eslint-disable-next-line no-unused-vars
+    (value: any, vnode: VnodeWithDom, oldVnode?: VnodeWithDom): void | boolean;
+  }
+
+  // The Directives interface is a mapping of directive names to Directive functions.
+  export interface Directives extends Record<string, Directive> {}
+
+  // The ReservedProps interface is a mapping of reserved prop names to the value `true`.
+  // These prop names cannot be used as custom prop names.
+  export interface ReservedProps extends Record<string, true> {}
+
+  // The Current interface represents the current component and virtual node that are being processed.
+  export interface Current {
+    // The current component. It can be a component, a POJO component, or null.
+    component: Component | POJOComponent | null;
+    // The current virtual node. It must have a DOM element associated with it.
+    vnode: VnodeWithDom | null;
+    // The old virtual node. It must have a DOM element associated with it.
+    oldVnode?: VnodeWithDom | null;
+    // The current event. It can be an event or null.
+    event: Event | null;
+  }
+
+  // The V function is the main function for creating virtual nodes.
+  // It takes a tag or component, props, and children as arguments, and returns a virtual node.
+  export interface V {
+    // eslint-disable-next-line no-unused-vars, no-use-before-define
+    (tagOrComponent: string | Component | POJOComponent, props: VnodeProperties | null, ...children: Children):
+      | VnodeInterface
+      | VnodeComponentInterface;
+    // eslint-disable-next-line no-unused-vars, no-use-before-define
+    fragment(_: any, ...children: Children): Children;
+  }
+
+  export let isNodeJs: boolean;
+  export function createDomElement(tag: string, isSVG?: boolean): DomElement;
+  export const Vnode: VnodeInterface;
+  export function isComponent(component: any): component is Component;
+  export const isVnode: (object?: unknown | VnodeInterface) => object is VnodeInterface;
+  export const isVnodeComponent: (object?: unknown | VnodeComponentInterface) => object is VnodeComponentInterface;
+  export function domToVnode(dom: any): VnodeWithDom;
+  export function trust(htmlString: string): any;
+  export const current: Current;
+  export const reservedProps: Record<string, true>;
+  export function onMount(callback: any): void;
+  export function onUpdate(callback: any): void;
+  export function onCleanup(callback: any): void;
+  export function onUnmount(callback: any): void;
+  export const directives: Directives;
+  export function directive(name: string, directive: Directive): void;
+  export function setAttribute(name: string, value: any, newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+  export function updateAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+  export function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
+  export function update(): void | string;
+  export function updateVnode(vnode: VnodeWithDom, oldVnode: VnodeWithDom): string | void;
+  export function unmount(): string | void;
+  export function mount(dom: any, component: any): string | void;
+  export const v: V;
+}

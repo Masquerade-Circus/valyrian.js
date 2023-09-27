@@ -48,10 +48,10 @@ export declare class Router implements RouterInterface {
     add(path: string, ...middlewares: Middlewares): Router;
     use(...middlewares: Middlewares | Router[] | string[]): Router;
     routes(): string[];
-    go(path: string, parentComponent?: Component, preventPushState?: boolean): Promise<string | void>;
+    go(path: string, parentComponent?: Component | POJOComponent | VnodeComponentInterface, preventPushState?: boolean): Promise<string | void>;
     getOnClickHandler(url: string): (e: MouseEvent) => void;
 }
-export declare function redirect(url: string, parentComponent?: Component, preventPushState?: boolean): string | void;
+export declare function redirect(url: string, parentComponent?: Component | POJOComponent | VnodeComponentInterface, preventPushState?: boolean): Promise<string | void>;
 export declare function mountRouter(elementContainer: string | any, router: Router): void;
 export {};
 //# sourceMappingURL=index.d.ts.map

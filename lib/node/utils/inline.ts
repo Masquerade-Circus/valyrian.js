@@ -6,7 +6,11 @@ import esbuild from "esbuild";
 /* eslint-disable sonarjs/cognitive-complexity */
 import fs from "fs";
 
-export async function inline(file: string | { raw: string; map?: string | null; file: string }, options: Record<string, any> = {}) {
+// eslint-disable-next-line complexity
+export async function inline(
+  file: string | { raw: string; map?: string | null; file: string },
+  options: Record<string, any> = {}
+) {
   if (typeof file === "string") {
     let ext = file.split(".").pop();
     if (ext && /(js|cjs|jsx|mjs|ts|tsx)/.test(ext)) {
@@ -69,6 +73,9 @@ export async function inline(file: string | { raw: string; map?: string | null; 
       };
 
       let result = await esbuild.build(esbuildOptions);
+      if (result.outputFiles?.length !== 2) {
+        throw new Error(result.errors.join("\n"));
+      }
 
       if (options.compact) {
         const terser = await import("terser");
@@ -85,6 +92,10 @@ export async function inline(file: string | { raw: string; map?: string | null; 
           ecma: 2022,
           ...(options.terser || {})
         });
+
+        if (!result2.code || !result2.map) {
+          throw new Error("Unknown error");
+        }
 
         let mapBase64 = Buffer.from(result2.map.toString()).toString("base64");
         let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
@@ -117,7 +128,11 @@ export async function inline(file: string | { raw: string; map?: string | null; 
   }
 }
 
-inline.uncss = async function (renderedHtml: (string | Promise<string>)[], css: string, options: Record<string, any> = {}) {
+inline.uncss = async function (
+  renderedHtml: (string | Promise<string>)[],
+  css: string,
+  options: Record<string, any> = {}
+) {
   let html = await Promise.all(renderedHtml);
 
   let contents = html.map((item) => {

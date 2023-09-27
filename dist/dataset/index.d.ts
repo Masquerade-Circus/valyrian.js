@@ -17,8 +17,8 @@ export declare class DataSet<T> implements DataSetInterface<T> {
     setVnodeAndHandler(vnode: VnodeWithDom, handler: DataSetHandler<T>): void;
     reset(data: T[]): void;
     add(...data: T[]): void;
-    delete(index: any): void;
-    update(index: any, item: Partial<T>): void;
+    delete(index: number): void;
+    update(index: number, item: Partial<T>): void;
 }
 export {};
 //# sourceMappingURL=index.d.ts.map

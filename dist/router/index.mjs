@@ -192,12 +192,13 @@ function mountRouter(elementContainer, router) {
   router.container = elementContainer;
   localRedirect = router.go.bind(router);
   if (!isNodeJs) {
-    let onPopStateGoToRoute = function() {
+    let onPopStateGoToRoute2 = function() {
       let pathWithoutPrefix = getPathWithoutPrefix(document.location.pathname, router.pathPrefix);
       router.go(pathWithoutPrefix, void 0, true);
     };
-    window.addEventListener("popstate", onPopStateGoToRoute, false);
-    onPopStateGoToRoute();
+    var onPopStateGoToRoute = onPopStateGoToRoute2;
+    window.addEventListener("popstate", onPopStateGoToRoute2, false);
+    onPopStateGoToRoute2();
   }
   directive("route", (url, vnode, oldnode) => {
     setAttribute("href", url, vnode, oldnode);

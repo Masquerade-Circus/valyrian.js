@@ -18,8 +18,8 @@ export declare class Node implements Node {
     set nodeValue(text: string);
     get nodeValue(): string;
     parent_node: Node | null;
-    get parentNode(): Node;
-    set parentNode(node: Node);
+    get parentNode(): Node | null;
+    set parentNode(node: Node | null);
     constructor();
     appendChild<T extends Node>(node: T): T;
     insertBefore<T extends Node>(node: T, child: Node | null): T;
@@ -27,7 +27,7 @@ export declare class Node implements Node {
     removeChild<T extends Node>(child: T): T;
     cloneNode(deep?: boolean | undefined): Node;
     setAttribute(name: string, value: any): void;
-    getAttribute(name: string): string;
+    getAttribute(name: string): string | null | undefined;
     removeAttribute(name: string): void;
     getElementById(id: string): Node | null;
     addEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions | undefined): void;

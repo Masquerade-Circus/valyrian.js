@@ -1,20 +1,34 @@
 {
   "compilerOptions": {
-    "jsx": "react",
-    "target": "ESNext",
+    // enable latest features
+    "lib": ["esnext", "dom"],
     "module": "NodeNext",
+    "target": "ESNext",
+
     "moduleResolution": "NodeNext",
-    "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true,
-    "allowJs": false,
-    "esModuleInterop": true,
+    "noEmit": false,
+    "moduleDetection": "force",
+
+    "jsx": "react", // support JSX
     "jsxFactory": "v",
     "jsxFragmentFactory": "v.fragment",
+    "allowJs": true, // allow importing `.js` from `.ts`
+    "esModuleInterop": true, // allow default imports for CommonJS modules
+
+    // best practices
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "composite": true,
+    "downlevelIteration": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+
     "rootDir": "lib",
     "paths": {
       "node_modules/*": ["./node_modules/*"]
     }
   },
   "include": ["./lib"],
-  "exclude": ["./dist/**"]
+  "exclude": ["./dist"]
 }

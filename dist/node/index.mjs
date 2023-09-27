@@ -771,6 +771,9 @@ async function inline(file, options = {}) {
         ...options.esbuild || {}
       };
       let result = await esbuild.build(esbuildOptions);
+      if (result.outputFiles?.length !== 2) {
+        throw new Error(result.errors.join("\n"));
+      }
       if (options.compact) {
         const terser = await import("terser");
         let result2 = await terser.minify(result.outputFiles[1].text, {
@@ -786,6 +789,9 @@ async function inline(file, options = {}) {
           ecma: 2022,
           ...options.terser || {}
         });
+        if (!result2.code || !result2.map) {
+          throw new Error("Unknown error");
+        }
         let mapBase64 = Buffer.from(result2.map.toString()).toString("base64");
         let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
         return { raw: result2.code, map: suffix, file };

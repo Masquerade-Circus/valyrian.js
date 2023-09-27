@@ -22,12 +22,12 @@ export interface SignalInterface extends Array<any> {
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
-export function Signal(initialValue): SignalInterface {
+export function Signal(initialValue: any): SignalInterface {
   // Create a copy of the current context object
   const { vnode, component } = { ...current };
 
   // Check if the context object has a vnode property
-  if (vnode) {
+  if (vnode && component) {
     // Is first call
     if (!vnode.components) {
       // Set the components property to an empty array
@@ -70,7 +70,7 @@ export function Signal(initialValue): SignalInterface {
   const subscriptions: SubscriptionsInterface = [];
 
   // Define a function that allows other parts of the code to subscribe to changes to the Signal's value
-  const subscribe = (callback) => {
+  const subscribe = (callback: Function) => {
     // Add the callback function to the subscriptions array if it is not already in the array
     if (subscriptions.indexOf(callback) === -1) {
       subscriptions.push(callback);
@@ -127,7 +127,7 @@ export function Signal(initialValue): SignalInterface {
   }
 
   // Define a function that allows the value of the Signal to be updated and notifies any subscribed functions of the change
-  const set = (newValue) => {
+  const set = (newValue: any) => {
     // If we have a current event on going, prevent the default action
     if (current.event) {
       current.event.preventDefault();
@@ -152,7 +152,7 @@ export function Signal(initialValue): SignalInterface {
 
   // If the context object has a vnode property, add the signal to the vnode's signals array
   // and add the subscriptions array to the vnode's subscriptions array
-  if (vnode) {
+  if (vnode && component) {
     component.signals.push(signal);
   }
 

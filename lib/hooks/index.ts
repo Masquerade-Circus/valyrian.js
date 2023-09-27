@@ -36,7 +36,7 @@ export const createHook = function createHook({
   return (...args: any[]) => {
     let { component, vnode } = current as CurrentOnPatch;
 
-    let hook = null;
+    let hook: any = null;
 
     if (vnode) {
       // Init the components array for the current vnode
@@ -109,7 +109,7 @@ export const useState = createHook({
     get.toJSON = get.valueOf = get;
     get.toString = () => `${value}`;
 
-    function set(newValue) {
+    function set(newValue: any) {
       // Prevent default event if it exists
       if (current.event) {
         current.event.preventDefault();

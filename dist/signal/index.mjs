@@ -2,7 +2,7 @@
 import { current, onUnmount, updateVnode, v } from "valyrian.js";
 function Signal(initialValue) {
   const { vnode, component } = { ...current };
-  if (vnode) {
+  if (vnode && component) {
     if (!vnode.components) {
       vnode.components = [];
     }
@@ -64,7 +64,7 @@ function Signal(initialValue) {
     }
   };
   let signal = [get, set, subscribe, subscriptions];
-  if (vnode) {
+  if (vnode && component) {
     component.signals.push(signal);
   }
   return signal;

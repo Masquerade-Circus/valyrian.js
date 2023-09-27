@@ -3,26 +3,24 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 /* eslint-disable complexity */
 
+interface DefaultRecord extends Record<string | number | symbol, any> {}
+
 // The VnodeProperties interface represents properties that can be passed to a virtual node.
-export interface VnodeProperties {
+export interface VnodeProperties extends DefaultRecord {
   // A unique key for the virtual node, which can be a string or a number.
   // This is useful for optimizing updates in a list of nodes.
   key?: string | number;
   // A state object that is associated with the virtual node.
   state?: any;
-  // An index signature that allows for any other properties to be added.
-  [key: string | number | symbol]: any;
 }
 
 // The DomElement interface extends the Element interface with an index signature.
 // This allows for any additional properties to be added to DOM elements.
-export interface DomElement extends Element {
-  [key: string]: any;
-}
+export interface DomElement extends Element, DefaultRecord {}
 
 // The VnodeInterface represents a virtual node. It has a number of optional fields,
 // including a tag, props, children, and a DOM element.
-export interface VnodeInterface {
+export interface VnodeInterface extends DefaultRecord {
   // The constructor for the virtual node. It takes a tag, props, and children as arguments.
   // The tag can be a string, a component, or a POJO component.
   // eslint-disable-next-line no-unused-vars
@@ -39,8 +37,6 @@ export interface VnodeInterface {
   dom?: DomElement;
   // A boolean indicating whether the virtual node has been processed in the keyed diffing algorithm.
   processed?: boolean;
-  // An index signature that allows for any additional properties to be added to the virtual node.
-  [key: string | number | symbol]: any;
 }
 
 // The VnodeWithDom interface represents a virtual node that has a DOM element associated with it.
@@ -50,28 +46,24 @@ export interface VnodeWithDom extends VnodeInterface {
 
 // The Component interface represents a function that returns a virtual node or a list of virtual nodes.
 // It can also have additional properties.
-export interface Component {
+export interface Component extends DefaultRecord {
   // The function that returns a virtual node or a list of virtual nodes.
   // It can take props and children as arguments.
   // eslint-disable-next-line no-unused-vars
   (props?: VnodeProperties | null, ...children: any[]): VnodeInterface | Children | any;
-  // An index signature that allows for any additional properties to be added to the component.
-  [key: string]: any;
 }
 
 // The POJOComponent interface represents a "plain old JavaScript object" (POJO) component.
 // It has a view function that returns a virtual node or a list of virtual nodes,
 // as well as optional props and children.
 // It can be used also to identify class instance components.
-export interface POJOComponent {
+export interface POJOComponent extends DefaultRecord {
   // The view function that returns a virtual node or a list of virtual nodes.
   view: Component;
   // The props for the component.
   props?: VnodeProperties | null;
   // The children for the component.
   children?: any[];
-  // An index signature that allows for any additional properties to be added to the POJO component.
-  [key: string]: any;
 }
 
 // The VnodeComponentInterface represents a virtual node that has a component as its tag.
@@ -95,15 +87,11 @@ export interface Directive {
 }
 
 // The Directives interface is a mapping of directive names to Directive functions.
-export interface Directives {
-  [key: string]: Directive;
-}
+export interface Directives extends Record<string, Directive> {}
 
 // The ReservedProps interface is a mapping of reserved prop names to the value `true`.
 // These prop names cannot be used as custom prop names.
-export interface ReservedProps {
-  [key: string]: true;
-}
+export interface ReservedProps extends Record<string, true> {}
 
 // The Current interface represents the current component and virtual node that are being processed.
 export interface Current {
@@ -127,6 +115,7 @@ export interface V {
   // eslint-disable-next-line no-unused-vars, no-use-before-define
   fragment(_: any, ...children: Children): Children;
 }
+
 // 'textTag' is a constant string that is used to represent text nodes in the virtual DOM.
 const textTag = "#text";
 
@@ -153,8 +142,10 @@ export const Vnode = function Vnode(this: VnodeInterface, tag: string, props: Vn
 
 // 'isComponent' is a function that returns true if the given 'component' is a valid component and false otherwise.
 // A component is either a function or an object with a 'view' function.
-export function isComponent(component): component is Component {
-  return component && (typeof component === "function" || (typeof component === "object" && "view" in component));
+export function isComponent(component: unknown): component is Component {
+  return Boolean(
+    component && (typeof component === "function" || (typeof component === "object" && "view" in component))
+  );
 }
 
 // 'isVnode' is a function that returns true if the given 'object' is a 'Vnode' instance and false otherwise.
@@ -268,28 +259,28 @@ const onUpdateSet: Set<Function> = new Set();
 const onUnmountSet: Set<Function> = new Set();
 
 // These functions allow users to register callbacks for the corresponding lifecycle events.
-export function onMount(callback) {
+export function onMount(callback: Function) {
   if (!isMounted) {
     onMountSet.add(callback);
   }
 }
 
-export function onUpdate(callback) {
+export function onUpdate(callback: Function) {
   onUpdateSet.add(callback);
 }
 
-export function onCleanup(callback) {
+export function onCleanup(callback: Function) {
   onCleanupSet.add(callback);
 }
 
-export function onUnmount(callback) {
+export function onUnmount(callback: Function) {
   if (!isMounted) {
     onUnmountSet.add(callback);
   }
 }
 
 // This function is used to call all the callbacks in a given set.
-function callSet(set) {
+function callSet(set: Set<Function>) {
   for (let callback of set) {
     callback();
   }
@@ -684,13 +675,13 @@ export function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void {
     let newTreeLength = newTree.length;
 
     // Create an object that maps keys to indices in the old tree
-    let oldKeyedList: { [key: string]: number } = {};
+    let oldKeyedList: Record<string, number> = {};
     for (let i = 0; i < oldTreeLength; i++) {
       oldKeyedList[oldTree[i].props.key] = i;
     }
 
     // Create an object that maps keys to indices in the new tree
-    let newKeyedList: { [key: string]: number } = {};
+    let newKeyedList: Record<string, number> = {};
     for (let i = 0; i < newTreeLength; i++) {
       newKeyedList[newTree[i].props.key] = i;
     }
@@ -989,7 +980,7 @@ export function unmount() {
   }
 }
 // This function takes in a DOM element or a DOM element selector and a component to be mounted on it.
-export function mount(dom, component) {
+export function mount(dom: string | DomElement, component: any) {
   // Check if the 'dom' argument is a string. If it is, select the first element that matches the given selector.
   // Otherwise, use the 'dom' argument as the container.
   let container =
