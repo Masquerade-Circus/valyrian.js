@@ -1,11 +1,23 @@
 
 
-## [7.2.9](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.8...7.2.9) (2023-09-27)
+## [7.2.10](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.8...7.2.10) (2023-09-27)
+
+
+### Styles
+
+* simplify types ([ce48482](https://github.com/Masquerade-Circus/valyrian.js/commit/ce48482a295a9c6550f93cca01993e55062983f6))
 
 
 ### Build System
 
 * add maps to js and mjs files ([6654f84](https://github.com/Masquerade-Circus/valyrian.js/commit/6654f84528642b7b6d1905a4a9f3676c2ae790b9))
+* update tsconfig.json ([7a7f564](https://github.com/Masquerade-Circus/valyrian.js/commit/7a7f564e013e8990395ebd46055480239be38bdc))
+
+## [7.2.9](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.8...7.2.9) (2023-09-27)
+
+### Build System
+
+*   add maps to js and mjs files ([6654f84](https://github.com/Masquerade-Circus/valyrian.js/commit/6654f84528642b7b6d1905a4a9f3676c2ae790b9))
 
 ## [7.2.8](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.7...7.2.8) (2023-09-27)
 
