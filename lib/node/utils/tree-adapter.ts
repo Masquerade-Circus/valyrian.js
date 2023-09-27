@@ -283,7 +283,7 @@ export class Element extends Node {
     this.childNodes = [];
   }
 
-  style = new Proxy(
+  _style = new Proxy(
     {},
     {
       get: (state: Record<string, any>, prop: string) => state[prop],
@@ -299,6 +299,26 @@ export class Element extends Node {
       }
     }
   );
+
+  get style() {
+    return this._style as any;
+  }
+
+  set style(value: string) {
+    if (typeof value === "string") {
+      // should match pairs like "color: red; font-size: 12px; background: url(http://example.com/image.png?s=1024x1024&amp;w=is&amp;k=20&amp;c=ASa_AG8uP5Di7azXgJraSA6ME7fbLB0GX4YT_OzCARI=);"
+      const regex = /([^:\s]+):\s*((url\([^)]+\))|[^;]+(?=(;|$)))/g;
+      let match;
+
+      while ((match = regex.exec(value)) !== null) {
+        this._style[match[1]] = match[2].trim();
+      }
+
+      return;
+    }
+
+    throw new Error("Cannot set style");
+  }
 
   classList = {
     toggle: (item: any, force: any) => {
@@ -342,6 +362,7 @@ export class Element extends Node {
   get innerHTML() {
     let str = "";
     for (let i = 0, l = this.childNodes.length; i < l; i++) {
+      // console.log("domToHtml", this.childNodes[i], domToHtml(this.childNodes[i] as Element));
       str += domToHtml(this.childNodes[i] as Element);
     }
     return str;
@@ -679,10 +700,10 @@ function getObjectIndexTree(html: string): DocumentFragment {
 
     if (attributesWithValues) {
       for (let attribute of attributesWithValues) {
-        const [name, value] = attribute.trim().split("=");
+        const [name, ...value] = attribute.trim().split("=");
         string = string.replace(attribute, "");
         if (value) {
-          element.attributes[name] = value.replace(/(^"|"$)/g, "");
+          element.attributes[name] = value.join("=").replace(/(^"|"$)/g, "");
         }
       }
     }
@@ -690,10 +711,10 @@ function getObjectIndexTree(html: string): DocumentFragment {
     let attributesWithBooleanValues = string.match(/\s\S+=[^"]+/g);
     if (attributesWithBooleanValues) {
       for (let attribute of attributesWithBooleanValues) {
-        const [name, value] = attribute.trim().split("=");
+        const [name, ...value] = attribute.trim().split("=");
         string = string.replace(attribute, "");
         if (value) {
-          element.attributes[name] = value;
+          element.attributes[name] = value.join("=").replace(/(^"|"$)/g, "");
         }
       }
     }

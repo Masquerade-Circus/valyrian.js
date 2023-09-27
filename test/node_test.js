@@ -1,4 +1,4 @@
-import { htmlToHyperscript, icons, inline, render, sw } from "valyrian.js/node";
+import { htmlToHyperscript, icons, inline, render, sw, htmlToDom, domToHtml } from "valyrian.js/node";
 
 import expect from "expect";
 import fs from "fs";
@@ -78,6 +78,19 @@ describe("Node test", () => {
     let Component = () => <div>Hello world</div>;
 
     expect(render(<Component />)).toEqual("<div>Hello world</div>");
+  });
+
+  it("should apply styles correctly", () => {
+    const image =
+      "https://media.istockphoto.com/id/1283852667/es/foto/toque-de-musgo-fresco-en-el-bosque.jpg?s=1024x1024&amp;w=is&amp;k=20&amp;c=ASa_AG8uP5Di7azXgJraSA6ME7fbLB0GX4YT_OzCARI=";
+    const html = render(<div style={`background-image: url(${image});`}>Hello world</div>);
+    const dom = htmlToDom(
+      '<div style="background-image: url(https://media.istockphoto.com/id/1283852667/es/foto/toque-de-musgo-fresco-en-el-bosque.jpg?s=1024x1024&amp;w=is&amp;k=20&amp;c=ASa_AG8uP5Di7azXgJraSA6ME7fbLB0GX4YT_OzCARI=);">Hello world</div>'
+    );
+    const result =
+      '<div style="background-image: url(https://media.istockphoto.com/id/1283852667/es/foto/toque-de-musgo-fresco-en-el-bosque.jpg?s=1024x1024&amp;w=is&amp;k=20&amp;c=ASa_AG8uP5Di7azXgJraSA6ME7fbLB0GX4YT_OzCARI=);">Hello world</div>';
+    expect(html).toEqual(result);
+    expect(domToHtml(dom)).toEqual(result);
   });
 
   it("Should create a service worker file", async () => {

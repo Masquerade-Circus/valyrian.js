@@ -185,7 +185,7 @@ var Element = class extends Node {
     this.attributes = [];
     this.childNodes = [];
   }
-  style = new Proxy(
+  _style = new Proxy(
     {},
     {
       get: (state, prop) => state[prop],
@@ -201,6 +201,20 @@ var Element = class extends Node {
       }
     }
   );
+  get style() {
+    return this._style;
+  }
+  set style(value) {
+    if (typeof value === "string") {
+      const regex = /([^:\s]+):\s*((url\([^)]+\))|[^;]+(?=(;|$)))/g;
+      let match;
+      while ((match = regex.exec(value)) !== null) {
+        this._style[match[1]] = match[2].trim();
+      }
+      return;
+    }
+    throw new Error("Cannot set style");
+  }
   classList = {
     toggle: (item, force) => {
       if (item) {
@@ -485,20 +499,20 @@ function getObjectIndexTree(html) {
     let attributesWithValues = string.match(/\S+="[^"]+"/g);
     if (attributesWithValues) {
       for (let attribute of attributesWithValues) {
-        const [name, value] = attribute.trim().split("=");
+        const [name, ...value] = attribute.trim().split("=");
         string = string.replace(attribute, "");
         if (value) {
-          element.attributes[name] = value.replace(/(^"|"$)/g, "");
+          element.attributes[name] = value.join("=").replace(/(^"|"$)/g, "");
         }
       }
     }
     let attributesWithBooleanValues = string.match(/\s\S+=[^"]+/g);
     if (attributesWithBooleanValues) {
       for (let attribute of attributesWithBooleanValues) {
-        const [name, value] = attribute.trim().split("=");
+        const [name, ...value] = attribute.trim().split("=");
         string = string.replace(attribute, "");
         if (value) {
-          element.attributes[name] = value;
+          element.attributes[name] = value.join("=").replace(/(^"|"$)/g, "");
         }
       }
     }
