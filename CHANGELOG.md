@@ -1,11 +1,17 @@
 
 
-### [7.2.6](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.5...7.2.6) (2023-09-23)
+### [7.2.7](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.6...7.2.7) (2023-09-27)
 
+
+### Bug Fixes
+
+* fix handling style property in html string to dom render ([17417ad](https://github.com/Masquerade-Circus/valyrian.js/commit/17417ad01a542126d3c3425a54366bdb640f7fd5))
+
+### [7.2.6](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.5...7.2.6) (2023-09-23)
 
 ### Code Refactoring
 
-* **router:** allow routes ending with #id ([08e010f](https://github.com/Masquerade-Circus/valyrian.js/commit/08e010fb3bcf7ae0c6050730f88e8ccb0d692f09))
+*   **router:** allow routes ending with #id ([08e010f](https://github.com/Masquerade-Circus/valyrian.js/commit/08e010fb3bcf7ae0c6050730f88e8ccb0d692f09))
 
 ### [7.2.5](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.4...7.2.5) (2023-09-22)
 

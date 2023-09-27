@@ -38,7 +38,9 @@ export declare class Text extends Node {
 }
 export declare class Element extends Node {
     constructor();
-    style: Record<string, any>;
+    _style: Record<string, any>;
+    get style(): string;
+    set style(value: string);
     classList: {
         toggle: (item: any, force: any) => void;
     };
