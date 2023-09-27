@@ -56,26 +56,30 @@ export class Node implements Node {
   constructor() {}
 
   appendChild<T extends Node>(node: T): T {
-    node.parentNode && node.parentNode.removeChild(node as Node);
-    this.childNodes.push(node);
-    node.parentNode = this;
+    if (node) {
+      node.parentNode && node.parentNode.removeChild(node as Node);
+      this.childNodes.push(node);
+      node.parentNode = this;
+    }
     return node;
   }
 
   insertBefore<T extends Node>(node: T, child: Node | null): T {
-    node.parentNode && node.parentNode.removeChild(node as Node);
-    node.parentNode = this;
-    if (child) {
-      let idx = this.childNodes.indexOf(child);
-      this.childNodes.splice(idx, 0, node);
-    } else {
-      this.childNodes.push(node);
+    if (node) {
+      node.parentNode && node.parentNode.removeChild(node as Node);
+      node.parentNode = this;
+      if (child) {
+        let idx = this.childNodes.indexOf(child);
+        this.childNodes.splice(idx, 0, node);
+      } else {
+        this.childNodes.push(node);
+      }
     }
     return node;
   }
 
   replaceChild<T extends Node>(node: Node, child: T): T {
-    if (child && child.parentNode === this) {
+    if (node && child && child.parentNode === this) {
       this.insertBefore(node, child);
       child.parentNode && child.parentNode.removeChild(child);
     }
