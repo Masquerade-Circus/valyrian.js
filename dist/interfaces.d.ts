@@ -93,4 +93,5 @@ declare module "valyrian.js" {
     function mount(dom: any, component: any): string | void;
     const v: V;
 }
+export {};
 //# sourceMappingURL=interfaces.d.ts.map

@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "jsx": "react",
-    "target": "ES2022",
-    "module": "ES2022",
+    "target": "ESNext",
+    "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,

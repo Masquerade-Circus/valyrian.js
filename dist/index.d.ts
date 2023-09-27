@@ -56,27 +56,11 @@ export interface V {
     fragment(_: any, ...children: Children): Children;
 }
 export declare let isNodeJs: boolean;
-export declare function createDomElement(tag: string, isSVG?: boolean): DomElement;
 export declare const Vnode: VnodeInterface;
-export declare function isComponent(component: any): component is Component;
 export declare const isVnode: (object?: unknown | VnodeInterface) => object is VnodeInterface;
 export declare const isVnodeComponent: (object?: unknown | VnodeComponentInterface) => object is VnodeComponentInterface;
-export declare function domToVnode(dom: any): VnodeWithDom;
-export declare function trust(htmlString: string): any;
 export declare const current: Current;
 export declare const reservedProps: Record<string, true>;
-export declare function onMount(callback: any): void;
-export declare function onUpdate(callback: any): void;
-export declare function onCleanup(callback: any): void;
-export declare function onUnmount(callback: any): void;
 export declare const directives: Directives;
-export declare function directive(name: string, directive: Directive): void;
-export declare function setAttribute(name: string, value: any, newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
-export declare function updateAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
-export declare function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
-export declare function update(): void | string;
-export declare function updateVnode(vnode: VnodeWithDom, oldVnode: VnodeWithDom): string | void;
-export declare function unmount(): string | void;
-export declare function mount(dom: any, component: any): string | void;
 export declare const v: V;
 //# sourceMappingURL=index.d.ts.map
