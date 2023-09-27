@@ -1,4 +1,4 @@
-export declare type Hook = any;
+export type Hook = any;
 export interface HookDefinition {
     onCreate: (...args: any[]) => any;
     onUpdate?: (hook: Hook, ...args: any[]) => any;

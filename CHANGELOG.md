@@ -1,11 +1,17 @@
 
 
-### [7.2.7](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.6...7.2.7) (2023-09-27)
+## [7.2.8](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.7...7.2.8) (2023-09-27)
 
+
+### Build System
+
+* update dependencies ([8918497](https://github.com/Masquerade-Circus/valyrian.js/commit/89184976c07246f566cad86f69e5c49f12322e2c))
+
+### [7.2.7](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.6...7.2.7) (2023-09-27)
 
 ### Bug Fixes
 
-* fix handling style property in html string to dom render ([17417ad](https://github.com/Masquerade-Circus/valyrian.js/commit/17417ad01a542126d3c3425a54366bdb640f7fd5))
+*   fix handling style property in html string to dom render ([17417ad](https://github.com/Masquerade-Circus/valyrian.js/commit/17417ad01a542126d3c3425a54366bdb640f7fd5))
 
 ### [7.2.6](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.5...7.2.6) (2023-09-23)
 
