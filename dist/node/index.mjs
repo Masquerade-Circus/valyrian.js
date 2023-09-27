@@ -48,24 +48,28 @@ var Node = class _Node {
   constructor() {
   }
   appendChild(node) {
-    node.parentNode && node.parentNode.removeChild(node);
-    this.childNodes.push(node);
-    node.parentNode = this;
+    if (node) {
+      node.parentNode && node.parentNode.removeChild(node);
+      this.childNodes.push(node);
+      node.parentNode = this;
+    }
     return node;
   }
   insertBefore(node, child) {
-    node.parentNode && node.parentNode.removeChild(node);
-    node.parentNode = this;
-    if (child) {
-      let idx = this.childNodes.indexOf(child);
-      this.childNodes.splice(idx, 0, node);
-    } else {
-      this.childNodes.push(node);
+    if (node) {
+      node.parentNode && node.parentNode.removeChild(node);
+      node.parentNode = this;
+      if (child) {
+        let idx = this.childNodes.indexOf(child);
+        this.childNodes.splice(idx, 0, node);
+      } else {
+        this.childNodes.push(node);
+      }
     }
     return node;
   }
   replaceChild(node, child) {
-    if (child && child.parentNode === this) {
+    if (node && child && child.parentNode === this) {
       this.insertBefore(node, child);
       child.parentNode && child.parentNode.removeChild(child);
     }
