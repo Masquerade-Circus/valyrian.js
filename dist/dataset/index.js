@@ -41,6 +41,7 @@ function deepFreeze(obj) {
 }
 var DataSet = class {
   #vnode;
+  // eslint-disable-next-line no-unused-vars
   #handler;
   #data = [];
   #isFrozen = false;

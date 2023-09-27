@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'url';const __filename = fileURLToPath(import.meta.url);const __dirname = path.dirname(__filename);// lib/node/utils/tree-adapter.ts
-var Node = class {
+var Node = class _Node {
+  // eslint-disable-next-line no-use-before-define
   childNodes = [];
   baseURI = "";
   tag_name;
@@ -36,6 +37,7 @@ var Node = class {
   get nodeValue() {
     return this.node_value;
   }
+  // eslint-disable-next-line no-use-before-define
   parent_node = null;
   get parentNode() {
     return this.parent_node;
@@ -97,7 +99,7 @@ var Node = class {
       }
       return node2;
     }
-    let node = new Node();
+    let node = new _Node();
     node.nodeType = this.nodeType;
     node.nodeName = this.nodeName;
     return node;
@@ -151,8 +153,67 @@ var Node = class {
     }
     return elementFound || null;
   }
+  // Not implemented
+  // firstChild!: ChildNode | null;
+  // isConnected!: boolean;
+  // lastChild!: ChildNode | null;
+  // nextSibling!: ChildNode | null;
+  // ownerDocument!: Document | null;
+  // parentElement!: HTMLElement | null;
+  // previousSibling!: ChildNode | null;
+  // compareDocumentPosition(other: Node): number {
+  //   throw new Error("Method not implemented.");
+  // }
+  // contains(other: Node | null): boolean {
+  //   throw new Error("Method not implemented.");
+  // }
+  // getRootNode(options?: GetRootNodeOptions | undefined): Node {
+  //   throw new Error("Method not implemented.");
+  // }
+  // hasChildNodes(): boolean {
+  //   throw new Error("Method not implemented.");
+  // }
+  // isDefaultNamespace(namespace: string | null): boolean {
+  //   throw new Error("Method not implemented.");
+  // }
+  // isEqualNode(otherNode: Node | null): boolean {
+  //   throw new Error("Method not implemented.");
+  // }
+  // isSameNode(otherNode: Node | null): boolean {
+  //   throw new Error("Method not implemented.");
+  // }
+  // lookupNamespaceURI(prefix: string | null): string | null {
+  //   throw new Error("Method not implemented.");
+  // }
+  // lookupPrefix(namespace: string | null): string | null {
+  //   throw new Error("Method not implemented.");
+  // }
+  // normalize(): void {
+  //   throw new Error("Method not implemented.");
+  // }
+  // ATTRIBUTE_NODE!: number;
+  // CDATA_SECTION_NODE!: number;
+  // COMMENT_NODE!: number;
+  // DOCUMENT_FRAGMENT_NODE!: number;
+  // DOCUMENT_NODE!: number;
+  // DOCUMENT_POSITION_CONTAINED_BY!: number;
+  // DOCUMENT_POSITION_CONTAINS!: number;
+  // DOCUMENT_POSITION_DISCONNECTED!: number;
+  // DOCUMENT_POSITION_FOLLOWING!: number;
+  // DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC!: number;
+  // DOCUMENT_POSITION_PRECEDING!: number;
+  // DOCUMENT_TYPE_NODE!: number;
+  // ELEMENT_NODE!: number;
+  // ENTITY_NODE!: number;
+  // ENTITY_REFERENCE_NODE!: number;
+  // NOTATION_NODE!: number;
+  // PROCESSING_INSTRUCTION_NODE!: number;
+  // TEXT_NODE!: number;
   addEventListener(type, callback, options) {
   }
+  // dispatchEvent(event: Event): boolean {
+  //   throw new Error("Method not implemented.");
+  // }
   removeEventListener(type, callback, options) {
   }
 };
@@ -617,6 +678,7 @@ async function icons(source, configuration) {
 icons.options = {
   iconsPath: null,
   linksViewPath: null,
+  // favicons options
   path: "",
   appName: null,
   appDescription: null,
@@ -640,6 +702,7 @@ icons.options = {
     firefox: false,
     windows: true,
     yandex: false
+    // Create Yandex browser icon. `boolean`
   }
 };
 
@@ -658,7 +721,9 @@ async function inline(file, options = {}) {
         let emitDeclaration = !!declarationDir;
         let tscProgOptions = {
           basePath: process.cwd(),
+          // always required, used for relative paths
           configFilePath: "tsconfig.json",
+          // config to inherit from (optional)
           files: [file],
           include: ["**/*.ts", "**/*.js", "**/*.tsx", "**/*.jsx", "**/*.mjs"],
           exclude: ["test*/**/*", "**/*.test.ts", "**/*.spec.ts", "dist/**"],
@@ -738,6 +803,7 @@ async function inline(file, options = {}) {
           },
           2: {
             restructureRules: true
+            // controls rule restructuring; defaults to false
           }
         },
         ...options.cleanCss || {}
@@ -776,6 +842,7 @@ inline.uncss = async function(renderedHtml, css, options = {}) {
       },
       2: {
         restructureRules: true
+        // controls rule restructuring; defaults to false
       }
     },
     ...options.cleanCss || {}

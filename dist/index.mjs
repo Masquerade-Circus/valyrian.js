@@ -58,6 +58,7 @@ var reservedProps = {
   key: true,
   state: true,
   "v-keep": true,
+  // Built in directives
   "v-if": true,
   "v-unless": true,
   "v-for": true,
@@ -127,8 +128,11 @@ var hideDirective = (test) => (bool, vnode, oldnode) => {
   }
 };
 var directives = {
+  // The "v-if" directive hides an element if the given condition is false
   "v-if": hideDirective(false),
+  // The "v-unless" directive hides an element if the given condition is true
   "v-unless": hideDirective(true),
+  // The "v-for" directive creates a loop and applies a callback function to each item in the loop
   "v-for": (set, vnode) => {
     let newChildren = [];
     let callback = vnode.children[0];
@@ -137,17 +141,21 @@ var directives = {
     }
     vnode.children = newChildren;
   },
+  // The "v-show" directive shows or hides an element by setting the "display" style property
   "v-show": (bool, vnode) => {
     vnode.dom.style.display = bool ? "" : "none";
   },
+  // The "v-class" directive adds or removes class names from an element based on a condition
   "v-class": (classes, vnode) => {
     for (let name in classes) {
       vnode.dom.classList.toggle(name, classes[name]);
     }
   },
+  // The "v-html" directive sets the inner HTML of an element to the given HTML string
   "v-html": (html, vnode) => {
     vnode.children = [trust(html)];
   },
+  // The "v-model" directive binds the value of an input element to a model property
   "v-model": ([model, property, event], vnode, oldVnode) => {
     let value;
     let handler = (e) => model[property] = e.target.value;
@@ -238,6 +246,10 @@ var directives = {
       oldVnode
     );
   },
+  // The "v-create" directive is called when a new virtual node is created.
+  // The provided callback function is called with the new virtual node as an argument.
+  // This directive is only called once per virtual node, when it is first created.
+  // eslint-disable-next-line no-unused-vars
   "v-create": (callback, vnode, oldVnode) => {
     if (!oldVnode) {
       let cleanup = callback(vnode);
@@ -246,6 +258,9 @@ var directives = {
       }
     }
   },
+  // The "v-update" directive is called when an existing virtual node is updated.
+  // The provided callback function is called with the new and old virtual nodes as arguments.
+  // This directive is only called once per virtual node update.
   "v-update": (callback, vnode, oldVnode) => {
     if (oldVnode) {
       let cleanup = callback(vnode, oldVnode);
@@ -254,6 +269,9 @@ var directives = {
       }
     }
   },
+  // The "v-cleanup" directive is called when the update is cleaned up.
+  // The provided callback function is called with the old virtual node as an argument.
+  // This directive is only called once per virtual node, when the update is cleaned up.
   "v-cleanup": (callback, vnode, oldVnode) => {
     onCleanup(() => callback(vnode, oldVnode));
   }

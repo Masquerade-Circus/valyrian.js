@@ -51,6 +51,7 @@ function ProxySignal(value) {
   let getters = {};
   let forceUpdate = false;
   let signal = new Proxy(
+    // eslint-disable-next-line no-unused-vars
     function(valOrPath, handler) {
       if (typeof valOrPath === "undefined") {
         return signal.value;

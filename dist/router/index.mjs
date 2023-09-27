@@ -96,7 +96,7 @@ async function searchComponent(router, middlewares) {
     }
   }
 }
-var Router = class {
+var Router = class _Router {
   paths = [];
   container = null;
   query = {};
@@ -119,7 +119,7 @@ var Router = class {
       `${this.pathPrefix}${typeof middlewares[0] === "string" ? middlewares.shift() : "/"}`
     );
     for (const item of middlewares) {
-      if (item instanceof Router) {
+      if (item instanceof _Router) {
         const subrouter = item;
         for (const subpath of subrouter.paths) {
           addPath({
