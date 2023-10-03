@@ -167,9 +167,7 @@ export function domToVnode(dom: any): VnodeWithDom {
   // Set the 'dom' property of the 'Vnode' instance to the child DOM node.
   // Push the 'Vnode' instance to the 'children' array.
   if (dom.nodeType === 3) {
-    const vnode = new Vnode(textTag, {}, [dom.nodeValue]);
-    vnode.dom = dom;
-    return vnode as VnodeWithDom;
+    return dom.nodeValue;
   }
 
   const children: VnodeWithDom[] = [];
@@ -178,7 +176,9 @@ export function domToVnode(dom: any): VnodeWithDom {
     const childDom = dom.childNodes[i];
     // If the child node is an element node, recursively call 'domToVnode' to convert it to a 'Vnode' instance.
     // Push the 'Vnode' instance to the 'children' array.
-    if (childDom.nodeType === 1 || childDom.nodeType === 3) {
+    if (childDom.nodeType === 3) {
+      children.push(childDom.nodeValue);
+    } else if (childDom.nodeType === 1) {
       children.push(domToVnode(childDom));
     }
   }
@@ -326,20 +326,18 @@ function eventListener(e: Event) {
 /* Directives --------------------------------------------------------------- */
 
 // This function creates a directive that hides an element based on a condition
-const hideDirective = (test: boolean) => (bool: boolean, vnode: VnodeInterface, oldnode?: VnodeInterface) => {
+const hideDirective = (test: boolean) => (bool: boolean, vnode: VnodeWithDom, oldnode?: VnodeInterface) => {
   // If test is true, use the value of bool. Otherwise, use the opposite of bool.
   const value = test ? bool : !bool;
 
   // If the value is true, hide the element by replacing it with a text node
   if (value) {
-    const newdom = document.createTextNode("");
-    if (oldnode && oldnode.dom && oldnode.dom.parentNode) {
-      oldnode.dom.parentNode.replaceChild(newdom, oldnode.dom);
+    const parentNode = vnode.dom?.parentNode;
+    if (parentNode) {
+      const newdom = document.createTextNode("");
+      parentNode.replaceChild(newdom, vnode.dom);
     }
-    vnode.tag = "#text";
-    vnode.children = [];
-    vnode.props = {};
-    vnode.dom = newdom as unknown as DomElement;
+
     return false;
   }
 };
@@ -708,8 +706,8 @@ export function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void {
       newTree.splice(i, 1);
       newTreeLength = newTree.length;
     } else {
-      // If the new child is a Vnode, set the text of the Vnode to the text content of its dom property
-      newTree[i] = new Vnode(textTag, {}, [newChild]);
+      // If the new child is not a Vnode or an array, it is a text node
+      // just continue the loop
       i++;
     }
   }
@@ -787,51 +785,50 @@ export function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void {
     const oldChild = oldTree[i];
     const isGreaterThanOldTreeLength = i >= oldTreeLength;
 
-    // Handle text nodes
-    if (newChild.tag === textTag) {
-      // If there's no corresponding old child or the old child isn't a text node
-      if (isGreaterThanOldTreeLength || oldChild.tag !== textTag) {
-        newChild.dom = document.createTextNode(newChild.children[0]); // Create a new text node
+    if (newChild instanceof Vnode === false) {
+      if (isGreaterThanOldTreeLength || oldChild instanceof Vnode) {
+        // If there's no corresponding old child, create a new text node for the new child
+        const dom = document.createTextNode(newChild as string);
+
         if (isGreaterThanOldTreeLength) {
-          // If there's no corresponding old child, append the new text node
-          newVnode.dom.appendChild(newChild.dom);
+          // Append the new child to the dom
+          newVnode.dom.appendChild(dom);
         } else {
-          // Replace the old non-text node with the new text node
-          newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
+          newVnode.dom.replaceChild(dom, newVnode.dom.childNodes[i]);
         }
-      } else {
-        // Update the old text node if content has changed
-        newChild.dom = oldChild.dom;
-        if (newChild.children[0] !== oldChild.dom.textContent) {
-          oldChild.dom.textContent = newChild.children[0];
-        }
+        continue;
+      }
+
+      // If the old child is not a vnode
+      // eslint-disable-next-line eqeqeq
+      if (newVnode.dom.childNodes[i].textContent != newChild) {
+        newVnode.dom.childNodes[i].textContent = newChild as string;
       }
       continue;
     }
 
-    // If the new child is not a text node
     // Set the isSVG flag for the new child if it is an SVG element or if the parent is an SVG element
     newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
 
-    // If the tag of the new child is different from the tag of the old child
-    if (isGreaterThanOldTreeLength || newChild.tag !== oldChild.tag) {
-      // Create a new dom element for the new child
+    if (isGreaterThanOldTreeLength || oldChild instanceof Vnode === false || newChild.tag !== oldChild.tag) {
+      // If there's no corresponding old child, create a new dom element for the new child
       newChild.dom = createDomElement(newChild.tag as string, newChild.isSVG);
-      // Update the attributes of the new child
-      updateAttributes(newChild as VnodeWithDom);
+
       if (isGreaterThanOldTreeLength) {
         // Append the new child to the dom
         newVnode.dom.appendChild(newChild.dom);
       } else {
-        // Replace the old child in the dom with the new child
-        newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
+        newVnode.dom.replaceChild(newChild.dom, newVnode.dom.childNodes[i]);
       }
+
+      // Update the attributes of the new child
+      updateAttributes(newChild as VnodeWithDom);
+
       // Recursively patch the new child
       patch(newChild as VnodeWithDom);
       continue;
     }
 
-    // If the tag of the new child is the same as the tag of the old child
     // Set the dom property of the new child to the dom property of the old child
     newChild.dom = oldChild.dom;
     // If the v-keep prop is the same for both the new and old child, set the children of the new child to the children of the old child
@@ -841,9 +838,9 @@ export function patch(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void {
     }
 
     // Update the attributes of the new child based on the old child
-    updateAttributes(newChild as VnodeWithDom, oldChild);
+    updateAttributes(newChild as VnodeWithDom, oldChild as VnodeWithDom);
     // Recursively patch the new and old children
-    patch(newChild as VnodeWithDom, oldChild);
+    patch(newChild as VnodeWithDom, oldChild as VnodeWithDom);
   }
 
   // Remove any old children that are no longer present in the new tree

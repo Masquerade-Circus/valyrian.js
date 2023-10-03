@@ -1,5 +1,4 @@
 // lib/index.ts
-var textTag = "#text";
 var isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
 function createDomElement(tag, isSVG = false) {
   return isSVG ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag);
@@ -22,14 +21,14 @@ var isVnodeComponent = (object) => {
 };
 function domToVnode(dom) {
   if (dom.nodeType === 3) {
-    const vnode2 = new Vnode(textTag, {}, [dom.nodeValue]);
-    vnode2.dom = dom;
-    return vnode2;
+    return dom.nodeValue;
   }
   const children = [];
   for (let i = 0, l = dom.childNodes.length; i < l; i++) {
     const childDom = dom.childNodes[i];
-    if (childDom.nodeType === 1 || childDom.nodeType === 3) {
+    if (childDom.nodeType === 3) {
+      children.push(childDom.nodeValue);
+    } else if (childDom.nodeType === 1) {
       children.push(domToVnode(childDom));
     }
   }
@@ -118,14 +117,11 @@ function eventListener(e) {
 var hideDirective = (test) => (bool, vnode, oldnode) => {
   const value = test ? bool : !bool;
   if (value) {
-    const newdom = document.createTextNode("");
-    if (oldnode && oldnode.dom && oldnode.dom.parentNode) {
-      oldnode.dom.parentNode.replaceChild(newdom, oldnode.dom);
+    const parentNode = vnode.dom?.parentNode;
+    if (parentNode) {
+      const newdom = document.createTextNode("");
+      parentNode.replaceChild(newdom, vnode.dom);
     }
-    vnode.tag = "#text";
-    vnode.children = [];
-    vnode.props = {};
-    vnode.dom = newdom;
     return false;
   }
 };
@@ -372,7 +368,6 @@ function patch(newVnode, oldVnode) {
       newTree.splice(i, 1);
       newTreeLength = newTree.length;
     } else {
-      newTree[i] = new Vnode(textTag, {}, [newChild]);
       i++;
     }
   }
@@ -427,31 +422,30 @@ function patch(newVnode, oldVnode) {
     const newChild = newTree[i2];
     const oldChild = oldTree[i2];
     const isGreaterThanOldTreeLength = i2 >= oldTreeLength;
-    if (newChild.tag === textTag) {
-      if (isGreaterThanOldTreeLength || oldChild.tag !== textTag) {
-        newChild.dom = document.createTextNode(newChild.children[0]);
+    if (newChild instanceof Vnode === false) {
+      if (isGreaterThanOldTreeLength || oldChild instanceof Vnode) {
+        const dom = document.createTextNode(newChild);
         if (isGreaterThanOldTreeLength) {
-          newVnode.dom.appendChild(newChild.dom);
+          newVnode.dom.appendChild(dom);
         } else {
-          newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
+          newVnode.dom.replaceChild(dom, newVnode.dom.childNodes[i2]);
         }
-      } else {
-        newChild.dom = oldChild.dom;
-        if (newChild.children[0] !== oldChild.dom.textContent) {
-          oldChild.dom.textContent = newChild.children[0];
-        }
+        continue;
+      }
+      if (newVnode.dom.childNodes[i2].textContent != newChild) {
+        newVnode.dom.childNodes[i2].textContent = newChild;
       }
       continue;
     }
     newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
-    if (isGreaterThanOldTreeLength || newChild.tag !== oldChild.tag) {
+    if (isGreaterThanOldTreeLength || oldChild instanceof Vnode === false || newChild.tag !== oldChild.tag) {
       newChild.dom = createDomElement(newChild.tag, newChild.isSVG);
-      updateAttributes(newChild);
       if (isGreaterThanOldTreeLength) {
         newVnode.dom.appendChild(newChild.dom);
       } else {
-        newVnode.dom.replaceChild(newChild.dom, oldChild.dom);
+        newVnode.dom.replaceChild(newChild.dom, newVnode.dom.childNodes[i2]);
       }
+      updateAttributes(newChild);
       patch(newChild);
       continue;
     }

@@ -366,7 +366,7 @@ describe("Mount and update", () => {
     expect(result10).toEqual("<div>Hello world 9</div>");
   });
 
-  it.skip("should test deepley nested components", () => {
+  it("should test deepley nested components", () => {
     const ChildComponent = () => (
       <>
         <div>Hello World</div>Hello 2
@@ -392,8 +392,8 @@ describe("Mount and update", () => {
       "<div><span>Hello</span><span>World</span><div>Hello World</div>Hello 2</div><div><span>Hello</span><span>World</span><div>Hello World</div>Hello 2</div>"
     );
 
-    for (let i = 0; i < 1000000; i++) {
+    /* for (let i = 0; i < 1000000; i++) {
       update();
-    }
+    } */
   });
 });

@@ -93,14 +93,7 @@ describe("Hyperscript", () => {
           id: "unique",
           class: "unique"
         },
-        children: [
-          {
-            tag: "#text",
-            props: {},
-            children: ["Hola mundo"],
-            dom: expect.anything()
-          }
-        ],
+        children: ["Hola mundo"],
         dom: expect.anything()
       }
     ]);
