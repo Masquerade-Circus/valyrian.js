@@ -54,7 +54,7 @@ export interface RequestInterface {
 function serialize(obj: Record<string, any>, prefix: string = ""): string {
   return Object.keys(obj)
     .map((prop: string) => {
-      let k = prefix ? `${prefix}[${prop}]` : prop;
+      const k = prefix ? `${prefix}[${prop}]` : prop;
       return typeof obj[prop] === "object"
         ? serialize(obj[prop], k)
         : `${encodeURIComponent(k)}=${encodeURIComponent(obj[prop])}`;
@@ -65,7 +65,7 @@ function serialize(obj: Record<string, any>, prefix: string = ""): string {
 function parseUrl(url: string, options: RequestOptionsWithUrls) {
   let u = /^https?/gi.test(url) ? url : options.urls.base + url;
 
-  let parts = u.split("?");
+  const parts = u.split("?");
   u = parts[0].trim().replace(/^\/\//, "/").replace(/\/$/, "").trim();
 
   if (parts[1]) {
@@ -92,7 +92,7 @@ const defaultOptions: RequestOptions = { allowedMethods: ["get", "post", "put", 
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
-  let url = baseUrl.replace(/\/$/gi, "").trim();
+  const url = baseUrl.replace(/\/$/gi, "").trim();
   if (!options.urls) {
     options.urls = {
       base: "",
@@ -105,7 +105,7 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
     options.allowedMethods = defaultOptions.allowedMethods;
   }
 
-  let opts: RequestOptionsWithUrls = {
+  const opts: RequestOptionsWithUrls = {
     ...(options as RequestOptionsWithUrls),
     urls: {
       node: options.urls.node || null,
@@ -115,7 +115,7 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
   };
 
   const request = async function request(method: string, url: string, data?: Record<string, any>, options = {}) {
-    let innerOptions: SendOptions = {
+    const innerOptions: SendOptions = {
       method: method.toUpperCase(),
       headers: {},
       resolveWithFullResponse: false,
@@ -127,8 +127,8 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
       innerOptions.headers.Accept = "application/json";
     }
 
-    let acceptType = innerOptions.headers.Accept;
-    let contentType = innerOptions.headers["Content-Type"] || innerOptions.headers["content-type"] || "";
+    const acceptType = innerOptions.headers.Accept;
+    const contentType = innerOptions.headers["Content-Type"] || innerOptions.headers["content-type"] || "";
 
     if (innerOptions.allowedMethods.indexOf(method) === -1) {
       throw new Error("Method not allowed");
@@ -148,7 +148,7 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
             formData = data;
           } else {
             formData = new FormData();
-            for (let i in data) {
+            for (const i in data) {
               formData.append(i, data[i]);
             }
           }
@@ -157,10 +157,10 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
       }
     }
 
-    let response = await fetch(parseUrl(url, opts), innerOptions);
+    const response = await fetch(parseUrl(url, opts), innerOptions);
     let body = null;
     if (!response.ok) {
-      let err = new Error(response.statusText) as Error & { response?: any; body?: any };
+      const err = new Error(response.statusText) as Error & { response?: any; body?: any };
       err.response = response;
       if (/text/gi.test(acceptType)) {
         err.body = await response.text();
@@ -203,15 +203,15 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
   request.setOption = (key: string, value: any) => {
     let result = opts;
 
-    let parsed = key.split(".");
+    const parsed = key.split(".");
     let next;
 
     while (parsed.length) {
       next = parsed.shift() as string;
 
-      let nextIsArray = next.indexOf("[") > -1;
+      const nextIsArray = next.indexOf("[") > -1;
       if (nextIsArray) {
-        let idx = next.replace(/\D/gi, "");
+        const idx = next.replace(/\D/gi, "");
         next = next.split("[")[0];
         parsed.unshift(idx);
       }
@@ -236,15 +236,15 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
     }
 
     let result = opts;
-    let parsed = key.split(".");
+    const parsed = key.split(".");
     let next;
 
     while (parsed.length) {
       next = parsed.shift() as string;
 
-      let nextIsArray = next.indexOf("[") > -1;
+      const nextIsArray = next.indexOf("[") > -1;
       if (nextIsArray) {
-        let idx = next.replace(/\D/gi, "");
+        const idx = next.replace(/\D/gi, "");
         next = next.split("[")[0];
         parsed.unshift(idx);
       }

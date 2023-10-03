@@ -7,7 +7,7 @@ function deepFreeze(obj) {
         deepFreeze(obj[i]);
       }
     } else {
-      let props = Reflect.ownKeys(obj);
+      const props = Reflect.ownKeys(obj);
       for (let i = 0, l = props.length; i < l; i++) {
         deepFreeze(obj[props[i]]);
       }
@@ -64,18 +64,18 @@ var DataSet = class {
     if (this.#vnode === null || this.#handler === null) {
       return;
     }
-    let vnode = this.#vnode;
-    let handler = this.#handler;
+    const vnode = this.#vnode;
+    const handler = this.#handler;
     if (data.length === 0) {
       vnode.children = [];
       vnode.dom.textContent = "";
       return;
     }
-    let childrenLength = vnode.children.length;
+    const childrenLength = vnode.children.length;
     for (let i = 0, l = data.length; i < l; i++) {
-      let child = handler(this.data[i], i);
+      const child = handler(this.data[i], i);
       if (i < childrenLength) {
-        let oldChild = vnode.children[i];
+        const oldChild = vnode.children[i];
         child.isSVG = oldChild.isSVG;
         child.dom = oldChild.dom;
         updateAttributes(child, oldChild);
@@ -97,7 +97,7 @@ var DataSet = class {
   }
   add(...data) {
     if (this.#data) {
-      let oldLength = this.#data.length;
+      const oldLength = this.#data.length;
       if (this.#isFrozen) {
         this.#setData([...this.#data, ...data]);
       } else {
@@ -106,10 +106,10 @@ var DataSet = class {
       if (this.#vnode === null || this.#handler === null) {
         return;
       }
-      let vnode = this.#vnode;
-      let handler = this.#handler;
+      const vnode = this.#vnode;
+      const handler = this.#handler;
       for (let i = 0, ii = oldLength, l = data.length; i < l; i++, ii++) {
-        let child = handler(this.#data[i], ii);
+        const child = handler(this.#data[i], ii);
         child.isSVG = vnode.isSVG || child.tag === "svg";
         child.dom = createDomElement(child.tag, child.isSVG);
         vnode.dom.appendChild(child.dom);
@@ -121,7 +121,7 @@ var DataSet = class {
   }
   delete(index) {
     if (this.#data && this.#vnode) {
-      let child = this.#vnode.children[index];
+      const child = this.#vnode.children[index];
       if (this.#isFrozen) {
         this.#setData(this.data.filter((_, i) => i !== index));
       } else {
@@ -133,13 +133,13 @@ var DataSet = class {
   }
   update(index, item) {
     if (this.#data && this.#vnode && this.#handler) {
-      let child = this.#vnode.children[index];
+      const child = this.#vnode.children[index];
       if (this.#isFrozen) {
         this.#setData(this.#data.map((d, i) => i === index ? { ...d, ...item } : d));
       } else {
         this.#data[index] = { ...this.#data[index], ...item };
       }
-      let newChild = this.#handler(this.#data[index], index);
+      const newChild = this.#handler(this.#data[index], index);
       newChild.isSVG = this.#vnode.isSVG || newChild.tag === "svg";
       newChild.dom = child.dom;
       this.#vnode.children[index] = newChild;

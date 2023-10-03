@@ -69,7 +69,7 @@ export class Node implements Node {
       node.parentNode && node.parentNode.removeChild(node as Node);
       node.parentNode = this;
       if (child) {
-        let idx = this.childNodes.indexOf(child);
+        const idx = this.childNodes.indexOf(child);
         this.childNodes.splice(idx, 0, node);
       } else {
         this.childNodes.push(node);
@@ -87,7 +87,7 @@ export class Node implements Node {
   }
   removeChild<T extends Node>(child: T): T {
     if (child && child.parentNode === this) {
-      let idx = (this.childNodes as unknown as Node[]).indexOf(child);
+      const idx = (this.childNodes as unknown as Node[]).indexOf(child);
       (this.childNodes as unknown as Node[]).splice(idx, 1);
       child.parentNode = null;
     }
@@ -99,7 +99,7 @@ export class Node implements Node {
     }
 
     if (this.nodeType === 1) {
-      let node = new Element();
+      const node = new Element();
       node.nodeType = this.nodeType;
       this.nodeName = this.nodeName;
       if (this.attributes) {
@@ -115,14 +115,14 @@ export class Node implements Node {
       return node;
     }
 
-    let node = new Node();
+    const node = new Node();
     node.nodeType = this.nodeType;
     node.nodeName = this.nodeName;
     return node;
   }
 
   setAttribute(name: string, value: any) {
-    let attr = {
+    const attr = {
       nodeName: name,
       nodeValue: value
     };
@@ -266,8 +266,8 @@ export class Text extends Node {
 
 function updateElementStyles(element: Element, state: Record<string, any>) {
   let str = "";
-  for (let key in state) {
-    let value = state[key];
+  for (const key in state) {
+    const value = state[key];
     if (typeof value !== "undefined" && value !== null && String(value).length > 0) {
       str += `${key}: ${state[key]};`;
     }
@@ -327,8 +327,8 @@ export class Element extends Node {
   classList = {
     toggle: (item: any, force: any) => {
       if (item) {
-        let classes = (this.getAttribute("class") || "").split(" ");
-        let itemIndex = classes.indexOf(item);
+        const classes = (this.getAttribute("class") || "").split(" ");
+        const itemIndex = classes.indexOf(item);
         if (force && itemIndex === -1) {
           classes.push(item);
         }
@@ -337,7 +337,7 @@ export class Element extends Node {
           classes.splice(itemIndex, 1);
         }
 
-        let final = classes.join(" ").trim();
+        const final = classes.join(" ").trim();
         if (final.length) {
           this.setAttribute("class", classes.join(" ").trim());
         } else {
@@ -374,7 +374,7 @@ export class Element extends Node {
 
   set innerHTML(html) {
     this.textContent = "";
-    let result = htmlToDom(html);
+    const result = htmlToDom(html);
     if (result instanceof DocumentFragment) {
       for (let i = 0, l = result.childNodes.length; i < l; i++) {
         this.appendChild(result.childNodes[i]);
@@ -409,13 +409,13 @@ export class Document extends Element {
   }
 
   createElement(type: string) {
-    let element = new Element();
+    const element = new Element();
     element.nodeName = type.toUpperCase();
     return element;
   }
 
   createElementNS(ns: string, type: string) {
-    let element = this.createElement(type);
+    const element = this.createElement(type);
     element.baseURI = ns;
     return element;
   }
@@ -425,7 +425,7 @@ export class Document extends Element {
   }
 }
 
-let selfClosingTags = [
+const selfClosingTags = [
   "area",
   "base",
   "br",
@@ -449,7 +449,7 @@ export function domToHtml(dom: Element): string {
   }
 
   if (dom.nodeType === 1) {
-    let name = dom.nodeName.toLowerCase();
+    const name = dom.nodeName.toLowerCase();
     let str = "<" + name;
     for (let i = 0, l = dom.attributes.length; i < l; i++) {
       str += " " + dom.attributes[i].nodeName + '="' + dom.attributes[i].nodeValue + '"';
@@ -459,7 +459,7 @@ export function domToHtml(dom: Element): string {
       str += ">";
       if (dom.childNodes && dom.childNodes.length > 0) {
         for (let i = 0, l = dom.childNodes.length; i < l; i++) {
-          let child = domToHtml(dom.childNodes[i] as Element);
+          const child = domToHtml(dom.childNodes[i] as Element);
           if (child) {
             str += child;
           }
@@ -492,9 +492,9 @@ export function domToHyperscript(childNodes: ChildNodes, depth = 1) {
         let str = `\n${spaces}v("${item.nodeName}", `;
 
         if (item.attributes) {
-          let attrs: Record<string, any> = {};
+          const attrs: Record<string, any> = {};
           for (let i = 0, l = item.attributes.length; i < l; i++) {
-            let attr = item.attributes[i];
+            const attr = item.attributes[i];
             attrs[attr.nodeName] = attr.nodeValue;
           }
           str += JSON.stringify(attrs);
@@ -534,21 +534,21 @@ interface ObjectIndexItemWithContent extends ObjectIndexItem {
 interface ObjectIndexList extends Array<ObjectIndexItem> {}
 
 function findTexts(item: ObjectIndexItemWithContent, html: string) {
-  let newChildren: ObjectIndexItemWithContent[] = [];
+  const newChildren: ObjectIndexItemWithContent[] = [];
 
   // If the item has children
   if (item.children.length) {
     // Search for texts in the children.
     for (let i = 0; i < item.children.length; i++) {
-      let child = item.children[i];
-      let nextChild = item.children[i + 1];
+      const child = item.children[i];
+      const nextChild = item.children[i + 1];
 
       // If is the first child and the child startsAt is greater than the item contentStartsAt then
       // the content between the item contentStartsAt and the child startsAt is a text child of the item.
       if (i === 0 && child.startsAt > item.contentStartsAt) {
-        let childContent = html.substring(item.contentStartsAt, child.startsAt);
+        const childContent = html.substring(item.contentStartsAt, child.startsAt);
 
-        let childText: ObjectIndexItemWithContent = {
+        const childText: ObjectIndexItemWithContent = {
           tagName: "#text",
           startsAt: item.contentStartsAt,
           endsAt: item.contentStartsAt + childContent.length,
@@ -568,9 +568,9 @@ function findTexts(item: ObjectIndexItemWithContent, html: string) {
       // If there is a next child and the child endsAt is less than the next child startsAt then
       // the content between the child endsAt and the next child startsAt is a text child of the item.
       if (nextChild && child.endsAt < nextChild.startsAt) {
-        let childContent = html.substring(child.endsAt, nextChild.startsAt);
+        const childContent = html.substring(child.endsAt, nextChild.startsAt);
 
-        let childText: ObjectIndexItemWithContent = {
+        const childText: ObjectIndexItemWithContent = {
           tagName: "#text",
           startsAt: child.endsAt,
           endsAt: child.endsAt + childContent.length,
@@ -587,9 +587,9 @@ function findTexts(item: ObjectIndexItemWithContent, html: string) {
       // If there are no next child and the child endsAt is less than the item contentEndsAt then
       // the content between the child endsAt and the item contentEndsAt is a text child of the item.
       if (!nextChild && child.endsAt < item.contentEndsAt) {
-        let childContent = html.substring(child.endsAt, item.contentEndsAt);
+        const childContent = html.substring(child.endsAt, item.contentEndsAt);
 
-        let childText: ObjectIndexItemWithContent = {
+        const childText: ObjectIndexItemWithContent = {
           tagName: "#text",
           startsAt: child.endsAt,
           endsAt: child.endsAt + childContent.length,
@@ -611,10 +611,10 @@ function findTexts(item: ObjectIndexItemWithContent, html: string) {
   // If the item has no children then set the contents between the item contentStartsAt and the item contentEndsAt
   // as a text child of the item.
   if (!item.children.length) {
-    let childContent = html.substring(item.contentStartsAt, item.contentEndsAt);
+    const childContent = html.substring(item.contentStartsAt, item.contentEndsAt);
 
     if (childContent.length) {
-      let childText: ObjectIndexItemWithContent = {
+      const childText: ObjectIndexItemWithContent = {
         tagName: "#text",
         startsAt: item.contentStartsAt,
         endsAt: item.contentEndsAt,
@@ -642,12 +642,12 @@ function convertToDom<T extends Node>(item: ObjectIndexItemWithContent): T {
       ? document.createDocumentFragment()
       : document.createElement(item.tagName)) as unknown as T;
 
-    for (let key in item.attributes) {
+    for (const key in item.attributes) {
       node.setAttribute(key, item.attributes[key]);
     }
 
     for (let i = 0; i < item.children.length; i++) {
-      let child = convertToDom(item.children[i]);
+      const child = convertToDom(item.children[i]);
       node.appendChild(child);
     }
   }
@@ -658,23 +658,23 @@ function convertToDom<T extends Node>(item: ObjectIndexItemWithContent): T {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function getObjectIndexTree(html: string): DocumentFragment {
   let item;
-  let regex = RegExp("<([^>|^!]+)>", "g");
-  let items: ObjectIndexList = [];
+  const regex = RegExp("<([^>|^!]+)>", "g");
+  const items: ObjectIndexList = [];
 
   // Make the initial list of items.
   while ((item = regex.exec(html))) {
     // If is a closing tag
     if (item[0].startsWith("</")) {
-      let lastOpenedItem = [...items].reverse().find((item) => item.endsAt === null);
+      const lastOpenedItem = [...items].reverse().find((item) => item.endsAt === null);
       if (lastOpenedItem) {
         lastOpenedItem.endsAt = item.index + item[0].length;
         lastOpenedItem.contentEndsAt = item.index;
 
         // Find the last opened item again, this will be the parent of the current item.
-        let parent = [...items].reverse().find((item) => item.endsAt === null);
+        const parent = [...items].reverse().find((item) => item.endsAt === null);
         if (parent) {
           // Find the index of the current item in the items array.
-          let index = items.indexOf(lastOpenedItem);
+          const index = items.indexOf(lastOpenedItem);
           // Remove the last opened item from the items array.
           items.splice(index, 1);
 
@@ -687,7 +687,7 @@ function getObjectIndexTree(html: string): DocumentFragment {
     }
 
     // If is an opening tag
-    let element: ObjectIndexItem = {
+    const element: ObjectIndexItem = {
       tagName: item[1].split(" ")[0],
       startsAt: item.index,
       endsAt: null,
@@ -700,10 +700,10 @@ function getObjectIndexTree(html: string): DocumentFragment {
 
     // Find the attributes of the tag.
     let string = (item[1] || "").substring(element.tagName.length + 1).replace(/\/$/g, "");
-    let attributesWithValues = string.match(/\S+="[^"]+"/g);
+    const attributesWithValues = string.match(/\S+="[^"]+"/g);
 
     if (attributesWithValues) {
-      for (let attribute of attributesWithValues) {
+      for (const attribute of attributesWithValues) {
         const [name, ...value] = attribute.trim().split("=");
         string = string.replace(attribute, "");
         if (value) {
@@ -712,9 +712,9 @@ function getObjectIndexTree(html: string): DocumentFragment {
       }
     }
 
-    let attributesWithBooleanValues = string.match(/\s\S+=[^"]+/g);
+    const attributesWithBooleanValues = string.match(/\s\S+=[^"]+/g);
     if (attributesWithBooleanValues) {
-      for (let attribute of attributesWithBooleanValues) {
+      for (const attribute of attributesWithBooleanValues) {
         const [name, ...value] = attribute.trim().split("=");
         string = string.replace(attribute, "");
         if (value) {
@@ -723,9 +723,9 @@ function getObjectIndexTree(html: string): DocumentFragment {
       }
     }
 
-    let attributesWithEmptyValues = string.match(/\s?\S+/g);
+    const attributesWithEmptyValues = string.match(/\s?\S+/g);
     if (attributesWithEmptyValues) {
-      for (let attribute of attributesWithEmptyValues) {
+      for (const attribute of attributesWithEmptyValues) {
         const name = attribute.trim();
         element.attributes[name] = true;
       }
@@ -737,7 +737,7 @@ function getObjectIndexTree(html: string): DocumentFragment {
       element.contentStartsAt = element.contentEndsAt = element.endsAt;
 
       // Find the last opened item, this will be the parent of the current item.
-      let parent = [...items].reverse().find((item) => item.endsAt === null);
+      const parent = [...items].reverse().find((item) => item.endsAt === null);
       if (parent) {
         // Add the last opened item as a child of the parent.
         parent.children.push(element);
@@ -748,7 +748,7 @@ function getObjectIndexTree(html: string): DocumentFragment {
     items.push(element);
   }
 
-  let fragmentItem: ObjectIndexItemWithContent = {
+  const fragmentItem: ObjectIndexItemWithContent = {
     tagName: "#document-fragment",
     startsAt: 0,
     endsAt: html.length,
@@ -777,16 +777,16 @@ export function htmlToDom(html: string): Element | Text | DocumentFragment {
   // search for the first opening tag.
   const openingTag = html.match(/<[^>]+>/g);
 
-  let document = new Document();
+  const document = new Document();
 
   // If the opening tag is not found, return a document fragment node with the html string as text content.
   if (!openingTag) {
-    let documentFragment = document.createDocumentFragment();
+    const documentFragment = document.createDocumentFragment();
     documentFragment.appendChild(document.createTextNode(html));
     return documentFragment;
   }
 
-  let fragment = getObjectIndexTree(html);
+  const fragment = getObjectIndexTree(html);
 
   if (fragment.childNodes.length > 1) {
     return fragment;
@@ -796,8 +796,8 @@ export function htmlToDom(html: string): Element | Text | DocumentFragment {
 }
 
 export function htmlToHyperscript(html: string) {
-  let domTree = htmlToDom(html);
-  let hyperscript = domToHyperscript(domTree instanceof DocumentFragment ? domTree.childNodes : [domTree]);
+  const domTree = htmlToDom(html);
+  const hyperscript = domToHyperscript(domTree instanceof DocumentFragment ? domTree.childNodes : [domTree]);
   return `[${hyperscript}\n]`;
 }
 

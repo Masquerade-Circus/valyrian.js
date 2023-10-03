@@ -9,8 +9,8 @@ import expect from "expect";
 // eslint-disable-next-line max-lines-per-function
 describe("Router", () => {
   it("Hard test", async () => {
-    let Component = () => <div>Hello world</div>;
-    let router = new Router();
+    const Component = () => <div>Hello world</div>;
+    const router = new Router();
     router
       .add(
         "/",
@@ -29,7 +29,7 @@ describe("Router", () => {
       )
       .add("/hello/:world", [() => console.log("Hello 7"), () => Component], () => console.log("Hello 7"));
 
-    let subrouter = new Router();
+    const subrouter = new Router();
 
     subrouter
       .add(
@@ -59,7 +59,7 @@ describe("Router", () => {
   });
 
   it("Mount and update with POJO component", async () => {
-    let Component = {
+    const Component = {
       world: "World",
       id: "example",
       view() {
@@ -67,8 +67,8 @@ describe("Router", () => {
       }
     };
 
-    let result = {};
-    let router = new Router();
+    const result = {};
+    const router = new Router();
     router.add("/", () => Component);
     mountRouter("body", router);
 
@@ -86,15 +86,15 @@ describe("Router", () => {
   });
 
   it("Mount and update with functional stateful component", async () => {
-    let Component = function () {
+    const Component = function () {
       return <div id={this.id}>Hello {this.world}</div>;
     };
 
     Component.world = "World";
     Component.id = "example";
 
-    let result = {};
-    let router = new Router();
+    const result = {};
+    const router = new Router();
     router.add("/", () => Component);
     mountRouter("body", router);
 
@@ -112,17 +112,17 @@ describe("Router", () => {
   });
 
   it("Mount and update with functional stateless subcomponent", async () => {
-    let SubComponent = (props) => <div id={props.id}>Hello {props.world}</div>;
-    let state = {
+    const SubComponent = (props) => <div id={props.id}>Hello {props.world}</div>;
+    const state = {
       world: "World",
       id: "example"
     };
-    let Component = function () {
+    const Component = function () {
       return <SubComponent {...state} />;
     };
 
-    let result = {};
-    let router = new Router();
+    const result = {};
+    const router = new Router();
     router.add("/", () => Component);
     mountRouter("body", router);
 
@@ -140,14 +140,14 @@ describe("Router", () => {
   });
 
   it("Antipattern: Mount and update with functional stateless component", async () => {
-    let Component = (props) => <div id={props.id}>Hello {props.world}</div>;
-    let props = {
+    const Component = (props) => <div id={props.id}>Hello {props.world}</div>;
+    const props = {
       world: "World",
       id: "example"
     };
 
-    let result = {};
-    let router = new Router();
+    const result = {};
+    const router = new Router();
     router.add("/", () => <Component {...props} />);
     mountRouter("body", router);
 
@@ -165,16 +165,16 @@ describe("Router", () => {
   });
 
   it("Test not found url", async () => {
-    let Hello = () => "Hello world";
-    let NotFound = () => <div>Ups, no route was found.</div>;
+    const Hello = () => "Hello world";
+    const NotFound = () => <div>Ups, no route was found.</div>;
 
-    let router = new Router();
+    const router = new Router();
     router.add("/", () => Hello);
     router.use(() => NotFound);
 
     mountRouter("body", router);
 
-    let result = {};
+    const result = {};
     result.found = await router.go("/");
     result.notFound = await router.go("/not_found");
 
@@ -185,11 +185,11 @@ describe("Router", () => {
   });
 
   it("Test params", async () => {
-    let Store = {
+    const Store = {
       world: "world",
       up: "up"
     };
-    let Hello = function () {
+    const Hello = function () {
       return (
         <div>
           Hello {this.world}, what's {this.up}
@@ -197,7 +197,7 @@ describe("Router", () => {
       );
     };
 
-    let router = new Router();
+    const router = new Router();
     router.add(
       "/hello",
       () => Object.assign(Hello, Store),
@@ -207,7 +207,7 @@ describe("Router", () => {
 
     mountRouter("body", router);
 
-    let result = {};
+    const result = {};
     result.before = await router.go("/hello");
     result.after = await router.go("/hello/Mike/whats/new");
 
@@ -218,10 +218,10 @@ describe("Router", () => {
   });
 
   it("Test mix single and array of middlewares", async () => {
-    let Hello = () => <div>Hello World</div>;
-    let middlewares = [];
+    const Hello = () => <div>Hello World</div>;
+    const middlewares = [];
 
-    let router = new Router();
+    const router = new Router();
     router.add(
       "/",
       () => middlewares.push("Middleware 1"),
@@ -241,7 +241,7 @@ describe("Router", () => {
     );
     mountRouter("body", router);
 
-    let result = await router.go("/");
+    const result = await router.go("/");
 
     expect(result).toEqual("<div>Hello World</div>");
     expect(middlewares).toEqual([
@@ -257,7 +257,7 @@ describe("Router", () => {
   });
 
   it("Test subrouter", async () => {
-    let Component = function () {
+    const Component = function () {
       return (
         <div>
           Hello {this.world}, from {this.country}
@@ -265,7 +265,7 @@ describe("Router", () => {
       );
     };
 
-    let subrouter = new Router();
+    const subrouter = new Router();
     subrouter
       .add("/from/:country", ({ params }) => {
         Component.world = params.world;
@@ -278,11 +278,11 @@ describe("Router", () => {
         return Component;
       });
 
-    let router = new Router();
+    const router = new Router();
     router.use("/hello/:world", subrouter);
     mountRouter("body", router);
 
-    let result = {};
+    const result = {};
     result.before = await router.go("/hello/Mike");
     result.after = await router.go("/hello/John/from/Mexico");
 
@@ -293,27 +293,27 @@ describe("Router", () => {
   });
 
   it("Test with parent component", async () => {
-    let Component = () => <div>Hello World</div>;
+    const Component = () => <div>Hello World</div>;
     // children are always the second argument
-    let ParentComponent = (props, ...children) => (
+    const ParentComponent = (props, ...children) => (
       <html>
         <body>{children}</body>
       </html>
     );
 
-    let router = new Router();
+    const router = new Router();
     router.add("/", () => Component);
     mountRouter("body", router);
 
-    let result = await router.go("/", ParentComponent);
+    const result = await router.go("/", ParentComponent);
 
     expect(result).toEqual("<html><body><div>Hello World</div></body></html>");
   });
 
   it("Test show error when calling with a non url", async () => {
-    let Component = () => <div>Hello World</div>;
+    const Component = () => <div>Hello World</div>;
 
-    let router = new Router();
+    const router = new Router();
     router.add("/", () => Component);
     mountRouter("body", router);
 
@@ -328,7 +328,7 @@ describe("Router", () => {
   });
 
   it("Test show error when no component is returned", async () => {
-    let router = new Router();
+    const router = new Router();
     router.add("/", () => {
       // Component is not returned
     });
@@ -345,11 +345,11 @@ describe("Router", () => {
   });
 
   it("Test get routes", () => {
-    let Component = () => "Hello world";
-    let subrouter = new Router();
+    const Component = () => "Hello world";
+    const subrouter = new Router();
     subrouter.add("/from/:country", () => Component).add("/", () => Component);
 
-    let router = new Router();
+    const router = new Router();
     router.use("/hello/:world", subrouter).add("/", () => Component);
 
     mountRouter("body", router);
@@ -358,18 +358,18 @@ describe("Router", () => {
   });
 
   it("Test the onClick handler for a single route", async () => {
-    let Component = () => <div>Hello World</div>;
-    let OtherComponent = () => <div>Hello Other World</div>;
+    const Component = () => <div>Hello World</div>;
+    const OtherComponent = () => <div>Hello Other World</div>;
 
-    let router = new Router();
+    const router = new Router();
     router.add("/", () => Component);
     router.add("/other", () => OtherComponent);
     mountRouter("body", router);
-    let result = {
+    const result = {
       before: await router.go("/")
     };
 
-    let handler = router.getOnClickHandler("/other");
+    const handler = router.getOnClickHandler("/other");
     handler({ preventDefault: () => {} });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
@@ -383,18 +383,18 @@ describe("Router", () => {
   });
 
   it("Test the onClick handler for a route with params", async () => {
-    let Component = ({ world }) => <div>Hello {world}</div>;
-    let OtherComponent = () => <div>Hello Other World</div>;
+    const Component = ({ world }) => <div>Hello {world}</div>;
+    const OtherComponent = () => <div>Hello Other World</div>;
 
-    let router = new Router();
+    const router = new Router();
     router.add("/other", () => OtherComponent);
     router.add("/:world", (req) => <Component world={req.params.world} />);
     mountRouter("body", router);
-    let result = {
+    const result = {
       before: await router.go("/other")
     };
 
-    let handler = router.getOnClickHandler("/Mike");
+    const handler = router.getOnClickHandler("/Mike");
     handler({ preventDefault: () => {} });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
@@ -408,16 +408,16 @@ describe("Router", () => {
   });
 
   it("Test the onClick handler from a route with query params (?param=value) to another route with query params (?param=value)", async () => {
-    let Component = ({ world }) => <div>Hello {world}</div>;
+    const Component = ({ world }) => <div>Hello {world}</div>;
 
-    let router = new Router();
+    const router = new Router();
     router.add("/world", (req) => <Component world={req.query.world} />);
     mountRouter("body", router);
-    let result = {
+    const result = {
       before: await router.go("/world?world=world")
     };
 
-    let handler = router.getOnClickHandler("/world?world=Mike");
+    const handler = router.getOnClickHandler("/world?world=Mike");
     handler({ preventDefault: () => {} });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
@@ -431,16 +431,16 @@ describe("Router", () => {
   });
 
   it("Test the onClick handler from a route with # to another route with #", async () => {
-    let router = new Router();
-    let Component = () => <div>Hello {router.url}</div>;
+    const router = new Router();
+    const Component = () => <div>Hello {router.url}</div>;
 
     router.add("/world", () => <Component />);
     mountRouter("body", router);
-    let result = {
+    const result = {
       before: await router.go("/world#world")
     };
 
-    let handler = router.getOnClickHandler("/world#Mike");
+    const handler = router.getOnClickHandler("/world#Mike");
     handler({ preventDefault: () => {} });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
@@ -454,7 +454,7 @@ describe("Router", () => {
   });
 
   it("Test the initial prefix", async () => {
-    let subrouter = new Router();
+    const subrouter = new Router();
 
     subrouter.add("/1", () => () => "1");
     subrouter.add("/2", () => () => "2");
@@ -463,7 +463,7 @@ describe("Router", () => {
       return false;
     });
 
-    let router = new Router("/test");
+    const router = new Router("/test");
     router.add("/", () => () => "home");
     router.add("/1", () => () => "1");
     router.add("/2", () => () => "2");
@@ -476,23 +476,23 @@ describe("Router", () => {
 
     mountRouter("body", router);
 
-    let res = await router.go("/");
+    const res = await router.go("/");
     expect(res).toEqual("home");
     expect(router.pathPrefix).toEqual("/test");
     expect(router.path).toEqual("/");
     expect(router.url).toEqual("/test");
 
-    let res2 = await router.go("/1");
+    const res2 = await router.go("/1");
     expect(res2).toEqual("1");
     expect(router.path).toEqual("/1");
     expect(router.url).toEqual("/test/1");
 
-    let res3 = await router.go("/sub/2");
+    const res3 = await router.go("/sub/2");
     expect(res3).toEqual("2");
     expect(router.path).toEqual("/sub/2");
     expect(router.url).toEqual("/test/sub/2");
 
-    let res4 = await router.go("/sub/3");
+    const res4 = await router.go("/sub/3");
     // Because is a redirect, res4 is undefined
     expect(res4).toBeUndefined();
     expect(router.path).toEqual("/1");

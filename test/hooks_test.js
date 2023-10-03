@@ -11,9 +11,9 @@ describe("Hooks", () => {
   afterEach(unmount);
   describe("State hook", () => {
     it("should handle a component state", async () => {
-      let Counter = () => {
-        let [count, setCount] = useState(0);
-        let interval = setInterval(() => setCount(count + 1), 10);
+      const Counter = () => {
+        const [count, setCount] = useState(0);
+        const interval = setInterval(() => setCount(count + 1), 10);
         onCleanup(() => clearInterval(interval));
         return <div>{count}</div>;
       };
@@ -27,16 +27,16 @@ describe("Hooks", () => {
     });
 
     it("should handle subcomponents state and onCleanup", async () => {
-      let Ok = () => {
-        let [ok, setOk] = useState("ok");
-        let interval = setInterval(() => setOk("not ok"), 10);
+      const Ok = () => {
+        const [ok, setOk] = useState("ok");
+        const interval = setInterval(() => setOk("not ok"), 10);
         onCleanup(() => clearInterval(interval));
         return <div>{ok}</div>;
       };
 
-      let Counter = () => {
-        let [count, setCount] = useState(0);
-        let interval = setInterval(() => setCount(count + 1), 10);
+      const Counter = () => {
+        const [count, setCount] = useState(0);
+        const interval = setInterval(() => setCount(count + 1), 10);
         onCleanup(() => clearInterval(interval));
         return (
           <div>
@@ -57,10 +57,10 @@ describe("Hooks", () => {
 
     it("should handle change of components", async () => {
       let change = false;
-      let Counter = () => {
-        let [count, setCount] = useState(0);
-        let [name] = useState("Hello");
-        let interval = setInterval(() => setCount(count + 1), 10);
+      const Counter = () => {
+        const [count, setCount] = useState(0);
+        const [name] = useState("Hello");
+        const interval = setInterval(() => setCount(count + 1), 10);
         onCleanup(() => clearInterval(interval));
         return (
           <div>
@@ -69,10 +69,10 @@ describe("Hooks", () => {
         );
       };
 
-      let OtherCounter = () => {
-        let [count, setCount] = useState(10);
-        let [name] = useState("World");
-        let interval = setInterval(() => setCount(count + 1), 10);
+      const OtherCounter = () => {
+        const [count, setCount] = useState(10);
+        const [name] = useState("World");
+        const interval = setInterval(() => setCount(count + 1), 10);
         onCleanup(() => clearInterval(interval));
         return (
           <div>
@@ -107,7 +107,7 @@ describe("Hooks", () => {
   describe("Effect hook", () => {
     it("should call the effect at first render", () => {
       let count = 0;
-      let Component = function () {
+      const Component = function () {
         useEffect(() => count++, []);
         return <div>{count}</div>;
       };
@@ -120,7 +120,7 @@ describe("Hooks", () => {
 
     it("should call the effect at every update", () => {
       let count = 0;
-      let Component = function () {
+      const Component = function () {
         useEffect(() => count++);
         return <div>{count}</div>;
       };
@@ -133,7 +133,7 @@ describe("Hooks", () => {
 
     it("should handle onCleanup", () => {
       let count = 0;
-      let Component = function () {
+      const Component = function () {
         useEffect(() => {
           count++;
           return () => (count -= 2);
@@ -149,7 +149,7 @@ describe("Hooks", () => {
 
     it("should not call the effect if the change array is passed and there are no changes", () => {
       let count = 0;
-      let Component = function () {
+      const Component = function () {
         useEffect(() => count++, [1]);
         return <div>{count}</div>;
       };
@@ -162,7 +162,7 @@ describe("Hooks", () => {
 
     it("should not call the effect if the change array is passed and is an empty array", () => {
       let count = 0;
-      let Component = function () {
+      const Component = function () {
         useEffect(() => count++, []);
         return <div>{count}</div>;
       };
@@ -175,7 +175,7 @@ describe("Hooks", () => {
 
     it("should call the effect if the change array is passed and there are changes", () => {
       let count = 0;
-      let Component = function () {
+      const Component = function () {
         useEffect(() => count++, [count]);
         return <div>{count}</div>;
       };
@@ -188,7 +188,7 @@ describe("Hooks", () => {
 
     it("should call onCleanup even if the changes array is passed and there are changes", () => {
       let count = 0;
-      let Component = function () {
+      const Component = function () {
         useEffect(() => {
           count++;
           return () => count++;
@@ -206,7 +206,7 @@ describe("Hooks", () => {
 
     it("should handle onCleanup on unMount", () => {
       let count = 0;
-      let Component = function () {
+      const Component = function () {
         useEffect(() => {
           count++;
           return () => (count -= 2);
@@ -229,7 +229,7 @@ describe("Hooks", () => {
 
     it("should call the effect only in the unmount", () => {
       let count = 0;
-      let Component = function () {
+      const Component = function () {
         useEffect(() => {
           count++;
         }, null);
@@ -251,12 +251,12 @@ describe("Hooks", () => {
 
     describe("Compare lifecycle vs hooks", () => {
       let lifecycleCount = 0;
-      let plusLifeCycle = () => (lifecycleCount += 1);
+      const plusLifeCycle = () => (lifecycleCount += 1);
 
       let hooksCount = 0;
-      let plusHooks = () => (hooksCount += 1);
+      const plusHooks = () => (hooksCount += 1);
 
-      let LifecycleComponent = () => {
+      const LifecycleComponent = () => {
         return (
           <div oncreate={plusLifeCycle} onupdate={plusLifeCycle} onremove={plusLifeCycle}>
             Hello world
@@ -264,7 +264,7 @@ describe("Hooks", () => {
         );
       };
 
-      let HooksComponent = () => {
+      const HooksComponent = () => {
         // useEffect(plusHooks, []); // Only create replaced by the next line
         useEffect(plusHooks); // Create & update
         useEffect(plusHooks, null); // Remove
@@ -295,7 +295,7 @@ describe("Hooks", () => {
     it("should return a ref", () => {
       let ref;
       let updated = false;
-      let Component = function () {
+      const Component = function () {
         ref = useRef(null);
         if (!updated) {
           expect(ref.current).toEqual(null);
@@ -303,11 +303,11 @@ describe("Hooks", () => {
         return <div v-ref={ref}>Hello world</div>;
       };
 
-      let response = mount("body", Component);
+      const response = mount("body", Component);
       expect(response).toEqual("<div>Hello world</div>");
       expect(ref.current).not.toEqual(null);
 
-      let refCurrent = ref.current;
+      const refCurrent = ref.current;
       updated = true;
       update();
       expect(refCurrent === ref.current).toEqual(true);
@@ -317,30 +317,30 @@ describe("Hooks", () => {
   describe("Callback hook", () => {
     it("should test the callback problem", () => {
       let callback;
-      let Component = function () {
+      const Component = function () {
         callback = () => {};
         return <div>Hello world</div>;
       };
 
-      let response = mount("body", Component);
+      const response = mount("body", Component);
       expect(response).toEqual("<div>Hello world</div>");
       expect(callback).not.toEqual(null);
 
-      let oldCallback = callback;
+      const oldCallback = callback;
       update();
       expect(oldCallback === callback).toEqual(false);
     });
 
     it("should call the callback", () => {
       let callback;
-      let Component = function () {
+      const Component = function () {
         callback = useCallback(() => {}, []);
         return <div>Hello world</div>;
       };
-      let response = mount("body", Component);
+      const response = mount("body", Component);
       expect(response).toEqual("<div>Hello world</div>");
       expect(callback).not.toEqual(null);
-      let oldCallback = callback;
+      const oldCallback = callback;
       update();
       expect(oldCallback === callback).toEqual(true);
     });
@@ -350,21 +350,21 @@ describe("Hooks", () => {
     it("should test the memo problem", () => {
       let computedTimes = 0;
       let color = "red";
-      let Component = function () {
+      const Component = function () {
         computedTimes++;
         return <div class={color}>Hello world</div>;
       };
 
-      let response = mount("body", Component);
+      const response = mount("body", Component);
       expect(response).toEqual('<div class="red">Hello world</div>');
       expect(computedTimes).toEqual(1);
 
-      let response2 = update();
+      const response2 = update();
       expect(response2).toEqual('<div class="red">Hello world</div>');
       expect(computedTimes).toEqual(2);
 
       color = "blue";
-      let response3 = update();
+      const response3 = update();
       expect(response3).toEqual('<div class="blue">Hello world</div>');
       expect(computedTimes).toEqual(3);
     });
@@ -372,30 +372,30 @@ describe("Hooks", () => {
     it("should use the memo", () => {
       let computedTimes = 0;
       let color = "red";
-      let Component = function () {
+      const Component = function () {
         return useMemo(() => {
           computedTimes++;
           return <div class={color}></div>;
         }, [color]);
       };
 
-      let response = mount("body", Component);
+      const response = mount("body", Component);
       expect(response).toEqual('<div class="red"></div>');
       expect(computedTimes).toEqual(1);
 
-      let response2 = update();
+      const response2 = update();
       expect(response2).toEqual('<div class="red"></div>');
       expect(computedTimes).toEqual(1);
 
       color = "blue";
-      let response3 = update();
+      const response3 = update();
       expect(response3).toEqual('<div class="blue"></div>');
       expect(computedTimes).toEqual(2);
     });
 
     it("Update class with hooks vs v-keep", () => {
       let updateClass = "";
-      let Component = () => (
+      const Component = () => (
         <div>
           {
             <div class={updateClass === "test" ? "test" : false} v-keep={updateClass}>
@@ -405,7 +405,7 @@ describe("Hooks", () => {
         </div>
       );
 
-      let Component2 = () => (
+      const Component2 = () => (
         <div>
           {useMemo(
             () => (
@@ -416,17 +416,17 @@ describe("Hooks", () => {
         </div>
       );
 
-      let before = mount("body", Component);
+      const before = mount("body", Component);
       expect(before).toEqual("<div><div>test</div></div>");
       updateClass = "test";
-      let after = update();
+      const after = update();
       expect(after).toEqual('<div><div class="test">test</div></div>');
 
       updateClass = "";
-      let before2 = mount("body", Component2);
+      const before2 = mount("body", Component2);
       expect(before2).toEqual("<div><div>test</div></div>");
       updateClass = "test";
-      let after2 = update();
+      const after2 = update();
       expect(after2).toEqual('<div><div class="test">test</div></div>');
     });
   });

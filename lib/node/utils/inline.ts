@@ -12,13 +12,13 @@ export async function inline(
   options: Record<string, any> = {}
 ) {
   if (typeof file === "string") {
-    let ext = file.split(".").pop();
+    const ext = file.split(".").pop();
     if (ext && /(js|cjs|jsx|mjs|ts|tsx)/.test(ext)) {
       if (/(ts|tsx)/.test(ext) && !options.noValidate) {
-        let declarationDir = options.declarationDir;
-        let emitDeclaration = !!declarationDir;
+        const declarationDir = options.declarationDir;
+        const emitDeclaration = !!declarationDir;
 
-        let tscProgOptions = {
+        const tscProgOptions = {
           basePath: process.cwd(), // always required, used for relative paths
           configFilePath: "tsconfig.json", // config to inherit from (optional)
           files: [file],
@@ -53,7 +53,7 @@ export async function inline(
         tsc.build(tscProgOptions);
       }
 
-      let esbuildOptions = {
+      const esbuildOptions = {
         entryPoints: [file],
         bundle: "bundle" in options ? options.bundle : true,
         sourcemap: "external",
@@ -72,14 +72,14 @@ export async function inline(
         ...(options.esbuild || {})
       };
 
-      let result = await esbuild.build(esbuildOptions);
+      const result = await esbuild.build(esbuildOptions);
       if (result.outputFiles?.length !== 2) {
         throw new Error(result.errors.join("\n"));
       }
 
       if (options.compact) {
         const terser = await import("terser");
-        let result2 = await terser.minify(result.outputFiles[1].text, {
+        const result2 = await terser.minify(result.outputFiles[1].text, {
           sourceMap: {
             content: result.outputFiles[0].text.toString()
           },
@@ -97,16 +97,16 @@ export async function inline(
           throw new Error("Unknown error");
         }
 
-        let mapBase64 = Buffer.from(result2.map.toString()).toString("base64");
-        let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
+        const mapBase64 = Buffer.from(result2.map.toString()).toString("base64");
+        const suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
         return { raw: result2.code, map: suffix, file };
       } else {
-        let mapBase64 = Buffer.from(result.outputFiles[0].text.toString()).toString("base64");
-        let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
+        const mapBase64 = Buffer.from(result.outputFiles[0].text.toString()).toString("base64");
+        const suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
         return { raw: result.outputFiles[1].text, map: suffix, file };
       }
     } else if (ext && /(css|scss|styl)/.test(ext)) {
-      let result = await new CleanCSS({
+      const result = await new CleanCSS({
         sourceMap: true,
         level: {
           1: {
@@ -133,18 +133,18 @@ inline.uncss = async function (
   css: string,
   options: Record<string, any> = {}
 ) {
-  let html = await Promise.all(renderedHtml);
+  const html = await Promise.all(renderedHtml);
 
-  let contents = html.map((item) => {
+  const contents = html.map((item) => {
     return {
       raw: item,
       extension: "html"
     };
   });
 
-  let purgecss = new PurgeCSS();
+  const purgecss = new PurgeCSS();
 
-  let output = await purgecss.purge({
+  const output = await purgecss.purge({
     fontFace: true,
     keyframes: true,
     variables: true,
@@ -154,7 +154,7 @@ inline.uncss = async function (
     css: [{ raw: css }]
   });
 
-  let cleanCss = await new CleanCSS({
+  const cleanCss = await new CleanCSS({
     sourceMap: false,
     level: {
       1: {

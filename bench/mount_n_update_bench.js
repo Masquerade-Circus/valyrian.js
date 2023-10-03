@@ -1,5 +1,6 @@
+/* eslint-disable no-console */
 /* eslint-disable indent */
-let { compare, benchmark, before, afterCycle } = require("buffalo-test");
+const { compare, benchmark, before, afterCycle } = require("buffalo-test");
 
 import "valyrian.js/node";
 
@@ -9,7 +10,7 @@ import { useEffect, useMemo } from "valyrian.js/hooks";
 const { expect } = require("expect");
 const { v: vOld } = require("./index-old.ts");
 
-let data = {
+const data = {
   before: [],
   before2: [],
   update1: [],
@@ -52,11 +53,11 @@ for (let i = 1000; i--; ) {
 }
 
 compare("Mount and update: Mount multiple types", () => {
-  let date = new Date();
+  const date = new Date();
   let useData = false;
-  let Component = () =>
+  const Component = () =>
     vOld("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]], useData ? data.before : null);
-  let Component2 = () =>
+  const Component2 = () =>
     v("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]], useData ? data.before2 : null);
 
   before(() => {
@@ -82,8 +83,8 @@ compare("Mount and update: Mount multiple types", () => {
 });
 
 compare("Mount and update: Mount single text", () => {
-  let Component = () => "hello world";
-  let Component2 = () => "hello world";
+  const Component = () => "hello world";
+  const Component2 = () => "hello world";
 
   before(() => {
     expect(vOld.mount("body", Component)).toEqual(`hello world`);
@@ -107,8 +108,8 @@ compare("Mount and update: Mount single text", () => {
 });
 
 compare("Mount and update: Mount single text in div", () => {
-  let Component = () => vOld("div", null, ["hello world"]);
-  let Component2 = () => v("div", null, ["hello world"]);
+  const Component = () => vOld("div", null, ["hello world"]);
+  const Component2 = () => v("div", null, ["hello world"]);
 
   before(() => {
     expect(vOld.mount("body", Component)).toEqual(`<div>hello world</div>`);
@@ -135,14 +136,14 @@ compare("Mount and update: Update multiple types", () => {
   let date = new Date();
   let useData = false;
   let updateData = false;
-  let Component = () =>
+  const Component = () =>
     vOld(
       "div",
       null,
       [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]],
       useData ? (updateData ? data.update1 : data.before) : null
     );
-  let Component2 = () =>
+  const Component2 = () =>
     v(
       "div",
       null,
@@ -151,18 +152,18 @@ compare("Mount and update: Update multiple types", () => {
     );
 
   before(async () => {
-    let oldDate = date;
+    const oldDate = date;
     expect(vOld.mount("body", Component)).toEqual(`<div>Hello1${oldDate}[object Object]Hello</div>`);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     date = new Date();
     expect(vOld.update()).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
 
     date = oldDate;
-    let before = mount("body", Component2);
+    const before = mount("body", Component2);
     expect(before).toEqual(`<div>Hello1${oldDate}[object Object]Hello</div>`);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     date = new Date();
-    let after = update();
+    const after = update();
     expect(after).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
 
     useData = true;
@@ -194,8 +195,8 @@ compare("Mount and update: Update multiple types", () => {
 
 compare("Mount and update: Update single text", () => {
   let updateData = false;
-  let Component = () => vOld("div", null, [updateData ? "hello moon" : "hello world"]);
-  let Component2 = () => v("div", null, [updateData ? "hello moon" : "hello world"]);
+  const Component = () => vOld("div", null, [updateData ? "hello moon" : "hello world"]);
+  const Component2 = () => v("div", null, [updateData ? "hello moon" : "hello world"]);
 
   before(() => {
     expect(vOld.mount("body", Component)).toEqual(`<div>hello world</div>`);
@@ -229,8 +230,8 @@ compare("Mount and update: Update single text", () => {
 });
 
 compare("Mount and update: Render list", () => {
-  let set = [1, 2, 3, 4, 5];
-  let tests = [
+  const set = [1, 2, 3, 4, 5];
+  const tests = [
     { name: "Removed at the end", set: [1, 2, 3, 4] }, // Removed at the end
     { name: "Removed at the start", set: [2, 3, 4, 5] }, // Remmoved at the start
     { name: "Removed at the center", set: [1, 3, 5] }, // Removed at the center
@@ -250,18 +251,18 @@ compare("Mount and update: Render list", () => {
 
   function getString(set) {
     let str = "<ul>";
-    for (let key of set) {
+    for (const key of set) {
       str += key ? `<li>${key}</li>` : "";
     }
     str += "</ul>";
     return str;
   }
-  let beforeString = getString(set);
+  const beforeString = getString(set);
 
   tests.forEach((test) => {
     before(() => {
       let keys = [...set];
-      let component = () =>
+      const component = () =>
         vOld(
           "ul",
           null,
@@ -273,11 +274,11 @@ compare("Mount and update: Render list", () => {
         );
 
       vOld.unmount();
-      let before = vOld.mount("body", component);
+      const before = vOld.mount("body", component);
       keys = [...test.set];
-      let after = vOld.update();
+      const after = vOld.update();
 
-      let afterString = getString(test.set);
+      const afterString = getString(test.set);
 
       expect(before).toEqual(beforeString);
       expect(after).toEqual(afterString);
@@ -285,7 +286,7 @@ compare("Mount and update: Render list", () => {
 
     before(() => {
       let keys = [...set];
-      let component = () =>
+      const component = () =>
         v(
           "ul",
           null,
@@ -296,11 +297,11 @@ compare("Mount and update: Render list", () => {
           })
         );
 
-      let before = mount("body", component);
+      const before = mount("body", component);
       keys = [...test.set];
-      let after = update();
+      const after = update();
 
-      let afterString = getString(test.set);
+      const afterString = getString(test.set);
 
       expect(before).toEqual(beforeString);
       expect(after).toEqual(afterString);
@@ -309,7 +310,7 @@ compare("Mount and update: Render list", () => {
 
   benchmark(`vOld`, () => {
     let keys = [...set];
-    let component = () =>
+    const component = () =>
       vOld(
         "ul",
         null,
@@ -322,7 +323,7 @@ compare("Mount and update: Render list", () => {
 
     vOld.unmount();
     vOld.mount("body", component);
-    for (let test of tests) {
+    for (const test of tests) {
       keys = [...test.set];
       vOld.update();
     }
@@ -330,7 +331,7 @@ compare("Mount and update: Render list", () => {
 
   benchmark(`v`, () => {
     let keys = [...set];
-    let component = () =>
+    const component = () =>
       v(
         "ul",
         null,
@@ -342,7 +343,7 @@ compare("Mount and update: Render list", () => {
       );
 
     mount("body", component);
-    for (let test of tests) {
+    for (const test of tests) {
       keys = [...test.set];
       update();
     }
@@ -350,8 +351,8 @@ compare("Mount and update: Render list", () => {
 });
 
 compare("Mount and update: Render keyed list", () => {
-  let set = [1, 2, 3, 4, 5];
-  let tests = [
+  const set = [1, 2, 3, 4, 5];
+  const tests = [
     { name: "Removed at the end", set: [1, 2, 3, 4] }, // Removed at the end
     { name: "Removed at the start", set: [2, 3, 4, 5] }, // Remmoved at the start
     { name: "Removed at the center", set: [1, 3, 5] }, // Removed at the center
@@ -371,18 +372,18 @@ compare("Mount and update: Render keyed list", () => {
 
   function getString(set) {
     let str = `<ul>`;
-    for (let key of set) {
+    for (const key of set) {
       str += key ? `<li>${key}</li>` : "";
     }
     str += "</ul>";
     return str;
   }
-  let beforeString = getString(set);
+  const beforeString = getString(set);
 
   tests.forEach((test) => {
     before(() => {
       let keys = [...set];
-      let component = () =>
+      const component = () =>
         vOld(
           "ul",
           null,
@@ -393,11 +394,11 @@ compare("Mount and update: Render keyed list", () => {
           })
         );
 
-      let before = vOld.mount("body", component);
+      const before = vOld.mount("body", component);
       keys = [...test.set];
-      let after = vOld.update();
+      const after = vOld.update();
 
-      let afterString = getString(test.set);
+      const afterString = getString(test.set);
 
       expect(before).toEqual(beforeString);
       expect(after).toEqual(afterString);
@@ -405,7 +406,7 @@ compare("Mount and update: Render keyed list", () => {
 
     before(() => {
       let keys = [...set];
-      let component = () =>
+      const component = () =>
         v(
           "ul",
           null,
@@ -417,11 +418,11 @@ compare("Mount and update: Render keyed list", () => {
         );
 
       console.log(test.name);
-      let before = mount("body", component);
+      const before = mount("body", component);
       keys = [...test.set];
-      let after = update();
+      const after = update();
 
-      let afterString = getString(test.set);
+      const afterString = getString(test.set);
 
       expect(before).toEqual(beforeString);
       expect(after).toEqual(afterString);
@@ -430,7 +431,7 @@ compare("Mount and update: Render keyed list", () => {
 
   benchmark(`vOld`, () => {
     let keys = [...set];
-    let component = () =>
+    const component = () =>
       vOld(
         "ul",
         null,
@@ -441,7 +442,7 @@ compare("Mount and update: Render keyed list", () => {
         })
       );
 
-    for (let test of tests) {
+    for (const test of tests) {
       vOld.unmount();
       vOld.mount("body", component);
       keys = [...test.set];
@@ -451,7 +452,7 @@ compare("Mount and update: Render keyed list", () => {
 
   benchmark(`v`, () => {
     let keys = [...set];
-    let component = () =>
+    const component = () =>
       v(
         "ul",
         null,
@@ -462,7 +463,7 @@ compare("Mount and update: Render keyed list", () => {
         })
       );
 
-    for (let test of tests) {
+    for (const test of tests) {
       mount("body", component);
       keys = [...test.set];
       update();
@@ -471,9 +472,9 @@ compare("Mount and update: Render keyed list", () => {
 });
 
 compare("Mount and update: Render keyed list -> stress", () => {
-  let set = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const set = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-  let tests = [
+  const tests = [
     { name: "Removed at the end", set: [1, 2, 3, 4, 5, 6, 7, 8, 9], movements: 1 }, // Removed at the end
     { name: "Removed at the start", set: [2, 3, 4, 5, 6, 7, 8, 9, 10], movements: 1 }, // Remmoved at the start
     { name: "Removed at the center", set: [1, 2, 3, 5, 6, 8, 9, 10], movements: 2 }, // Removed at the center
@@ -496,18 +497,18 @@ compare("Mount and update: Render keyed list -> stress", () => {
 
   function getString(set) {
     let str = `<ul>`;
-    for (let key of set) {
+    for (const key of set) {
       str += key ? `<li>${key}</li>` : "";
     }
     str += "</ul>";
     return str;
   }
-  let beforeString = getString(set);
+  const beforeString = getString(set);
 
   tests.forEach((test) => {
     before(() => {
       let keys = [...set];
-      let component = () =>
+      const component = () =>
         vOld(
           "ul",
           null,
@@ -518,11 +519,11 @@ compare("Mount and update: Render keyed list -> stress", () => {
           })
         );
 
-      let before = vOld.mount("body", component);
+      const before = vOld.mount("body", component);
       keys = [...test.set];
-      let after = vOld.update();
+      const after = vOld.update();
 
-      let afterString = getString(test.set);
+      const afterString = getString(test.set);
 
       expect(before).toEqual(beforeString);
       expect(after).toEqual(afterString);
@@ -530,7 +531,7 @@ compare("Mount and update: Render keyed list -> stress", () => {
 
     before(() => {
       let keys = [...set];
-      let component = () =>
+      const component = () =>
         v(
           "ul",
           null,
@@ -542,11 +543,11 @@ compare("Mount and update: Render keyed list -> stress", () => {
         );
 
       console.log(test.name);
-      let before = mount("body", component);
+      const before = mount("body", component);
       keys = [...test.set];
-      let after = update();
+      const after = update();
 
-      let afterString = getString(test.set);
+      const afterString = getString(test.set);
 
       expect(before).toEqual(beforeString);
       expect(after).toEqual(afterString);
@@ -555,7 +556,7 @@ compare("Mount and update: Render keyed list -> stress", () => {
 
   benchmark(`vOld`, () => {
     let keys = [...set];
-    let component = () =>
+    const component = () =>
       vOld(
         "ul",
         null,
@@ -566,7 +567,7 @@ compare("Mount and update: Render keyed list -> stress", () => {
         })
       );
 
-    for (let test of tests) {
+    for (const test of tests) {
       vOld.unmount();
       vOld.mount("body", component);
       keys = [...test.set];
@@ -576,7 +577,7 @@ compare("Mount and update: Render keyed list -> stress", () => {
 
   benchmark(`v`, () => {
     let keys = [...set];
-    let component = () =>
+    const component = () =>
       v(
         "ul",
         null,
@@ -587,7 +588,7 @@ compare("Mount and update: Render keyed list -> stress", () => {
         })
       );
 
-    for (let test of tests) {
+    for (const test of tests) {
       mount("body", component);
       keys = [...test.set];
       update();
@@ -596,24 +597,24 @@ compare("Mount and update: Render keyed list -> stress", () => {
 });
 
 compare("Mount and update: Render keyed list -> swap keys on large set", () => {
-  let set = [...Array(1000).keys()];
-  let updatedLargeSet = [...set];
+  const set = [...Array(1000).keys()];
+  const updatedLargeSet = [...set];
   updatedLargeSet[1] = 998;
   updatedLargeSet[998] = 1;
 
   function getString(set) {
     let str = `<ul>`;
-    for (let key of set) {
+    for (const key of set) {
       str += key !== undefined ? `<li>${key}</li>` : "";
     }
     str += "</ul>";
     return str;
   }
-  let beforeString = getString(set);
+  const beforeString = getString(set);
 
   before(() => {
     let keys = [...set];
-    let component = () =>
+    const component = () =>
       vOld(
         "ul",
         null,
@@ -624,11 +625,11 @@ compare("Mount and update: Render keyed list -> swap keys on large set", () => {
         })
       );
 
-    let before = vOld.mount("body", component);
+    const before = vOld.mount("body", component);
     keys = [...updatedLargeSet];
-    let after = vOld.update();
+    const after = vOld.update();
 
-    let afterString = getString(updatedLargeSet);
+    const afterString = getString(updatedLargeSet);
 
     expect(before).toEqual(beforeString);
     expect(after).toEqual(afterString);
@@ -636,7 +637,7 @@ compare("Mount and update: Render keyed list -> swap keys on large set", () => {
 
   before(() => {
     let keys = [...set];
-    let component = () =>
+    const component = () =>
       v(
         "ul",
         null,
@@ -647,11 +648,11 @@ compare("Mount and update: Render keyed list -> swap keys on large set", () => {
         })
       );
 
-    let before = mount("body", component);
+    const before = mount("body", component);
     keys = [...updatedLargeSet];
-    let after = update();
+    const after = update();
 
-    let afterString = getString(updatedLargeSet);
+    const afterString = getString(updatedLargeSet);
 
     expect(before).toEqual(beforeString);
     expect(after).toEqual(afterString);
@@ -659,7 +660,7 @@ compare("Mount and update: Render keyed list -> swap keys on large set", () => {
 
   benchmark(`vOld`, () => {
     let keys = [...set];
-    let component = () =>
+    const component = () =>
       vOld(
         "ul",
         null,
@@ -678,7 +679,7 @@ compare("Mount and update: Render keyed list -> swap keys on large set", () => {
 
   benchmark(`v`, () => {
     let keys = [...set];
-    let component = () =>
+    const component = () =>
       v(
         "ul",
         null,
@@ -697,11 +698,11 @@ compare("Mount and update: Render keyed list -> swap keys on large set", () => {
 
 compare("Mount and update: Update class", () => {
   // Init with 1000 words
-  let words = [...Array(1000).keys()].map((key) => `word ${key}`);
+  const words = [...Array(1000).keys()].map((key) => `word ${key}`);
   let useData = false;
   let updateClass = "";
   let updateClass2 = "";
-  let Component = () =>
+  const Component = () =>
     vOld(
       "div",
       {},
@@ -725,7 +726,7 @@ compare("Mount and update: Update class", () => {
             "test"
           )
     );
-  let Component2 = () =>
+  const Component2 = () =>
     v(
       "div",
       {},
@@ -751,16 +752,16 @@ compare("Mount and update: Update class", () => {
     );
 
   before(() => {
-    let before = vOld.mount("body", Component);
+    const before = vOld.mount("body", Component);
     expect(before).toEqual("<div><div>test</div></div>");
     updateClass = "test";
-    let after = vOld.update();
+    const after = vOld.update();
     expect(after).toEqual('<div><div class="test">test</div></div>');
 
-    let before2 = mount("body", Component2);
+    const before2 = mount("body", Component2);
     expect(before2).toEqual("<div><div>test</div></div>");
     updateClass2 = "test";
-    let after2 = update();
+    const after2 = update();
     expect(after2).toEqual('<div><div class="test">test</div></div>');
 
     useData = true;
@@ -781,7 +782,7 @@ compare("Mount and update: Update class", () => {
 
 compare("Mount and update: Update class with hooks vs v-keep", () => {
   let updateClass2 = "";
-  let Component = () => (
+  const Component = () => (
     <div>
       {
         <div class={updateClass2 === "test" ? "test" : false} v-keep={updateClass2}>
@@ -791,7 +792,7 @@ compare("Mount and update: Update class with hooks vs v-keep", () => {
     </div>
   );
 
-  let Component2 = () => (
+  const Component2 = () => (
     <div>
       {useMemo(
         () => (
@@ -803,17 +804,17 @@ compare("Mount and update: Update class with hooks vs v-keep", () => {
   );
 
   before(() => {
-    let before = mount("body", Component);
+    const before = mount("body", Component);
     expect(before).toEqual("<div><div>test</div></div>");
     updateClass2 = "test";
-    let after = update();
+    const after = update();
     expect(after).toEqual('<div><div class="test">test</div></div>');
 
     updateClass2 = "";
-    let before2 = mount("body", Component2);
+    const before2 = mount("body", Component2);
     expect(before2).toEqual("<div><div>test</div></div>");
     updateClass2 = "test";
-    let after2 = update();
+    const after2 = update();
     expect(after2).toEqual('<div><div class="test">test</div></div>');
     updateClass2 = "";
   });
@@ -839,12 +840,12 @@ compare("Mount and update: Update class with hooks vs v-keep", () => {
 
 compare("Lifecycle vs hooks", () => {
   let lifecycleCount = 0;
-  let plusLifeCycle = () => (lifecycleCount += 1);
+  const plusLifeCycle = () => (lifecycleCount += 1);
 
   let hooksCount = 0;
-  let plusHooks = () => (hooksCount += 1);
+  const plusHooks = () => (hooksCount += 1);
 
-  let LifecycleComponent = () => {
+  const LifecycleComponent = () => {
     return (
       <div oncreate={plusLifeCycle} onupdate={plusLifeCycle} onremove={plusLifeCycle}>
         Hello world
@@ -852,7 +853,7 @@ compare("Lifecycle vs hooks", () => {
     );
   };
 
-  let HooksComponent = () => {
+  const HooksComponent = () => {
     // useEffect(plusHooks, []); // Only create replaced by the next line
     useEffect(plusHooks); // Create & Update
     useEffect(plusHooks, null); // Remove

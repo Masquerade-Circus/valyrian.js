@@ -11,8 +11,8 @@ global.FormData = FormData as any;
 global.document = document as any;
 
 function render(...args: any[]) {
-  let Component = () => args;
-  let result = mount("div", Component);
+  const Component = () => args;
+  const result = mount("div", Component);
   unmount();
   return result;
 }

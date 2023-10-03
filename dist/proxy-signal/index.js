@@ -35,8 +35,8 @@ function makeUnsubscribe(subscriptions, computed, handler, cleanup) {
 }
 function createSubscription(signal, subscriptions, handler) {
   if (subscriptions.has(handler) === false) {
-    let computed = ProxySignal(() => handler(signal.value));
-    let cleanup = computed();
+    const computed = ProxySignal(() => handler(signal.value));
+    const cleanup = computed();
     makeUnsubscribe(subscriptions, computed, handler, cleanup);
     subscriptions.set(handler, computed);
   }
@@ -48,10 +48,10 @@ function delayedUpdate() {
   updateTimeout = setTimeout(import_valyrian.update);
 }
 function ProxySignal(value) {
-  let subscriptions = /* @__PURE__ */ new Map();
-  let getters = {};
+  const subscriptions = /* @__PURE__ */ new Map();
+  const getters = {};
   let forceUpdate = false;
-  let signal = new Proxy(
+  const signal = new Proxy(
     // eslint-disable-next-line no-unused-vars
     function(valOrPath, handler) {
       if (typeof valOrPath === "undefined") {
@@ -61,7 +61,7 @@ function ProxySignal(value) {
         return createSubscription(signal, subscriptions, valOrPath);
       }
       if (typeof valOrPath === "string" && typeof handler !== "undefined") {
-        let parsed = valOrPath.split(".");
+        const parsed = valOrPath.split(".");
         let result = signal.value;
         let next;
         while (parsed.length) {
@@ -85,13 +85,13 @@ function ProxySignal(value) {
     {
       set(state, prop, val) {
         if (prop === "value" || prop === "unsubscribe" || prop === "cleanup") {
-          let old = state[prop];
+          const old = state[prop];
           state[prop] = val;
           if (prop === "value" && (forceUpdate || val !== old)) {
             forceUpdate = false;
-            for (let [handler, computed] of subscriptions) {
+            for (const [handler, computed] of subscriptions) {
               computed.cleanup();
-              let cleanup = handler(val);
+              const cleanup = handler(val);
               makeUnsubscribe(subscriptions, computed, handler, cleanup);
             }
             delayedUpdate();
@@ -117,7 +117,7 @@ function ProxySignal(value) {
     value: { value, writable: true, enumerable: true },
     cleanup: {
       value() {
-        for (let [handler, computed] of subscriptions) {
+        for (const [handler, computed] of subscriptions) {
           computed.unsubscribe();
         }
       },

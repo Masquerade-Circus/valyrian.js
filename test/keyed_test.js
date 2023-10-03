@@ -5,8 +5,8 @@ import { mount, update, v } from "valyrian.js";
 import expect from "expect";
 
 describe("Keyed lists", () => {
-  let set = [1, 2, 3, 4, 5];
-  let tests = [
+  const set = [1, 2, 3, 4, 5];
+  const tests = [
     { name: "Removed at the end", set: [1, 2, 3, 4] }, // Removed at the end
     { name: "Removed at the start", set: [2, 3, 4, 5] }, // Remmoved at the start
     { name: "Removed at the center", set: [1, 3, 5] }, // Removed at the center
@@ -25,18 +25,18 @@ describe("Keyed lists", () => {
 
   function getString(set) {
     let str = "<ul>";
-    for (let key of set) {
+    for (const key of set) {
       str += key ? `<li>${key}</li>` : "";
     }
     str += "</ul>";
     return str;
   }
-  let beforeString = getString(set);
+  const beforeString = getString(set);
 
   tests.forEach((test) => {
     it("Keyed list: " + test.name, () => {
       let keys = [...set];
-      let component = () => (
+      const component = () => (
         <ul>
           {keys.map((key) => {
             if (key) {
@@ -46,21 +46,27 @@ describe("Keyed lists", () => {
         </ul>
       );
 
-      let before = mount("body", component);
+      const before = mount("body", component);
       keys = [...test.set];
-      let after = update();
-
-      let afterString = getString(test.set);
+      const after = update();
+      const afterString = getString(test.set);
 
       expect(before).toEqual(beforeString);
       expect(after).toEqual(afterString);
+
+      for (let i = 0; i < 10000; i++) {
+        keys = [...set];
+        update();
+        keys = [...test.set];
+        update();
+      }
     });
   });
 
   it("Keyed list: Replace with string and update with list", () => {
-    let keys = [1, 2, 3, 4, 5];
+    const keys = [1, 2, 3, 4, 5];
     let useStrings = true;
-    let component = () => (
+    const component = () => (
       <ul>
         {keys.map((key) => {
           if (useStrings) {
@@ -71,15 +77,15 @@ describe("Keyed lists", () => {
       </ul>
     );
 
-    let before = mount("body", component);
+    const before = mount("body", component);
 
     useStrings = false;
-    let after = update();
+    const after = update();
 
-    let afterString = getString(keys);
+    const afterString = getString(keys);
 
     useStrings = true;
-    let afterUpdate = update();
+    const afterUpdate = update();
 
     expect(before).toEqual("<ul>12345</ul>");
     expect(after).toEqual(afterString);
@@ -88,7 +94,7 @@ describe("Keyed lists", () => {
 
   it("Keyed list: Replace with undefined and update with defined", () => {
     let keys = [1, 2, 3, 4, 5];
-    let component = () => (
+    const component = () => (
       <ul>
         {keys.map((key) => {
           if (key) {
@@ -99,17 +105,17 @@ describe("Keyed lists", () => {
       </ul>
     );
 
-    let before = mount("body", component);
+    const before = mount("body", component);
 
     keys = [6, 7, 8, 9, , 10];
-    let after = update();
+    const after = update();
 
-    let afterString = getString(keys);
+    const afterString = getString(keys);
 
     keys = [1, 2, 3, 4, 5];
-    let afterUpdate = update();
+    const afterUpdate = update();
 
-    let afterUpdateString = getString(keys);
+    const afterUpdateString = getString(keys);
 
     expect(before).toEqual(beforeString);
     expect(after).toEqual(afterString);

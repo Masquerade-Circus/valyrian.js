@@ -58,7 +58,8 @@
     "sonarjs/no-identical-functions": 0,
     "max-lines-per-function": ["warn", { "max": 300, "skipBlankLines": true, "skipComments": true }],
     "max-len": ["error", 220],
-    "max-statements-per-line": ["error", { "max": 3 }]
+    "max-statements-per-line": ["error", { "max": 3 }],
+    "prefer-const": "error"
   },
   "env": {
     "shared-node-browser": true,

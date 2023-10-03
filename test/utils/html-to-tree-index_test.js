@@ -6,9 +6,9 @@ import { htmlToDom } from "valyrian.js/node";
 
 describe("Html to Tree index", () => {
   it("should create a document fragment with multiple children and attributes for a complex tree", () => {
-    let html = `<div id="test" class="test">Hello <span id="test" class="test">World</span> <span id="test" class="test">How are you</span></div><span id="test" class="test">I'm fine</span>`;
+    const html = `<div id="test" class="test">Hello <span id="test" class="test">World</span> <span id="test" class="test">How are you</span></div><span id="test" class="test">I'm fine</span>`;
 
-    let result = htmlToDom(html);
+    const result = htmlToDom(html);
 
     expect(result).toHaveProperty("tagName", "#document-fragment");
     expect(result).toHaveProperty("nodeType", 11);
@@ -90,9 +90,9 @@ describe("Html to Tree index", () => {
   });
 
   it("should create correctly self closing elements", () => {
-    let html = `<div><img src="test.png" /></div>`;
+    const html = `<div><img src="test.png" /></div>`;
 
-    let result = htmlToDom(html);
+    const result = htmlToDom(html);
 
     expect(result).toHaveProperty("tagName", "DIV");
     expect(result).toHaveProperty("nodeType", 1);
@@ -110,9 +110,9 @@ describe("Html to Tree index", () => {
   });
 
   it("should create correctly an element with an attribute whose content is a space separated list of values", () => {
-    let html = `<div class="test test2 test3"></div>`;
+    const html = `<div class="test test2 test3"></div>`;
 
-    let result = htmlToDom(html);
+    const result = htmlToDom(html);
 
     expect(result).toHaveProperty("tagName", "DIV");
     expect(result).toHaveProperty("nodeType", 1);
@@ -127,9 +127,9 @@ describe("Html to Tree index", () => {
   });
 
   it("should work with a last children as text", () => {
-    let html = '<body><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</body>';
+    const html = '<body><link rel="shortcult icon" href="/icons/favicon.ico"/>Hello world</body>';
 
-    let result = htmlToDom(html);
+    const result = htmlToDom(html);
 
     expect(result).toHaveProperty("tagName", "BODY");
     expect(result).toHaveProperty("nodeType", 1);
@@ -154,9 +154,9 @@ describe("Html to Tree index", () => {
   });
 
   it("should work with a mix of start, middle and last children", () => {
-    let html = "Hello <div>World, <span>How are</span> you?</div> <span>I'm fine</span> today.";
+    const html = "Hello <div>World, <span>How are</span> you?</div> <span>I'm fine</span> today.";
 
-    let result = htmlToDom(html);
+    const result = htmlToDom(html);
 
     expect(result).toHaveProperty("tagName", "#document-fragment");
     expect(result).toHaveProperty("nodeType", 11);
@@ -198,9 +198,9 @@ describe("Html to Tree index", () => {
   });
 
   it("should work with flat attributes and boolean attributes", () => {
-    let html = "<div opened selected=false></div>";
+    const html = "<div opened selected=false></div>";
 
-    let result = htmlToDom(html);
+    const result = htmlToDom(html);
 
     expect(result).toHaveProperty("tagName", "DIV");
     expect(result).toHaveProperty("nodeType", 1);

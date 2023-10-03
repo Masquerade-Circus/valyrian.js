@@ -51,7 +51,7 @@ export function Signal(initialValue: any): SignalInterface {
     }
 
     // Assign the signal variable to the signal stored at the index of the vnode object's calls property in the vnode's signals array
-    let signal: SignalInterface = component.signals[++vnode.signal_calls];
+    const signal: SignalInterface = component.signals[++vnode.signal_calls];
 
     // If a signal has already been assigned to the signal variable, return it
     if (signal) {
@@ -78,12 +78,12 @@ export function Signal(initialValue: any): SignalInterface {
   };
 
   // Set the vnodes to update when the Signal's value changes
-  let vnodesToUpdate: Array<VnodeWithDom> = [];
+  const vnodesToUpdate: Array<VnodeWithDom> = [];
 
   // This is the function that will be called when the Signal's value changes
   const updateVnodes = () => {
     // Create a copy of the vnodesToUpdate array and filter out any duplicate vnodes
-    let vnodesToUpdateCopy = vnodesToUpdate.filter((vnode, index, self) => {
+    const vnodesToUpdateCopy = vnodesToUpdate.filter((vnode, index, self) => {
       return self.findIndex((v) => v.dom === vnode.dom) === index;
     });
 
@@ -91,7 +91,7 @@ export function Signal(initialValue: any): SignalInterface {
     for (let i = 0, l = vnodesToUpdateCopy.length; i < l; i++) {
       const vnode2 = vnodesToUpdateCopy[i];
       // If it does, create a new vnode object based on the original vnode, its children, and its DOM and SVG properties
-      let newVnode = v(vnode2.tag, vnode2.props, ...vnode2.initialChildren) as VnodeWithDom;
+      const newVnode = v(vnode2.tag, vnode2.props, ...vnode2.initialChildren) as VnodeWithDom;
       newVnode.dom = vnode2.dom; // Set the new vnode object's DOM property to the old vnode object's DOM property
       newVnode.isSVG = vnode2.isSVG; // Set the new vnode object's isSVG property to the old vnode object's isSVG property
 
@@ -148,7 +148,7 @@ export function Signal(initialValue: any): SignalInterface {
   };
 
   // Assign the signal variable an array containing the get, set, and subscribe functions
-  let signal: SignalInterface = [get, set, subscribe, subscriptions];
+  const signal: SignalInterface = [get, set, subscribe, subscriptions];
 
   // If the context object has a vnode property, add the signal to the vnode's signals array
   // and add the subscriptions array to the vnode's subscriptions array

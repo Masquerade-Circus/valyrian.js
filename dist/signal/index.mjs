@@ -14,7 +14,7 @@ function Signal(initialValue) {
         onUnmount(() => Reflect.deleteProperty(component, "signals"));
       }
     }
-    let signal2 = component.signals[++vnode.signal_calls];
+    const signal2 = component.signals[++vnode.signal_calls];
     if (signal2) {
       signal2[3].length = 0;
       return signal2;
@@ -27,14 +27,14 @@ function Signal(initialValue) {
       subscriptions.push(callback);
     }
   };
-  let vnodesToUpdate = [];
+  const vnodesToUpdate = [];
   const updateVnodes = () => {
-    let vnodesToUpdateCopy = vnodesToUpdate.filter((vnode2, index, self) => {
+    const vnodesToUpdateCopy = vnodesToUpdate.filter((vnode2, index, self) => {
       return self.findIndex((v2) => v2.dom === vnode2.dom) === index;
     });
     for (let i = 0, l = vnodesToUpdateCopy.length; i < l; i++) {
       const vnode2 = vnodesToUpdateCopy[i];
-      let newVnode = v(vnode2.tag, vnode2.props, ...vnode2.initialChildren);
+      const newVnode = v(vnode2.tag, vnode2.props, ...vnode2.initialChildren);
       newVnode.dom = vnode2.dom;
       newVnode.isSVG = vnode2.isSVG;
       updateVnode(newVnode, vnode2);
@@ -63,7 +63,7 @@ function Signal(initialValue) {
       subscriptions[i](value);
     }
   };
-  let signal = [get, set, subscribe, subscriptions];
+  const signal = [get, set, subscribe, subscriptions];
   if (vnode && component) {
     component.signals.push(signal);
   }

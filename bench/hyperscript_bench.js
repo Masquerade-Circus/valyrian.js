@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const { before, benchmark, compare } = require("buffalo-test");
 
 import { v as VNext } from "valyrian.js";
@@ -6,10 +7,10 @@ const { expect } = require("expect");
 const { v: vOld } = require("./index-old.ts");
 
 compare("hyperscript", () => {
-  let date = new Date();
+  const date = new Date();
   before(async () => {
-    let { raw: newTs } = await inline("./lib/index.ts", { compact: true, noValidate: true });
-    let { raw: oldjs } = await inline("./bench/index-old.ts", { compact: true, noValidate: true });
+    const { raw: newTs } = await inline("./lib/index.ts", { compact: true, noValidate: true });
+    const { raw: oldjs } = await inline("./bench/index-old.ts", { compact: true, noValidate: true });
     console.log(oldjs.length);
     console.log(newTs.length);
 

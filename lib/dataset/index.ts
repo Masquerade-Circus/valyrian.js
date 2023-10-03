@@ -23,7 +23,7 @@ function deepFreeze(obj: any) {
         deepFreeze(obj[i]);
       }
     } else {
-      let props = Reflect.ownKeys(obj);
+      const props = Reflect.ownKeys(obj);
       for (let i = 0, l = props.length; i < l; i++) {
         deepFreeze(obj[props[i]]);
       }
@@ -90,8 +90,8 @@ export class DataSet<T> implements DataSetInterface<T> {
       return;
     }
 
-    let vnode = this.#vnode;
-    let handler = this.#handler;
+    const vnode = this.#vnode;
+    const handler = this.#handler;
 
     if (data.length === 0) {
       vnode.children = [];
@@ -99,12 +99,12 @@ export class DataSet<T> implements DataSetInterface<T> {
       return;
     }
 
-    let childrenLength = vnode.children.length;
+    const childrenLength = vnode.children.length;
     for (let i = 0, l = data.length; i < l; i++) {
-      let child = handler(this.data[i], i);
+      const child = handler(this.data[i], i);
 
       if (i < childrenLength) {
-        let oldChild = vnode.children[i];
+        const oldChild = vnode.children[i];
         child.isSVG = oldChild.isSVG;
         child.dom = oldChild.dom;
         updateAttributes(child as VnodeWithDom, oldChild);
@@ -129,7 +129,7 @@ export class DataSet<T> implements DataSetInterface<T> {
 
   add(...data: T[]) {
     if (this.#data) {
-      let oldLength = this.#data.length;
+      const oldLength = this.#data.length;
       if (this.#isFrozen) {
         this.#setData([...this.#data, ...data]);
       } else {
@@ -140,11 +140,11 @@ export class DataSet<T> implements DataSetInterface<T> {
         return;
       }
 
-      let vnode = this.#vnode;
-      let handler = this.#handler;
+      const vnode = this.#vnode;
+      const handler = this.#handler;
 
       for (let i = 0, ii = oldLength, l = data.length; i < l; i++, ii++) {
-        let child = handler(this.#data[i], ii);
+        const child = handler(this.#data[i], ii);
         child.isSVG = vnode.isSVG || child.tag === "svg";
         child.dom = createDomElement(child.tag as string, child.isSVG);
         vnode.dom.appendChild(child.dom);
@@ -157,7 +157,7 @@ export class DataSet<T> implements DataSetInterface<T> {
 
   delete(index: number) {
     if (this.#data && this.#vnode) {
-      let child = this.#vnode.children[index];
+      const child = this.#vnode.children[index];
       if (this.#isFrozen) {
         this.#setData(this.data.filter((_, i) => i !== index));
       } else {
@@ -171,13 +171,13 @@ export class DataSet<T> implements DataSetInterface<T> {
 
   update(index: number, item: Partial<T>) {
     if (this.#data && this.#vnode && this.#handler) {
-      let child = this.#vnode.children[index];
+      const child = this.#vnode.children[index];
       if (this.#isFrozen) {
         this.#setData(this.#data.map((d, i) => (i === index ? { ...d, ...item } : d)));
       } else {
         this.#data[index] = { ...this.#data[index], ...item };
       }
-      let newChild = this.#handler(this.#data[index], index);
+      const newChild = this.#handler(this.#data[index], index);
       newChild.isSVG = this.#vnode.isSVG || newChild.tag === "svg";
       newChild.dom = child.dom;
       this.#vnode.children[index] = newChild;

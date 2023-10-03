@@ -31,7 +31,7 @@ function deepFreeze(obj: any) {
         deepFreeze(obj[i]);
       }
     } else {
-      let props = Reflect.ownKeys(obj);
+      const props = Reflect.ownKeys(obj);
       for (let i = 0, l = props.length; i < l; i++) {
         deepFreeze(obj[props[i]]);
       }
@@ -60,7 +60,7 @@ export const Store = function Store(
     }
   }
 
-  let localState = typeof state === "function" ? state() : state;
+  const localState = typeof state === "function" ? state() : state;
 
   this.state = new Proxy(localState || {}, {
     get: (state, prop: string) => deepFreeze(state[prop]),

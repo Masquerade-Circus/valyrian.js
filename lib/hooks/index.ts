@@ -34,7 +34,7 @@ export const createHook = function createHook({
   returnValue
 }: HookDefinition): Hook {
   return (...args: any[]) => {
-    let { component, vnode } = current as CurrentOnPatch;
+    const { component, vnode } = current as CurrentOnPatch;
 
     let hook: any = null;
 
@@ -129,7 +129,7 @@ export const useState = createHook({
 // Effect hook
 export const useEffect = createHook({
   onCreate: (effect: Function, changes: any[]) => {
-    let hook: {
+    const hook: {
       effect: Function;
       prev: any[];
       onRemove?: Function;

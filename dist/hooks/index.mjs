@@ -8,7 +8,7 @@ var createHook = function createHook2({
   returnValue
 }) {
   return (...args) => {
-    let { component, vnode } = current;
+    const { component, vnode } = current;
     let hook = null;
     if (vnode) {
       if (!vnode.components) {
@@ -74,7 +74,7 @@ var useState = createHook({
 });
 var useEffect = createHook({
   onCreate: (effect, changes) => {
-    let hook = { effect, prev: [] };
+    const hook = { effect, prev: [] };
     if (changes === null) {
       hook.onRemove = effect;
       return hook;

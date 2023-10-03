@@ -8,7 +8,7 @@ import expect from "expect";
 describe("ProxySignals", () => {
   it("should create a signal", async () => {
     // Create signal
-    let counter = ProxySignal(0);
+    const counter = ProxySignal(0);
 
     // Read value
     counter();
@@ -23,18 +23,18 @@ describe("ProxySignals", () => {
     // counter('path', 0)
 
     // Effectful computed / Subscription
-    let effect = counter((val) => expect(val).toBeGreaterThanOrEqual(0));
+    const effect = counter((val) => expect(val).toBeGreaterThanOrEqual(0));
 
     // Named computed / Getter
     counter.getter("hello", (val) => "hello " + val);
 
     // Pure computed
-    let computed = counter((val) => "hello " + val);
+    const computed = counter((val) => "hello " + val);
 
     // Unlinked Pure computed
-    let unlinked = ProxySignal(() => "hello " + counter.value);
+    const unlinked = ProxySignal(() => "hello " + counter.value);
 
-    let interval = setInterval(() => (counter.value += 1), 10);
+    const interval = setInterval(() => (counter.value += 1), 10);
     expect(counter.hello).toEqual("hello 0");
     expect(computed()).toEqual("hello 0");
     expect(computed.value).toEqual("hello 0");
@@ -60,10 +60,10 @@ describe("ProxySignals", () => {
   });
 
   it("should test effect cleanup", async () => {
-    let delay = ProxySignal(10);
-    let count = ProxySignal(0);
-    let effectInterval = delay((delay) => {
-      let interval = setInterval(() => {
+    const delay = ProxySignal(10);
+    const count = ProxySignal(0);
+    const effectInterval = delay((delay) => {
+      const interval = setInterval(() => {
         count.value = count.value + 1;
       }, delay);
       return () => clearInterval(interval);
@@ -85,12 +85,12 @@ describe("ProxySignals", () => {
   });
 
   it("should test deep state effect cleanup", async () => {
-    let state = ProxySignal({
+    const state = ProxySignal({
       count: 0,
       delay: 10
     });
-    let effectInterval2 = state(() => {
-      let interval = setInterval(() => {
+    const effectInterval2 = state(() => {
+      const interval = setInterval(() => {
         state("count", (current) => current + 1);
       }, state.value.delay);
       return () => clearInterval(interval);
@@ -112,16 +112,16 @@ describe("ProxySignals", () => {
 
 describe("Hooks like pattern", () => {
   it("should create a simple counter", async () => {
-    let Counter = (ms) => {
-      let count = ProxySignal(0);
-      let interval = setInterval(() => {
+    const Counter = (ms) => {
+      const count = ProxySignal(0);
+      const interval = setInterval(() => {
         count.value = count.value + 1;
       }, ms);
       onUnmount(() => clearInterval(interval));
       return () => <div>{count.value}</div>;
     };
 
-    let Component = Counter(10);
+    const Component = Counter(10);
 
     let result = mount("div", Component);
     expect(result).toEqual("<div>0</div>");
@@ -132,11 +132,11 @@ describe("Hooks like pattern", () => {
   });
 
   it("should create a counter with delay change", async () => {
-    let Counter = (ms) => {
-      let delay = ProxySignal(ms);
-      let count = ProxySignal(0);
-      let interval = delay((delay) => {
-        let interval = setInterval(() => {
+    const Counter = (ms) => {
+      const delay = ProxySignal(ms);
+      const count = ProxySignal(0);
+      const interval = delay((delay) => {
+        const interval = setInterval(() => {
           count.value = count.value + 1;
         }, delay);
         return () => clearInterval(interval);
@@ -145,7 +145,7 @@ describe("Hooks like pattern", () => {
       return () => <div>{count.value}</div>;
     };
 
-    let Component = Counter(10);
+    const Component = Counter(10);
 
     let result = mount("div", Component);
     expect(result).toEqual("<div>0</div>");
@@ -156,13 +156,13 @@ describe("Hooks like pattern", () => {
   });
 
   it("should create a counter with deep state", async () => {
-    let Counter = (ms) => {
-      let state = ProxySignal({
+    const Counter = (ms) => {
+      const state = ProxySignal({
         count: 0,
         delay: ms
       });
-      let interval = state(() => {
-        let interval = setInterval(() => {
+      const interval = state(() => {
+        const interval = setInterval(() => {
           state("count", (current) => current + 1);
         }, state.value.delay);
         return () => clearInterval(interval);
@@ -171,7 +171,7 @@ describe("Hooks like pattern", () => {
       return () => <div>{state.value.count}</div>;
     };
 
-    let Component = Counter(10);
+    const Component = Counter(10);
 
     let result = mount("div", Component);
     expect(result).toEqual("<div>0</div>");

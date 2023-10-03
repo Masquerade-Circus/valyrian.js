@@ -48,9 +48,9 @@ var addPath = ({
   if (!method || !path || !Array.isArray(middlewares) || middlewares.length === 0) {
     throw new Error(`Invalid route input: ${method} ${path} ${middlewares}`);
   }
-  let realpath = path.replace(/(\S)(\/+)$/, "$1");
-  let params = (realpath.match(/:(\w+)?/gi) || []).map((param) => param.slice(1));
-  let regexpPath = "^" + realpath.replace(/:(\w+)/gi, "([^\\/\\s]+)") + "$";
+  const realpath = path.replace(/(\S)(\/+)$/, "$1");
+  const params = (realpath.match(/:(\w+)?/gi) || []).map((param) => param.slice(1));
+  const regexpPath = "^" + realpath.replace(/:(\w+)/gi, "([^\\/\\s]+)") + "$";
   router.paths.push({
     method,
     path: realpath,
@@ -60,24 +60,24 @@ var addPath = ({
   });
 };
 function parseQuery(queryParts) {
-  let parts = queryParts ? queryParts.split("&") : [];
-  let query = {};
-  for (let nameValue of parts) {
-    let [name, value] = nameValue.split("=", 2);
+  const parts = queryParts ? queryParts.split("&") : [];
+  const query = {};
+  for (const nameValue of parts) {
+    const [name, value] = nameValue.split("=", 2);
     query[name] = value || "";
   }
   return query;
 }
 function searchMiddlewares(router, path) {
-  let middlewares = [];
-  let params = {};
-  let matches = [];
-  for (let item of router.paths) {
-    let match = item.regexp.exec(path);
+  const middlewares = [];
+  const params = {};
+  const matches = [];
+  for (const item of router.paths) {
+    const match = item.regexp.exec(path);
     if (Array.isArray(match)) {
       middlewares.push(...item.middlewares);
       match.shift();
-      for (let [index, key] of item.params.entries()) {
+      for (const [index, key] of item.params.entries()) {
         params[key] = match[index];
       }
       matches.push(...match);
@@ -128,12 +128,12 @@ var Router = class _Router {
     this.pathPrefix = pathPrefix;
   }
   add(path, ...middlewares) {
-    let pathWithoutLastSlash = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
+    const pathWithoutLastSlash = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
     addPath({ router: this, method: "add", path: pathWithoutLastSlash, middlewares });
     return this;
   }
   use(...middlewares) {
-    let path = getPathWithoutLastSlash(
+    const path = getPathWithoutLastSlash(
       `${this.pathPrefix}${typeof middlewares[0] === "string" ? middlewares.shift() : "/"}`
     );
     for (const item of middlewares) {
@@ -162,7 +162,7 @@ var Router = class _Router {
     if (!path) {
       throw new Error("router.url.required");
     }
-    let constructedPath = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
+    const constructedPath = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
     const parts = constructedPath.split("?", 2);
     this.url = constructedPath;
     this.query = parseQuery(parts[1]);
@@ -211,7 +211,7 @@ function mountRouter(elementContainer, router) {
   localRedirect = router.go.bind(router);
   if (!import_valyrian.isNodeJs) {
     let onPopStateGoToRoute2 = function() {
-      let pathWithoutPrefix = getPathWithoutPrefix(document.location.pathname, router.pathPrefix);
+      const pathWithoutPrefix = getPathWithoutPrefix(document.location.pathname, router.pathPrefix);
       router.go(pathWithoutPrefix, void 0, true);
     };
     var onPopStateGoToRoute = onPopStateGoToRoute2;

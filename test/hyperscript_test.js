@@ -107,7 +107,7 @@ describe("Hyperscript", () => {
   });
 
   it("should handle different types of data", () => {
-    let date = new Date();
+    const date = new Date();
 
     expect(v("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]])).toEqual({
       tag: "div",

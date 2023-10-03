@@ -12,7 +12,7 @@ function deepFreeze(obj) {
         deepFreeze(obj[i]);
       }
     } else {
-      let props = Reflect.ownKeys(obj);
+      const props = Reflect.ownKeys(obj);
       for (let i = 0, l = props.length; i < l; i++) {
         deepFreeze(obj[props[i]]);
       }
@@ -33,7 +33,7 @@ var Store = function Store2({ state = {}, getters = {}, actions = {}, mutations 
       throw new Error("You need to commit a mutation to change the state");
     }
   }
-  let localState = typeof state === "function" ? state() : state;
+  const localState = typeof state === "function" ? state() : state;
   this.state = new Proxy(localState || {}, {
     get: (state2, prop) => deepFreeze(state2[prop]),
     set: (state2, prop, value) => {
