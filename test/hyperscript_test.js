@@ -9,7 +9,8 @@ describe("Hyperscript", () => {
     expect(v("div")).toEqual({
       tag: "div",
       props: {},
-      children: []
+      children: [],
+      isSVG: false
     });
   });
 
@@ -17,6 +18,7 @@ describe("Hyperscript", () => {
     expect(v("div", null, "Hello")).toEqual({
       tag: "div",
       props: {},
+      isSVG: false,
       children: ["Hello"]
     });
   });
@@ -25,10 +27,12 @@ describe("Hyperscript", () => {
     expect(v("div", null, v("span"))).toEqual({
       tag: "div",
       props: {},
+      isSVG: false,
       children: [
         {
           tag: "span",
           props: {},
+          isSVG: false,
           children: []
         }
       ]
@@ -39,6 +43,7 @@ describe("Hyperscript", () => {
     expect(v("div", null, "Hello ", "world")).toEqual({
       tag: "div",
       props: {},
+      isSVG: false,
       children: ["Hello ", "world"]
     });
   });
@@ -47,6 +52,7 @@ describe("Hyperscript", () => {
     expect(v("div", null, ["Hello ", "world"])).toEqual({
       tag: "div",
       props: {},
+      isSVG: false,
       children: [["Hello ", "world"]]
     });
   });
@@ -55,11 +61,13 @@ describe("Hyperscript", () => {
     expect(v("div", null, ["Hello ", "world"], v("span", null, "Whats up"))).toEqual({
       tag: "div",
       props: {},
+      isSVG: false,
       children: [
         ["Hello ", "world"],
         {
           tag: "span",
           props: {},
+          isSVG: false,
           children: ["Whats up"]
         }
       ]
@@ -70,6 +78,7 @@ describe("Hyperscript", () => {
     expect(v("div", null, ["Hello ", "world", ["Only", ["for", "this", ["time"]]]])).toEqual({
       tag: "div",
       props: {},
+      isSVG: false,
       children: [["Hello ", "world", ["Only", ["for", "this", ["time"]]]]]
     });
   });
@@ -81,6 +90,7 @@ describe("Hyperscript", () => {
         id: "unique",
         class: "unique"
       },
+      isSVG: false,
       children: []
     });
   });
@@ -93,6 +103,7 @@ describe("Hyperscript", () => {
           id: "unique",
           class: "unique"
         },
+        isSVG: false,
         children: ["Hola mundo"],
         dom: expect.anything()
       }
@@ -105,6 +116,7 @@ describe("Hyperscript", () => {
     expect(v("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]])).toEqual({
       tag: "div",
       props: {},
+      isSVG: false,
       children: [[null, "Hello", undefined, 1, date, { hello: "world" }, ["Hello"]]]
     });
   });
