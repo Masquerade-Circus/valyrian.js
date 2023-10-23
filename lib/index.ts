@@ -1,8 +1,4 @@
-/* eslint-disable indent */
-/* eslint-disable eqeqeq */
-/* eslint-disable complexity */
 declare global {
-  // eslint-disable-next-line vars-on-top, no-var
   var document: Document;
   namespace JSX {
     interface IntrinsicElements {
@@ -18,10 +14,6 @@ export interface VnodeProperties extends DefaultRecord {
 }
 
 export interface DomElement extends Element, DefaultRecord {}
-
-export interface DomElementWithVnode extends DomElement {
-  vnode: VnodeWithDom;
-}
 
 export interface Component extends DefaultRecord {
   (props: VnodeProperties, children: any[]): Vnode | any;
@@ -40,146 +32,25 @@ export interface VnodeComponentInterface extends Vnode {
 export interface Children extends Array<Vnode | VnodeComponentInterface | ValyrianComponent | any> {}
 
 export interface Directive {
-  (vnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void | boolean;
+  (vnode: VnodeWithDom, oldProps: VnodeProperties | null): void | boolean;
 }
 
 export const isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
 
-const byStringMatcherCache: Record<string, (vnode: VnodeWithDom) => boolean> = {};
-const byStringMatcherRegex = /^([^.#]*)?#?([^.]*)?(.*)?$/;
-
-function byStringMatcher(string: string) {
-  if (!byStringMatcherCache[string]) {
-    // Use regular expression to extract tag, id, and classes
-    const match = byStringMatcherRegex.exec(string) as RegExpMatchArray;
-    const tag = match[1];
-    const id = match[2];
-    const classes = match[3] ? match[3].split(".").splice(1) : null;
-
-    let matcher: (vnode: VnodeWithDom) => boolean = (vnode: VnodeWithDom) => vnode instanceof Vnode;
-    if (tag) {
-      const previousMatcher = matcher;
-      matcher = (vnode: VnodeWithDom) => previousMatcher(vnode) && vnode.tag === tag;
-    }
-
-    if (id) {
-      const previousMatcher = matcher;
-      matcher = (vnode: VnodeWithDom) => previousMatcher(vnode) && vnode.dom.id === id;
-    }
-
-    if (classes) {
-      const previousMatcher = matcher;
-      matcher = (vnode: VnodeWithDom) => {
-        if (!previousMatcher(vnode)) {
-          return false;
-        }
-
-        for (const className of classes) {
-          if (!vnode.dom.classList.contains(className)) {
-            return false;
-          }
-        }
-
-        return true;
-      };
-    }
-
-    byStringMatcherCache[string] = matcher;
-  }
-
-  return byStringMatcherCache[string];
-}
-
 export class Vnode {
   constructor(
     public tag: string | Component | POJOComponent,
-    public props: VnodeProperties,
+    public props: null | VnodeProperties,
     public children: Children,
-    public dom?: DomElementWithVnode,
-    public processed?: boolean,
-    public isSVG?: boolean,
-    public _parent?: Vnode
+    public dom?: DomElement,
+    public isSVG?: boolean
   ) {}
-
-  parent(matcher?: string | ((vnode: VnodeWithDom) => boolean)): Vnode | void {
-    if (!matcher) {
-      return this._parent;
-    }
-
-    const finalMatcher = typeof matcher === "string" ? byStringMatcher(matcher) : matcher;
-
-    let parent = this._parent as VnodeWithDom;
-    while (parent) {
-      if (finalMatcher(parent)) {
-        return parent;
-      }
-      parent = parent._parent;
-    }
-  }
-
-  findChild(filter: string | ((vnode: VnodeWithDom) => boolean)): VnodeWithDom | void {
-    const finalFilter =
-      typeof filter === "string"
-        ? byStringMatcher(filter)
-        : (vnode: VnodeWithDom) => vnode instanceof Vnode && filter(vnode);
-
-    for (let i = 0, l = this.children.length; i < l; i++) {
-      const child = this.children[i];
-      if (finalFilter(child as VnodeWithDom)) {
-        return child as VnodeWithDom;
-      }
-    }
-
-    for (let i = 0, l = this.children.length; i < l; i++) {
-      const child = this.children[i];
-      if (child instanceof Vnode) {
-        const result = child.findChild(finalFilter);
-        if (result) {
-          return result;
-        }
-      }
-    }
-  }
-
-  filterChildren(filter: string | ((vnode: VnodeWithDom, i: number) => boolean)): VnodeWithDom[] {
-    const finalFilter =
-      typeof filter === "string"
-        ? byStringMatcher(filter)
-        : (vnode: VnodeWithDom, i: number) => vnode instanceof Vnode && filter(vnode, i);
-    const result: VnodeWithDom[] = [];
-    for (let i = 0, l = this.children.length; i < l; i++) {
-      const child = this.children[i];
-      if (finalFilter(child as VnodeWithDom, i)) {
-        result.push(child as VnodeWithDom);
-      }
-    }
-
-    return result;
-  }
-
-  get(index: number): VnodeWithDom | void {
-    return this.children[index];
-  }
-
-  remove(this: VnodeWithDom) {
-    this.dom.remove();
-    cleanupVnodeChildren(this);
-    domToVnodeWeakMap.delete(this.dom);
-    this._parent.children.splice(this._parent.children.indexOf(this), 1);
-  }
-
-  replace(this: VnodeWithDom, newChild: VnodeWithDom) {
-    this._parent.children.splice(this._parent.children.indexOf(this), 1, newChild);
-    processVnode(this._parent, newChild, this.dom);
-    cleanupVnodeChildren(this);
-    domToVnodeWeakMap.delete(this.dom);
-  }
 }
 
 export interface VnodeWithDom extends Vnode {
   tag: string;
-  dom: DomElementWithVnode;
-  _parent: VnodeWithDom;
+  dom: DomElement;
+  props: VnodeProperties;
 }
 
 export const isComponent = (component: unknown): component is Component => typeof component === "function";
@@ -196,7 +67,7 @@ export function domToVnode(dom: any): VnodeWithDom {
 
   const vnode = new Vnode(dom.nodeName.toLowerCase(), {}, []) as VnodeWithDom;
   vnode.dom = dom;
-  domToVnodeWeakMap.set(dom, vnode);
+  dom.props = vnode.props;
 
   for (let i = 0, l = dom.childNodes.length; i < l; i++) {
     const childDom = dom.childNodes[i];
@@ -204,14 +75,14 @@ export function domToVnode(dom: any): VnodeWithDom {
       vnode.children.push(childDom.nodeValue);
     } else if (childDom.nodeType === 1) {
       const childVnode = domToVnode(childDom);
-      childVnode._parent = vnode;
-      vnode.children.push();
+      vnode.children.push(childVnode);
     }
   }
 
+  const props = vnode.props as VnodeProperties;
   for (let i = 0, l = dom.attributes.length; i < l; i++) {
     const attr = dom.attributes[i];
-    vnode.props[attr.nodeName] = attr.nodeValue;
+    props[attr.nodeName] = attr.nodeValue;
   }
 
   return vnode as VnodeWithDom;
@@ -227,35 +98,28 @@ let mainComponent: VnodeComponentInterface | null = null;
 let mainVnode: VnodeWithDom | null = null;
 let isMounted = false;
 
-// This object is used to store the current virtual node and component being rendered.
 export const current = {
   vnode: null as Vnode | null,
   component: null as ValyrianComponent | null,
   event: null as Event | null
 };
 
-/* Reserved props ----------------------------------------------------------- */
-// This object is used to store the names of reserved props, which are props that are reserved
-// for special purposes and should not be used as regular component props.
-export const reservedProps: Record<string, true> = {
-  key: true,
-  state: true,
-  "v-keep": true, // Used to keep the element when the parent is updated
-  "v-text": true, // Used to set the text content of an element
+export const reservedProps = new Set<string>([
+  "key",
+  "state",
+  "v-keep",
+  "v-text",
+  "v-if",
+  "v-for",
+  "v-show",
+  "v-class",
+  "v-html",
+  "v-model",
+  "v-create",
+  "v-update",
+  "v-cleanup"
+]);
 
-  // Built in directives
-  "v-if": true,
-  "v-for": true,
-  "v-show": true,
-  "v-class": true,
-  "v-html": true,
-  "v-model": true,
-  "v-create": true,
-  "v-update": true,
-  "v-cleanup": true
-};
-
-/* Mounting, Updating, Cleanup and Unmounting ------------------------------- */
 const onCleanupSet = new Set<Function>();
 const onMountSet = new Set<Function>();
 const onUpdateSet = new Set<Function>();
@@ -271,8 +135,18 @@ const callSet = (set: Set<Function>) => {
   set.clear();
 };
 
-/* Directives --------------------------------------------------------------- */
 export const directives: Record<string, Directive> = {
+  "v-for"(vnode: VnodeWithDom) {
+    const set = vnode.props["v-for"];
+    const children = vnode.children;
+    const callback = children[0];
+    children.length = set.length;
+
+    for (let i = 0, l = set.length; i < l; i++) {
+      children[i] = callback(set[i], i);
+    }
+  },
+
   "v-if": (vnode: VnodeWithDom) => {
     const bool = Boolean(vnode.props["v-if"]);
     if (bool) {
@@ -286,13 +160,6 @@ export const directives: Record<string, Directive> = {
     }
   },
 
-  "v-for": (vnode: VnodeWithDom) => {
-    const [set, callback] = vnode.props["v-for"];
-    for (let i = 0, l = set.length; i < l; i++) {
-      vnode.children.push(callback(set[i], i));
-    }
-  },
-
   "v-show": (vnode: VnodeWithDom) => {
     const bool = Boolean(vnode.props["v-show"]);
     (
@@ -302,21 +169,132 @@ export const directives: Record<string, Directive> = {
     ).style.display = bool ? "" : "none";
   },
 
-  "v-class": (vnode: VnodeWithDom) => {
-    const classes = vnode.props["v-class"];
-    const classList = (vnode.dom as DomElement).classList;
-    for (const name in classes) {
-      const value = typeof classes[name] === "function" ? (classes[name] as Function)() : classes[name];
-      classList.toggle(name, value);
-    }
-  },
-
   "v-html": (vnode: VnodeWithDom) => {
     vnode.children = [trust(vnode.props["v-html"])];
   },
 
-  "v-create": (vnode: VnodeWithDom, oldVnode: VnodeWithDom | null) => {
-    if (!oldVnode) {
+  // The "v-model" directive binds the value of an input element to a model property
+  "v-model": (vnode: VnodeWithDom) => {
+    let [model, property, event]: any[] = vnode.props["v-model"];
+    let value;
+    // This function updates the model property when the input element's value changes
+    let handler = (e: Event) => (model[property] = (e.target as DomElement & Record<string, any>).value);
+    if (vnode.tag === "input") {
+      // If the element is an input, use the "input" event by default
+      event = event || "oninput";
+      // Depending on the type of input element, use a different handler function
+      switch (vnode.props.type) {
+        case "checkbox": {
+          if (Array.isArray(model[property])) {
+            // If the model property is an array, add or remove the value from the array when the checkbox is checked or unchecked
+            handler = (e: Event) => {
+              const val = (e.target as DomElement & Record<string, any>).value;
+              const idx = model[property].indexOf(val);
+              if (idx === -1) {
+                model[property].push(val);
+              } else {
+                model[property].splice(idx, 1);
+              }
+            };
+            // If the value is in the array, set the checkbox to be checked
+            value = model[property].indexOf(vnode.dom.value) !== -1;
+          } else if ("value" in vnode.props) {
+            // If the input element has a "value" attribute, use it to determine the checked state
+            handler = () => {
+              if (model[property] === vnode.props.value) {
+                model[property] = null;
+              } else {
+                model[property] = vnode.props.value;
+              }
+            };
+            value = model[property] === vnode.props.value;
+          } else {
+            // If there is no "value" attribute, use a boolean value for the model property
+            handler = () => (model[property] = !model[property]);
+            value = model[property];
+          }
+          // Set the "checked" attribute on the input element
+          // eslint-disable-next-line no-use-before-define
+          sharedSetAttribute("checked", value, vnode);
+          break;
+        }
+        case "radio": {
+          // If the element is a radio button, set the "checked" attribute based on the value of the model property
+          // eslint-disable-next-line no-use-before-define
+          sharedSetAttribute("checked", model[property] === vnode.dom.value, vnode);
+          break;
+        }
+        default: {
+          // For all other input types, set the "value" attribute based on the value of the model property
+          // eslint-disable-next-line no-use-before-define
+          sharedSetAttribute("value", model[property], vnode);
+        }
+      }
+    } else if (vnode.tag === "select") {
+      // If the element is a select element, use the "click" event by default
+      event = event || "onclick";
+      if (vnode.props.multiple) {
+        // If the select element allows multiple selections, update the model property with an array of selected values
+        handler = (e: Event & Record<string, any>) => {
+          const val = (e.target as DomElement & Record<string, any>).value;
+          if (e.ctrlKey) {
+            // If the Ctrl key is pressed, add or remove the value from the array
+            const idx = model[property].indexOf(val);
+            if (idx === -1) {
+              model[property].push(val);
+            } else {
+              model[property].splice(idx, 1);
+            }
+          } else {
+            // If the Ctrl key is not pressed, set the model property to an array with the selected value
+            model[property].splice(0, model[property].length);
+            model[property].push(val);
+          }
+        };
+        // Set the "selected" attribute on the options based on whether they are in the model property array
+        vnode.children.forEach((child: VnodeWithDom) => {
+          if (child.tag === "option") {
+            const value = "value" in child.props ? child.props.value : child.children.join("").trim();
+            child.props.selected = model[property].indexOf(value) !== -1;
+          }
+        });
+      } else {
+        // If the select element does not allow multiple selections, set the "selected" attribute on the options based on the value of the model property
+        vnode.children.forEach((child: VnodeWithDom) => {
+          if (child.tag === "option") {
+            const value = "value" in child.props ? child.props.value : child.children.join("").trim();
+            child.props.selected = value === model[property];
+          }
+        });
+      }
+    } else if (vnode.tag === "textarea") {
+      // If the element is a textarea, use the "input" event by default
+      event = event || "oninput";
+      // Set the textarea's content to the value of the model property
+      vnode.children = [model[property]];
+    }
+
+    // We assume that the prev handler if any will not be changed by the user across patchs
+    const prevHandler = vnode.props[event];
+
+    // Set the event handler on the element
+    // eslint-disable-next-line no-use-before-define
+    sharedSetAttribute(
+      event,
+      (e: Event) => {
+        handler(e);
+
+        // If the previous handler is defined, call it after the model has been updated
+        if (prevHandler) {
+          prevHandler(e);
+        }
+      },
+      vnode
+    );
+  },
+
+  "v-create": (vnode: VnodeWithDom, oldProps: VnodeProperties | null) => {
+    if (!oldProps) {
       const callback = vnode.props["v-create"];
       const cleanup = callback(vnode);
 
@@ -326,10 +304,10 @@ export const directives: Record<string, Directive> = {
     }
   },
 
-  "v-update": (vnode: VnodeWithDom, oldVnode: VnodeWithDom | null) => {
-    if (oldVnode) {
+  "v-update": (vnode: VnodeWithDom, oldProps: VnodeProperties | null) => {
+    if (oldProps) {
       const callback = vnode.props["v-update"];
-      const cleanup = callback(vnode, oldVnode);
+      const cleanup = callback(vnode, oldProps);
 
       if (typeof cleanup === "function") {
         onCleanup(cleanup);
@@ -340,17 +318,49 @@ export const directives: Record<string, Directive> = {
   "v-cleanup": (vnode: VnodeWithDom) => {
     const callback = vnode.props["v-cleanup"];
     onCleanup(() => callback(vnode));
+  },
+
+  // Frequent used properties
+  class: (vnode: VnodeWithDom) => {
+    const value = vnode.props.class;
+    if (typeof value === "string") {
+      vnode.dom.className = value;
+    } else if (Array.isArray(value)) {
+      vnode.dom.className = value.join(" ");
+    } else if (typeof value === "object") {
+      const classList = vnode.dom.classList;
+      for (const name in value) {
+        const val = typeof value[name] === "function" ? (value[name] as Function)() : value[name];
+        classList.toggle(name, val);
+      }
+    }
+  },
+
+  id: (vnode: VnodeWithDom) => {
+    vnode.dom.id = vnode.props.id;
+  },
+
+  style: (vnode: VnodeWithDom) => {
+    const value = vnode.props.style;
+    if (typeof value === "string") {
+      vnode.dom.style.cssText = value;
+    } else if (typeof value === "object") {
+      const domStyle = vnode.dom.style;
+      domStyle.cssText = "";
+      for (const name in value) {
+        domStyle[name] = value[name];
+      }
+    }
   }
 };
 
 export function directive(name: string, directive: Directive) {
   const directiveName = `v-${name}`;
   directives[directiveName] = directive;
-  reservedProps[directiveName] = true;
+  reservedProps.add(directiveName);
 }
 
-/* Event listener ----------------------------------------------------------- */
-const eventListenerNames: Record<string, true> = {};
+const eventListenerNames = new Set<string>();
 
 function eventListener(e: Event) {
   current.event = e;
@@ -358,9 +368,9 @@ function eventListener(e: Event) {
   const name = `on${e.type}`;
 
   while (dom) {
-    const oldVnode = domToVnodeWeakMap.get(dom);
-    if (oldVnode && oldVnode.props[name]) {
-      oldVnode.props[name](e, oldVnode);
+    const oldProps = dom.props;
+    if (oldProps && oldProps[name]) {
+      oldProps[name](e, dom);
 
       if (!e.defaultPrevented) {
         update();
@@ -373,177 +383,81 @@ function eventListener(e: Event) {
   current.event = null;
 }
 
-function sharedSetAttribute(
-  name: string,
-  value: any,
-  newVnode: VnodeWithDom,
-  oldVnode: VnodeWithDom | null
-): void | boolean {
+function sharedSetAttribute(name: string, value: any, newVnode: VnodeWithDom): void | boolean {
+  const newVnodeDom = newVnode.dom;
   if (typeof value === "function") {
-    if (name in eventListenerNames === false) {
+    if (!eventListenerNames.has(name)) {
       (mainVnode as VnodeWithDom).dom.addEventListener(name.slice(2), eventListener);
-      eventListenerNames[name] = true;
+      eventListenerNames.add(name);
     }
     return;
   }
 
-  if (name === "style" && typeof value === "object") {
-    // Apply styles
-    for (const styleKey in value) {
-      if (value.hasOwnProperty(styleKey)) {
-        newVnode.dom.style[styleKey] = value[styleKey];
-      }
-    }
+  if (name in newVnodeDom) {
+    newVnodeDom[name] = value;
     return;
   }
 
-  if (name in newVnode.dom) {
-    if (newVnode.dom[name] != value) {
-      newVnode.dom[name] = value;
-    }
-    return;
-  }
-
-  if (!oldVnode || value !== oldVnode.props[name]) {
-    if (value === false) {
-      newVnode.dom.removeAttribute(name);
-    } else {
-      newVnode.dom.setAttribute(name, value);
-    }
+  if (value === false) {
+    newVnodeDom.removeAttribute(name);
+  } else {
+    newVnodeDom.setAttribute(name, value);
   }
 }
 
-export function setAttribute(name: string, value: any, newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
-  if (!reservedProps[name]) {
+export function setAttribute(name: string, value: any, newVnode: VnodeWithDom): void {
+  if (!reservedProps.has(name)) {
     newVnode.props[name] = value;
-    sharedSetAttribute(name, value, newVnode, oldVnode);
+    sharedSetAttribute(name, value, newVnode);
   }
 }
 
-function removeAttributes(vnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
-  if (oldVnode) {
-    for (const name in oldVnode.props) {
-      if (!vnode.props[name] && !eventListenerNames[name] && !reservedProps[name]) {
-        if (name in vnode.dom) {
-          vnode.dom[name] = null;
-        } else {
-          vnode.dom.removeAttribute(name);
-        }
+function removeAttributes(vnode: VnodeWithDom, oldProps: VnodeProperties | null): void {
+  if (!oldProps) {
+    return;
+  }
+
+  const vnodeDom = vnode.dom;
+  const vnodeProps = vnode.props;
+
+  for (const name in oldProps) {
+    if (name in vnodeProps === false && !eventListenerNames.has(name) && !reservedProps.has(name)) {
+      if (name in vnodeDom) {
+        vnodeDom[name] = null;
+      } else {
+        vnodeDom.removeAttribute(name);
       }
     }
   }
 }
 
-function addProperties(vnode: VnodeWithDom, oldVnode: VnodeWithDom | null) {
-  for (const name in vnode.props) {
-    if (reservedProps[name]) {
-      if (directives[name] && directives[name](vnode, oldVnode) === false) {
+function addProperties(vnode: VnodeWithDom, oldProps: VnodeProperties | null) {
+  const vnodeProps = vnode.props;
+  for (const name in vnodeProps) {
+    if (directives[name]) {
+      if (directives[name](vnode, oldProps) === false) {
         break;
       }
       continue;
     }
-    sharedSetAttribute(name, vnode.props[name], vnode, oldVnode);
+
+    if (reservedProps.has(name)) {
+      continue;
+    }
+
+    sharedSetAttribute(name, vnodeProps[name], vnode);
   }
 }
 
-export function updateAttributes(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
-  removeAttributes(newVnode, oldVnode);
-  addProperties(newVnode, oldVnode);
+function updateAttributes(newVnode: VnodeWithDom, oldProps: VnodeProperties | null): void {
+  removeAttributes(newVnode, oldProps);
+  addProperties(newVnode, oldProps);
 }
-
-/* patch ------------------------------------------------------------------- */
-
-const domToVnodeWeakMap = new WeakMap<DomElement, VnodeWithDom>();
 
 function createElement(tag: string, isSVG: boolean): DomElement {
   return isSVG
     ? document.createElementNS("http://www.w3.org/2000/svg", tag)
     : (document.createElement(tag) as DomElement);
-}
-
-function createNewElement(vnode: any, parentVnode: VnodeWithDom) {
-  if (vnode instanceof Vnode === false) {
-    return document.createTextNode(vnode);
-  }
-
-  vnode._parent = parentVnode;
-  const dom = createElement(vnode.tag, vnode.isSVG);
-  vnode.dom = dom;
-  domToVnodeWeakMap.set(dom, vnode);
-  addProperties(vnode, null);
-
-  if ("v-text" in vnode.props) {
-    dom.textContent = vnode.props["v-text"];
-    return dom;
-  }
-
-  flatTree(vnode);
-
-  if (vnode.children.length === 0) {
-    return dom;
-  }
-
-  for (let i = 0, l = vnode.children.length; i < l; i++) {
-    const childVnode = vnode.children[i];
-    const childEl = createNewElement(childVnode, vnode);
-    dom.appendChild(childEl);
-  }
-
-  return dom;
-}
-
-function cleanupVnodeChildren(vnode: VnodeWithDom) {
-  for (let i = 0, l = vnode.dom.childNodes.length; i < l; i++) {
-    const child = vnode.dom.childNodes[i];
-    if (domToVnodeWeakMap.has(child as DomElement)) {
-      const oldVnode = domToVnodeWeakMap.get(child as DomElement) as VnodeWithDom;
-      cleanupVnodeChildren(oldVnode);
-      domToVnodeWeakMap.delete(child as DomElement);
-    }
-  }
-}
-
-function processVnode(newVnode: VnodeWithDom, newChild: VnodeWithDom, oldChild: DomElement): void {
-  newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
-
-  if (!oldChild || newChild.tag !== oldChild.nodeName.toLowerCase()) {
-    newChild.dom = createNewElement(newChild, newVnode) as DomElementWithVnode;
-    if (oldChild) {
-      newVnode.dom.replaceChild(newChild.dom, oldChild);
-    } else {
-      newVnode.dom.appendChild(newChild.dom);
-    }
-    return;
-  }
-
-  newChild._parent = newVnode;
-  const oldVnode = domToVnodeWeakMap.get(oldChild);
-  newChild.dom = oldChild as DomElementWithVnode;
-  domToVnodeWeakMap.set(oldChild, newChild);
-
-  if (oldVnode && "v-keep" in newChild.props && newChild.props["v-keep"] === oldVnode.props["v-keep"]) {
-    newChild.children = oldVnode.children;
-    return;
-  }
-
-  updateAttributes(newChild as VnodeWithDom, oldVnode || null);
-
-  if ("v-text" in newChild.props) {
-    if (newChild.dom.textContent != newChild.props["v-text"]) {
-      newChild.dom.textContent = newChild.props["v-text"];
-    }
-    return;
-  }
-
-  if (newChild.children.length === 0) {
-    if (newChild.dom.childNodes.length > 0) {
-      newChild.dom.textContent = "";
-      cleanupVnodeChildren(newChild);
-    }
-    return;
-  }
-
-  patch(newChild as VnodeWithDom);
 }
 
 function flatTree(newVnode: VnodeWithDom) {
@@ -564,156 +478,197 @@ function flatTree(newVnode: VnodeWithDom) {
       continue;
     }
 
-    if (newChild instanceof Vnode && typeof newChild.tag !== "string") {
-      const component = ("view" in newChild.tag ? newChild.tag.view : newChild.tag).bind(newChild.tag);
-      current.component = component;
-      children[i] = component(newChild.props, newChild.children);
+    if (newChild instanceof Vnode) {
+      if (newChild.props === null) {
+        newChild.props = {};
+      }
+
+      if (typeof newChild.tag !== "string") {
+        const component = ("view" in newChild.tag ? newChild.tag.view : newChild.tag).bind(newChild.tag);
+        current.component = component;
+        children[i] = component(newChild.props, newChild.children);
+        continue;
+      } else {
+        newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
+      }
     }
 
     i++;
   }
 }
 
-export function patch(newVnode: VnodeWithDom): void {
-  flatTree(newVnode);
-  const { dom, children } = newVnode;
-  const newTreeLength = children.length;
-
-  if (newTreeLength === 0) {
-    dom.textContent = "";
-    cleanupVnodeChildren(newVnode);
-    return;
-  }
-
-  const oldTree = dom.childNodes as unknown as DomElementWithVnode[];
-  const oldTreeLength = oldTree.length;
-  const firstOldVnode = oldTree[0] && domToVnodeWeakMap.get(oldTree[0]);
-
-  if (firstOldVnode && children[0] instanceof Vnode && "key" in children[0].props && "key" in firstOldVnode.props) {
-    const oldKeyedList: Record<string, number> = {};
-    const newKeyedList: Record<string, number> = {};
-    const childNodes = newVnode.dom.childNodes;
-
-    // Create key maps while also handling removal of nodes not present in children
-    for (let i = 0; i < oldTreeLength; i++) {
-      const oldVnode = domToVnodeWeakMap.get(oldTree[i]);
-      oldKeyedList[oldVnode?.props.key as any] = i;
-      if (i < newTreeLength) {
-        newKeyedList[children[i].props.key] = i;
-      }
-    }
-
-    for (let i = 0; i < newTreeLength; i++) {
-      const newChild = children[i];
-      newChild._parent = newVnode;
-      newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
-      const oldChildIndex = oldKeyedList[newChild.props.key];
-      const oldChild = oldTree[oldChildIndex];
-      let shouldPatch = true;
-
-      if (oldChild) {
-        newChild.dom = oldChild;
-        const oldVnode = domToVnodeWeakMap.get(oldChild) as VnodeWithDom;
-
-        newChild.dom = oldChild;
-        domToVnodeWeakMap.set(oldChild, newChild);
-
-        if (oldVnode && "v-keep" in newChild.props && newChild.props["v-keep"] === oldVnode.props["v-keep"]) {
-          newChild.children = oldVnode.children;
-          shouldPatch = false;
-        } else {
-          updateAttributes(newChild, oldVnode);
-          if ("v-text" in newChild.props) {
-            if (newChild.dom.textContent != newChild.props["v-text"]) {
-              newChild.dom.textContent = newChild.props["v-text"];
-            }
-            shouldPatch = false;
-          } else if (newChild.children.length === 0) {
-            if (newChild.dom.childNodes.length > 0) {
-              newChild.dom.textContent = "";
-              cleanupVnodeChildren(newChild);
-            }
-            shouldPatch = false;
-          }
-        }
-      } else {
-        newChild.dom = createNewElement(newChild, newVnode) as DomElementWithVnode;
-        shouldPatch = false;
-      }
-
-      const currentNode = childNodes[i];
-      if (!currentNode) {
-        newVnode.dom.appendChild(newChild.dom);
-      } else if (currentNode !== newChild.dom) {
-        newVnode.dom.replaceChild(newChild.dom, currentNode);
-      }
-
-      shouldPatch && patch(newChild);
-    }
-
-    for (let i = newTreeLength; i < oldTreeLength; i++) {
-      const oldVnode = domToVnodeWeakMap.get(oldTree[i]);
-      if (oldVnode && !newKeyedList[oldVnode.props.key as any]) {
-        const domToRemove = oldTree[i];
-        domToRemove.parentNode && domToRemove.remove();
-        cleanupVnodeChildren(oldVnode);
-      }
+function createNewElement(newChild: any, newVnode: VnodeWithDom, oldChild: DomElement | null) {
+  if (newChild instanceof Vnode === false) {
+    const dom = document.createTextNode(newChild);
+    if (oldChild) {
+      newVnode.dom.replaceChild(dom, oldChild);
+    } else {
+      newVnode.dom.appendChild(dom);
     }
     return;
   }
 
-  const maxLen = Math.max(newTreeLength, oldTreeLength);
+  const dom = createElement(newChild.tag, newChild.isSVG);
+  if (oldChild) {
+    newVnode.dom.replaceChild(dom, oldChild);
+  } else {
+    newVnode.dom.appendChild(dom);
+  }
+  newChild.dom = dom;
+  addProperties(newChild, null);
+  newChild.dom.props = newChild.props;
+  flatTree(newChild);
+  const children = newChild.children;
+  if (children.length === 0) {
+    newChild.dom.textContent = "";
+    return;
+  }
 
-  for (let i = 0; i < maxLen; i++) {
+  for (let i = 0, l = children.length; i < l; i++) {
+    createNewElement(children[i], newChild, null);
+  }
+  children.length = 0;
+}
+
+function patchKeyed(newVnode: VnodeWithDom) {
+  const oldTree = newVnode.dom.childNodes as unknown as DomElement[];
+  const oldKeyedList: Record<string, number> = {};
+  const newKeyedList: Record<string, number> = {};
+  const children = newVnode.children;
+
+  for (let i = 0, l = oldTree.length; i < l; i++) {
+    const oldChild = oldTree[i];
+    const oldProps = oldChild.props;
+    if (oldProps) {
+      oldKeyedList[oldProps.key as string] = i;
+    }
+
+    if (i < children.length && children[i] instanceof Vnode) {
+      newKeyedList[children[i].props.key as string] = i;
+    }
+  }
+
+  for (let i = 0, l = children.length; i < l; i++) {
     const newChild = children[i];
-    const oldChild = oldTree[i] as DomElementWithVnode;
-    const oldVnode = domToVnodeWeakMap.get(oldChild);
-
-    if (newChild === oldVnode) {
-      continue;
-    }
+    const oldIndex = oldKeyedList[newChild.props.key];
+    const oldChild = oldTree[oldIndex];
 
     if (!oldChild) {
-      newVnode.dom.appendChild(createNewElement(newChild, newVnode));
+      createNewElement(newChild, newVnode, null);
       continue;
     }
 
-    if (!newChild) {
+    newChild.dom = oldChild;
+    if (newVnode.dom.childNodes[i] !== newChild.dom) {
+      newVnode.dom.insertBefore(newChild.dom, newVnode.dom.childNodes[i]);
+    }
+
+    const oldProps = oldChild.props;
+    newChild.dom = oldChild as DomElement;
+    oldChild.props = newChild.props;
+
+    if (oldProps && "v-keep" in newChild.props && newChild.props["v-keep"] === oldProps["v-keep"]) {
+      continue;
+    }
+
+    updateAttributes(newChild as VnodeWithDom, oldProps || null);
+    patch(newChild);
+  }
+
+  // Remove any old nodes not in the new tree
+  for (let i = 0, l = oldTree.length; i < l; i++) {
+    const oldChild = oldTree[i];
+    const oldProps = oldChild.props;
+    if (oldProps && !newKeyedList[oldProps.key as string]) {
       oldChild.remove();
-      oldVnode && cleanupVnodeChildren(oldVnode);
+    }
+  }
+}
+
+export function patch(newVnode: VnodeWithDom): void {
+  flatTree(newVnode);
+  const children = newVnode.children;
+
+  if (children.length === 0) {
+    newVnode.dom.textContent = "";
+    return;
+  }
+
+  const oldDomChildren = newVnode.dom.childNodes as unknown as DomElement[];
+  const oldChildrenLength = oldDomChildren.length;
+  if (oldChildrenLength > 0) {
+    const firstOldProps = oldDomChildren[0].props;
+    const firstVnode = children[0] as VnodeWithDom;
+    if (firstOldProps && firstVnode instanceof Vnode && "key" in firstVnode.props && "key" in firstOldProps) {
+      patchKeyed(newVnode);
+      children.length = 0;
+      return;
+    }
+  }
+
+  const childrenLength = children.length;
+  if (oldChildrenLength === 0) {
+    for (let i = 0; i < childrenLength; i++) {
+      createNewElement(children[i], newVnode, null);
+    }
+    children.length = 0;
+    return;
+  }
+
+  for (let i = 0; i < childrenLength; i++) {
+    const oldChild = oldDomChildren[i];
+    const newChild = children[i];
+    if (!oldChild) {
+      createNewElement(newChild, newVnode, null);
       continue;
     }
 
     if (newChild instanceof Vnode === false) {
       if (oldChild.nodeType !== 3) {
-        const textDom = document.createTextNode(newChild as string);
-        newVnode.dom.replaceChild(textDom, oldChild);
-        if (domToVnodeWeakMap.has(oldChild)) {
-          oldVnode && cleanupVnodeChildren(oldVnode);
-          domToVnodeWeakMap.delete(oldChild);
-        }
-      } else if (oldChild.nodeValue != newChild) {
-        oldChild.nodeValue = newChild as string;
+        newVnode.dom.replaceChild(document.createTextNode(newChild), oldChild);
+        continue;
+      }
+
+      if (oldChild.nodeValue != newChild) {
+        oldChild.nodeValue = newChild;
       }
       continue;
     }
 
-    processVnode(newVnode, newChild as VnodeWithDom, oldChild);
+    if ("v-keep" in newChild.props) {
+      if (oldChild.props && oldChild.props["v-keep"] === newChild.props["v-keep"]) {
+        continue;
+      }
+
+      const nextOldChild = oldDomChildren[i + 1];
+      if (nextOldChild && nextOldChild.props && nextOldChild.props["v-keep"] === newChild.props["v-keep"]) {
+        oldChild.remove();
+        continue;
+      }
+    }
+
+    if (newChild.tag !== oldChild.nodeName.toLowerCase()) {
+      createNewElement(newChild, newVnode, oldChild);
+      continue;
+    }
+
+    newChild.dom = oldChild;
+    updateAttributes(newChild as VnodeWithDom, oldChild.props || null);
+    oldChild.props = newChild.props;
+    patch(newChild);
   }
+
+  for (let i = childrenLength, l = oldDomChildren.length; i < l; i++) {
+    oldDomChildren[i]?.remove();
+  }
+
+  children.length = 0;
 }
 
 export function update(): void | string {
   if (mainVnode) {
-    callSet(onCleanupSet);
     mainVnode.children = [mainComponent];
-    patch(mainVnode);
-    callSet(isMounted ? onUpdateSet : onMountSet);
-    isMounted = true;
-    current.vnode = null;
-    current.component = null;
-    if (isNodeJs) {
-      return mainVnode.dom.innerHTML;
-    }
+    return updateVnode(mainVnode);
   }
 }
 
@@ -759,13 +714,14 @@ export function mount(dom: string | DomElement, component: any) {
   if (mainComponent && mainComponent.tag !== vnodeComponent.tag) {
     unmount();
   }
+
   mainComponent = vnodeComponent as VnodeComponentInterface;
   mainVnode = domToVnode(container);
   return update();
 }
 
 export function v(tagOrComponent: string | Component, props: VnodeProperties, ...children: Children) {
-  return new Vnode(tagOrComponent, props || {}, children);
+  return new Vnode(tagOrComponent, props, children);
 }
 
 v.fragment = (_: VnodeProperties, ...children: Children) => children;
