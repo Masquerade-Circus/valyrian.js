@@ -2,13 +2,14 @@
 declare global {
   // eslint-disable-next-line vars-on-top, no-var, no-unused-vars
   var document: Document;
+  // eslint-disable-next-line no-unused-vars
+  namespace JSX {
+    // eslint-disable-next-line no-unused-vars, no-use-before-define
+    interface IntrinsicElements extends DefaultRecord {}
+  }
 }
 
 interface DefaultRecord extends Record<string | number | symbol, any> {}
-
-namespace JSX {
-  interface IntrinsicElements extends DefaultRecord {}
-}
 
 export interface VnodeProperties extends DefaultRecord {
   key?: string | number;
@@ -17,6 +18,7 @@ export interface VnodeProperties extends DefaultRecord {
 export interface DomElement extends Element, DefaultRecord {}
 
 export interface Component extends DefaultRecord {
+  // eslint-disable-next-line no-unused-vars, no-use-before-define
   (props: VnodeProperties, children: any[]): Vnode | any;
 }
 
@@ -26,13 +28,16 @@ export interface POJOComponent extends DefaultRecord {
 
 export type ValyrianComponent = Component | POJOComponent;
 
+// eslint-disable-next-line no-use-before-define
 export interface VnodeComponentInterface extends Vnode {
   tag: ValyrianComponent;
 }
 
+// eslint-disable-next-line no-use-before-define
 export interface Children extends Array<Vnode | VnodeComponentInterface | ValyrianComponent | any> {}
 
 export interface Directive {
+  // eslint-disable-next-line no-unused-vars, no-use-before-define
   (value: any, vnode: VnodeWithDom, oldProps: VnodeProperties | null): void | boolean;
 }
 
@@ -40,10 +45,15 @@ export const isNodeJs = Boolean(typeof process !== "undefined" && process.versio
 
 export class Vnode {
   constructor(
+    // eslint-disable-next-line no-unused-vars
     public tag: string | Component | POJOComponent,
+    // eslint-disable-next-line no-unused-vars
     public props: null | VnodeProperties,
+    // eslint-disable-next-line no-unused-vars
     public children: Children,
+    // eslint-disable-next-line no-unused-vars
     public dom?: DomElement,
+    // eslint-disable-next-line no-unused-vars
     public isSVG?: boolean
   ) {}
 }
@@ -94,10 +104,7 @@ export function domToVnode(dom: any): VnodeWithDom | void {
       props[attr.nodeName] = attr.nodeValue;
     }
 
-    const vnode = new Vnode(tag, props, children);
-    vnode.dom = dom;
-    vnode.isSVG = tag === "svg";
-    return vnode as VnodeWithDom;
+    return new Vnode(tag, props, children, dom, tag === "svg") as VnodeWithDom;
   }
 }
 
@@ -657,12 +664,12 @@ export function patch(newVnode: VnodeWithDom): void {
     const oldChild = oldDomChildren[i];
     const newChild = children[i];
 
-    if (newChild instanceof Vnode === false) {
-      if (!oldChild) {
-        newVnode.dom.appendChild(document.createTextNode(newChild));
-        continue;
-      }
+    if (!oldChild) {
+      createNewElement(newChild, newVnode, null);
+      continue;
+    }
 
+    if (newChild instanceof Vnode === false) {
       if (oldChild.nodeType !== 3) {
         newVnode.dom.replaceChild(document.createTextNode(newChild), oldChild);
         continue;
@@ -672,11 +679,6 @@ export function patch(newVnode: VnodeWithDom): void {
       if (oldChild.nodeValue != newChild) {
         oldChild.nodeValue = newChild;
       }
-      continue;
-    }
-
-    if (!oldChild) {
-      createNewElement(newChild, newVnode, null);
       continue;
     }
 

@@ -1,5 +1,9 @@
 declare global {
     var document: Document;
+    namespace JSX {
+        interface IntrinsicElements extends DefaultRecord {
+        }
+    }
 }
 interface DefaultRecord extends Record<string | number | symbol, any> {
 }

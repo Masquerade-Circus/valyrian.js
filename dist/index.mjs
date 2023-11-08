@@ -40,10 +40,7 @@ function domToVnode(dom) {
       const attr = attributes[i];
       props[attr.nodeName] = attr.nodeValue;
     }
-    const vnode = new Vnode(tag, props, children);
-    vnode.dom = dom;
-    vnode.isSVG = tag === "svg";
-    return vnode;
+    return new Vnode(tag, props, children, dom, tag === "svg");
   }
 }
 function trust(htmlString) {
@@ -494,11 +491,11 @@ function patch(newVnode) {
   for (let i = 0; i < childrenLength; i++) {
     const oldChild = oldDomChildren[i];
     const newChild = children[i];
+    if (!oldChild) {
+      createNewElement(newChild, newVnode, null);
+      continue;
+    }
     if (newChild instanceof Vnode === false) {
-      if (!oldChild) {
-        newVnode.dom.appendChild(document.createTextNode(newChild));
-        continue;
-      }
       if (oldChild.nodeType !== 3) {
         newVnode.dom.replaceChild(document.createTextNode(newChild), oldChild);
         continue;
@@ -506,10 +503,6 @@ function patch(newVnode) {
       if (oldChild.nodeValue != newChild) {
         oldChild.nodeValue = newChild;
       }
-      continue;
-    }
-    if (!oldChild) {
-      createNewElement(newChild, newVnode, null);
       continue;
     }
     if ("v-keep" in newChild.props) {
