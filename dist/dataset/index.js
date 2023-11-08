@@ -102,15 +102,15 @@ var DataSet = class {
         const oldChild = vnode.children[i];
         child.isSVG = oldChild.isSVG;
         child.dom = oldChild.dom;
-        (0, import_valyrian.updateAttributes)(child, oldChild);
+        (0, import_valyrian.updateAttributes)(child, null);
         vnode.children[i] = child;
-        (0, import_valyrian.patch)(child, oldChild);
+        (0, import_valyrian.patch)(child);
         continue;
       }
       child.isSVG = vnode.isSVG || child.tag === "svg";
-      child.dom = (0, import_valyrian.createDomElement)(child.tag, child.isSVG);
+      child.dom = (0, import_valyrian.createElement)(child.tag, child.isSVG);
       vnode.dom.appendChild(child.dom);
-      (0, import_valyrian.updateAttributes)(child);
+      (0, import_valyrian.updateAttributes)(child, null);
       vnode.children.push(child);
       (0, import_valyrian.patch)(child);
     }
@@ -135,9 +135,9 @@ var DataSet = class {
       for (let i = 0, ii = oldLength, l = data.length; i < l; i++, ii++) {
         const child = handler(this.#data[i], ii);
         child.isSVG = vnode.isSVG || child.tag === "svg";
-        child.dom = (0, import_valyrian.createDomElement)(child.tag, child.isSVG);
+        child.dom = (0, import_valyrian.createElement)(child.tag, child.isSVG);
         vnode.dom.appendChild(child.dom);
-        (0, import_valyrian.updateAttributes)(child);
+        (0, import_valyrian.updateAttributes)(child, null);
         vnode.children.push(child);
         (0, import_valyrian.patch)(child);
       }
@@ -167,8 +167,8 @@ var DataSet = class {
       newChild.isSVG = this.#vnode.isSVG || newChild.tag === "svg";
       newChild.dom = child.dom;
       this.#vnode.children[index] = newChild;
-      (0, import_valyrian.updateAttributes)(newChild, child);
-      (0, import_valyrian.patch)(newChild, child);
+      (0, import_valyrian.updateAttributes)(newChild, null);
+      (0, import_valyrian.patch)(newChild);
     }
   }
 };

@@ -1,5 +1,6 @@
 // lib/hooks/index.ts
 import { current, directive, onCleanup, onUnmount, update } from "valyrian.js";
+var componentToHooksWeakMap = /* @__PURE__ */ new WeakMap();
 var createHook = function createHook2({
   onCreate,
   onUpdate: onUpdateHook,
@@ -8,42 +9,26 @@ var createHook = function createHook2({
   returnValue
 }) {
   return (...args) => {
-    const { component, vnode } = current;
+    const component = current.component;
     let hook = null;
-    if (vnode) {
-      if (!vnode.components) {
-        vnode.components = [];
-      }
-      if (vnode.components.indexOf(component) === -1) {
-        vnode.hook_calls = -1;
-        vnode.components.push(component);
-        if (!component.hooks) {
-          component.hooks = [];
-          onUnmount(() => Reflect.deleteProperty(component, "hooks"));
-        }
-      }
-      hook = component.hooks[++vnode.hook_calls];
+    if (componentToHooksWeakMap.has(component) === false) {
+      const HookCalls2 = { hooks: [], hook_calls: -1 };
+      componentToHooksWeakMap.set(component, HookCalls2);
+      onUnmount(() => componentToHooksWeakMap.delete(component));
+    }
+    const HookCalls = componentToHooksWeakMap.get(component);
+    onCleanup(() => HookCalls.hook_calls = -1);
+    hook = HookCalls.hooks[++HookCalls.hook_calls];
+    if (hook) {
+      onUpdateHook && onUpdateHook(hook, ...args);
     }
     if (!hook) {
       hook = onCreate(...args);
-      if (vnode) {
-        component.hooks.push(hook);
-      }
-      if (onRemove) {
-        onUnmount(() => onRemove(hook));
-      }
-    } else {
-      if (onUpdateHook) {
-        onUpdateHook(hook, ...args);
-      }
+      HookCalls.hooks.push(hook);
+      onRemove && onUnmount(() => onRemove(hook));
     }
-    if (onCleanupHook) {
-      onCleanup(() => onCleanupHook(hook));
-    }
-    if (returnValue) {
-      return returnValue(hook);
-    }
-    return hook;
+    onCleanupHook && onCleanup(() => onCleanupHook(hook));
+    return returnValue ? returnValue(hook) : hook;
   };
 };
 var updateTimeout;

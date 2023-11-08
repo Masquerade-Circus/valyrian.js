@@ -59,8 +59,8 @@ describe("Signal", () => {
     expect(div.innerHTML).toEqual("<div><button>-</button><span>1</span><button>+</button></div>");
     expect(componentCalls).toEqual(2);
     increment();
-    expect(componentCalls).toEqual(3);
     expect(div.innerHTML).toEqual("<div><button>-</button><span>2</span><button>+</button></div>");
+    expect(componentCalls).toEqual(3);
     res = update();
     expect(res).toEqual("<div><button>-</button><span>2</span><button>+</button></div>");
   });
@@ -283,7 +283,7 @@ describe("Signal", () => {
 
   it("should handle change of components", async () => {
     let change = false;
-    const Counter = () => {
+    function Counter() {
       const [count, setCount] = Signal(0);
       const [name] = Signal("Hello");
       const interval = setInterval(() => setCount(count() + 1), 10);
@@ -293,9 +293,9 @@ describe("Signal", () => {
           {count()} {name()}
         </div>
       );
-    };
+    }
 
-    const OtherCounter = () => {
+    function OtherCounter() {
       const [count, setCount] = Signal(10);
       const [name] = Signal("World");
       const interval = setInterval(() => setCount(count() + 1), 10);
@@ -305,7 +305,7 @@ describe("Signal", () => {
           {count()} {name()}
         </div>
       );
-    };
+    }
 
     function Component() {
       return change ? <OtherCounter /> : <Counter />;
@@ -329,9 +329,38 @@ describe("Signal", () => {
     unmount();
   });
 
-  it("should handle a component with a v-for directive", () => {
+  it("should handle the update from different children", () => {
     const [count, setCount] = Signal(0);
-    const [items, setItems] = Signal([1, 2, 3]);
+    function Child({ id }) {
+      return <div id={id}>{count()}</div>;
+    }
+    function Child2({ id }) {
+      return <div id={id}>{count()}</div>;
+    }
+    function Component() {
+      return (
+        <div>
+          <div>
+            <Child id="1" />
+          </div>
+          <div>
+            <Child2 id="2" />
+          </div>
+        </div>
+      );
+    }
+    const div = document.createElement("div");
+    const result = mount(div, Component);
+    expect(result).toEqual('<div><div><div id="1">0</div></div><div><div id="2">0</div></div></div>');
+    setCount(1);
+    expect(div.innerHTML).toEqual('<div><div><div id="1">1</div></div><div><div id="2">1</div></div></div>');
+    setCount(2);
+    expect(div.innerHTML).toEqual('<div><div><div id="1">2</div></div><div><div id="2">2</div></div></div>');
+  });
+
+  it("should handle a component with a v-for directive", () => {
+    const [count, setCount] = Signal(0, "count");
+    const [items, setItems] = Signal([1, 2, 3], "items");
     let mainComponentCalls = 0;
     let itemComponentCalls = 0;
     function Item({ item }) {
@@ -354,24 +383,31 @@ describe("Signal", () => {
     setCount(1);
     expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 1</div></div>");
     expect(mainComponentCalls).toEqual(1);
-    expect(itemComponentCalls).toEqual(4); // Only the third item component should be called again
+    expect(itemComponentCalls).toEqual(6); // All item components should be called again
     setItems([1, 2, 3, 4]);
     expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 1</div><div>4 </div></div>");
     expect(mainComponentCalls).toEqual(2);
-    expect(itemComponentCalls).toEqual(8); // All item components should be called again plus the new one
+    expect(itemComponentCalls).toEqual(10); // All item components should be called again plus the new one
     setCount(2);
     expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 2</div><div>4 </div></div>");
     expect(mainComponentCalls).toEqual(2);
-    expect(itemComponentCalls).toEqual(9); // Only the third item component should be called again
-    setCount(3);
-    expect(mainComponentCalls).toEqual(2);
-    expect(itemComponentCalls).toEqual(10); // Only the third item component should be called again
-    setItems([1, 2, 3, 4]);
-    expect(mainComponentCalls).toEqual(3);
     expect(itemComponentCalls).toEqual(14); // All item components should be called again
-    setCount(4);
+    setCount(3);
+    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 3</div><div>4 </div></div>");
+    expect(mainComponentCalls).toEqual(2);
+    expect(itemComponentCalls).toEqual(18); // All item components should be called again
+    setItems([1, 2, 3, 4]);
+    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 3</div><div>4 </div></div>");
     expect(mainComponentCalls).toEqual(3);
-    expect(itemComponentCalls).toEqual(15); //Only the third item component should be called again
+    expect(itemComponentCalls).toEqual(22); // All item components should be called again
+    setCount(4);
+    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 4</div><div>4 </div></div>");
+    expect(mainComponentCalls).toEqual(3);
+    expect(itemComponentCalls).toEqual(26); // All item components should be called again
+    setItems([1, 2, 3]);
+    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 4</div></div>");
+    expect(mainComponentCalls).toEqual(4);
+    expect(itemComponentCalls).toEqual(29); // All item components should be called again
   });
 
   it("should handle a component with a v-for directive and child components", () => {
@@ -413,42 +449,20 @@ describe("Signal", () => {
     expect(mainComponentCalls).toEqual(2);
     expect(itemComponentCalls).toEqual(9); // Only the third item component should be called again
     setCount(3);
+    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 3</div><div>4 </div></div>");
     expect(mainComponentCalls).toEqual(2);
     expect(itemComponentCalls).toEqual(10); // Only the third item component should be called again
     setItems([1, 2, 3, 4]);
+    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 3</div><div>4 </div></div>");
     expect(mainComponentCalls).toEqual(3);
     expect(itemComponentCalls).toEqual(14); // All item components should be called again
     setCount(4);
+    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 4</div><div>4 </div></div>");
     expect(mainComponentCalls).toEqual(3);
     expect(itemComponentCalls).toEqual(15); //Only the third item component should be called again
-  });
-
-  it("should handle the update from different children", () => {
-    const [count, setCount] = Signal(0);
-    function Child({ id }) {
-      return <div id={id}>{count()}</div>;
-    }
-    function Child2({ id }) {
-      return <div id={id}>{count()}</div>;
-    }
-    function Component() {
-      return (
-        <div>
-          <div>
-            <Child id="1" />
-          </div>
-          <div>
-            <Child2 id="2" />
-          </div>
-        </div>
-      );
-    }
-    const div = document.createElement("div");
-    const result = mount(div, Component);
-    expect(result).toEqual('<div><div><div id="1">0</div></div><div><div id="2">0</div></div></div>');
-    setCount(1);
-    expect(div.innerHTML).toEqual('<div><div><div id="1">1</div></div><div><div id="2">1</div></div></div>');
-    setCount(2);
-    expect(div.innerHTML).toEqual('<div><div><div id="1">2</div></div><div><div id="2">2</div></div></div>');
+    setItems([1, 2, 3]);
+    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 4</div></div>");
+    expect(mainComponentCalls).toEqual(4);
+    expect(itemComponentCalls).toEqual(18); // All item components should be called again
   });
 });

@@ -218,8 +218,9 @@ function mountRouter(elementContainer, router) {
     window.addEventListener("popstate", onPopStateGoToRoute2, false);
     onPopStateGoToRoute2();
   }
-  (0, import_valyrian.directive)("route", (url, vnode, oldnode) => {
-    (0, import_valyrian.setAttribute)("href", url, vnode, oldnode);
-    (0, import_valyrian.setAttribute)("onclick", router.getOnClickHandler(url), vnode, oldnode);
+  (0, import_valyrian.directive)("route", (vnode) => {
+    const url = vnode.props["v-route"];
+    (0, import_valyrian.setAttribute)("href", url, vnode);
+    (0, import_valyrian.setAttribute)("onclick", router.getOnClickHandler(url), vnode);
   });
 }

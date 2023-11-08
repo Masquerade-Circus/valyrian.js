@@ -1,11 +1,8 @@
-
-
 ## [7.2.11](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.10...7.2.11) (2023-09-27)
-
 
 ### Bug Fixes
 
-* fix tree-adapter append replace and remove unexistent child ([992fbd6](https://github.com/Masquerade-Circus/valyrian.js/commit/992fbd6e9cffa5fd94f9eca74562baede4a053cf))
+*   fix tree-adapter append replace and remove unexistent child ([992fbd6](https://github.com/Masquerade-Circus/valyrian.js/commit/992fbd6e9cffa5fd94f9eca74562baede4a053cf))
 
 ## [7.2.10](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.8...7.2.10) (2023-09-27)
 

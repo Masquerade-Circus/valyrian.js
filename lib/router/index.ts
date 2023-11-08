@@ -344,8 +344,9 @@ export function mountRouter(elementContainer: string | any, router: Router): voi
     onPopStateGoToRoute();
   }
 
-  directive("route", (url: string, vnode: VnodeWithDom, oldnode?: VnodeWithDom): void => {
-    setAttribute("href", url, vnode, oldnode);
-    setAttribute("onclick", router.getOnClickHandler(url), vnode, oldnode);
+  directive("route", (vnode: VnodeWithDom): void => {
+    const url = vnode.props["v-route"];
+    setAttribute("href", url, vnode);
+    setAttribute("onclick", router.getOnClickHandler(url), vnode);
   });
 }

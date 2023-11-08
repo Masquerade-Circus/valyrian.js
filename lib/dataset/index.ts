@@ -1,4 +1,4 @@
-import { VnodeInterface, VnodeWithDom, createDomElement, directive, patch, updateAttributes } from "valyrian.js";
+import { VnodeWithDom, createElement, directive, patch, updateAttributes } from "valyrian.js";
 
 interface DataSetInterface<T> {
   data: T[];
@@ -13,7 +13,7 @@ interface DataSetInterface<T> {
 }
 interface DataSetHandler<T> {
   // eslint-disable-next-line no-unused-vars
-  (data: T, index: number): VnodeInterface;
+  (data: T, index: number): VnodeWithDom;
 }
 
 function deepFreeze(obj: any) {
@@ -107,16 +107,16 @@ export class DataSet<T> implements DataSetInterface<T> {
         const oldChild = vnode.children[i];
         child.isSVG = oldChild.isSVG;
         child.dom = oldChild.dom;
-        updateAttributes(child as VnodeWithDom, oldChild);
+        updateAttributes(child as VnodeWithDom, null);
         vnode.children[i] = child;
-        patch(child as VnodeWithDom, oldChild);
+        patch(child as VnodeWithDom);
         continue;
       }
 
       child.isSVG = vnode.isSVG || child.tag === "svg";
-      child.dom = createDomElement(child.tag as string, child.isSVG);
+      child.dom = createElement(child.tag as string, child.isSVG);
       vnode.dom.appendChild(child.dom);
-      updateAttributes(child as VnodeWithDom);
+      updateAttributes(child as VnodeWithDom, null);
       vnode.children.push(child);
       patch(child as VnodeWithDom);
     }
@@ -146,9 +146,9 @@ export class DataSet<T> implements DataSetInterface<T> {
       for (let i = 0, ii = oldLength, l = data.length; i < l; i++, ii++) {
         const child = handler(this.#data[i], ii);
         child.isSVG = vnode.isSVG || child.tag === "svg";
-        child.dom = createDomElement(child.tag as string, child.isSVG);
+        child.dom = createElement(child.tag as string, child.isSVG);
         vnode.dom.appendChild(child.dom);
-        updateAttributes(child as VnodeWithDom);
+        updateAttributes(child as VnodeWithDom, null);
         vnode.children.push(child);
         patch(child as VnodeWithDom);
       }
@@ -181,13 +181,13 @@ export class DataSet<T> implements DataSetInterface<T> {
       newChild.isSVG = this.#vnode.isSVG || newChild.tag === "svg";
       newChild.dom = child.dom;
       this.#vnode.children[index] = newChild;
-      updateAttributes(newChild as VnodeWithDom, child);
-      patch(newChild as VnodeWithDom, child);
+      updateAttributes(newChild as VnodeWithDom, null);
+      patch(newChild as VnodeWithDom);
     }
   }
 }
 
-directive("with-dataset", (dataSet, vnode) => {
-  dataSet.setVnodeAndHandler(vnode as VnodeWithDom, vnode.children[0]);
+directive("with-dataset", (dataSet: DataSet<any>, vnode: VnodeWithDom) => {
+  dataSet.setVnodeAndHandler(vnode, vnode.children[0]);
   return false;
 });

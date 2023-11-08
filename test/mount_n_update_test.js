@@ -90,7 +90,7 @@ describe("Mount and update", () => {
     );
   });
 
-  it.skip("Mount with class component", () => {
+  it("Mount with class component", () => {
     class Component {
       constructor() {
         this.id = "example";
@@ -105,7 +105,7 @@ describe("Mount and update", () => {
 
     const result = {};
 
-    result.before = mount("body", ComponentInstance.view);
+    result.before = mount("body", ComponentInstance);
     ComponentInstance.world = "John Doe";
     result.after = update();
 
@@ -125,7 +125,7 @@ describe("Mount and update", () => {
     };
     const result = {};
 
-    result.before = mount("body", Component.view);
+    result.before = mount("body", Component);
     Component.world = "John Doe";
     result.after = update();
     result.afteragain = update();
@@ -240,7 +240,7 @@ describe("Mount and update", () => {
   });
 
   it("should fail silently if try to update before mount", () => {
-    const Component = () => <div>Hello world</div>;
+    unmount();
     update();
   });
 

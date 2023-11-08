@@ -200,9 +200,10 @@ function mountRouter(elementContainer, router) {
     window.addEventListener("popstate", onPopStateGoToRoute2, false);
     onPopStateGoToRoute2();
   }
-  directive("route", (url, vnode, oldnode) => {
-    setAttribute("href", url, vnode, oldnode);
-    setAttribute("onclick", router.getOnClickHandler(url), vnode, oldnode);
+  directive("route", (vnode) => {
+    const url = vnode.props["v-route"];
+    setAttribute("href", url, vnode);
+    setAttribute("onclick", router.getOnClickHandler(url), vnode);
   });
 }
 export {

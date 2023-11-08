@@ -22,13 +22,13 @@ describe("Directives", () => {
 
     it("should be able to get the vnode", () => {
       let newVnode;
-      let oldVnode;
+      let oldProps;
 
       const app = () => <div v-test2 />;
 
-      directive("test2", (v, vnode) => {
+      directive("test2", (v, vnode, old) => {
         newVnode = vnode;
-        oldVnode = vnode.dom.oldProps;
+        oldProps = old;
       });
 
       mount("div", app);
@@ -46,7 +46,7 @@ describe("Directives", () => {
         isSVG: false
       });
 
-      expect(oldVnode).toEqual({
+      expect(oldProps).toEqual({
         "v-test2": true
       });
     });
@@ -54,8 +54,8 @@ describe("Directives", () => {
     it("should be able to identify if this is first render or update", () => {
       const app = () => <div v-render />;
 
-      directive("render", (v, vnode) => {
-        if (!vnode.dom.oldProps) {
+      directive("render", (v, vnode, oldProps) => {
+        if (!oldProps) {
           vnode.children = ["First render, vnode created"];
         } else {
           vnode.children = ["Second render, vnode updated"];

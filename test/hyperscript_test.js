@@ -8,17 +8,14 @@ describe("Hyperscript", () => {
   it("should create a div element", () => {
     expect(v("div")).toEqual({
       tag: "div",
-      props: {},
-      children: [],
-      isSVG: false
+      children: []
     });
   });
 
   it("should create a div element with a text child", () => {
     expect(v("div", null, "Hello")).toEqual({
       tag: "div",
-      props: {},
-      isSVG: false,
+      props: null,
       children: ["Hello"]
     });
   });
@@ -26,13 +23,10 @@ describe("Hyperscript", () => {
   it("should create a div element with an element child", () => {
     expect(v("div", null, v("span"))).toEqual({
       tag: "div",
-      props: {},
-      isSVG: false,
+      props: null,
       children: [
         {
           tag: "span",
-          props: {},
-          isSVG: false,
           children: []
         }
       ]
@@ -42,8 +36,7 @@ describe("Hyperscript", () => {
   it("should create a div element with comma separated children", () => {
     expect(v("div", null, "Hello ", "world")).toEqual({
       tag: "div",
-      props: {},
-      isSVG: false,
+      props: null,
       children: ["Hello ", "world"]
     });
   });
@@ -51,8 +44,7 @@ describe("Hyperscript", () => {
   it("should create a div element with array of children", () => {
     expect(v("div", null, ["Hello ", "world"])).toEqual({
       tag: "div",
-      props: {},
-      isSVG: false,
+      props: null,
       children: [["Hello ", "world"]]
     });
   });
@@ -60,14 +52,12 @@ describe("Hyperscript", () => {
   it("should create a div element with mixed array of children and comma separated children", () => {
     expect(v("div", null, ["Hello ", "world"], v("span", null, "Whats up"))).toEqual({
       tag: "div",
-      props: {},
-      isSVG: false,
+      props: null,
       children: [
         ["Hello ", "world"],
         {
           tag: "span",
-          props: {},
-          isSVG: false,
+          props: null,
           children: ["Whats up"]
         }
       ]
@@ -77,8 +67,7 @@ describe("Hyperscript", () => {
   it("should create a div element with mixed nested arrays of children ", () => {
     expect(v("div", null, ["Hello ", "world", ["Only", ["for", "this", ["time"]]]])).toEqual({
       tag: "div",
-      props: {},
-      isSVG: false,
+      props: null,
       children: [["Hello ", "world", ["Only", ["for", "this", ["time"]]]]]
     });
   });
@@ -90,7 +79,6 @@ describe("Hyperscript", () => {
         id: "unique",
         class: "unique"
       },
-      isSVG: false,
       children: []
     });
   });
@@ -115,8 +103,7 @@ describe("Hyperscript", () => {
 
     expect(v("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]])).toEqual({
       tag: "div",
-      props: {},
-      isSVG: false,
+      props: null,
       children: [[null, "Hello", undefined, 1, date, { hello: "world" }, ["Hello"]]]
     });
   });

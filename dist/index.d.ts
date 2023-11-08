@@ -1,10 +1,5 @@
 declare global {
     var document: Document;
-    namespace JSX {
-        interface IntrinsicElements {
-            [elemName: string]: any;
-        }
-    }
 }
 interface DefaultRecord extends Record<string | number | symbol, any> {
 }
@@ -26,7 +21,7 @@ export interface VnodeComponentInterface extends Vnode {
 export interface Children extends Array<Vnode | VnodeComponentInterface | ValyrianComponent | any> {
 }
 export interface Directive {
-    (vnode: VnodeWithDom, oldProps: VnodeProperties | null): void | boolean;
+    (value: any, vnode: VnodeWithDom, oldProps: VnodeProperties | null): void | boolean;
 }
 export declare const isNodeJs: boolean;
 export declare class Vnode {
@@ -45,8 +40,12 @@ export interface VnodeWithDom extends Vnode {
 export declare const isComponent: (component: unknown) => component is Component;
 export declare const isVnode: (object?: unknown) => object is Vnode;
 export declare const isVnodeComponent: (object?: unknown) => object is VnodeComponentInterface;
-export declare function domToVnode(dom: any): VnodeWithDom;
-export declare function trust(htmlString: string): VnodeWithDom[];
+export declare function v(tagOrComponent: string | Component, props: VnodeProperties, ...children: Children): Vnode;
+export declare namespace v {
+    var fragment: (_: VnodeProperties, ...children: Children) => Children;
+}
+export declare function domToVnode(dom: any): VnodeWithDom | void;
+export declare function trust(htmlString: string): (void | VnodeWithDom)[];
 export declare const current: {
     vnode: Vnode | null;
     component: ValyrianComponent | null;
@@ -60,14 +59,12 @@ export declare const onUnmount: (callback: Function) => false | Set<Function>;
 export declare const directives: Record<string, Directive>;
 export declare function directive(name: string, directive: Directive): void;
 export declare function setAttribute(name: string, value: any, newVnode: VnodeWithDom): void;
+export declare function updateAttributes(newVnode: VnodeWithDom, oldProps: VnodeProperties | null): void;
+export declare function createElement(tag: string, isSVG: boolean): DomElement;
 export declare function patch(newVnode: VnodeWithDom): void;
-export declare function update(): void | string;
 export declare function updateVnode(vnode: VnodeWithDom): string | void;
+export declare function update(): void | string;
 export declare function unmount(): string | void;
 export declare function mount(dom: string | DomElement, component: any): string | void;
-export declare function v(tagOrComponent: string | Component, props: VnodeProperties, ...children: Children): Vnode;
-export declare namespace v {
-    var fragment: (_: VnodeProperties, ...children: Children) => Children;
-}
 export {};
 //# sourceMappingURL=index.d.ts.map

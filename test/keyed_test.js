@@ -4,7 +4,7 @@ import { mount, update, v } from "valyrian.js";
 
 import expect from "expect";
 
-describe.skip("Keyed lists", () => {
+describe("Keyed lists", () => {
   const set = [1, 2, 3, 4, 5];
   const tests = [
     { name: "Removed at the end", set: [1, 2, 3, 4] }, // Removed at the end

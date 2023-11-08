@@ -1,5 +1,5 @@
 // lib/dataset/index.ts
-import { createDomElement, directive, patch, updateAttributes } from "valyrian.js";
+import { createElement, directive, patch, updateAttributes } from "valyrian.js";
 function deepFreeze(obj) {
   if (typeof obj === "object" && obj !== null && !Object.isFrozen(obj)) {
     if (Array.isArray(obj)) {
@@ -78,15 +78,15 @@ var DataSet = class {
         const oldChild = vnode.children[i];
         child.isSVG = oldChild.isSVG;
         child.dom = oldChild.dom;
-        updateAttributes(child, oldChild);
+        updateAttributes(child, null);
         vnode.children[i] = child;
-        patch(child, oldChild);
+        patch(child);
         continue;
       }
       child.isSVG = vnode.isSVG || child.tag === "svg";
-      child.dom = createDomElement(child.tag, child.isSVG);
+      child.dom = createElement(child.tag, child.isSVG);
       vnode.dom.appendChild(child.dom);
-      updateAttributes(child);
+      updateAttributes(child, null);
       vnode.children.push(child);
       patch(child);
     }
@@ -111,9 +111,9 @@ var DataSet = class {
       for (let i = 0, ii = oldLength, l = data.length; i < l; i++, ii++) {
         const child = handler(this.#data[i], ii);
         child.isSVG = vnode.isSVG || child.tag === "svg";
-        child.dom = createDomElement(child.tag, child.isSVG);
+        child.dom = createElement(child.tag, child.isSVG);
         vnode.dom.appendChild(child.dom);
-        updateAttributes(child);
+        updateAttributes(child, null);
         vnode.children.push(child);
         patch(child);
       }
@@ -143,8 +143,8 @@ var DataSet = class {
       newChild.isSVG = this.#vnode.isSVG || newChild.tag === "svg";
       newChild.dom = child.dom;
       this.#vnode.children[index] = newChild;
-      updateAttributes(newChild, child);
-      patch(newChild, child);
+      updateAttributes(newChild, null);
+      patch(newChild);
     }
   }
 };

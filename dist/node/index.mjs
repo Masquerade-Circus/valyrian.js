@@ -83,6 +83,9 @@ var Node = class _Node {
     }
     return child;
   }
+  remove() {
+    return this.parentNode ? this.parentNode.removeChild(this) : this;
+  }
   cloneNode(deep) {
     if (this.nodeType === 3) {
       return new Text(this.nodeValue);
@@ -280,10 +283,20 @@ var Element = class extends Node {
     }
     throw new Error("Cannot set style");
   }
+  get className() {
+    return this.getAttribute("class") || "";
+  }
+  set className(value) {
+    if (value == null || value === false) {
+      this.removeAttribute("class");
+    } else {
+      this.setAttribute("class", String(value));
+    }
+  }
   classList = {
     toggle: (item, force) => {
       if (item) {
-        const classes = (this.getAttribute("class") || "").split(" ");
+        const classes = (this.className || "").split(" ");
         const itemIndex = classes.indexOf(item);
         if (force && itemIndex === -1) {
           classes.push(item);
@@ -293,13 +306,23 @@ var Element = class extends Node {
         }
         const final = classes.join(" ").trim();
         if (final.length) {
-          this.setAttribute("class", classes.join(" ").trim());
+          this.className = classes.join(" ").trim();
         } else {
-          this.removeAttribute("class");
+          this.className = false;
         }
       }
     }
   };
+  get id() {
+    return this.getAttribute("id") || "";
+  }
+  set id(value) {
+    if (value == null || value === false) {
+      this.removeAttribute("id");
+    } else {
+      this.setAttribute("id", String(value));
+    }
+  }
   set textContent(text) {
     this.nodeValue = String(text);
     this.childNodes = this.nodeValue ? [new Text(this.nodeValue)] : [];

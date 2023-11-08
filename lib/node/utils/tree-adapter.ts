@@ -93,6 +93,11 @@ export class Node implements Node {
     }
     return child;
   }
+
+  remove(): Node {
+    return this.parentNode ? this.parentNode.removeChild(this) : this;
+  }
+
   cloneNode(deep?: boolean | undefined): Node {
     if (this.nodeType === 3) {
       return new Text(this.nodeValue);
@@ -324,10 +329,22 @@ export class Element extends Node {
     throw new Error("Cannot set style");
   }
 
+  get className(): string {
+    return this.getAttribute("class") || "";
+  }
+
+  set className(value: string | boolean) {
+    if (value == null || value === false) {
+      this.removeAttribute("class");
+    } else {
+      this.setAttribute("class", String(value));
+    }
+  }
+
   classList = {
     toggle: (item: any, force: any) => {
       if (item) {
-        const classes = (this.getAttribute("class") || "").split(" ");
+        const classes = (this.className || "").split(" ");
         const itemIndex = classes.indexOf(item);
         if (force && itemIndex === -1) {
           classes.push(item);
@@ -339,13 +356,25 @@ export class Element extends Node {
 
         const final = classes.join(" ").trim();
         if (final.length) {
-          this.setAttribute("class", classes.join(" ").trim());
+          this.className = classes.join(" ").trim();
         } else {
-          this.removeAttribute("class");
+          this.className = false;
         }
       }
     }
   };
+
+  get id(): string {
+    return this.getAttribute("id") || "";
+  }
+
+  set id(value: string | boolean) {
+    if (value == null || value === false) {
+      this.removeAttribute("id");
+    } else {
+      this.setAttribute("id", String(value));
+    }
+  }
 
   set textContent(text) {
     this.nodeValue = String(text);

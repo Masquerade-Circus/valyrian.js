@@ -1,161 +1,86 @@
-import { VnodeWithDom, current, onUnmount, updateVnode, v } from "valyrian.js";
+import { updateVnode, current, VnodeWithDom, onCleanup, POJOComponent, Component, onUnmount } from "valyrian.js";
 
-interface GetterInterface {
-  (): any;
-}
+type getter = () => any;
+type setter = (newValue: any) => void;
+type unsubscribe = () => void;
+type subscribe = (callback: () => void) => unsubscribe;
+type subscriptions = Set<() => void>;
+type signal = [getter, setter, subscribe, subscriptions];
 
-interface SetterInterface {
-  (value: any): void;
-}
+type SignalCalls = {
+  signals: signal[];
+  signal_calls: number;
+};
 
-interface SubscribeInterface {
-  (callback: Function): void;
-}
+const componentToSignalsWeakMap = new WeakMap<Component | POJOComponent, SignalCalls>();
 
-interface SubscriptionsInterface extends Array<Function> {}
-
-export interface SignalInterface extends Array<any> {
-  0: GetterInterface;
-  1: SetterInterface;
-  2: SubscribeInterface;
-  3: SubscriptionsInterface;
-}
-
-// eslint-disable-next-line sonarjs/cognitive-complexity
-export function Signal(initialValue: any): SignalInterface {
-  // Create a copy of the current context object
-  const { vnode, component } = { ...current };
-
-  // Check if the context object has a vnode property
-  if (vnode && component) {
-    // Is first call
-    if (!vnode.components) {
-      // Set the components property to an empty array
-      vnode.components = [];
+// Signal is a generic function that creates a reactive state with a getter, setter, and subscribe mechanism.
+export function Signal<T>(initialValue: T): signal {
+  if (current.component) {
+    if (componentToSignalsWeakMap.has(current.component) === false) {
+      const SignalCalls = { signals: [], signal_calls: -1 };
+      componentToSignalsWeakMap.set(current.component, SignalCalls);
+      onUnmount(() => componentToSignalsWeakMap.delete(current.component as Component | POJOComponent));
     }
 
-    // Check if the components array of the vnode object does not contain the component object
-    if (vnode.components.indexOf(component) === -1) {
-      // Set the calls property to -1
-      vnode.signal_calls = -1;
-      // Add the component to the components array
-      vnode.components.push(component);
+    const SignalCalls = componentToSignalsWeakMap.get(current.component) as SignalCalls;
+    onCleanup(() => (SignalCalls.signal_calls = -1));
 
-      // Check if the component object has a signals property
-      if (!component.signals) {
-        // Set the signals property of the component object to an empty array
-        component.signals = [];
-        // Add a function to the cleanup stack that removes the signals property from the component object
-        onUnmount(() => Reflect.deleteProperty(component, "signals"));
-      }
-    }
+    const signal = SignalCalls.signals[++SignalCalls.signal_calls];
 
-    // Assign the signal variable to the signal stored at the index of the vnode object's calls property in the vnode's signals array
-    const signal: SignalInterface = component.signals[++vnode.signal_calls];
-
-    // If a signal has already been assigned to the signal variable, return it
     if (signal) {
-      // Remove all subscriptions because we come from a new render
-      signal[3].length = 0;
-
-      // Return the signal
-      return signal;
+      // Return the signal if it already exists.
+      // But without the subscribe function. This is to prevent the subscribe function from being called multiple times.
+      const fakeSubscribe = (() => {}) as unknown as subscribe;
+      return [signal[0], signal[1], fakeSubscribe, signal[3]];
     }
   }
 
-  // Declare a variable to store the current value of the Signal
-  let value = initialValue;
+  // The current value of the signal is stored in a closure to maintain state.
+  let value: T = initialValue;
+  // Subscribers is a Set of functions to be called whenever the value changes.
+  const subscribers: subscriptions = new Set();
 
-  // Create an array to store functions that have subscribed to changes to the Signal's value
-  const subscriptions: SubscriptionsInterface = [];
-
-  // Define a function that allows other parts of the code to subscribe to changes to the Signal's value
-  const subscribe = (callback: Function) => {
-    // Add the callback function to the subscriptions array if it is not already in the array
-    if (subscriptions.indexOf(callback) === -1) {
-      subscriptions.push(callback);
-    }
+  // subscribe is a function that allows a subscriber to listen to changes in the signal's value.
+  // It returns an unsubscribe function to stop listening to changes.
+  const subscribe = (callback: () => void) => {
+    subscribers.add(callback);
+    return () => subscribers.delete(callback);
   };
 
-  // Set the vnodes to update when the Signal's value changes
-  const vnodesToUpdate: Array<VnodeWithDom> = [];
+  const domToVnodesToUpdate: Map<Node, VnodeWithDom> = new Map();
+  const updateVnodes = () => domToVnodesToUpdate.forEach((vnode) => updateVnode(vnode));
 
-  // This is the function that will be called when the Signal's value changes
-  const updateVnodes = () => {
-    // Create a copy of the vnodesToUpdate array and filter out any duplicate vnodes
-    const vnodesToUpdateCopy = vnodesToUpdate.filter((vnode, index, self) => {
-      return self.findIndex((v) => v.dom === vnode.dom) === index;
-    });
-
-    // Loop through the vnodesToUpdate array
-    for (let i = 0, l = vnodesToUpdateCopy.length; i < l; i++) {
-      const vnode2 = vnodesToUpdateCopy[i];
-      // If it does, create a new vnode object based on the original vnode, its children, and its DOM and SVG properties
-      const newVnode = v(vnode2.tag, vnode2.props, ...vnode2.initialChildren) as VnodeWithDom;
-      newVnode.dom = vnode2.dom; // Set the new vnode object's DOM property to the old vnode object's DOM property
-      newVnode.isSVG = vnode2.isSVG; // Set the new vnode object's isSVG property to the old vnode object's isSVG property
-
-      // Update the vnode object
-      updateVnode(newVnode, vnode2);
-    }
-  };
-
-  // Define a function that returns the current value of the Signal
-  function get() {
-    // Get the current vnode from the context object
-    const { vnode: vnode2 } = current;
-
-    // If we have a current vnode, it means that a get function is being called from within a component
-    // so we subscribe the vnode to be updated when the Signal's value changes
-    if (vnode2 && vnodesToUpdate.indexOf(vnode2) === -1) {
-      // We set the initialChildren to a copy of the vnode's children array
-      // This is the case when the vnode is a component that has not been rendered yet and we need the initial children
-      // because they could have the components that are using the Signal
-      if (!vnode2.initialChildren) {
-        vnode2.initialChildren = [...vnode2.children];
-      }
-
-      // Add the vnode to the vnodesToUpdate array
-      vnodesToUpdate.push(vnode2);
-
-      // Subscribe the updateVnodes function to the Signal
+  // getValue is a function that returns the current value of the signal.
+  const getValue = () => {
+    if (current.vnode) {
+      const vnode = current.vnode as VnodeWithDom;
+      domToVnodesToUpdate.set(vnode.dom, vnode);
       subscribe(updateVnodes);
     }
-
-    // Return the current value of the Signal
     return value;
-  }
+  };
 
-  // Define a function that allows the value of the Signal to be updated and notifies any subscribed functions of the change
-  const set = (newValue: any) => {
-    // If we have a current event on going, prevent the default action
+  // setValue is a function that updates the value of the signal and notifies subscribers.
+  const setValue = (newValue: any) => {
     if (current.event) {
       current.event.preventDefault();
     }
 
-    // Just return if the new value is the same as the current value
-    if (newValue === value) {
+    if (value === newValue) {
       return;
     }
-
-    // Update the value of the Signal
     value = newValue;
-
-    // Call each subscribed function with the new value of the Signal as an argument
-    for (let i = 0, l = subscriptions.length; i < l; i++) {
-      subscriptions[i](value);
-    }
+    // Notify all subscribers by invoking their callback functions.
+    subscribers.forEach((subscriber) => subscriber());
   };
 
-  // Assign the signal variable an array containing the get, set, and subscribe functions
-  const signal: SignalInterface = [get, set, subscribe, subscriptions];
+  const signal: signal = [getValue, setValue, subscribe, subscribers];
 
-  // If the context object has a vnode property, add the signal to the vnode's signals array
-  // and add the subscriptions array to the vnode's subscriptions array
-  if (vnode && component) {
-    component.signals.push(signal);
+  if (current.component) {
+    const SignalCalls = componentToSignalsWeakMap.get(current.component) as SignalCalls;
+    SignalCalls.signals.push(signal);
   }
 
-  // Return the signal
   return signal;
 }
