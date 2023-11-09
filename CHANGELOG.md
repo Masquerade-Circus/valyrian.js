@@ -1,3 +1,15 @@
+
+
+## [7.2.12](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.11...7.2.12) (2023-11-09)
+
+
+### Code Refactoring
+
+* Update [WIP] ([2224a99](https://github.com/Masquerade-Circus/valyrian.js/commit/2224a993338a1aaf7f589f938e5eeb842b853711))
+* Updated ([070ddc7](https://github.com/Masquerade-Circus/valyrian.js/commit/070ddc789ee09fa26fbcb21e1d88b70bccd9075a))
+* Updated ([8113665](https://github.com/Masquerade-Circus/valyrian.js/commit/81136656a6dbf41116e483b88873742e4fcd895b))
+* Updated ([ed33c0d](https://github.com/Masquerade-Circus/valyrian.js/commit/ed33c0d803ec155e3b6b46175f98ede62f609cff))
+
 ## [7.2.11](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.10...7.2.11) (2023-09-27)
 
 ### Bug Fixes
