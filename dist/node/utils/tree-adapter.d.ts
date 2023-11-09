@@ -25,6 +25,7 @@ export declare class Node implements Node {
     insertBefore<T extends Node>(node: T, child: Node | null): T;
     replaceChild<T extends Node>(node: Node, child: T): T;
     removeChild<T extends Node>(child: T): T;
+    remove(): Node;
     cloneNode(deep?: boolean | undefined): Node;
     setAttribute(name: string, value: any): void;
     getAttribute(name: string): string | null | undefined;
@@ -41,9 +42,13 @@ export declare class Element extends Node {
     _style: Record<string, any>;
     get style(): string;
     set style(value: string);
+    get className(): string;
+    set className(value: string | boolean);
     classList: {
         toggle: (item: any, force: any) => void;
     };
+    get id(): string;
+    set id(value: string | boolean);
     set textContent(text: string);
     get textContent(): string;
     set innerText(text: string);

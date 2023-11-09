@@ -2,9 +2,9 @@ import fs from "fs";
 import path from "path";
 
 export function sw(file: string, options = {}) {
-  let swfiletemplate = path.resolve(__dirname, "./node.sw.tpl");
-  let swTpl = fs.readFileSync(swfiletemplate, "utf8");
-  let opt = Object.assign(
+  const swfiletemplate = path.resolve(__dirname, "./node.sw.tpl");
+  const swTpl = fs.readFileSync(swfiletemplate, "utf8");
+  const opt = Object.assign(
     {
       version: "v1::",
       name: "Valyrian.js",

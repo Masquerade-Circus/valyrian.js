@@ -65,8 +65,8 @@ function makeUnsubscribe(
 function createSubscription(signal: ProxySignal, subscriptions: Subscriptions, handler: Subscription) {
   if (subscriptions.has(handler) === false) {
     // eslint-disable-next-line no-use-before-define
-    let computed = ProxySignal(() => handler(signal.value));
-    let cleanup = computed(); // Execute to register itself
+    const computed = ProxySignal(() => handler(signal.value));
+    const cleanup = computed(); // Execute to register itself
     makeUnsubscribe(subscriptions, computed, handler, cleanup);
     subscriptions.set(handler, computed);
   }
@@ -82,12 +82,12 @@ function delayedUpdate() {
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function ProxySignal(value: any): ProxySignal {
-  let subscriptions = new Map();
-  let getters: Getters = {};
+  const subscriptions = new Map();
+  const getters: Getters = {};
 
   let forceUpdate = false;
 
-  let signal: ProxySignal = new Proxy(
+  const signal: ProxySignal = new Proxy(
     // eslint-disable-next-line no-unused-vars
     function (valOrPath?: any | Subscription, handler?: (valueAtPathPosition: any) => any) {
       // Works as a getter
@@ -102,7 +102,7 @@ export function ProxySignal(value: any): ProxySignal {
 
       // Works as a setter with a path
       if (typeof valOrPath === "string" && typeof handler !== "undefined") {
-        let parsed = valOrPath.split(".");
+        const parsed = valOrPath.split(".");
         let result = signal.value;
         let next;
         while (parsed.length) {
@@ -128,13 +128,13 @@ export function ProxySignal(value: any): ProxySignal {
     {
       set(state, prop, val) {
         if (prop === "value" || prop === "unsubscribe" || prop === "cleanup") {
-          let old = state[prop];
+          const old = state[prop];
           state[prop] = val;
           if (prop === "value" && (forceUpdate || val !== old)) {
             forceUpdate = false;
-            for (let [handler, computed] of subscriptions) {
+            for (const [handler, computed] of subscriptions) {
               computed.cleanup();
-              let cleanup = handler(val);
+              const cleanup = handler(val);
               makeUnsubscribe(subscriptions, computed, handler, cleanup);
             }
             delayedUpdate();
@@ -164,7 +164,7 @@ export function ProxySignal(value: any): ProxySignal {
     cleanup: {
       value() {
         // eslint-disable-next-line no-unused-vars
-        for (let [handler, computed] of subscriptions) {
+        for (const [handler, computed] of subscriptions) {
           computed.unsubscribe();
         }
       },

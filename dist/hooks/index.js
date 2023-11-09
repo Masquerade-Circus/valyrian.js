@@ -29,6 +29,7 @@ __export(hooks_exports, {
 });
 module.exports = __toCommonJS(hooks_exports);
 var import_valyrian = require("valyrian.js");
+var componentToHooksWeakMap = /* @__PURE__ */ new WeakMap();
 var createHook = function createHook2({
   onCreate,
   onUpdate: onUpdateHook,
@@ -37,42 +38,26 @@ var createHook = function createHook2({
   returnValue
 }) {
   return (...args) => {
-    let { component, vnode } = import_valyrian.current;
+    const component = import_valyrian.current.component;
     let hook = null;
-    if (vnode) {
-      if (!vnode.components) {
-        vnode.components = [];
-      }
-      if (vnode.components.indexOf(component) === -1) {
-        vnode.hook_calls = -1;
-        vnode.components.push(component);
-        if (!component.hooks) {
-          component.hooks = [];
-          (0, import_valyrian.onUnmount)(() => Reflect.deleteProperty(component, "hooks"));
-        }
-      }
-      hook = component.hooks[++vnode.hook_calls];
+    if (componentToHooksWeakMap.has(component) === false) {
+      const HookCalls2 = { hooks: [], hook_calls: -1 };
+      componentToHooksWeakMap.set(component, HookCalls2);
+      (0, import_valyrian.onUnmount)(() => componentToHooksWeakMap.delete(component));
+    }
+    const HookCalls = componentToHooksWeakMap.get(component);
+    (0, import_valyrian.onCleanup)(() => HookCalls.hook_calls = -1);
+    hook = HookCalls.hooks[++HookCalls.hook_calls];
+    if (hook) {
+      onUpdateHook && onUpdateHook(hook, ...args);
     }
     if (!hook) {
       hook = onCreate(...args);
-      if (vnode) {
-        component.hooks.push(hook);
-      }
-      if (onRemove) {
-        (0, import_valyrian.onUnmount)(() => onRemove(hook));
-      }
-    } else {
-      if (onUpdateHook) {
-        onUpdateHook(hook, ...args);
-      }
+      HookCalls.hooks.push(hook);
+      onRemove && (0, import_valyrian.onUnmount)(() => onRemove(hook));
     }
-    if (onCleanupHook) {
-      (0, import_valyrian.onCleanup)(() => onCleanupHook(hook));
-    }
-    if (returnValue) {
-      return returnValue(hook);
-    }
-    return hook;
+    onCleanupHook && (0, import_valyrian.onCleanup)(() => onCleanupHook(hook));
+    return returnValue ? returnValue(hook) : hook;
   };
 };
 var updateTimeout;
@@ -103,7 +88,7 @@ var useState = createHook({
 });
 var useEffect = createHook({
   onCreate: (effect, changes) => {
-    let hook = { effect, prev: [] };
+    const hook = { effect, prev: [] };
     if (changes === null) {
       hook.onRemove = effect;
       return hook;

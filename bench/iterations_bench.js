@@ -1,17 +1,17 @@
 /* eslint-disable eqeqeq */
-let { compare, benchmark, before, beforeEach, beforeCycle } = require("buffalo-test");
+const { compare, benchmark, before, beforeEach, beforeCycle } = require("buffalo-test");
 
 import expect from "expect";
 
 // Fastest key in object
 compare.skip("Set.has vs [].indexOf vs Object[key] vs key in Object", () => {
-  let set = new Set();
+  const set = new Set();
   set.add("hello");
   set.add("world");
 
-  let arr = ["hello", "world"];
+  const arr = ["hello", "world"];
 
-  let obj = { hello: true, world: true };
+  const obj = { hello: true, world: true };
 
   before(() => {
     expect(set.has("hello")).toEqual(true);
@@ -58,13 +58,13 @@ compare.skip("Set.has vs [].indexOf vs Object[key] vs key in Object", () => {
 
 // Fastest is arr.indexOf(func)
 compare.skip("Function in Set vs Array", () => {
-  let namedFunction = function namedFunction() {};
-  let set = new Set();
+  const namedFunction = function namedFunction() {};
+  const set = new Set();
   set.add(() => {});
   set.add(() => {});
   set.add(namedFunction);
 
-  let arr = [() => {}, () => {}, namedFunction];
+  const arr = [() => {}, () => {}, namedFunction];
 
   before(() => {
     expect(set.has(() => {})).toEqual(false);
@@ -87,10 +87,10 @@ compare.skip("Function in Set vs Array", () => {
 });
 
 compare.skip("Add function to set vs add function to array and cycle through them", () => {
-  let set = new Set();
+  const set = new Set();
   let arr = [];
-  let func = () => {};
-  let namedFunction = function namedFunction() {};
+  const func = () => {};
+  const namedFunction = function namedFunction() {};
 
   before(() => {
     expect(set.has(func)).toEqual(false);
@@ -135,7 +135,7 @@ compare.skip("Add function to set vs add function to array and cycle through the
     // eslint-disable-next-line sonarjs/no-element-overwrite
     set.add(namedFunction);
 
-    for (let f of set) {
+    for (const f of set) {
       f();
     }
 
@@ -167,7 +167,7 @@ compare.skip("Add function to set vs add function to array and cycle through the
     // eslint-disable-next-line sonarjs/no-element-overwrite
     set.add(namedFunction);
 
-    for (let f of set) {
+    for (const f of set) {
       f();
     }
 
@@ -191,7 +191,7 @@ compare.skip("Add function to set vs add function to array and cycle through the
 });
 
 compare.skip("Object.keys for loop vs Object.keys for of vs for in", () => {
-  let obj = {
+  const obj = {
     a: 1,
     b: 2,
     c: 3,
@@ -202,7 +202,7 @@ compare.skip("Object.keys for loop vs Object.keys for of vs for in", () => {
   };
 
   benchmark("Object.keys for loop", () => {
-    let keys = Object.keys(obj);
+    const keys = Object.keys(obj);
 
     for (let i = 0; i--; ) {
       keys[i];
@@ -210,22 +210,22 @@ compare.skip("Object.keys for loop vs Object.keys for of vs for in", () => {
   });
 
   benchmark("Object.keys for of", () => {
-    let keys = Object.keys(obj);
+    const keys = Object.keys(obj);
 
-    for (let key of keys) {
+    for (const key of keys) {
       key;
     }
   });
 
   benchmark("for in", () => {
-    for (let key in obj) {
+    for (const key in obj) {
       key;
     }
   });
 });
 
 compare.skip("typeof function vs startsWith vs charAt vs string[0]", () => {
-  let obj = {
+  const obj = {
     oncreate() {},
     b: null,
     c: 1,
@@ -234,37 +234,37 @@ compare.skip("typeof function vs startsWith vs charAt vs string[0]", () => {
   };
 
   benchmark("typeof function", () => {
-    for (let key in obj) {
+    for (const key in obj) {
       typeof key === "function";
     }
   });
 
   benchmark("startsWith", () => {
-    for (let key in obj) {
+    for (const key in obj) {
       // eslint-disable-next-line sonarjs/no-ignored-return
       key.startsWith("on");
     }
   });
 
   benchmark("charAt", () => {
-    for (let key in obj) {
+    for (const key in obj) {
       key.charAt(0) === "o" && key.charAt(1) === "n";
     }
   });
 
   benchmark("string[0]", () => {
-    for (let key in obj) {
+    for (const key in obj) {
       key[0] === "o" && key[1] === "n";
     }
   });
 });
 
 compare.skip("Array.isArray vs typeof object & Array.isArray", () => {
-  let a = [];
-  let b = {};
-  let c = null;
-  let d = "string";
-  let e = 1;
+  const a = [];
+  const b = {};
+  const c = null;
+  const d = "string";
+  const e = 1;
 
   benchmark("Array.isArray", () => {
     Array.isArray(a);
@@ -290,8 +290,8 @@ compare.skip("string comparison vs instance comparison vs property comparison", 
   class B {
     b = "b";
   }
-  let classA = new A();
-  let classB = new B();
+  const classA = new A();
+  const classB = new B();
 
   benchmark("string comparison", () => {
     classA.name === "a";
@@ -320,7 +320,7 @@ compare.skip("string comparison vs instance comparison vs property comparison", 
 });
 
 compare.skip("For loop if/continue vs if/else", () => {
-  let arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   beforeEach(() => {
     expect(arr.length).toEqual(10);
@@ -350,7 +350,7 @@ compare.skip("For loop if/continue vs if/else", () => {
 });
 
 compare.skip("map array of strings vs reduce with object keys equals index", () => {
-  let objects = [
+  const objects = [
     { key: "a" },
     { key: "b" },
     { key: "c" },
@@ -364,28 +364,28 @@ compare.skip("map array of strings vs reduce with object keys equals index", () 
   ];
 
   beforeEach(() => {
-    let arrayByMap = objects.map((obj) => obj.key);
+    const arrayByMap = objects.map((obj) => obj.key);
     expect(arrayByMap[0]).toEqual("a");
 
-    let objectByReduce = objects.reduce((acc, obj, i) => {
+    const objectByReduce = objects.reduce((acc, obj, i) => {
       acc[obj.key] = i;
       return acc;
     }, {});
     expect(objectByReduce.a).toEqual(0);
 
-    let arrayByFor = [];
+    const arrayByFor = [];
     for (let i = 0; i < objects.length; i++) {
       arrayByFor.push(objects[i].key);
     }
     expect(arrayByFor[0]).toEqual("a");
 
-    let objectByFor = {};
+    const objectByFor = {};
     for (let i = 0; i < objects.length; i++) {
       objectByFor[objects[i].key] = i;
     }
     expect(objectByFor.a).toEqual(0);
 
-    let objectMapByFor = new Map();
+    const objectMapByFor = new Map();
     for (let i = 0; i < objects.length; i++) {
       objectMapByFor.set(objects[i].key, i);
     }
@@ -393,7 +393,7 @@ compare.skip("map array of strings vs reduce with object keys equals index", () 
   });
 
   benchmark("map array of strings", () => {
-    let arrayByMap = objects.map((obj) => obj.key);
+    const arrayByMap = objects.map((obj) => obj.key);
     arrayByMap.indexOf("a") !== -1;
     arrayByMap.indexOf("b") !== -1;
     arrayByMap.indexOf("c") !== -1;
@@ -418,7 +418,7 @@ compare.skip("map array of strings vs reduce with object keys equals index", () 
   });
 
   benchmark("reduce with object keys equals index", () => {
-    let objectByReduce = objects.reduce((acc, obj, i) => {
+    const objectByReduce = objects.reduce((acc, obj, i) => {
       acc[obj.key] = i;
       return acc;
     }, {});
@@ -446,7 +446,7 @@ compare.skip("map array of strings vs reduce with object keys equals index", () 
   });
 
   benchmark("array by for", () => {
-    let arrayByFor = [];
+    const arrayByFor = [];
     for (let i = 0; i < objects.length; i++) {
       arrayByFor.push(objects[i].key);
     }
@@ -474,7 +474,7 @@ compare.skip("map array of strings vs reduce with object keys equals index", () 
   });
 
   benchmark("object by for", () => {
-    let objectByFor = {};
+    const objectByFor = {};
     for (let i = 0; i < objects.length; i++) {
       objectByFor[objects[i].key] = i;
     }
@@ -502,7 +502,7 @@ compare.skip("map array of strings vs reduce with object keys equals index", () 
   });
 
   benchmark("object map by for", () => {
-    let objectMapByFor = new Map();
+    const objectMapByFor = new Map();
     for (let i = 0; i < objects.length; i++) {
       objectMapByFor.set(objects[i].key, i);
     }
@@ -539,7 +539,7 @@ compare.skip("Symbol access vs direct access", () => {
       render: () => {}
     };
 
-    let ValyrianSymbol = Symbol("Valyrian");
+    const ValyrianSymbol = Symbol("Valyrian");
     Component2[ValyrianSymbol] = {
       render: () => {}
     };
@@ -582,7 +582,7 @@ compare.skip("Symbol access vs direct access", () => {
 
   benchmark("Symbol access access", () => {
     function Component2() {}
-    let symbol = Symbol("Valyrian");
+    const symbol = Symbol("Valyrian");
 
     for (let i = 1000; i--; ) {
       Component2[symbol] = {

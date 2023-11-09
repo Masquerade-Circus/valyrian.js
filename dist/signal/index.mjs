@@ -1,71 +1,52 @@
 // lib/signal/index.ts
-import { current, onUnmount, updateVnode, v } from "valyrian.js";
+import { updateVnode, current, onCleanup, onUnmount } from "valyrian.js";
+var componentToSignalsWeakMap = /* @__PURE__ */ new WeakMap();
 function Signal(initialValue) {
-  const { vnode, component } = { ...current };
-  if (vnode && component) {
-    if (!vnode.components) {
-      vnode.components = [];
+  if (current.component) {
+    if (componentToSignalsWeakMap.has(current.component) === false) {
+      const SignalCalls2 = { signals: [], signal_calls: -1 };
+      componentToSignalsWeakMap.set(current.component, SignalCalls2);
+      onUnmount(() => componentToSignalsWeakMap.delete(current.component));
     }
-    if (vnode.components.indexOf(component) === -1) {
-      vnode.signal_calls = -1;
-      vnode.components.push(component);
-      if (!component.signals) {
-        component.signals = [];
-        onUnmount(() => Reflect.deleteProperty(component, "signals"));
-      }
-    }
-    let signal2 = component.signals[++vnode.signal_calls];
+    const SignalCalls = componentToSignalsWeakMap.get(current.component);
+    onCleanup(() => SignalCalls.signal_calls = -1);
+    const signal2 = SignalCalls.signals[++SignalCalls.signal_calls];
     if (signal2) {
-      signal2[3].length = 0;
-      return signal2;
+      const fakeSubscribe = () => {
+      };
+      return [signal2[0], signal2[1], fakeSubscribe, signal2[3]];
     }
   }
   let value = initialValue;
-  const subscriptions = [];
+  const subscribers = /* @__PURE__ */ new Set();
   const subscribe = (callback) => {
-    if (subscriptions.indexOf(callback) === -1) {
-      subscriptions.push(callback);
-    }
+    subscribers.add(callback);
+    return () => subscribers.delete(callback);
   };
-  let vnodesToUpdate = [];
-  const updateVnodes = () => {
-    let vnodesToUpdateCopy = vnodesToUpdate.filter((vnode2, index, self) => {
-      return self.findIndex((v2) => v2.dom === vnode2.dom) === index;
-    });
-    for (let i = 0, l = vnodesToUpdateCopy.length; i < l; i++) {
-      const vnode2 = vnodesToUpdateCopy[i];
-      let newVnode = v(vnode2.tag, vnode2.props, ...vnode2.initialChildren);
-      newVnode.dom = vnode2.dom;
-      newVnode.isSVG = vnode2.isSVG;
-      updateVnode(newVnode, vnode2);
-    }
-  };
-  function get() {
-    const { vnode: vnode2 } = current;
-    if (vnode2 && vnodesToUpdate.indexOf(vnode2) === -1) {
-      if (!vnode2.initialChildren) {
-        vnode2.initialChildren = [...vnode2.children];
-      }
-      vnodesToUpdate.push(vnode2);
+  const domToVnodesToUpdate = /* @__PURE__ */ new Map();
+  const updateVnodes = () => domToVnodesToUpdate.forEach((vnode) => updateVnode(vnode));
+  const getValue = () => {
+    if (current.vnode) {
+      const vnode = current.vnode;
+      domToVnodesToUpdate.set(vnode.dom, vnode);
       subscribe(updateVnodes);
     }
     return value;
-  }
-  const set = (newValue) => {
+  };
+  const setValue = (newValue) => {
     if (current.event) {
       current.event.preventDefault();
     }
-    if (newValue === value) {
+    if (value === newValue) {
       return;
     }
     value = newValue;
-    for (let i = 0, l = subscriptions.length; i < l; i++) {
-      subscriptions[i](value);
-    }
+    subscribers.forEach((subscriber) => subscriber());
   };
-  let signal = [get, set, subscribe, subscriptions];
-  if (vnode && component) {
-    component.signals.push(signal);
+  const signal = [getValue, setValue, subscribe, subscribers];
+  if (current.component) {
+    const SignalCalls = componentToSignalsWeakMap.get(current.component);
+    SignalCalls.signals.push(signal);
   }
   return signal;
 }

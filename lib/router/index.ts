@@ -104,15 +104,15 @@ const addPath = ({
   }
 
   // Trim trailing slashes from the path
-  let realpath = path.replace(/(\S)(\/+)$/, "$1");
+  const realpath = path.replace(/(\S)(\/+)$/, "$1");
 
   // Find the express-like params in the path
-  let params = (realpath.match(/:(\w+)?/gi) || [])
+  const params = (realpath.match(/:(\w+)?/gi) || [])
     // Set the names of the params found
     .map((param) => param.slice(1));
 
   // Generate a regular expression to match the path
-  let regexpPath = "^" + realpath.replace(/:(\w+)/gi, "([^\\/\\s]+)") + "$";
+  const regexpPath = "^" + realpath.replace(/:(\w+)/gi, "([^\\/\\s]+)") + "$";
 
   router.paths.push({
     method,
@@ -126,12 +126,12 @@ const addPath = ({
 // Parse a query string into an object
 function parseQuery(queryParts?: string): Record<string, string> {
   // Split the query string into an array of name-value pairs
-  let parts = queryParts ? queryParts.split("&") : [];
-  let query: Record<string, string> = {};
+  const parts = queryParts ? queryParts.split("&") : [];
+  const query: Record<string, string> = {};
 
   // Iterate over the name-value pairs and add them to the query object
-  for (let nameValue of parts) {
-    let [name, value] = nameValue.split("=", 2);
+  for (const nameValue of parts) {
+    const [name, value] = nameValue.split("=", 2);
     query[name] = value || "";
   }
 
@@ -140,13 +140,13 @@ function parseQuery(queryParts?: string): Record<string, string> {
 
 // Search for middlewares that match a given path
 function searchMiddlewares(router: RouterInterface, path: string): Middlewares {
-  let middlewares: Middlewares = [];
-  let params: Record<string, any> = {};
-  let matches = [];
+  const middlewares: Middlewares = [];
+  const params: Record<string, any> = {};
+  const matches = [];
 
   // Search for middlewares
-  for (let item of router.paths) {
-    let match = item.regexp.exec(path);
+  for (const item of router.paths) {
+    const match = item.regexp.exec(path);
 
     // If we found middlewares
     if (Array.isArray(match)) {
@@ -154,7 +154,7 @@ function searchMiddlewares(router: RouterInterface, path: string): Middlewares {
       match.shift();
 
       // Parse params
-      for (let [index, key] of item.params.entries()) {
+      for (const [index, key] of item.params.entries()) {
         params[key] = match[index];
       }
 
@@ -228,13 +228,13 @@ export class Router implements RouterInterface {
   }
 
   add(path: string, ...middlewares: Middlewares): Router {
-    let pathWithoutLastSlash = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
+    const pathWithoutLastSlash = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
     addPath({ router: this, method: "add", path: pathWithoutLastSlash, middlewares });
     return this;
   }
 
   use(...middlewares: Middlewares | Router[] | string[]): Router {
-    let path = getPathWithoutLastSlash(
+    const path = getPathWithoutLastSlash(
       `${this.pathPrefix}${typeof middlewares[0] === "string" ? middlewares.shift() : "/"}`
     );
 
@@ -273,7 +273,7 @@ export class Router implements RouterInterface {
       throw new Error("router.url.required");
     }
 
-    let constructedPath = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
+    const constructedPath = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
     const parts = constructedPath.split("?", 2);
     this.url = constructedPath;
     this.query = parseQuery(parts[1]);
@@ -337,15 +337,16 @@ export function mountRouter(elementContainer: string | any, router: Router): voi
 
   if (!isNodeJs) {
     function onPopStateGoToRoute(): void {
-      let pathWithoutPrefix = getPathWithoutPrefix(document.location.pathname, router.pathPrefix);
+      const pathWithoutPrefix = getPathWithoutPrefix(document.location.pathname, router.pathPrefix);
       (router as unknown as Router).go(pathWithoutPrefix, undefined, true);
     }
     window.addEventListener("popstate", onPopStateGoToRoute, false);
     onPopStateGoToRoute();
   }
 
-  directive("route", (url: string, vnode: VnodeWithDom, oldnode?: VnodeWithDom): void => {
-    setAttribute("href", url, vnode, oldnode);
-    setAttribute("onclick", router.getOnClickHandler(url), vnode, oldnode);
+  directive("route", (vnode: VnodeWithDom): void => {
+    const url = vnode.props["v-route"];
+    setAttribute("href", url, vnode);
+    setAttribute("onclick", router.getOnClickHandler(url), vnode);
   });
 }

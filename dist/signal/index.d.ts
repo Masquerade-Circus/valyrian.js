@@ -1,20 +1,9 @@
-interface GetterInterface {
-    (): any;
-}
-interface SetterInterface {
-    (value: any): void;
-}
-interface SubscribeInterface {
-    (callback: Function): void;
-}
-interface SubscriptionsInterface extends Array<Function> {
-}
-export interface SignalInterface extends Array<any> {
-    0: GetterInterface;
-    1: SetterInterface;
-    2: SubscribeInterface;
-    3: SubscriptionsInterface;
-}
-export declare function Signal(initialValue: any): SignalInterface;
+type getter = () => any;
+type setter = (newValue: any) => void;
+type unsubscribe = () => void;
+type subscribe = (callback: () => void) => unsubscribe;
+type subscriptions = Set<() => void>;
+type signal = [getter, setter, subscribe, subscriptions];
+export declare function Signal<T>(initialValue: T): signal;
 export {};
 //# sourceMappingURL=index.d.ts.map

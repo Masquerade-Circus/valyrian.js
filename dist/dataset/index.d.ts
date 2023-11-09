@@ -1,4 +1,4 @@
-import { VnodeInterface, VnodeWithDom } from "valyrian.js";
+import { VnodeWithDom } from "valyrian.js";
 interface DataSetInterface<T> {
     data: T[];
     reset: (data: T[]) => void;
@@ -7,7 +7,7 @@ interface DataSetInterface<T> {
     delete: (index: number) => void;
 }
 interface DataSetHandler<T> {
-    (data: T, index: number): VnodeInterface;
+    (data: T, index: number): VnodeWithDom;
 }
 export declare class DataSet<T> implements DataSetInterface<T> {
     #private;

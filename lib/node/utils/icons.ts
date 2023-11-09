@@ -33,7 +33,7 @@ interface IconsOptions {
 }
 
 export async function icons(source: string, configuration?: IconsOptions) {
-  let options = {
+  const options = {
     ...icons.options,
     ...(configuration || {})
   };
@@ -49,20 +49,20 @@ export async function icons(source: string, configuration?: IconsOptions) {
   const { favicons } = await import("favicons");
 
   try {
-    let response = await favicons(source, options);
+    const response = await favicons(source, options);
 
     if (options.iconsPath) {
-      for (let i in response.images) {
+      for (const i in response.images) {
         fs.writeFileSync(options.iconsPath + response.images[i].name, response.images[i].contents);
       }
 
-      for (let i in response.files) {
+      for (const i in response.files) {
         fs.writeFileSync(options.iconsPath + response.files[i].name, response.files[i].contents);
       }
     }
 
     if (options.linksViewPath) {
-      let html = `
+      const html = `
   function Links(){
     return ${htmlToHyperscript(response.html.join(""))};
   }

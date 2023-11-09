@@ -75,7 +75,7 @@ describe("Node test", () => {
   });
 
   it("Get html from hyperscript", () => {
-    let Component = () => <div>Hello world</div>;
+    const Component = () => <div>Hello world</div>;
 
     expect(render(<Component />)).toEqual("<div>Hello world</div>");
   });
@@ -85,16 +85,18 @@ describe("Node test", () => {
       "https://media.istockphoto.com/id/1283852667/es/foto/toque-de-musgo-fresco-en-el-bosque.jpg?s=1024x1024&amp;w=is&amp;k=20&amp;c=ASa_AG8uP5Di7azXgJraSA6ME7fbLB0GX4YT_OzCARI=";
     const html = render(<div style={`background-image: url(${image});`}>Hello world</div>);
     const dom = htmlToDom(
+      // eslint-disable-next-line max-len
       '<div style="background-image: url(https://media.istockphoto.com/id/1283852667/es/foto/toque-de-musgo-fresco-en-el-bosque.jpg?s=1024x1024&amp;w=is&amp;k=20&amp;c=ASa_AG8uP5Di7azXgJraSA6ME7fbLB0GX4YT_OzCARI=);">Hello world</div>'
     );
     const result =
+      // eslint-disable-next-line max-len
       '<div style="background-image: url(https://media.istockphoto.com/id/1283852667/es/foto/toque-de-musgo-fresco-en-el-bosque.jpg?s=1024x1024&amp;w=is&amp;k=20&amp;c=ASa_AG8uP5Di7azXgJraSA6ME7fbLB0GX4YT_OzCARI=);">Hello world</div>';
     expect(html).toEqual(result);
     expect(domToHtml(dom)).toEqual(result);
   });
 
   it("Should create a service worker file", async () => {
-    let file = ".tmp/sw.js";
+    const file = ".tmp/sw.js";
     await sw(file, {
       name: "Test",
       version: packageJson.version,
@@ -106,7 +108,7 @@ describe("Node test", () => {
 
   // NOTE: This test will take some time between 30 and 60 seconds
   it("Should generate icons, manifest.json and a links component", async () => {
-    let favicons = {
+    const favicons = {
       iconsPath: ".tmp/", // Path to the generated icons
       linksViewPath: ".tmp/", // Path to the generated links file
 
@@ -159,19 +161,19 @@ describe("Node test", () => {
   });
 
   it("should remove unused css", async () => {
-    let html = "<body><span>Hello world</span></body>";
-    let css = `
+    const html = "<body><span>Hello world</span></body>";
+    const css = `
 span{display:block;}
 span.hello{display: inline-block}
     `;
-    let cleanCss = await inline.uncss([html], css);
+    const cleanCss = await inline.uncss([html], css);
 
     expect(cleanCss).toEqual("span{display:block}");
   });
 
   it("should inline js", async () => {
-    let { raw: indexTs } = await inline("./lib/index.ts", { compact: true, noValidate: true });
-    let { raw: indexOld } = await inline("./bench/index-old.js", { compact: true });
+    const { raw: indexTs } = await inline("./lib/index.ts", { compact: true, noValidate: true });
+    const { raw: indexOld } = await inline("./bench/index-old.js", { compact: true });
     // eslint-disable-next-line no-console
     console.log(indexTs.length);
     // eslint-disable-next-line no-console
@@ -179,26 +181,26 @@ span.hello{display: inline-block}
   });
 
   it("should convert tsx to hyperscript by default", async () => {
-    let { raw: component } = await inline("./test/utils/component.tsx", { compact: false, noValidate: true });
-    let { raw: component2 } = await inline("./test/utils/component.tsx", { compact: true });
+    const { raw: component } = await inline("./test/utils/component.tsx", { compact: false, noValidate: true });
+    const { raw: component2 } = await inline("./test/utils/component.tsx", { compact: true });
 
     expect(component).toMatch(`
   function Button() {
     return /* @__PURE__ */ v("button", null, "Hello");
   }`);
 
-    expect(component2).toMatch(`function(){return G("button",null,"Hello")}`);
+    expect(component2).toMatch(/function\(\)\{return \w\("button",null,"Hello"\)\}/);
   });
 
   it("should convert jsx to hyperscript by default", async () => {
-    let { raw: component } = await inline("./test/utils/component.jsx", { compact: false });
-    let { raw: component2 } = await inline("./test/utils/component.jsx", { compact: true });
+    const { raw: component } = await inline("./test/utils/component.jsx", { compact: false });
+    const { raw: component2 } = await inline("./test/utils/component.jsx", { compact: true });
 
     expect(component).toMatch(`
   function Button() {
     return /* @__PURE__ */ v("button", null, "Hello");
   }`);
 
-    expect(component2).toMatch(`function(){return G("button",null,"Hello")}`);
+    expect(component2).toMatch(/function\(\)\{return \w\("button",null,"Hello"\)\}/);
   });
 });

@@ -12,7 +12,7 @@ describe("Directives", () => {
   describe("Directive creation", () => {
     it("should be able create a directive", () => {
       let result;
-      let expected = "Hello world";
+      const expected = "Hello world";
 
       directive("test", (value) => (result = `Hello ${value}`));
 
@@ -22,16 +22,18 @@ describe("Directives", () => {
 
     it("should be able to get the vnode", () => {
       let newVnode;
-      let oldVnode;
+      let oldProps;
 
-      let app = () => <div v-test2 />;
+      const app = () => <div v-test2 />;
 
       directive("test2", (v, vnode, old) => {
         newVnode = vnode;
-        oldVnode = old;
+        oldProps = old;
       });
 
       mount("div", app);
+      update();
+      update();
       update();
 
       expect(newVnode).toEqual({
@@ -44,50 +46,44 @@ describe("Directives", () => {
         isSVG: false
       });
 
-      expect(oldVnode).toEqual({
-        tag: "div",
-        props: {
-          "v-test2": true
-        },
-        dom: expect.any(Object),
-        children: [],
-        isSVG: false
+      expect(oldProps).toEqual({
+        "v-test2": true
       });
     });
 
     it("should be able to identify if this is first render or update", () => {
-      let app = () => <div v-render />;
+      const app = () => <div v-render />;
 
-      directive("render", (v, vnode, oldVnode) => {
-        if (!oldVnode) {
+      directive("render", (v, vnode, oldProps) => {
+        if (!oldProps) {
           vnode.children = ["First render, vnode created"];
         } else {
           vnode.children = ["Second render, vnode updated"];
         }
       });
 
-      let result = mount("body", app);
+      const result = mount("body", app);
 
       expect(result).toEqual("<div>First render, vnode created</div>");
 
-      let result2 = update();
+      const result2 = update();
       expect(result2).toEqual("<div>Second render, vnode updated</div>");
     });
 
     it("should be able to modify the children of a vnode", () => {
-      let expected = "<div>Hello world</div>";
+      const expected = "<div>Hello world</div>";
 
       directive("test3", (v, vnode) => {
         vnode.children = ["Hello world"];
       });
 
-      let app = () => (
+      const app = () => (
         <div v-test3>
           <span>Hello John Doe</span>
         </div>
       );
 
-      let result = mount("div", app);
+      const result = mount("div", app);
       expect(result).toEqual(expected);
     });
 
@@ -97,7 +93,7 @@ describe("Directives", () => {
      */
     it("Modify properties is not guaranteed", () => {
       let update = false;
-      let app = () => <div u="u" v-test4 x="x" />;
+      const app = () => <div u="u" v-test4 x="x" />;
 
       directive("test4", (value, vnode, oldVnode) => {
         // Try to change u property
@@ -110,11 +106,11 @@ describe("Directives", () => {
         vnode.props.x = "property changed";
       });
 
-      let result = mount("div", app);
+      const result = mount("div", app);
       expect(result).toEqual('<div u="u" x="property changed"></div>');
 
       update = true;
-      let result2 = mount("div", app);
+      const result2 = mount("div", app);
       expect(result2).toEqual('<div u="property changed" x="property changed"></div>');
     });
 
@@ -123,14 +119,14 @@ describe("Directives", () => {
      * For this we should be able to use a directive as flag
      */
     it("should be able to use it as a flag", () => {
-      let expected = "<div>August 16, 2018</div>";
+      const expected = "<div>August 16, 2018</div>";
 
-      let formatDate = (value) => dayjs(value).format("MMMM D, YYYY");
+      const formatDate = (value) => dayjs(value).format("MMMM D, YYYY");
 
       directive("date-inline", (date, vnode) => (vnode.children = [formatDate(date)]));
       directive("date", (_, vnode) => (vnode.children = [formatDate(vnode.children[0])]));
 
-      let date = "08-16-2018";
+      const date = "08-16-2018";
       let result = mount("div", () => <div v-date-inline={date} />);
       expect(result).toEqual(expected);
 
@@ -146,7 +142,7 @@ describe("Directives", () => {
     it("v-switch example", () => {
       directive("switch", (value, vnode) => {
         for (let i = 0, l = vnode.children.length; i < l; i++) {
-          let [test, handler] = vnode.children[i];
+          const [test, handler] = vnode.children[i];
           let result = false;
           result = typeof test === "function" ? test(value) : value === test;
 
@@ -160,7 +156,7 @@ describe("Directives", () => {
       });
 
       let name;
-      let component = () => (
+      const component = () => (
         <div v-switch={name}>
           {["John", <span>Hello John</span>]}
           {[(val) => val === "John Doe", <span>Hello John Doe</span>]}
@@ -206,18 +202,18 @@ describe("Directives", () => {
      */
     describe("v-for", () => {
       it("should create 10 list items", () => {
-        let items = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa"];
-        let expected = "<ul>" + items.reduce((str, word) => str + `<li>${word}</li>`, "") + "</ul>";
-        let result = mount("body", () => <ul v-for={items}>{(word) => <li>{word}</li>}</ul>);
+        const items = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa"];
+        const expected = "<ul>" + items.reduce((str, word) => str + `<li>${word}</li>`, "") + "</ul>";
+        const result = mount("body", () => <ul v-for={items}>{(word) => <li>{word}</li>}</ul>);
 
         expect(result).toEqual(expected);
       });
 
       it("should create 10 list items getting its index", () => {
-        let items = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa"];
+        const items = ["alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa"];
         let i = 0;
-        let expected = "<ul>" + items.reduce((str, word) => str + `<li>${i++} - ${word}</li>`, "") + "</ul>";
-        let result = mount("body", () => (
+        const expected = "<ul>" + items.reduce((str, word) => str + `<li>${i++} - ${word}</li>`, "") + "</ul>";
+        const result = mount("body", () => (
           <ul v-for={items}>
             {(word, i) => (
               <li>
@@ -237,12 +233,12 @@ describe("Directives", () => {
      */
     describe("v-if", () => {
       it("should render vnode if thruthy values", () => {
-        let values = [{}, 1, true, [], "string", new Date(), -1];
+        const values = [{}, 1, true, [], "string", new Date(), -1];
 
-        let expected = "<div><span>Hello world</span></div>";
+        const expected = "<div><span>Hello world</span></div>";
 
         values.forEach((value) => {
-          let result = mount("div", () => (
+          const result = mount("div", () => (
             <div>
               <span v-if={value}>Hello world</span>
             </div>
@@ -252,12 +248,12 @@ describe("Directives", () => {
       });
 
       it("should not render vnode with falsy values", () => {
-        let values = [false, 0, "", null, , NaN];
+        const values = [false, 0, "", null, , NaN];
 
-        let expected = "<div></div>";
+        const expected = "<div></div>";
 
         values.forEach((value) => {
-          let result = mount("div", () => (
+          const result = mount("div", () => (
             <div>
               <span v-if={value}>Hello world</span>
             </div>
@@ -268,19 +264,19 @@ describe("Directives", () => {
 
       it("should update oldnode", () => {
         let value = true;
-        let expected1 = "<div><span>Hello world</span></div>";
-        let expected2 = "<div></div>";
+        const expected1 = "<div><span>Hello world</span></div>";
+        const expected2 = "<div></div>";
 
-        let app = () => (
+        const app = () => (
           <div>
             <span v-if={value}>Hello world</span>
           </div>
         );
-        let result1 = mount("div", app);
+        const result1 = mount("div", app);
         expect(result1).toEqual(expected1);
 
         value = false;
-        let result2 = update();
+        const result2 = update();
         expect(result2).toEqual(expected2);
       });
     });
@@ -294,12 +290,12 @@ describe("Directives", () => {
      */
     describe("v-unless", () => {
       it("should render vnode with falsy values", () => {
-        let values = [false, 0, "", null, , NaN];
+        const values = [false, 0, "", null, , NaN];
 
-        let expected = "<div><span>Hello world</span></div>";
+        const expected = "<div><span>Hello world</span></div>";
 
         values.forEach((value) => {
-          let result = mount("div", () => (
+          const result = mount("div", () => (
             <div>
               <span v-unless={value}>Hello world</span>
             </div>
@@ -309,12 +305,12 @@ describe("Directives", () => {
       });
 
       it("should not render vnode if thruthy values", () => {
-        let values = [{}, 1, true, [], "string", new Date(), -1];
+        const values = [{}, 1, true, [], "string", new Date(), -1];
 
-        let expected = "<div></div>";
+        const expected = "<div></div>";
 
         values.forEach((value) => {
-          let result = mount("div", () => (
+          const result = mount("div", () => (
             <div>
               <span v-unless={value}>Hello world</span>
             </div>
@@ -330,9 +326,9 @@ describe("Directives", () => {
      */
     describe("v-show", () => {
       it("should show a vnode if true", () => {
-        let value = true;
-        let expected = "<div><span>Hello world</span></div>";
-        let result = mount("div", () => (
+        const value = true;
+        const expected = "<div><span>Hello world</span></div>";
+        const result = mount("div", () => (
           <div>
             <span v-show={value}>Hello world</span>
           </div>
@@ -342,9 +338,9 @@ describe("Directives", () => {
       });
 
       it("should hide a vnode if false", () => {
-        let value = false;
-        let expected = '<div><span style="display: none;">Hello world</span></div>';
-        let result = mount("div", () => (
+        const value = false;
+        const expected = '<div><span style="display: none;">Hello world</span></div>';
+        const result = mount("div", () => (
           <div>
             <span v-show={value}>Hello world</span>
           </div>
@@ -359,29 +355,29 @@ describe("Directives", () => {
      */
     describe("v-class", () => {
       it("should toggle on a class", () => {
-        let classes = {
+        const classes = {
           world: true
         };
 
-        let app = () => <div v-class={classes} />;
-        let result = mount("body", app);
+        const app = () => <div v-class={classes} />;
+        const result = mount("body", app);
         expect(result).toEqual('<div class="world"></div>');
 
         classes.world = false;
-        let result2 = update();
+        const result2 = update();
         expect(result2).toEqual("<div></div>");
       });
 
       it("should toggle on a class in an element with a class attribute", () => {
-        let classes = {
+        const classes = {
           world: true
         };
-        let app = () => <div class="hello" v-class={classes} />;
-        let result = mount("body", app);
+        const app = () => <div class="hello" v-class={classes} />;
+        const result = mount("body", app);
         expect(result).toEqual('<div class="hello world"></div>');
 
         classes.world = false;
-        let result2 = update();
+        const result2 = update();
         expect(result2).toEqual('<div class="hello"></div>');
       });
     });
@@ -392,34 +388,34 @@ describe("Directives", () => {
      */
     describe("v-keep", () => {
       it("should not update the dom after first render", () => {
-        let Store = { hello: "world" };
-        let app = () => <div v-keep>Hello {Store.hello}</div>;
+        const Store = { hello: "world" };
+        const app = () => <div v-keep>Hello {Store.hello}</div>;
 
-        let result = mount("body", app);
+        const result = mount("body", app);
         expect(result).toEqual("<div>Hello world</div>");
 
         // We update our store
         Store.hello = "John Doe";
 
-        let result2 = update();
+        const result2 = update();
         expect(result2).toEqual("<div>Hello world</div>");
       });
       it("should update the dom after the value changes", () => {
-        let Store = { hello: "world", id: 1 };
-        let app = () => <div v-keep={Store.id}>Hello {Store.hello}</div>;
+        const Store = { hello: "world", id: 1 };
+        const app = () => <div v-keep={Store.id}>Hello {Store.hello}</div>;
 
-        let result = mount("body", app);
+        const result = mount("body", app);
         expect(result).toEqual("<div>Hello world</div>");
 
         // We update our store
         Store.hello = "John Doe";
 
-        let result2 = update();
+        const result2 = update();
         expect(result2).toEqual("<div>Hello world</div>");
 
         // We update our id
         Store.id = 2;
-        let result3 = update();
+        const result3 = update();
         expect(result3).toEqual("<div>Hello John Doe</div>");
       });
     });
@@ -432,14 +428,14 @@ describe("Directives", () => {
     describe("v-html", () => {
       it("should handle direct html render", () => {
         // Using trust example
-        let Component = () => <div>{trust("<div>Hello world</div>")}</div>;
-        let result = mount("body", Component);
+        const Component = () => <div>{trust("<div>Hello world</div>")}</div>;
+        const result = mount("body", Component);
 
         expect(result).toEqual("<div><div>Hello world</div></div>");
 
         // Using v-html directive
-        let Component2 = () => <div v-html="<div>Hello world</div>" />;
-        let result2 = mount("body", Component2);
+        const Component2 = () => <div v-html="<div>Hello world</div>" />;
+        const result2 = mount("body", Component2);
 
         expect(result2).toEqual("<div><div>Hello world</div></div>");
       });
@@ -449,19 +445,19 @@ describe("Directives", () => {
   // if the v-if directive resolve to false, we should not execute any other directive or attribute update like v-for
   describe("use v-if with v-for", () => {
     it("should use v-if with v-for directives", () => {
-      let arr = [1, 2, 3, 4];
+      const arr = [1, 2, 3, 4];
       let show = true;
-      let app = () => (
+      const app = () => (
         <div v-if={show} v-for={arr}>
           {(i) => <span>{i}</span>}
         </div>
       );
 
-      let result = mount("body", app);
+      const result = mount("body", app);
       expect(result).toEqual("<div><span>1</span><span>2</span><span>3</span><span>4</span></div>");
 
       show = false;
-      let result2 = update();
+      const result2 = update();
       expect(result2).toEqual("");
     });
   });
@@ -472,15 +468,15 @@ describe("Directives", () => {
    */
   describe("reserved word state", () => {
     it("should not render an attribute", () => {
-      let state = { hello: "world" };
-      let Component = () => (
+      const state = { hello: "world" };
+      const Component = () => (
         <div
           state={state}
           shouldupdate={(newVnode, oldVnode) => oldVnode.props.state.hello !== newVnode.props.state.hello}
         />
       );
 
-      let result = mount("body", Component);
+      const result = mount("body", Component);
       expect(result).toEqual("<div></div>");
     });
   });
@@ -488,15 +484,15 @@ describe("Directives", () => {
   // lifecycle hooks
   describe("lifecycle hooks", () => {
     it("should allow to identify lifecycles", () => {
-      let events = [];
-      let Component = () => (
+      const events = [];
+      const Component = () => (
         <div
           v-create={() => events.push("create")}
           v-update={() => events.push("update")}
           v-cleanup={() => events.push("cleanup")}
         />
       );
-      let result = mount("body", Component); // create and mount
+      const result = mount("body", Component); // create and mount
       update(); // cleanup and update
       update(); // cleanup and update
       update(); // cleanup and update

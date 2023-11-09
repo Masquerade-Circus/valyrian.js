@@ -1,10 +1,4 @@
-import { Component, POJOComponent, VnodeWithDom, current, directive, onCleanup, onUnmount, update } from "valyrian.js";
-
-interface CurrentOnPatch {
-  component: Component | POJOComponent;
-  vnode: VnodeWithDom;
-  oldVnode: VnodeWithDom;
-}
+import { Component, POJOComponent, current, directive, onCleanup, onUnmount, update } from "valyrian.js";
 
 export type Hook = any;
 
@@ -26,6 +20,13 @@ export interface CreateHook {
   (HookDefinition: HookDefinition): (...args: any[]) => any;
 }
 
+type HookCalls = {
+  hooks: Hook[];
+  hook_calls: number;
+};
+
+const componentToHooksWeakMap = new WeakMap<Component | POJOComponent, HookCalls>();
+
 export const createHook = function createHook({
   onCreate,
   onUpdate: onUpdateHook,
@@ -34,62 +35,33 @@ export const createHook = function createHook({
   returnValue
 }: HookDefinition): Hook {
   return (...args: any[]) => {
-    let { component, vnode } = current as CurrentOnPatch;
-
+    const component = current.component as Component | POJOComponent;
     let hook: any = null;
 
-    if (vnode) {
-      // Init the components array for the current vnode
-      if (!vnode.components) {
-        vnode.components = [];
-      }
+    if (componentToHooksWeakMap.has(component) === false) {
+      const HookCalls = { hooks: [], hook_calls: -1 };
+      componentToHooksWeakMap.set(component, HookCalls);
+      onUnmount(() => componentToHooksWeakMap.delete(component));
+    }
 
-      if (vnode.components.indexOf(component) === -1) {
-        vnode.hook_calls = -1;
-        vnode.components.push(component);
-        if (!component.hooks) {
-          component.hooks = [];
-          onUnmount(() => Reflect.deleteProperty(component, "hooks"));
-        }
-      }
+    const HookCalls = componentToHooksWeakMap.get(component) as HookCalls;
+    onCleanup(() => (HookCalls.hook_calls = -1));
 
-      hook = component.hooks[++vnode.hook_calls];
+    hook = HookCalls.hooks[++HookCalls.hook_calls];
+
+    if (hook) {
+      onUpdateHook && onUpdateHook(hook, ...args);
     }
 
     // If the hook doesn't exist, create it
     if (!hook) {
-      // create a new hook
       hook = onCreate(...args);
-
-      if (vnode) {
-        // Add the hook to the component
-        component.hooks.push(hook);
-      }
-
-      // if we have a onRemove hook, add it to the onUnmount set
-      if (onRemove) {
-        // Add the hook to the onRemove array
-        onUnmount(() => onRemove(hook));
-      }
-    } else {
-      if (onUpdateHook) {
-        onUpdateHook(hook, ...args);
-      }
+      HookCalls.hooks.push(hook);
+      onRemove && onUnmount(() => onRemove(hook));
     }
 
-    // If we have an onCleanup function, add it to the cleanup set
-    if (onCleanupHook) {
-      // Add the hook to the onCleanup set
-      onCleanup(() => onCleanupHook(hook));
-    }
-
-    // If we have a returnValue function, call it and return the result instead of the hook
-    if (returnValue) {
-      return returnValue(hook);
-    }
-
-    // Return the hook
-    return hook;
+    onCleanupHook && onCleanup(() => onCleanupHook(hook));
+    return returnValue ? returnValue(hook) : hook;
   };
 } as unknown as CreateHook;
 
@@ -110,7 +82,6 @@ export const useState = createHook({
     get.toString = () => `${value}`;
 
     function set(newValue: any) {
-      // Prevent default event if it exists
       if (current.event) {
         current.event.preventDefault();
       }
@@ -129,7 +100,7 @@ export const useState = createHook({
 // Effect hook
 export const useEffect = createHook({
   onCreate: (effect: Function, changes: any[]) => {
-    let hook: {
+    const hook: {
       effect: Function;
       prev: any[];
       onRemove?: Function;

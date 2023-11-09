@@ -26,13 +26,13 @@ module.exports = __toCommonJS(request_exports);
 var import_valyrian = require("valyrian.js");
 function serialize(obj, prefix = "") {
   return Object.keys(obj).map((prop) => {
-    let k = prefix ? `${prefix}[${prop}]` : prop;
+    const k = prefix ? `${prefix}[${prop}]` : prop;
     return typeof obj[prop] === "object" ? serialize(obj[prop], k) : `${encodeURIComponent(k)}=${encodeURIComponent(obj[prop])}`;
   }).join("&");
 }
 function parseUrl(url, options) {
   let u = /^https?/gi.test(url) ? url : options.urls.base + url;
-  let parts = u.split("?");
+  const parts = u.split("?");
   u = parts[0].trim().replace(/^\/\//, "/").replace(/\/$/, "").trim();
   if (parts[1]) {
     u += `?${parts[1]}`;
@@ -51,7 +51,7 @@ function parseUrl(url, options) {
 }
 var defaultOptions = { allowedMethods: ["get", "post", "put", "patch", "delete", "head", "options"] };
 function Requester(baseUrl = "", options = defaultOptions) {
-  let url = baseUrl.replace(/\/$/gi, "").trim();
+  const url = baseUrl.replace(/\/$/gi, "").trim();
   if (!options.urls) {
     options.urls = {
       base: "",
@@ -62,7 +62,7 @@ function Requester(baseUrl = "", options = defaultOptions) {
   if (!options.allowedMethods) {
     options.allowedMethods = defaultOptions.allowedMethods;
   }
-  let opts = {
+  const opts = {
     ...options,
     urls: {
       node: options.urls.node || null,
@@ -71,7 +71,7 @@ function Requester(baseUrl = "", options = defaultOptions) {
     }
   };
   const request2 = async function request3(method, url2, data, options2 = {}) {
-    let innerOptions = {
+    const innerOptions = {
       method: method.toUpperCase(),
       headers: {},
       resolveWithFullResponse: false,
@@ -81,8 +81,8 @@ function Requester(baseUrl = "", options = defaultOptions) {
     if (!innerOptions.headers.Accept) {
       innerOptions.headers.Accept = "application/json";
     }
-    let acceptType = innerOptions.headers.Accept;
-    let contentType = innerOptions.headers["Content-Type"] || innerOptions.headers["content-type"] || "";
+    const acceptType = innerOptions.headers.Accept;
+    const contentType = innerOptions.headers["Content-Type"] || innerOptions.headers["content-type"] || "";
     if (innerOptions.allowedMethods.indexOf(method) === -1) {
       throw new Error("Method not allowed");
     }
@@ -99,7 +99,7 @@ function Requester(baseUrl = "", options = defaultOptions) {
             formData = data;
           } else {
             formData = new FormData();
-            for (let i in data) {
+            for (const i in data) {
               formData.append(i, data[i]);
             }
           }
@@ -107,10 +107,10 @@ function Requester(baseUrl = "", options = defaultOptions) {
         }
       }
     }
-    let response = await fetch(parseUrl(url2, opts), innerOptions);
+    const response = await fetch(parseUrl(url2, opts), innerOptions);
     let body = null;
     if (!response.ok) {
-      let err = new Error(response.statusText);
+      const err = new Error(response.statusText);
       err.response = response;
       if (/text/gi.test(acceptType)) {
         err.body = await response.text();
@@ -142,13 +142,13 @@ function Requester(baseUrl = "", options = defaultOptions) {
   request2.new = (baseUrl2, options2) => Requester(baseUrl2, { ...opts, ...options2 || {} });
   request2.setOption = (key, value) => {
     let result = opts;
-    let parsed = key.split(".");
+    const parsed = key.split(".");
     let next;
     while (parsed.length) {
       next = parsed.shift();
-      let nextIsArray = next.indexOf("[") > -1;
+      const nextIsArray = next.indexOf("[") > -1;
       if (nextIsArray) {
-        let idx = next.replace(/\D/gi, "");
+        const idx = next.replace(/\D/gi, "");
         next = next.split("[")[0];
         parsed.unshift(idx);
       }
@@ -167,13 +167,13 @@ function Requester(baseUrl = "", options = defaultOptions) {
       return opts;
     }
     let result = opts;
-    let parsed = key.split(".");
+    const parsed = key.split(".");
     let next;
     while (parsed.length) {
       next = parsed.shift();
-      let nextIsArray = next.indexOf("[") > -1;
+      const nextIsArray = next.indexOf("[") > -1;
       if (nextIsArray) {
-        let idx = next.replace(/\D/gi, "");
+        const idx = next.replace(/\D/gi, "");
         next = next.split("[")[0];
         parsed.unshift(idx);
       }

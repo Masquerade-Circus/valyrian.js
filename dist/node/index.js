@@ -103,7 +103,7 @@ var Node = class _Node {
       node.parentNode && node.parentNode.removeChild(node);
       node.parentNode = this;
       if (child) {
-        let idx = this.childNodes.indexOf(child);
+        const idx = this.childNodes.indexOf(child);
         this.childNodes.splice(idx, 0, node);
       } else {
         this.childNodes.push(node);
@@ -120,18 +120,21 @@ var Node = class _Node {
   }
   removeChild(child) {
     if (child && child.parentNode === this) {
-      let idx = this.childNodes.indexOf(child);
+      const idx = this.childNodes.indexOf(child);
       this.childNodes.splice(idx, 1);
       child.parentNode = null;
     }
     return child;
+  }
+  remove() {
+    return this.parentNode ? this.parentNode.removeChild(this) : this;
   }
   cloneNode(deep) {
     if (this.nodeType === 3) {
       return new Text(this.nodeValue);
     }
     if (this.nodeType === 1) {
-      let node2 = new Element();
+      const node2 = new Element();
       node2.nodeType = this.nodeType;
       this.nodeName = this.nodeName;
       if (this.attributes) {
@@ -146,13 +149,13 @@ var Node = class _Node {
       }
       return node2;
     }
-    let node = new _Node();
+    const node = new _Node();
     node.nodeType = this.nodeType;
     node.nodeName = this.nodeName;
     return node;
   }
   setAttribute(name, value) {
-    let attr = {
+    const attr = {
       nodeName: name,
       nodeValue: value
     };
@@ -274,8 +277,8 @@ var Text = class extends Node {
 };
 function updateElementStyles(element, state) {
   let str = "";
-  for (let key in state) {
-    let value = state[key];
+  for (const key in state) {
+    const value = state[key];
     if (typeof value !== "undefined" && value !== null && String(value).length > 0) {
       str += `${key}: ${state[key]};`;
     }
@@ -323,26 +326,46 @@ var Element = class extends Node {
     }
     throw new Error("Cannot set style");
   }
+  get className() {
+    return this.getAttribute("class") || "";
+  }
+  set className(value) {
+    if (value == null || value === false) {
+      this.removeAttribute("class");
+    } else {
+      this.setAttribute("class", String(value));
+    }
+  }
   classList = {
     toggle: (item, force) => {
       if (item) {
-        let classes = (this.getAttribute("class") || "").split(" ");
-        let itemIndex = classes.indexOf(item);
+        const classes = (this.className || "").split(" ");
+        const itemIndex = classes.indexOf(item);
         if (force && itemIndex === -1) {
           classes.push(item);
         }
         if (!force && itemIndex !== -1) {
           classes.splice(itemIndex, 1);
         }
-        let final = classes.join(" ").trim();
+        const final = classes.join(" ").trim();
         if (final.length) {
-          this.setAttribute("class", classes.join(" ").trim());
+          this.className = classes.join(" ").trim();
         } else {
-          this.removeAttribute("class");
+          this.className = false;
         }
       }
     }
   };
+  get id() {
+    return this.getAttribute("id") || "";
+  }
+  set id(value) {
+    if (value == null || value === false) {
+      this.removeAttribute("id");
+    } else {
+      this.setAttribute("id", String(value));
+    }
+  }
   set textContent(text) {
     this.nodeValue = String(text);
     this.childNodes = this.nodeValue ? [new Text(this.nodeValue)] : [];
@@ -365,7 +388,7 @@ var Element = class extends Node {
   }
   set innerHTML(html) {
     this.textContent = "";
-    let result = htmlToDom(html);
+    const result = htmlToDom(html);
     if (result instanceof DocumentFragment) {
       for (let i = 0, l = result.childNodes.length; i < l; i++) {
         this.appendChild(result.childNodes[i]);
@@ -395,12 +418,12 @@ var Document = class extends Element {
     return new DocumentFragment();
   }
   createElement(type) {
-    let element = new Element();
+    const element = new Element();
     element.nodeName = type.toUpperCase();
     return element;
   }
   createElementNS(ns, type) {
-    let element = this.createElement(type);
+    const element = this.createElement(type);
     element.baseURI = ns;
     return element;
   }
@@ -430,7 +453,7 @@ function domToHtml(dom) {
     return dom.textContent;
   }
   if (dom.nodeType === 1) {
-    let name = dom.nodeName.toLowerCase();
+    const name = dom.nodeName.toLowerCase();
     let str = "<" + name;
     for (let i = 0, l = dom.attributes.length; i < l; i++) {
       str += " " + dom.attributes[i].nodeName + '="' + dom.attributes[i].nodeValue + '"';
@@ -439,7 +462,7 @@ function domToHtml(dom) {
       str += ">";
       if (dom.childNodes && dom.childNodes.length > 0) {
         for (let i = 0, l = dom.childNodes.length; i < l; i++) {
-          let child = domToHtml(dom.childNodes[i]);
+          const child = domToHtml(dom.childNodes[i]);
           if (child) {
             str += child;
           }
@@ -469,9 +492,9 @@ ${spaces}"${item.nodeValue}"`;
       let str = `
 ${spaces}v("${item.nodeName}", `;
       if (item.attributes) {
-        let attrs = {};
+        const attrs = {};
         for (let i = 0, l = item.attributes.length; i < l; i++) {
-          let attr = item.attributes[i];
+          const attr = item.attributes[i];
           attrs[attr.nodeName] = attr.nodeValue;
         }
         str += JSON.stringify(attrs);
@@ -489,14 +512,14 @@ ${spaces}`;
   }).join(",");
 }
 function findTexts(item, html) {
-  let newChildren = [];
+  const newChildren = [];
   if (item.children.length) {
     for (let i = 0; i < item.children.length; i++) {
-      let child = item.children[i];
-      let nextChild = item.children[i + 1];
+      const child = item.children[i];
+      const nextChild = item.children[i + 1];
       if (i === 0 && child.startsAt > item.contentStartsAt) {
-        let childContent = html.substring(item.contentStartsAt, child.startsAt);
-        let childText = {
+        const childContent = html.substring(item.contentStartsAt, child.startsAt);
+        const childText = {
           tagName: "#text",
           startsAt: item.contentStartsAt,
           endsAt: item.contentStartsAt + childContent.length,
@@ -510,8 +533,8 @@ function findTexts(item, html) {
       }
       newChildren.push(child);
       if (nextChild && child.endsAt < nextChild.startsAt) {
-        let childContent = html.substring(child.endsAt, nextChild.startsAt);
-        let childText = {
+        const childContent = html.substring(child.endsAt, nextChild.startsAt);
+        const childText = {
           tagName: "#text",
           startsAt: child.endsAt,
           endsAt: child.endsAt + childContent.length,
@@ -524,8 +547,8 @@ function findTexts(item, html) {
         newChildren.push(childText);
       }
       if (!nextChild && child.endsAt < item.contentEndsAt) {
-        let childContent = html.substring(child.endsAt, item.contentEndsAt);
-        let childText = {
+        const childContent = html.substring(child.endsAt, item.contentEndsAt);
+        const childText = {
           tagName: "#text",
           startsAt: child.endsAt,
           endsAt: child.endsAt + childContent.length,
@@ -541,9 +564,9 @@ function findTexts(item, html) {
     }
   }
   if (!item.children.length) {
-    let childContent = html.substring(item.contentStartsAt, item.contentEndsAt);
+    const childContent = html.substring(item.contentStartsAt, item.contentEndsAt);
     if (childContent.length) {
-      let childText = {
+      const childText = {
         tagName: "#text",
         startsAt: item.contentStartsAt,
         endsAt: item.contentEndsAt,
@@ -564,11 +587,11 @@ function convertToDom(item) {
     node = document.createTextNode(item.nodeValue);
   } else {
     node = item.tagName === "#document-fragment" ? document.createDocumentFragment() : document.createElement(item.tagName);
-    for (let key in item.attributes) {
+    for (const key in item.attributes) {
       node.setAttribute(key, item.attributes[key]);
     }
     for (let i = 0; i < item.children.length; i++) {
-      let child = convertToDom(item.children[i]);
+      const child = convertToDom(item.children[i]);
       node.appendChild(child);
     }
   }
@@ -576,24 +599,24 @@ function convertToDom(item) {
 }
 function getObjectIndexTree(html) {
   let item;
-  let regex = RegExp("<([^>|^!]+)>", "g");
-  let items = [];
+  const regex = RegExp("<([^>|^!]+)>", "g");
+  const items = [];
   while (item = regex.exec(html)) {
     if (item[0].startsWith("</")) {
-      let lastOpenedItem = [...items].reverse().find((item2) => item2.endsAt === null);
+      const lastOpenedItem = [...items].reverse().find((item2) => item2.endsAt === null);
       if (lastOpenedItem) {
         lastOpenedItem.endsAt = item.index + item[0].length;
         lastOpenedItem.contentEndsAt = item.index;
-        let parent = [...items].reverse().find((item2) => item2.endsAt === null);
+        const parent = [...items].reverse().find((item2) => item2.endsAt === null);
         if (parent) {
-          let index = items.indexOf(lastOpenedItem);
+          const index = items.indexOf(lastOpenedItem);
           items.splice(index, 1);
           parent.children.push(lastOpenedItem);
         }
       }
       continue;
     }
-    let element = {
+    const element = {
       tagName: item[1].split(" ")[0],
       startsAt: item.index,
       endsAt: null,
@@ -604,9 +627,9 @@ function getObjectIndexTree(html) {
       nodeValue: null
     };
     let string = (item[1] || "").substring(element.tagName.length + 1).replace(/\/$/g, "");
-    let attributesWithValues = string.match(/\S+="[^"]+"/g);
+    const attributesWithValues = string.match(/\S+="[^"]+"/g);
     if (attributesWithValues) {
-      for (let attribute of attributesWithValues) {
+      for (const attribute of attributesWithValues) {
         const [name, ...value] = attribute.trim().split("=");
         string = string.replace(attribute, "");
         if (value) {
@@ -614,9 +637,9 @@ function getObjectIndexTree(html) {
         }
       }
     }
-    let attributesWithBooleanValues = string.match(/\s\S+=[^"]+/g);
+    const attributesWithBooleanValues = string.match(/\s\S+=[^"]+/g);
     if (attributesWithBooleanValues) {
-      for (let attribute of attributesWithBooleanValues) {
+      for (const attribute of attributesWithBooleanValues) {
         const [name, ...value] = attribute.trim().split("=");
         string = string.replace(attribute, "");
         if (value) {
@@ -624,9 +647,9 @@ function getObjectIndexTree(html) {
         }
       }
     }
-    let attributesWithEmptyValues = string.match(/\s?\S+/g);
+    const attributesWithEmptyValues = string.match(/\s?\S+/g);
     if (attributesWithEmptyValues) {
-      for (let attribute of attributesWithEmptyValues) {
+      for (const attribute of attributesWithEmptyValues) {
         const name = attribute.trim();
         element.attributes[name] = true;
       }
@@ -634,7 +657,7 @@ function getObjectIndexTree(html) {
     if (item[0].endsWith("/>")) {
       element.endsAt = element.startsAt + item[0].length;
       element.contentStartsAt = element.contentEndsAt = element.endsAt;
-      let parent = [...items].reverse().find((item2) => item2.endsAt === null);
+      const parent = [...items].reverse().find((item2) => item2.endsAt === null);
       if (parent) {
         parent.children.push(element);
         continue;
@@ -642,7 +665,7 @@ function getObjectIndexTree(html) {
     }
     items.push(element);
   }
-  let fragmentItem = {
+  const fragmentItem = {
     tagName: "#document-fragment",
     startsAt: 0,
     endsAt: html.length,
@@ -657,21 +680,21 @@ function getObjectIndexTree(html) {
 }
 function htmlToDom(html) {
   const openingTag = html.match(/<[^>]+>/g);
-  let document2 = new Document();
+  const document2 = new Document();
   if (!openingTag) {
-    let documentFragment = document2.createDocumentFragment();
+    const documentFragment = document2.createDocumentFragment();
     documentFragment.appendChild(document2.createTextNode(html));
     return documentFragment;
   }
-  let fragment = getObjectIndexTree(html);
+  const fragment = getObjectIndexTree(html);
   if (fragment.childNodes.length > 1) {
     return fragment;
   }
   return fragment.childNodes[0];
 }
 function htmlToHyperscript(html) {
-  let domTree = htmlToDom(html);
-  let hyperscript = domToHyperscript(domTree instanceof DocumentFragment ? domTree.childNodes : [domTree]);
+  const domTree = htmlToDom(html);
+  const hyperscript = domToHyperscript(domTree instanceof DocumentFragment ? domTree.childNodes : [domTree]);
   return `[${hyperscript}
 ]`;
 }
@@ -684,7 +707,7 @@ var import_form_data = __toESM(require("form-data"));
 // lib/node/utils/icons.ts
 var import_fs = __toESM(require("fs"));
 async function icons(source, configuration) {
-  let options = {
+  const options = {
     ...icons.options,
     ...configuration || {}
   };
@@ -696,17 +719,17 @@ async function icons(source, configuration) {
   }
   const { favicons } = await import("favicons");
   try {
-    let response = await favicons(source, options);
+    const response = await favicons(source, options);
     if (options.iconsPath) {
-      for (let i in response.images) {
+      for (const i in response.images) {
         import_fs.default.writeFileSync(options.iconsPath + response.images[i].name, response.images[i].contents);
       }
-      for (let i in response.files) {
+      for (const i in response.files) {
         import_fs.default.writeFileSync(options.iconsPath + response.files[i].name, response.files[i].contents);
       }
     }
     if (options.linksViewPath) {
-      let html = `
+      const html = `
   function Links(){
     return ${htmlToHyperscript(response.html.join(""))};
   }
@@ -761,12 +784,12 @@ var import_esbuild = __toESM(require("esbuild"));
 var import_fs2 = __toESM(require("fs"));
 async function inline(file, options = {}) {
   if (typeof file === "string") {
-    let ext = file.split(".").pop();
+    const ext = file.split(".").pop();
     if (ext && /(js|cjs|jsx|mjs|ts|tsx)/.test(ext)) {
       if (/(ts|tsx)/.test(ext) && !options.noValidate) {
-        let declarationDir = options.declarationDir;
-        let emitDeclaration = !!declarationDir;
-        let tscProgOptions = {
+        const declarationDir = options.declarationDir;
+        const emitDeclaration = !!declarationDir;
+        const tscProgOptions = {
           basePath: process.cwd(),
           // always required, used for relative paths
           configFilePath: "tsconfig.json",
@@ -799,7 +822,7 @@ async function inline(file, options = {}) {
         console.log("tsc", tscProgOptions);
         tsc.build(tscProgOptions);
       }
-      let esbuildOptions = {
+      const esbuildOptions = {
         entryPoints: [file],
         bundle: "bundle" in options ? options.bundle : true,
         sourcemap: "external",
@@ -817,13 +840,13 @@ async function inline(file, options = {}) {
         },
         ...options.esbuild || {}
       };
-      let result = await import_esbuild.default.build(esbuildOptions);
+      const result = await import_esbuild.default.build(esbuildOptions);
       if (result.outputFiles?.length !== 2) {
         throw new Error(result.errors.join("\n"));
       }
       if (options.compact) {
         const terser = await import("terser");
-        let result2 = await terser.minify(result.outputFiles[1].text, {
+        const result2 = await terser.minify(result.outputFiles[1].text, {
           sourceMap: {
             content: result.outputFiles[0].text.toString()
           },
@@ -839,16 +862,16 @@ async function inline(file, options = {}) {
         if (!result2.code || !result2.map) {
           throw new Error("Unknown error");
         }
-        let mapBase64 = Buffer.from(result2.map.toString()).toString("base64");
-        let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
+        const mapBase64 = Buffer.from(result2.map.toString()).toString("base64");
+        const suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
         return { raw: result2.code, map: suffix, file };
       } else {
-        let mapBase64 = Buffer.from(result.outputFiles[0].text.toString()).toString("base64");
-        let suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
+        const mapBase64 = Buffer.from(result.outputFiles[0].text.toString()).toString("base64");
+        const suffix = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
         return { raw: result.outputFiles[1].text, map: suffix, file };
       }
     } else if (ext && /(css|scss|styl)/.test(ext)) {
-      let result = await new import_clean_css.default({
+      const result = await new import_clean_css.default({
         sourceMap: true,
         level: {
           1: {
@@ -870,15 +893,15 @@ async function inline(file, options = {}) {
   }
 }
 inline.uncss = async function(renderedHtml, css, options = {}) {
-  let html = await Promise.all(renderedHtml);
-  let contents = html.map((item) => {
+  const html = await Promise.all(renderedHtml);
+  const contents = html.map((item) => {
     return {
       raw: item,
       extension: "html"
     };
   });
-  let purgecss = new import_purgecss.PurgeCSS();
-  let output = await purgecss.purge({
+  const purgecss = new import_purgecss.PurgeCSS();
+  const output = await purgecss.purge({
     fontFace: true,
     keyframes: true,
     variables: true,
@@ -887,7 +910,7 @@ inline.uncss = async function(renderedHtml, css, options = {}) {
     content: contents,
     css: [{ raw: css }]
   });
-  let cleanCss = await new import_clean_css.default({
+  const cleanCss = await new import_clean_css.default({
     sourceMap: false,
     level: {
       1: {
@@ -907,9 +930,9 @@ inline.uncss = async function(renderedHtml, css, options = {}) {
 var import_fs3 = __toESM(require("fs"));
 var import_path = __toESM(require("path"));
 function sw(file, options = {}) {
-  let swfiletemplate = import_path.default.resolve(__dirname, "./node.sw.tpl");
-  let swTpl = import_fs3.default.readFileSync(swfiletemplate, "utf8");
-  let opt = Object.assign(
+  const swfiletemplate = import_path.default.resolve(__dirname, "./node.sw.tpl");
+  const swTpl = import_fs3.default.readFileSync(swfiletemplate, "utf8");
+  const opt = Object.assign(
     {
       version: "v1::",
       name: "Valyrian.js",
@@ -929,8 +952,8 @@ function sw(file, options = {}) {
 global.FormData = import_form_data.default;
 global.document = document;
 function render(...args) {
-  let Component = () => args;
-  let result = (0, import_valyrian.mount)("div", Component);
+  const Component = () => args;
+  const result = (0, import_valyrian.mount)("div", Component);
   (0, import_valyrian.unmount)();
   return result;
 }
