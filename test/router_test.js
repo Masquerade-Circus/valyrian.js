@@ -341,7 +341,7 @@ describe("Router", () => {
       err = error.message;
     }
 
-    expect(err).toEqual("The url / requested wasn't found");
+    expect(err).toEqual("The URL / was not found in the router's registered paths.");
   });
 
   it("Test get routes", () => {
@@ -370,7 +370,7 @@ describe("Router", () => {
     };
 
     const handler = router.getOnClickHandler("/other");
-    handler({ preventDefault: () => {} });
+    handler({ preventDefault: () => {}, button: 0 });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
 
@@ -395,7 +395,7 @@ describe("Router", () => {
     };
 
     const handler = router.getOnClickHandler("/Mike");
-    handler({ preventDefault: () => {} });
+    handler({ preventDefault: () => {}, button: 0 });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
 
@@ -418,7 +418,7 @@ describe("Router", () => {
     };
 
     const handler = router.getOnClickHandler("/world?world=Mike");
-    handler({ preventDefault: () => {} });
+    handler({ preventDefault: () => {}, button: 0 });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
 
@@ -441,7 +441,7 @@ describe("Router", () => {
     };
 
     const handler = router.getOnClickHandler("/world#Mike");
-    handler({ preventDefault: () => {} });
+    handler({ preventDefault: () => {}, button: 0 });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
 

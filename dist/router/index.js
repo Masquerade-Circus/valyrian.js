@@ -50,7 +50,7 @@ var addPath = ({
   }
   const realpath = path.replace(/(\S)(\/+)$/, "$1");
   const params = (realpath.match(/:(\w+)?/gi) || []).map((param) => param.slice(1));
-  const regexpPath = "^" + realpath.replace(/:(\w+)/gi, "([^\\/\\s]+)") + "$";
+  const regexpPath = "^" + realpath.replace(/:([\w-]+)/gi, "([^\\/\\s]+)") + "$";
   router.paths.push({
     method,
     path: realpath,
@@ -64,7 +64,7 @@ function parseQuery(queryParts) {
   const query = {};
   for (const nameValue of parts) {
     const [name, value] = nameValue.split("=", 2);
-    query[name] = value || "";
+    query[name] = isNaN(Number(value)) === false ? Number(value) : value === "true" ? true : value === "false" ? false : value;
   }
   return query;
 }
@@ -105,7 +105,12 @@ async function searchComponent(router, middlewares) {
   };
   let response;
   for (const middleware of middlewares) {
-    response = await middleware(request, response);
+    try {
+      response = await middleware(request, response);
+    } catch (error) {
+      console.error(`Error in middleware: ${error.message}`);
+      return false;
+    }
     if (response !== void 0 && ((0, import_valyrian.isComponent)(response) || (0, import_valyrian.isVnodeComponent)(response))) {
       return response;
     }
@@ -172,7 +177,7 @@ var Router = class _Router {
       return;
     }
     if (!component) {
-      throw new Error(`The url ${constructedPath} requested wasn't found`);
+      throw new Error(`The URL ${constructedPath} was not found in the router's registered paths.`);
     }
     if ((0, import_valyrian.isComponent)(parentComponent) || (0, import_valyrian.isVnodeComponent)(parentComponent)) {
       const childComponent = (0, import_valyrian.isVnodeComponent)(component) ? component : (0, import_valyrian.v)(component, {});
@@ -183,7 +188,7 @@ var Router = class _Router {
         component = (0, import_valyrian.v)(parentComponent, {}, childComponent);
       }
     }
-    if (!import_valyrian.isNodeJs && !preventPushState) {
+    if (!import_valyrian.isNodeJs && !preventPushState && window.location.pathname + window.location.search !== constructedPath) {
       window.history.pushState(null, "", constructedPath);
     }
     if (this.container) {
@@ -192,6 +197,9 @@ var Router = class _Router {
   }
   getOnClickHandler(url) {
     return (e) => {
+      if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.defaultPrevented) {
+        return;
+      }
       if (typeof url === "string" && url.length > 0) {
         this.go(url);
       }
@@ -200,9 +208,10 @@ var Router = class _Router {
   }
 };
 var localRedirect;
-function redirect(url, parentComponent, preventPushState = false) {
+async function redirect(url, parentComponent, preventPushState = false) {
   if (!localRedirect) {
-    throw new Error("router.redirect.not.found");
+    console.warn("Redirect function is not initialized. Please mount the router first.");
+    return;
   }
   return localRedirect(url, parentComponent, preventPushState);
 }

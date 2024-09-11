@@ -112,7 +112,7 @@ const addPath = ({
     .map((param) => param.slice(1));
 
   // Generate a regular expression to match the path
-  const regexpPath = "^" + realpath.replace(/:(\w+)/gi, "([^\\/\\s]+)") + "$";
+  const regexpPath = "^" + realpath.replace(/:([\w-]+)/gi, "([^\\/\\s]+)") + "$";
 
   router.paths.push({
     method,
@@ -124,15 +124,14 @@ const addPath = ({
 };
 
 // Parse a query string into an object
-function parseQuery(queryParts?: string): Record<string, string> {
-  // Split the query string into an array of name-value pairs
+function parseQuery(queryParts?: string): Record<string, any> {
   const parts = queryParts ? queryParts.split("&") : [];
-  const query: Record<string, string> = {};
+  const query: Record<string, any> = {};
 
-  // Iterate over the name-value pairs and add them to the query object
   for (const nameValue of parts) {
     const [name, value] = nameValue.split("=", 2);
-    query[name] = value || "";
+    query[name] =
+      isNaN(Number(value)) === false ? Number(value) : value === "true" ? true : value === "false" ? false : value;
   }
 
   return query;
@@ -198,7 +197,13 @@ async function searchComponent(
   // Iterate through middlewares
   for (const middleware of middlewares) {
     // Invoke middleware and update response
-    response = await middleware(request, response);
+    try {
+      response = await middleware(request, response);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(`Error in middleware: ${(error as any).message}`);
+      return false;
+    }
 
     // Return response if it's a valid component
     if (response !== undefined && (isComponent(response) || isVnodeComponent(response))) {
@@ -286,7 +291,7 @@ export class Router implements RouterInterface {
     }
 
     if (!component) {
-      throw new Error(`The url ${constructedPath} requested wasn't found`);
+      throw new Error(`The URL ${constructedPath} was not found in the router's registered paths.`);
     }
 
     if (isComponent(parentComponent) || isVnodeComponent(parentComponent)) {
@@ -299,7 +304,7 @@ export class Router implements RouterInterface {
       }
     }
 
-    if (!isNodeJs && !preventPushState) {
+    if (!isNodeJs && !preventPushState && window.location.pathname + window.location.search !== constructedPath) {
       window.history.pushState(null, "", constructedPath);
     }
 
@@ -310,6 +315,12 @@ export class Router implements RouterInterface {
 
   getOnClickHandler(url: string) {
     return (e: MouseEvent) => {
+      // We only want to handle left-clicks that aren't modified by other keys (like Ctrl + click)
+      // and that aren't on links with a target attribute set to _blank or _self
+      if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.defaultPrevented) {
+        return;
+      }
+
       if (typeof url === "string" && url.length > 0) {
         this.go(url);
       }
@@ -320,13 +331,15 @@ export class Router implements RouterInterface {
 
 let localRedirect: RedirectFunction;
 
-export function redirect(
+export async function redirect(
   url: string,
   parentComponent?: Component | POJOComponent | VnodeComponentInterface,
   preventPushState = false
 ): Promise<string | void> {
   if (!localRedirect) {
-    throw new Error("router.redirect.not.found");
+    // eslint-disable-next-line no-console
+    console.warn("Redirect function is not initialized. Please mount the router first.");
+    return;
   }
   return localRedirect(url, parentComponent, preventPushState);
 }
