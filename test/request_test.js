@@ -160,6 +160,7 @@ describe("Request", () => {
         const res = await request.get(`${server.baseUrl}/posts/`, {
           userId: 1
         });
+
         expect(res).toEqual(expect.any(Array));
         expect(res.length).toEqual(10);
         await server.close();

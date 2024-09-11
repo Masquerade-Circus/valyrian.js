@@ -49,7 +49,7 @@ export declare function v(tagOrComponent: string | ValyrianComponent, props: Vno
 export declare namespace v {
     var fragment: (_: VnodeProperties, ...children: Children) => Children;
 }
-export declare function domToVnode(dom: any): VnodeWithDom | void;
+export declare function hidrateDomToVnode(dom: any): VnodeWithDom | void;
 export declare function trust(htmlString: string): (void | VnodeWithDom)[];
 export declare const current: {
     vnode: Vnode | null;
@@ -66,10 +66,9 @@ export declare function directive(name: string, directive: Directive): void;
 export declare function setAttribute(name: string, value: any, newVnode: VnodeWithDom): void;
 export declare function updateAttributes(newVnode: VnodeWithDom, oldProps: VnodeProperties | null): void;
 export declare function createElement(tag: string, isSVG: boolean): DomElement;
-export declare function patch(newVnode: VnodeWithDom): void;
 export declare function updateVnode(vnode: VnodeWithDom): string | void;
 export declare function update(): void | string;
 export declare function unmount(): string | void;
-export declare function mount(dom: string | DomElement, component: any): string | void;
+export declare function mount(domOrContent: string | DomElement | any, component?: any): string | void;
 export {};
 //# sourceMappingURL=index.d.ts.map

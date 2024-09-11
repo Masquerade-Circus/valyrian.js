@@ -4,7 +4,7 @@ interface TInterface {
 export declare function setTranslations(defaultTranslation: Record<string, any>, newTranslations: Record<string, Record<string, any>>): TInterface;
 export declare function setLang(newLang: string): void;
 export declare class NumberFormatter {
-    private _value;
+    #private;
     get value(): number;
     set(newValue: number | string, shiftDecimal?: boolean): this;
     private clean;
