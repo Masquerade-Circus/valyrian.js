@@ -1,7 +1,7 @@
 // lib/translate/index.ts
 import { get } from "valyrian.js/utils";
 var translations = {};
-var lang = "es";
+var lang = "en";
 function t(path, params) {
   const langDef = translations[lang];
   const translation = get(langDef, path);
@@ -29,28 +29,32 @@ function setTranslations(defaultTranslation, newTranslations) {
       ...newTranslations[lang2]
     };
   }
-  return t;
+}
+function getTranslations() {
+  return translations;
 }
 function setLang(newLang) {
   if (typeof newLang !== "string") {
-    console.error(`Language ${newLang} not found`);
-    return;
+    throw new Error(`Language ${newLang} not found`);
   }
   const parsedLang = newLang.toLowerCase().split("-").shift()?.split("_").shift();
   if (typeof parsedLang !== "string") {
-    console.error(`Language ${newLang} not found`);
-    return;
+    throw new Error(`Language ${newLang} not found`);
   }
   if (!translations[parsedLang]) {
-    console.error(`Language ${newLang} not found`);
-    return;
+    throw new Error(`Language ${newLang} not found`);
   }
   lang = parsedLang;
+}
+function getLang() {
+  return lang;
 }
 var NumberFormatter = class _NumberFormatter {
   #value = 0;
   get value() {
     return this.#value;
+  }
+  constructor() {
   }
   set(newValue, shiftDecimal = false) {
     this.#value = this.clean(newValue, shiftDecimal);
@@ -64,23 +68,28 @@ var NumberFormatter = class _NumberFormatter {
     const number = Number(stringNumber);
     return isNaN(number) ? 0 : number;
   }
-  format(digits = 2) {
-    const formatter = new Intl.NumberFormat("en-US", {
+  format(digits = 2, options = {}, customLocale) {
+    const lang2 = customLocale || getLang();
+    const formatter = new Intl.NumberFormat(lang2, {
       style: "currency",
       currency: "USD",
       minimumFractionDigits: digits,
-      maximumFractionDigits: digits
+      maximumFractionDigits: digits,
+      ...options
     });
     return formatter.format(this.#value);
   }
   fromDecimalPlaces(decimalPlaces) {
-    const factor = Math.pow(10, decimalPlaces);
-    this.#value = Math.round(this.#value * factor);
+    const currentDecimalPlaces = this.getDecimalPlaces();
+    const factor = Math.pow(10, decimalPlaces - currentDecimalPlaces);
+    this.#value = Number((this.#value / factor).toFixed(decimalPlaces));
     return this;
   }
+  // Ex toDecimalPlaces(1) = 123.456 -> 12345.6
   toDecimalPlaces(decimalPlaces) {
-    const factor = Math.pow(10, decimalPlaces);
-    this.#value = this.#value / factor;
+    const currentDecimalPlaces = this.getDecimalPlaces();
+    const factor = Math.pow(10, currentDecimalPlaces - decimalPlaces);
+    this.#value = Number((this.#value * factor).toFixed(decimalPlaces));
     return this;
   }
   getDecimalPlaces() {
@@ -91,8 +100,8 @@ var NumberFormatter = class _NumberFormatter {
     const decimalIndex = stringValue.indexOf(".");
     return decimalIndex === -1 ? 0 : stringValue.length - decimalIndex - 1;
   }
-  shiftDecimal() {
-    return this.fromDecimalPlaces(this.getDecimalPlaces());
+  shiftDecimalPlaces() {
+    return this.toDecimalPlaces(0);
   }
   static create(value = 0, shiftDecimal = false) {
     const formatter = new _NumberFormatter();
@@ -101,6 +110,9 @@ var NumberFormatter = class _NumberFormatter {
 };
 export {
   NumberFormatter,
+  getLang,
+  getTranslations,
   setLang,
-  setTranslations
+  setTranslations,
+  t
 };

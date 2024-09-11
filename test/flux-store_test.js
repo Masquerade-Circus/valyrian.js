@@ -29,7 +29,7 @@ describe("FluxStore", () => {
             setTimeout(() => {
               context.commit("pushB", payload);
               resolve();
-            }, 1000);
+            }, 10);
           });
         }
       },

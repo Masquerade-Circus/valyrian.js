@@ -2,12 +2,9 @@
 import { get } from "valyrian.js/utils";
 
 const translations: Record<string, Record<string, any>> = {};
-let lang = "es";
+let lang = "en";
 
-interface TInterface {
-  (path: string, params?: Record<string, string>): string;
-}
-function t(path: string, params?: Record<string, string>): string {
+export function t(path: string, params?: Record<string, string>): string {
   const langDef = translations[lang];
   const translation = get(langDef, path);
 
@@ -31,7 +28,7 @@ function t(path: string, params?: Record<string, string>): string {
 export function setTranslations(
   defaultTranslation: Record<string, any>,
   newTranslations: Record<string, Record<string, any>>
-): TInterface {
+) {
   for (const lang in translations) {
     Reflect.deleteProperty(translations, lang);
   }
@@ -42,29 +39,32 @@ export function setTranslations(
       ...newTranslations[lang]
     };
   }
+}
 
-  return t;
+export function getTranslations(): Record<string, Record<string, any>> {
+  return translations;
 }
 
 export function setLang(newLang: string): void {
   if (typeof newLang !== "string") {
-    console.error(`Language ${newLang} not found`);
-    return;
+    throw new Error(`Language ${newLang} not found`);
   }
 
   const parsedLang = newLang.toLowerCase().split("-").shift()?.split("_").shift();
 
   if (typeof parsedLang !== "string") {
-    console.error(`Language ${newLang} not found`);
-    return;
+    throw new Error(`Language ${newLang} not found`);
   }
 
   if (!translations[parsedLang]) {
-    console.error(`Language ${newLang} not found`);
-    return;
+    throw new Error(`Language ${newLang} not found`);
   }
 
   lang = parsedLang;
+}
+
+export function getLang(): string {
+  return lang;
 }
 
 export class NumberFormatter {
@@ -73,6 +73,8 @@ export class NumberFormatter {
   get value(): number {
     return this.#value;
   }
+
+  private constructor() {}
 
   public set(newValue: number | string, shiftDecimal = false) {
     this.#value = this.clean(newValue, shiftDecimal);
@@ -91,26 +93,31 @@ export class NumberFormatter {
     return isNaN(number) ? 0 : number;
   }
 
-  format(digits = 2): string {
-    const formatter = new Intl.NumberFormat("en-US", {
+  format(digits = 2, options: Intl.NumberFormatOptions = {}, customLocale?: Intl.LocalesArgument): string {
+    const lang = customLocale || getLang();
+    const formatter = new Intl.NumberFormat(lang, {
       style: "currency",
       currency: "USD",
       minimumFractionDigits: digits,
-      maximumFractionDigits: digits
+      maximumFractionDigits: digits,
+      ...options
     });
 
     return formatter.format(this.#value);
   }
 
   fromDecimalPlaces(decimalPlaces: number) {
-    const factor = Math.pow(10, decimalPlaces);
-    this.#value = Math.round(this.#value * factor);
+    const currentDecimalPlaces = this.getDecimalPlaces();
+    const factor = Math.pow(10, decimalPlaces - currentDecimalPlaces);
+    this.#value = Number((this.#value / factor).toFixed(decimalPlaces));
     return this;
   }
 
+  // Ex toDecimalPlaces(1) = 123.456 -> 12345.6
   toDecimalPlaces(decimalPlaces: number) {
-    const factor = Math.pow(10, decimalPlaces);
-    this.#value = this.#value / factor;
+    const currentDecimalPlaces = this.getDecimalPlaces();
+    const factor = Math.pow(10, currentDecimalPlaces - decimalPlaces);
+    this.#value = Number((this.#value * factor).toFixed(decimalPlaces));
     return this;
   }
 
@@ -124,8 +131,8 @@ export class NumberFormatter {
     return decimalIndex === -1 ? 0 : stringValue.length - decimalIndex - 1;
   }
 
-  shiftDecimal() {
-    return this.fromDecimalPlaces(this.getDecimalPlaces());
+  shiftDecimalPlaces() {
+    return this.toDecimalPlaces(0);
   }
 
   static create(value: number | string = 0, shiftDecimal = false): NumberFormatter {
