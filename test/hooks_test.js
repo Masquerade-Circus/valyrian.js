@@ -20,7 +20,7 @@ describe("Hooks", () => {
 
       let result = mount("div", Counter);
       expect(result).toEqual("<div>0</div>");
-      await new Promise((resolve) => setTimeout(() => resolve(), 29));
+      await new Promise((resolve) => setTimeout(() => resolve(), 35));
       result = update();
       expect(result).toEqual("<div>2</div>");
       unmount();

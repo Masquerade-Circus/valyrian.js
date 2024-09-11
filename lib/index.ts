@@ -732,6 +732,12 @@ export function update(): void | string {
   }
 }
 
+let updateTimeout: any;
+export function debouncedUpdate() {
+  clearTimeout(updateTimeout);
+  updateTimeout = setTimeout(update, 5);
+}
+
 export function unmount() {
   if (mainVnode) {
     mainComponent = v(() => null, {}) as VnodeComponentInterface;

@@ -1,4 +1,4 @@
-import { Component, POJOComponent, current, directive, onCleanup, onUnmount, update } from "valyrian.js";
+import { Component, POJOComponent, current, directive, onCleanup, onUnmount, debouncedUpdate } from "valyrian.js";
 import { hasChanged } from "valyrian.js/utils";
 
 export type Hook = any;
@@ -54,13 +54,6 @@ export const createHook = function createHook({
     return returnValue ? returnValue(hook) : hook;
   };
 } as unknown as CreateHook;
-
-let timeout: any;
-
-const debouncedUpdate = () => {
-  clearTimeout(timeout);
-  timeout = setTimeout(update, 5);
-};
 
 // Use state hook
 export const useState = createHook({

@@ -1,5 +1,5 @@
 // lib/hooks/index.ts
-import { current, directive, onCleanup, onUnmount, update } from "valyrian.js";
+import { current, directive, onCleanup, onUnmount, debouncedUpdate } from "valyrian.js";
 import { hasChanged } from "valyrian.js/utils";
 var componentToHooksWeakMap = /* @__PURE__ */ new WeakMap();
 var createHook = function createHook2({
@@ -29,11 +29,6 @@ var createHook = function createHook2({
     onCleanupHook && onCleanup(() => onCleanupHook(hook));
     return returnValue ? returnValue(hook) : hook;
   };
-};
-var timeout;
-var debouncedUpdate = () => {
-  clearTimeout(timeout);
-  timeout = setTimeout(update, 5);
 };
 var useState = createHook({
   onCreate: (value) => {

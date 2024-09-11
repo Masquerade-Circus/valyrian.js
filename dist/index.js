@@ -23,6 +23,7 @@ __export(lib_exports, {
   Vnode: () => Vnode,
   createElement: () => createElement,
   current: () => current,
+  debouncedUpdate: () => debouncedUpdate,
   directive: () => directive,
   directives: () => directives,
   hidrateDomToVnode: () => hidrateDomToVnode,
@@ -602,6 +603,11 @@ function update() {
       return mainVnode.dom.innerHTML;
     }
   }
+}
+var updateTimeout;
+function debouncedUpdate() {
+  clearTimeout(updateTimeout);
+  updateTimeout = setTimeout(update, 5);
 }
 function unmount() {
   if (mainVnode) {

@@ -62,7 +62,53 @@ function hasChanged(prev, current) {
   }
   return Object.is(prev, current) === false;
 }
+
+// lib/utils/deep-freeze.ts
+function deepFreeze(obj) {
+  if (typeof obj === "object" && obj !== null && !Object.isFrozen(obj)) {
+    if (Array.isArray(obj)) {
+      for (let i = 0, l = obj.length; i < l; i++) {
+        deepFreeze(obj[i]);
+      }
+    } else {
+      const props = Reflect.ownKeys(obj);
+      for (let i = 0, l = props.length; i < l; i++) {
+        deepFreeze(obj[props[i]]);
+      }
+      const proto = Object.getPrototypeOf(obj);
+      if (proto && proto !== Object.prototype) {
+        deepFreeze(proto);
+      }
+    }
+    Object.freeze(obj);
+  }
+  return obj;
+}
+function deepCloneUnfreeze(obj) {
+  if (typeof obj === "undefined" || obj === null || typeof obj !== "object") {
+    return obj;
+  }
+  if (obj.constructor && obj.constructor !== Object && obj.constructor !== Array) {
+    const clone2 = Reflect.construct(obj.constructor, []);
+    for (const key of Reflect.ownKeys(obj)) {
+      const value = obj[key];
+      clone2[key] = deepCloneUnfreeze(value);
+    }
+    return clone2;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map((item) => deepCloneUnfreeze(item));
+  }
+  const clone = {};
+  for (const key of Reflect.ownKeys(obj)) {
+    const value = obj[key];
+    clone[key] = deepCloneUnfreeze(value);
+  }
+  return clone;
+}
 export {
+  deepCloneUnfreeze,
+  deepFreeze,
   get,
   hasChanged,
   set

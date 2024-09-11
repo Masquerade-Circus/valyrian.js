@@ -556,6 +556,11 @@ function update() {
     }
   }
 }
+var updateTimeout;
+function debouncedUpdate() {
+  clearTimeout(updateTimeout);
+  updateTimeout = setTimeout(update, 5);
+}
 function unmount() {
   if (mainVnode) {
     mainComponent = v(() => null, {});
@@ -591,6 +596,7 @@ export {
   Vnode,
   createElement,
   current,
+  debouncedUpdate,
   directive,
   directives,
   hidrateDomToVnode,

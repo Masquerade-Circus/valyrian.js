@@ -1,6 +1,7 @@
 interface ChildNodes extends Array<Node | Element | Text | DocumentFragment> {
 }
 export declare class Node implements Node {
+    #private;
     childNodes: ChildNodes;
     baseURI: string;
     tag_name: string;
@@ -20,6 +21,8 @@ export declare class Node implements Node {
     parent_node: Node | null;
     get parentNode(): Node | null;
     set parentNode(node: Node | null);
+    get dataset(): Record<string | number, any>;
+    set dataset(value: Record<string | number, any>);
     constructor();
     appendChild<T extends Node>(node: T): T;
     insertBefore<T extends Node>(node: T, child: Node | null): T;

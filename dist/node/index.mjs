@@ -45,6 +45,13 @@ var Node = class _Node {
   set parentNode(node) {
     this.parent_node = node;
   }
+  #dataset = {};
+  get dataset() {
+    return this.#dataset;
+  }
+  set dataset(value) {
+    this.#dataset = value;
+  }
   constructor() {
   }
   appendChild(node) {
@@ -98,6 +105,9 @@ var Node = class _Node {
         for (let i = 0, l = this.attributes.length; i < l; i++) {
           node2.setAttribute(this.attributes[i].nodeName, this.attributes[i].nodeValue);
         }
+      }
+      for (const key in this.dataset) {
+        node2.dataset[key] = this.dataset[key];
       }
       if (deep) {
         for (let i = 0, l = this.childNodes.length; i < l; i++) {

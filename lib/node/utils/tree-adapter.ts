@@ -53,6 +53,16 @@ export class Node implements Node {
     this.parent_node = node;
   }
 
+  #dataset: Record<string | number, any> = {};
+
+  get dataset() {
+    return this.#dataset;
+  }
+
+  set dataset(value) {
+    this.#dataset = value;
+  }
+
   constructor() {}
 
   appendChild<T extends Node>(node: T): T {
@@ -112,6 +122,11 @@ export class Node implements Node {
           node.setAttribute(this.attributes[i].nodeName, this.attributes[i].nodeValue);
         }
       }
+
+      for (const key in this.dataset) {
+        node.dataset[key] = this.dataset[key];
+      }
+
       if (deep) {
         for (let i = 0, l = this.childNodes.length; i < l; i++) {
           node.appendChild(this.childNodes[i].cloneNode(deep));

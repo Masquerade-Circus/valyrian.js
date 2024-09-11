@@ -68,6 +68,7 @@ export declare function updateAttributes(newVnode: VnodeWithDom, oldProps: Vnode
 export declare function createElement(tag: string, isSVG: boolean): DomElement;
 export declare function updateVnode(vnode: VnodeWithDom): string | void;
 export declare function update(): void | string;
+export declare function debouncedUpdate(): void;
 export declare function unmount(): string | void;
 export declare function mount(domOrContent: string | DomElement | any, component?: any): string | void;
 export {};

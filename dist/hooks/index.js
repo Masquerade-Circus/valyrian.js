@@ -59,11 +59,6 @@ var createHook = function createHook2({
     return returnValue ? returnValue(hook) : hook;
   };
 };
-var timeout;
-var debouncedUpdate = () => {
-  clearTimeout(timeout);
-  timeout = setTimeout(import_valyrian.update, 5);
-};
 var useState = createHook({
   onCreate: (value) => {
     let state = value;
@@ -77,7 +72,7 @@ var useState = createHook({
       const resolvedValue = typeof newValue === "function" ? newValue(state) : newValue;
       if ((0, import_utils.hasChanged)(state, resolvedValue)) {
         state = resolvedValue;
-        debouncedUpdate();
+        (0, import_valyrian.debouncedUpdate)();
       }
     }
     return [get, set];

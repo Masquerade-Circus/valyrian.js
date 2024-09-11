@@ -219,7 +219,7 @@ async function copy({ entryPoint, outfileName }) {
     "hooks",
     "request",
     "sw",
-    "store",
+    "flux-store",
     "router",
     "signals",
     "utils",
