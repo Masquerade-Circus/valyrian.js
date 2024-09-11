@@ -44,11 +44,11 @@ async function build({
   external = []
 }) {
   try {
-    let header = `\n/*** ${entryPoint} ***/`;
+    const header = `\n/*** ${entryPoint} ***/`;
     console.log(header);
 
-    let outdir = outfileName.split("/").slice(0, -1).join("/");
-    let outfile = outfileName.split("/").pop();
+    const outdir = outfileName.split("/").slice(0, -1).join("/");
+    const outfile = outfileName.split("/").pop();
 
     // If clean is true, delete the outdir
     if (clean && fs.existsSync(outdir)) {
@@ -62,7 +62,7 @@ async function build({
 
     if ((libCheck || emitDeclarations) && entryPoint.endsWith(".ts")) {
       const tsc = require("tsc-prog");
-      let tscProgOptions2 = {
+      const tscProgOptions2 = {
         basePath: __dirname, // always required, used for relative paths
         configFilePath: "tsconfig.json", // config to inherit from (optional)
         files: [entryPoint],
@@ -82,7 +82,7 @@ async function build({
       tsc.build(tscProgOptions2);
     }
 
-    let cjs = esbuild.buildSync({
+    const cjs = esbuild.buildSync({
       entryPoints: [entryPoint],
       bundle: true,
       sourcemap: "external",
@@ -96,7 +96,7 @@ async function build({
       external
     });
 
-    let esm = esbuild.buildSync({
+    const esm = esbuild.buildSync({
       entryPoints: [entryPoint],
       bundle: true,
       sourcemap: "external",
@@ -129,9 +129,9 @@ async function build({
 
     let result2;
     if (minify) {
-      let codeToMinify = minify === "esm" ? esm : cjs;
+      const codeToMinify = minify === "esm" ? esm : cjs;
       if (codeToMinify) {
-        let code = convertToUMD(codeToMinify.outputFiles[1].text, globalName);
+        const code = convertToUMD(codeToMinify.outputFiles[1].text, globalName);
         result2 = await terser.minify(code, {
           sourceMap: {
             content: codeToMinify.outputFiles[0].text.toString()
@@ -145,8 +145,8 @@ async function build({
           ecma: 2022
         });
 
-        let mapBase64 = Buffer.from(result2.map.toString()).toString("base64");
-        let map = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
+        const mapBase64 = Buffer.from(result2.map.toString()).toString("base64");
+        const map = `//# sourceMappingURL=data:application/json;charset=utf-8;base64,${mapBase64}`;
         if (embedSourceMap) {
           fs.writeFileSync(`${outfileName}.min.js`, result2.code + map);
         } else {
@@ -160,7 +160,7 @@ async function build({
       return (bytes / 1024).toFixed(2) + "kb";
     }
 
-    let text = await esbuild.analyzeMetafile(esm.metafile, { verbose: true });
+    const text = await esbuild.analyzeMetafile(esm.metafile, { verbose: true });
     console.log(text);
     console.log("Esm", formatBytesToKiloBytes(esm.outputFiles[1].text.length));
     if (minify) {
@@ -180,8 +180,8 @@ async function build({
 
 // eslint-disable-next-line no-unused-vars
 async function copy({ entryPoint, outfileName }) {
-  let outdir = outfileName.split("/").slice(0, -1).join("/");
-  let outfile = outfileName.split("/").pop();
+  const outdir = outfileName.split("/").slice(0, -1).join("/");
+  const outfile = outfileName.split("/").pop();
   console.log(`\Coping ${entryPoint} to ${outfileName}`);
   console.log(`Using ${outdir} as output directory`);
   console.log(`Using ${outfile} as output file`);
@@ -195,15 +195,15 @@ async function copy({ entryPoint, outfileName }) {
 }
 
 (async () => {
-  let isDev = process.env.NODE_ENV === "development";
-  let libCheck = !isDev;
-  let emitDeclarations = !isDev;
-  let clean = !isDev;
+  const isDev = process.env.NODE_ENV === "development";
+  const libCheck = !isDev;
+  const emitDeclarations = !isDev;
+  const clean = !isDev;
 
   const args = process.argv.slice(2);
   const onlyMain = args.includes("--only-main");
 
-  let buildStart = hrtime();
+  const buildStart = hrtime();
 
   await build({
     globalName: "Valyrian",
@@ -215,56 +215,38 @@ async function copy({ entryPoint, outfileName }) {
     emitDeclarations
   });
 
+  const otherModules = [
+    "hooks",
+    "request",
+    "sw",
+    "store",
+    "router",
+    "signals",
+    "utils",
+    "suspense",
+    "native-store",
+    "translate"
+  ];
+
   if (!onlyMain) {
-    await build({
-      globalName: "ValyrianHooks",
-      entryPoint: "./lib/hooks/index.ts",
-      outfileName: "./dist/hooks/index",
-      clean: false,
-      minify: false,
-      libCheck,
-      external: ["valyrian.js"]
-    });
-
-    await build({
-      globalName: "ValyrianRequest",
-      entryPoint: "./lib/request/index.ts",
-      outfileName: "./dist/request/index",
-      clean: false,
-      minify: false,
-      libCheck,
-      external: ["valyrian.js"]
-    });
-
-    await build({
-      globalName: "ValyrianSw",
-      entryPoint: "./lib/sw/index.ts",
-      outfileName: "./dist/sw/index",
-      clean: false,
-      minify: false,
-      libCheck,
-      external: ["valyrian.js"]
-    });
-
-    await build({
-      globalName: "ValyrianStore",
-      entryPoint: "./lib/store/index.ts",
-      outfileName: "./dist/store/index",
-      clean: false,
-      minify: false,
-      libCheck,
-      external: ["valyrian.js"]
-    });
-
-    await build({
-      globalName: "ValyrianRouter",
-      entryPoint: "./lib/router/index.ts",
-      outfileName: "./dist/router/index",
-      clean: false,
-      minify: false,
-      libCheck,
-      external: ["valyrian.js"]
-    });
+    for (const module of otherModules) {
+      const firstCaseName = module
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join("");
+      const globalName = `Valyrian${firstCaseName}`;
+      const entryPoint = `./lib/${module}/index.ts`;
+      const outfileName = `./dist/${module}/index`;
+      await build({
+        globalName,
+        entryPoint,
+        outfileName,
+        clean: false,
+        minify: false,
+        libCheck,
+        external: ["valyrian.js", ...otherModules.map((m) => `valyrian.js/${m}`)]
+      });
+    }
 
     await build({
       globalName: "ValyrianNode",
@@ -285,38 +267,9 @@ async function copy({ entryPoint, outfileName }) {
         "sharp",
         "clean-css",
         "form-data",
-        "valyrian.js"
+        "valyrian.js",
+        ...otherModules.map((m) => `valyrian.js/${m}`)
       ]
-    });
-
-    await build({
-      globalName: "ValyrianProxySignal",
-      entryPoint: "./lib/proxy-signal/index.ts",
-      outfileName: "./dist/proxy-signal/index",
-      clean: false,
-      minify: false,
-      libCheck,
-      external: ["valyrian.js"]
-    });
-
-    await build({
-      globalName: "ValyrianSignal",
-      entryPoint: "./lib/signal/index.ts",
-      outfileName: "./dist/signal/index",
-      clean: false,
-      minify: false,
-      libCheck,
-      external: ["valyrian.js"]
-    });
-
-    await build({
-      globalName: "ValyrianDataSet",
-      entryPoint: "./lib/dataset/index.ts",
-      outfileName: "./dist/dataset/index",
-      clean: false,
-      minify: false,
-      libCheck,
-      external: ["valyrian.js"]
     });
 
     copy({

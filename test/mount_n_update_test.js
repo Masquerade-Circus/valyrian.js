@@ -398,3 +398,41 @@ describe("Mount and update", () => {
     } */
   });
 });
+
+describe.skip("Benchmark Test: Mount and update", function () {
+  beforeEach(unmount);
+  afterEach(unmount);
+
+  it("should benchmark mount and update times", function () {
+    const iterations = 1000;
+    const createComponent = (index) =>
+      v("div", { id: `test-${index}`, class: `class-${index}` }, [
+        v("span", { "data-index": index }, `Texto del nodo ${index}`),
+        v("input", { type: "text", value: `input-${index}` })
+      ]);
+
+    const children = [];
+    for (let i = 0; i < iterations; i++) {
+      children.push(createComponent(i));
+    }
+    function Component() {
+      return v("div", null, children);
+    }
+
+    // eslint-disable-next-line no-console
+    console.time("Mount");
+    mount("body", Component);
+    // eslint-disable-next-line no-console
+    console.timeEnd("Mount");
+
+    children.length = 0;
+    // eslint-disable-next-line no-console
+    console.time("Update");
+    for (let i = 0; i < iterations; i++) {
+      children.push(createComponent(i));
+      update();
+    }
+    // eslint-disable-next-line no-console
+    console.timeEnd("Update");
+  });
+});

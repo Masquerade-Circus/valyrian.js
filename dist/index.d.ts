@@ -41,10 +41,11 @@ export interface VnodeWithDom extends Vnode {
     dom: DomElement;
     props: VnodeProperties;
 }
+export declare const isPOJOComponent: (component: unknown) => component is POJOComponent;
 export declare const isComponent: (component: unknown) => component is Component;
 export declare const isVnode: (object?: unknown) => object is Vnode;
 export declare const isVnodeComponent: (object?: unknown) => object is VnodeComponentInterface;
-export declare function v(tagOrComponent: string | Component, props: VnodeProperties, ...children: Children): Vnode;
+export declare function v(tagOrComponent: string | ValyrianComponent, props: VnodeProperties, ...children: Children): Vnode;
 export declare namespace v {
     var fragment: (_: VnodeProperties, ...children: Children) => Children;
 }

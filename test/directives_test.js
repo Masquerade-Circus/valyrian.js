@@ -282,45 +282,6 @@ describe("Directives", () => {
     });
 
     /**
-     * Valyrian isn't template based so we can't handle a v-else like directive
-     * Instead of v-else we will have a v-unless directive
-     *
-     * Works as embers "unless" helper
-     * It renders a vnode if the referenced value is false
-     */
-    describe("v-unless", () => {
-      it("should render vnode with falsy values", () => {
-        const values = [false, 0, "", null, , NaN];
-
-        const expected = "<div><span>Hello world</span></div>";
-
-        values.forEach((value) => {
-          const result = mount("div", () => (
-            <div>
-              <span v-unless={value}>Hello world</span>
-            </div>
-          ));
-          expect(result).toEqual(expected);
-        });
-      });
-
-      it("should not render vnode if thruthy values", () => {
-        const values = [{}, 1, true, [], "string", new Date(), -1];
-
-        const expected = "<div></div>";
-
-        values.forEach((value) => {
-          const result = mount("div", () => (
-            <div>
-              <span v-unless={value}>Hello world</span>
-            </div>
-          ));
-          expect(result).toEqual(expected);
-        });
-      });
-    });
-
-    /**
      * Works as Vue's v-show directive
      * It renders a vnode and only changes it's display style value
      */

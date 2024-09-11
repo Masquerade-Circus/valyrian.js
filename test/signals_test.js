@@ -1,468 +1,423 @@
-/* eslint-disable max-lines-per-function */
-/* eslint-disable no-console */
-import "valyrian.js/node";
-
-import { afterEach, describe, it } from "mocha";
-// eslint-disable-next-line no-unused-vars
-import { mount, onCleanup, unmount, update, v } from "valyrian.js";
-
-import { Signal } from "valyrian.js/signal";
 import expect from "expect";
+import { describe, it } from "mocha";
 
-describe("Signal", () => {
-  afterEach(unmount);
+import { v, mount } from "valyrian.js";
+import { createSignalStore, createSignal, createEffect } from "valyrian.js/signals";
 
-  it("should test basic signal", () => {
-    const [count, setCount, subscribe] = Signal(0);
-    subscribe(() => console.log(`The count is now ${count()}`));
-    expect(count()).toEqual(0);
-    setCount(1);
-    expect(count()).toEqual(1);
-    expect(`${count()}`).toEqual("1");
+describe("Signals", () => {
+  describe("createSignal", () => {
+    it("should create a signal with an initial value", () => {
+      const [count] = createSignal(0);
+      expect(count()).toEqual(0);
+    });
+
+    it("should update the signal value when the setter is used", () => {
+      const [count, setCount] = createSignal(0);
+      setCount(5);
+      expect(count()).toEqual(5);
+    });
   });
 
-  it("should test basic signal inside a component", async () => {
-    let setCountOut = null;
-    let countOut = null;
+  describe("createEffect", () => {
+    it("should execute the effect when initialized", () => {
+      let effectExecuted = false;
+      createEffect(() => {
+        effectExecuted = true;
+      });
+      expect(effectExecuted).toEqual(true);
+    });
 
-    function increment() {
-      setCountOut(countOut() + 1);
-    }
+    it("should re-execute the effect when a signal used in the effect changes", () => {
+      const [count, setCount] = createSignal(0);
+      let effectValue = null;
 
-    function decrement() {
-      setCountOut(countOut() - 1);
-    }
+      createEffect(() => {
+        effectValue = count();
+      });
 
-    let componentCalls = 0;
-    function Counter() {
-      componentCalls++;
-      const [count, setCount, subscribe] = Signal(0);
-      setCountOut = setCount;
-      countOut = count;
-      subscribe(() => console.log(`The count is now ${count()}`));
-      return (
-        <div>
-          <button onClick={decrement}>-</button>
-          <span>{count()}</span>
-          <button onClick={increment}>+</button>
-        </div>
-      );
-    }
+      expect(effectValue).toEqual(0);
 
-    const div = document.createElement("div");
-
-    let res = mount(div, <Counter />);
-    expect(res).toEqual("<div><button>-</button><span>0</span><button>+</button></div>");
-    expect(div.innerHTML).toEqual("<div><button>-</button><span>0</span><button>+</button></div>");
-    expect(componentCalls).toEqual(1);
-    increment();
-    expect(div.innerHTML).toEqual("<div><button>-</button><span>1</span><button>+</button></div>");
-    expect(componentCalls).toEqual(2);
-    increment();
-    expect(div.innerHTML).toEqual("<div><button>-</button><span>2</span><button>+</button></div>");
-    expect(componentCalls).toEqual(3);
-    res = update();
-    expect(res).toEqual("<div><button>-</button><span>2</span><button>+</button></div>");
+      setCount(10);
+      expect(effectValue).toEqual(10);
+    });
   });
 
-  it("should test basic signal outside a component", async () => {
-    const [count, setCount, subscribe] = Signal(0);
-    subscribe(() => console.log(`The count is now ${count()}`));
+  describe("Iteration between multiple signals", () => {
+    it("should update effects when multiple signals change", () => {
+      const [signalA, setSignalA] = createSignal(0);
+      const [signalB, setSignalB] = createSignal(100);
+      let result = null;
 
-    function Counter() {
-      return (
-        <div>
-          <button onClick={() => setCount(count() - 1)}>-</button>
-          <button onClick={() => setCount(count() + 1)}>+</button>
-        </div>
-      );
-    }
+      createEffect(() => {
+        result = signalA() + signalB();
+      });
 
-    function Display() {
-      return (
-        <div>
-          <span>{count()}</span>
-        </div>
-      );
-    }
+      expect(result).toEqual(100);
 
-    function App() {
-      return (
-        <div>
-          <Counter />
-          <Display />
-        </div>
-      );
-    }
+      setSignalA(50);
+      expect(result).toEqual(150);
 
-    const div = document.createElement("div");
-
-    let res = mount(div, <App />);
-    expect(res).toEqual("<div><div><button>-</button><button>+</button></div><div><span>0</span></div></div>");
-    setCount(1);
-    expect(div.innerHTML).toEqual(
-      "<div><div><button>-</button><button>+</button></div><div><span>1</span></div></div>"
-    );
-    setCount(2);
-    expect(div.innerHTML).toEqual(
-      "<div><div><button>-</button><button>+</button></div><div><span>2</span></div></div>"
-    );
-    res = update();
-    expect(res).toEqual("<div><div><button>-</button><button>+</button></div><div><span>2</span></div></div>");
+      setSignalB(200);
+      expect(result).toEqual(250);
+    });
   });
 
-  it("should test multiple signals", () => {
-    let setCountOut = null;
-    let setCount2Out = null;
-    function Counter() {
-      const [count, setCount, subscribe] = Signal(0);
-      const [count2, setCount2, subscribe2] = Signal(0);
-      setCountOut = setCount;
-      setCount2Out = setCount2;
-      subscribe(() => console.log(`The count is now ${count()}`));
-      subscribe2(() => console.log(`The count2 is now ${count2()}`));
-      return (
-        <div>
-          <button onClick={() => setCount(count() - 1)}>-</button>
-          <span>{count()}</span>
-          <button onClick={() => setCount(count() + 1)}>+</button>
-          <button onClick={() => setCount2(count2() - 1)}>-</button>
-          <span>{count2()}</span>
-          <button onClick={() => setCount2(count2() + 1)}>+</button>
-        </div>
-      );
-    }
+  describe("Effect execution control", () => {
+    it("should not re-execute the effect if the value does not change", () => {
+      const [count, setCount] = createSignal(0);
+      let effectExecutionCount = 0;
 
-    const div = document.createElement("div");
+      createEffect(() => {
+        effectExecutionCount++;
+        count();
+      });
 
-    const res = mount(div, <Counter />);
-    expect(res).toEqual(
-      "<div><button>-</button><span>0</span><button>+</button><button>-</button><span>0</span><button>+</button></div>"
-    );
-    setCountOut(1);
-    expect(div.innerHTML).toEqual(
-      "<div><button>-</button><span>1</span><button>+</button><button>-</button><span>0</span><button>+</button></div>"
-    );
-    setCount2Out(1);
-    expect(div.innerHTML).toEqual(
-      "<div><button>-</button><span>1</span><button>+</button><button>-</button><span>1</span><button>+</button></div>"
-    );
+      expect(effectExecutionCount).toEqual(1);
+
+      setCount(0);
+      expect(effectExecutionCount).toEqual(1);
+    });
   });
 
-  it("should test multiple component instances with signal inside component", () => {
-    let setCountOut = null;
-    function Counter() {
-      const [count, setCount, subscribe] = Signal(0);
-      setCountOut = setCount;
-      subscribe(() => console.log(`The count is now ${count()}`));
-      return (
-        <div>
-          <button onClick={() => setCount(count() - 1)}>-</button>
-          <span>{count()}</span>
-          <button onClick={() => setCount(count() + 1)}>+</button>
-        </div>
-      );
-    }
+  describe("Components using signals", () => {
+    it("should render a component using a signal", () => {
+      const dom = document.createElement("div");
+      const [count] = createSignal(0);
 
-    function App() {
-      return (
-        <div>
-          <Counter />
-          <Counter />
-        </div>
-      );
-    }
-
-    const div = document.createElement("div");
-
-    const res = mount(div, <App />);
-    expect(res).toEqual(
-      "<div><div><button>-</button><span>0</span><button>+</button></div><div><button>-</button><span>0</span><button>+</button></div></div>"
-    );
-    setCountOut(1);
-    expect(div.innerHTML).toEqual(
-      "<div><div><button>-</button><span>0</span><button>+</button></div><div><button>-</button><span>1</span><button>+</button></div></div>"
-    );
-    setCountOut(2);
-    expect(div.innerHTML).toEqual(
-      "<div><div><button>-</button><span>0</span><button>+</button></div><div><button>-</button><span>2</span><button>+</button></div></div>"
-    );
-  });
-
-  it("should test multiple component instances with signal outside component", () => {
-    const [count, setCount] = Signal(0);
-    function Counter() {
-      return (
-        <div>
-          <button onClick={() => setCount(count() - 1)}>-</button>
-          <span>{count()}</span>
-          <button onClick={() => setCount(count() + 1)}>+</button>
-        </div>
-      );
-    }
-
-    function App() {
-      return (
-        <div>
-          <Counter />
-          <Counter />
-        </div>
-      );
-    }
-
-    const div = document.createElement("div");
-
-    const res = mount(div, <App />);
-    expect(res).toEqual(
-      "<div><div><button>-</button><span>0</span><button>+</button></div><div><button>-</button><span>0</span><button>+</button></div></div>"
-    );
-    setCount(1);
-    expect(div.innerHTML).toEqual(
-      "<div><div><button>-</button><span>1</span><button>+</button></div><div><button>-</button><span>1</span><button>+</button></div></div>"
-    );
-    setCount(2);
-    expect(div.innerHTML).toEqual(
-      "<div><div><button>-</button><span>2</span><button>+</button></div><div><button>-</button><span>2</span><button>+</button></div></div>"
-    );
-  });
-
-  it("should test signal inside a component with a signal outside the component", () => {
-    let setCount1Out = null;
-    let setCount2Out = null;
-    let setCount3Out = null;
-
-    function Counter() {
-      const [count, setCount, subscribe] = Signal(0);
-      if (!setCount1Out) {
-        setCount1Out = setCount;
-      } else if (!setCount2Out) {
-        setCount2Out = setCount;
+      function CounterComponent() {
+        return v("div", {}, `Count: ${count()}`);
       }
-      subscribe(() => console.log(`The count is now ${count()}`));
-      return (
-        <div id="counter">
-          <button onClick={() => setCount(count() - 1)}>-</button>
-          <span>{count()}</span>
-          <button onClick={() => setCount(count() + 1)}>+</button>
-        </div>
-      );
-    }
 
-    function App() {
-      const [count, setCount, subscribe] = Signal(0);
-      setCount3Out = setCount;
-      subscribe(() => console.log(`The app count is now ${count()}`));
-      return (
-        <div>
-          <Counter />
-          <Counter />
-          <div id="count">{count()}</div>
-        </div>
-      );
-    }
+      mount(dom, CounterComponent);
 
-    const div = document.createElement("div");
+      expect(dom.innerHTML).toEqual("<div>Count: 0</div>");
+    });
 
-    const res = mount(div, <App />);
-    expect(res).toEqual(
-      '<div><div id="counter"><button>-</button><span>0</span><button>+</button></div><div id="counter"><button>-</button><span>0</span><button>+</button></div><div id="count">0</div></div>'
-    );
-    setCount1Out(1);
-    expect(div.innerHTML).toEqual(
-      '<div><div id="counter"><button>-</button><span>1</span><button>+</button></div><div id="counter"><button>-</button><span>0</span><button>+</button></div><div id="count">0</div></div>'
-    );
-    setCount2Out(1);
-    expect(div.innerHTML).toEqual(
-      '<div><div id="counter"><button>-</button><span>1</span><button>+</button></div><div id="counter"><button>-</button><span>1</span><button>+</button></div><div id="count">0</div></div>'
-    );
-    setCount3Out(1);
-    expect(div.innerHTML).toEqual(
-      '<div><div id="counter"><button>-</button><span>1</span><button>+</button></div><div id="counter"><button>-</button><span>1</span><button>+</button></div><div id="count">1</div></div>'
-    );
+    it("should re-render the component when the signal changes", () => {
+      const dom = document.createElement("div");
+      const [count, setCount] = createSignal(0);
+
+      function CounterComponent() {
+        return v("span", {}, `Count: ${count()}`);
+      }
+
+      mount(dom, CounterComponent);
+
+      expect(dom.innerHTML).toEqual("<span>Count: 0</span>");
+
+      setCount(5);
+
+      expect(dom.innerHTML).toEqual("<span>Count: 5</span>");
+    });
+
+    it("should update the component when any of the signals change", () => {
+      const dom = document.createElement("div");
+      const [countA, setCountA] = createSignal(1);
+      const [countB, setCountB] = createSignal(2);
+
+      function DualCounterComponent() {
+        return v("span", {}, `Count A: ${countA()} | Count B: ${countB()}`);
+      }
+
+      mount(dom, DualCounterComponent);
+
+      expect(dom.innerHTML).toEqual("<span>Count A: 1 | Count B: 2</span>");
+
+      setCountA(5);
+      expect(dom.innerHTML).toEqual("<span>Count A: 5 | Count B: 2</span>");
+
+      setCountB(10);
+      expect(dom.innerHTML).toEqual("<span>Count A: 5 | Count B: 10</span>");
+    });
+
+    it("should not re-render if the signal does not change", () => {
+      const dom = document.createElement("div");
+      const [count, setCount] = createSignal(0);
+      let renderCount = 0;
+
+      function CounterComponent() {
+        renderCount++;
+        return v("span", {}, `Count: ${count()}`);
+      }
+
+      mount(dom, CounterComponent);
+
+      expect(renderCount).toEqual(1);
+      expect(dom.innerHTML).toEqual("<span>Count: 0</span>");
+
+      setCount(0);
+      expect(renderCount).toEqual(1);
+      expect(dom.innerHTML).toEqual("<span>Count: 0</span>");
+    });
+
+    it("should re-render both components when the shared signal changes", () => {
+      const dom1 = document.createElement("div");
+      const dom2 = document.createElement("div");
+      const [sharedSignal, setSharedSignal] = createSignal(0);
+
+      function FirstComponent() {
+        return v("span", {}, `First: ${sharedSignal()}`);
+      }
+
+      function SecondComponent() {
+        return v("span", {}, `Second: ${sharedSignal()}`);
+      }
+
+      mount(dom1, FirstComponent);
+      mount(dom2, SecondComponent);
+
+      expect(dom1.innerHTML).toEqual("<span>First: 0</span>");
+      expect(dom2.innerHTML).toEqual("<span>Second: 0</span>");
+
+      setSharedSignal(100);
+
+      expect(dom1.innerHTML).toEqual("<span>First: 100</span>");
+      expect(dom2.innerHTML).toEqual("<span>Second: 100</span>");
+    });
   });
 
-  it("should handle change of components", async () => {
-    let change = false;
-    function Counter() {
-      const [count, setCount] = Signal(0);
-      const [name] = Signal("Hello");
-      const interval = setInterval(() => setCount(count() + 1), 10);
-      onCleanup(() => clearInterval(interval));
-      return (
-        <div>
-          {count()} {name()}
-        </div>
+  describe("Selective re-rendering within components", () => {
+    it("should re-render only the child component affected by the signal", () => {
+      const dom = document.createElement("div");
+
+      const [childCount, setChildCount] = createSignal(0);
+      let parentRenderCount = 0;
+      let childRenderCount = 0;
+
+      function ChildComponent() {
+        childRenderCount++;
+        return v("span", {}, `Child Count: ${childCount()}`);
+      }
+
+      function ParentComponent() {
+        parentRenderCount++;
+        return v("div", {}, [v("h1", {}, "Parent Component"), v(ChildComponent)]);
+      }
+
+      mount(dom, ParentComponent);
+
+      expect(dom.innerHTML).toEqual("<div><h1>Parent Component</h1><span>Child Count: 0</span></div>");
+      expect(parentRenderCount).toEqual(1);
+      expect(childRenderCount).toEqual(1);
+
+      setChildCount(5);
+
+      expect(dom.innerHTML).toEqual("<div><h1>Parent Component</h1><span>Child Count: 5</span></div>");
+      expect(parentRenderCount).toEqual(1);
+      expect(childRenderCount).toEqual(2);
+    });
+
+    it("should re-render only the affected child component", () => {
+      const dom = document.createElement("div");
+
+      const [child1Count, setChild1Count] = createSignal(0);
+      const [child2Count, setChild2Count] = createSignal(100);
+      let parentRenderCount = 0;
+      let child1RenderCount = 0;
+      let child2RenderCount = 0;
+
+      function Child1Component() {
+        child1RenderCount++;
+        return `Child 1 Count: ${child1Count()}`;
+      }
+
+      function Child2Component() {
+        child2RenderCount++;
+        return `Child 2 Count: ${child2Count()}`;
+      }
+
+      function ParentComponent() {
+        parentRenderCount++;
+        return v("div", {}, [
+          v("h1", {}, "Parent Component"),
+          v("span", {}, v(Child1Component)),
+          v("span", {}, v(Child2Component))
+        ]);
+      }
+
+      mount(dom, ParentComponent);
+
+      // Verificamos el renderizado inicial
+      expect(dom.innerHTML).toEqual(
+        "<div><h1>Parent Component</h1><span>Child 1 Count: 0</span><span>Child 2 Count: 100</span></div>"
       );
-    }
+      expect(parentRenderCount).toEqual(1);
+      expect(child1RenderCount).toEqual(1);
+      expect(child2RenderCount).toEqual(1);
 
-    function OtherCounter() {
-      const [count, setCount] = Signal(10);
-      const [name] = Signal("World");
-      const interval = setInterval(() => setCount(count() + 1), 10);
-      onCleanup(() => clearInterval(interval));
-      return (
-        <div>
-          {count()} {name()}
-        </div>
+      setChild1Count(5);
+
+      expect(dom.innerHTML).toEqual(
+        "<div><h1>Parent Component</h1><span>Child 1 Count: 5</span><span>Child 2 Count: 100</span></div>"
       );
-    }
+      expect(parentRenderCount).toEqual(1);
+      expect(child1RenderCount).toEqual(2);
+      expect(child2RenderCount).toEqual(1);
 
-    function Component() {
-      return change ? <OtherCounter /> : <Counter />;
-    }
+      setChild2Count(200);
 
-    let result = mount("div", Component);
-    expect(result).toEqual("<div>0 Hello</div>");
-    await new Promise((resolve) => setTimeout(() => resolve(), 28));
-    change = true;
-    result = update();
-    expect(result).toEqual("<div>10 World</div>");
-    await new Promise((resolve) => setTimeout(() => resolve(), 28));
-    result = update();
-    expect(result).toEqual("<div>12 World</div>");
-    await new Promise((resolve) => setTimeout(() => resolve(), 28));
-    result = update();
-    expect(result).toEqual("<div>14 World</div>");
-    change = false;
-    result = update();
-    expect(result).toEqual("<div>2 Hello</div>");
-    unmount();
+      expect(dom.innerHTML).toEqual(
+        "<div><h1>Parent Component</h1><span>Child 1 Count: 5</span><span>Child 2 Count: 200</span></div>"
+      );
+      expect(parentRenderCount).toEqual(1);
+      expect(child1RenderCount).toEqual(2);
+      expect(child2RenderCount).toEqual(2);
+    });
+
+    it("should re-render only the affected nested component", () => {
+      const dom = document.createElement("div");
+
+      const [innerCount, setInnerCount] = createSignal(0);
+      let outerRenderCount = 0;
+      let innerRenderCount = 0;
+
+      function InnerComponent() {
+        innerRenderCount++;
+        return v("span", {}, `Inner Count: ${innerCount()}`);
+      }
+
+      function OuterComponent() {
+        outerRenderCount++;
+        return v("div", {}, [v("h1", {}, "Outer Component"), v(InnerComponent)]);
+      }
+
+      mount(dom, OuterComponent);
+
+      expect(dom.innerHTML).toEqual("<div><h1>Outer Component</h1><span>Inner Count: 0</span></div>");
+      expect(outerRenderCount).toEqual(1);
+      expect(innerRenderCount).toEqual(1);
+
+      setInnerCount(10);
+
+      expect(dom.innerHTML).toEqual("<div><h1>Outer Component</h1><span>Inner Count: 10</span></div>");
+      expect(outerRenderCount).toEqual(1);
+      expect(innerRenderCount).toEqual(2);
+    });
+  });
+});
+
+describe("Signal Store", () => {
+  describe("createSignalStore", () => {
+    it("should create a store with an initial state", () => {
+      const [state] = createSignalStore({ count: 0 });
+      expect(state()).toEqual({ count: 0 });
+    });
+
+    it("should update a nested property in the store", () => {
+      const [state, setState] = createSignalStore({ user: { name: "Alice", age: 25 } });
+      expect(state().user.name).toEqual("Alice");
+      setState("user.name", "Bob");
+      expect(state().user.name).toEqual("Bob");
+    });
+
+    it("should execute the effect when the store state changes", () => {
+      const [state, setState] = createSignalStore({ count: 0 });
+      let effectValue = null;
+
+      createEffect(() => {
+        effectValue = state().count;
+      });
+
+      expect(effectValue).toEqual(0);
+
+      setState("count", 5);
+      expect(effectValue).toEqual(5);
+    });
+
+    it("should not re-execute the effect if the value does not change", () => {
+      const [state, setState] = createSignalStore({ count: 0 });
+      let effectExecutionCount = 0;
+
+      createEffect(() => {
+        effectExecutionCount++;
+        state().count;
+      });
+
+      expect(effectExecutionCount).toEqual(1);
+
+      setState("count", 0);
+      expect(effectExecutionCount).toEqual(1);
+    });
+
+    it("should handle complex values (objects and arrays) correctly", () => {
+      const [state, setState] = createSignalStore({
+        users: [{ name: "Alice" }, { name: "Bob" }]
+      });
+
+      setState("users.0.name", "Charlie");
+
+      expect(state().users[0].name).toEqual("Charlie");
+    });
+
+    it("should update only one property without affecting the others", () => {
+      const [state, setState] = createSignalStore({
+        countA: 0,
+        countB: 100
+      });
+
+      setState("countA", 50);
+      expect(state().countA).toEqual(50);
+      expect(state().countB).toEqual(100);
+    });
   });
 
-  it("should handle the update from different children", () => {
-    const [count, setCount] = Signal(0);
-    function Child({ id }) {
-      return <div id={id}>{count()}</div>;
-    }
-    function Child2({ id }) {
-      return <div id={id}>{count()}</div>;
-    }
-    function Component() {
-      return (
-        <div>
-          <div>
-            <Child id="1" />
-          </div>
-          <div>
-            <Child2 id="2" />
-          </div>
-        </div>
-      );
-    }
-    const div = document.createElement("div");
-    const result = mount(div, Component);
-    expect(result).toEqual('<div><div><div id="1">0</div></div><div><div id="2">0</div></div></div>');
-    setCount(1);
-    expect(div.innerHTML).toEqual('<div><div><div id="1">1</div></div><div><div id="2">1</div></div></div>');
-    setCount(2);
-    expect(div.innerHTML).toEqual('<div><div><div id="1">2</div></div><div><div id="2">2</div></div></div>');
-  });
+  describe("Reactivity with components", () => {
+    it("should re-render a component when the store state changes", () => {
+      const dom = document.createElement("div");
+      const [state, setState] = createSignalStore({ count: 0 });
 
-  it("should handle a component with a v-for directive", () => {
-    const [count, setCount] = Signal(0, "count");
-    const [items, setItems] = Signal([1, 2, 3], "items");
-    let mainComponentCalls = 0;
-    let itemComponentCalls = 0;
-    function Item({ item }) {
-      itemComponentCalls++;
-      return (
-        <div>
-          {item} {item === 3 ? count() : ""}
-        </div>
-      );
-    }
-    const Component = () => {
-      mainComponentCalls++;
-      return <div v-for={items()}>{(item) => <Item item={item} />}</div>;
-    };
-    const div = document.createElement("div");
-    const result = mount(div, Component);
-    expect(result).toEqual("<div><div>1 </div><div>2 </div><div>3 0</div></div>");
-    expect(mainComponentCalls).toEqual(1);
-    expect(itemComponentCalls).toEqual(3);
-    setCount(1);
-    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 1</div></div>");
-    expect(mainComponentCalls).toEqual(1);
-    expect(itemComponentCalls).toEqual(6); // All item components should be called again
-    setItems([1, 2, 3, 4]);
-    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 1</div><div>4 </div></div>");
-    expect(mainComponentCalls).toEqual(2);
-    expect(itemComponentCalls).toEqual(10); // All item components should be called again plus the new one
-    setCount(2);
-    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 2</div><div>4 </div></div>");
-    expect(mainComponentCalls).toEqual(2);
-    expect(itemComponentCalls).toEqual(14); // All item components should be called again
-    setCount(3);
-    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 3</div><div>4 </div></div>");
-    expect(mainComponentCalls).toEqual(2);
-    expect(itemComponentCalls).toEqual(18); // All item components should be called again
-    setItems([1, 2, 3, 4]);
-    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 3</div><div>4 </div></div>");
-    expect(mainComponentCalls).toEqual(3);
-    expect(itemComponentCalls).toEqual(22); // All item components should be called again
-    setCount(4);
-    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 4</div><div>4 </div></div>");
-    expect(mainComponentCalls).toEqual(3);
-    expect(itemComponentCalls).toEqual(26); // All item components should be called again
-    setItems([1, 2, 3]);
-    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 4</div></div>");
-    expect(mainComponentCalls).toEqual(4);
-    expect(itemComponentCalls).toEqual(29); // All item components should be called again
-  });
+      function CounterComponent() {
+        return v("div", {}, `Count: ${state().count}`);
+      }
 
-  it("should handle a component with a v-for directive and child components", () => {
-    const [count, setCount] = Signal(0);
-    const [items, setItems] = Signal([1, 2, 3]);
-    let mainComponentCalls = 0;
-    let itemComponentCalls = 0;
-    function Item({ item }) {
-      itemComponentCalls++;
-      return `${item} ${item === 3 ? count() : ""}`;
-    }
-    const Component = () => {
-      mainComponentCalls++;
-      return (
-        <div v-for={items()}>
-          {(item) => (
-            <div>
-              <Item item={item} />
-            </div>
-          )}
-        </div>
-      );
-    };
-    const div = document.createElement("div");
-    const result = mount(div, Component);
-    expect(result).toEqual("<div><div>1 </div><div>2 </div><div>3 0</div></div>");
-    expect(mainComponentCalls).toEqual(1);
-    expect(itemComponentCalls).toEqual(3);
-    setCount(1);
-    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 1</div></div>");
-    expect(mainComponentCalls).toEqual(1);
-    expect(itemComponentCalls).toEqual(4); // Only the third item component should be called again
-    setItems([1, 2, 3, 4]);
-    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 1</div><div>4 </div></div>");
-    expect(mainComponentCalls).toEqual(2);
-    expect(itemComponentCalls).toEqual(8); // All item components should be called again plus the new one
-    setCount(2);
-    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 2</div><div>4 </div></div>");
-    expect(mainComponentCalls).toEqual(2);
-    expect(itemComponentCalls).toEqual(9); // Only the third item component should be called again
-    setCount(3);
-    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 3</div><div>4 </div></div>");
-    expect(mainComponentCalls).toEqual(2);
-    expect(itemComponentCalls).toEqual(10); // Only the third item component should be called again
-    setItems([1, 2, 3, 4]);
-    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 3</div><div>4 </div></div>");
-    expect(mainComponentCalls).toEqual(3);
-    expect(itemComponentCalls).toEqual(14); // All item components should be called again
-    setCount(4);
-    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 4</div><div>4 </div></div>");
-    expect(mainComponentCalls).toEqual(3);
-    expect(itemComponentCalls).toEqual(15); //Only the third item component should be called again
-    setItems([1, 2, 3]);
-    expect(div.innerHTML).toEqual("<div><div>1 </div><div>2 </div><div>3 4</div></div>");
-    expect(mainComponentCalls).toEqual(4);
-    expect(itemComponentCalls).toEqual(18); // All item components should be called again
+      mount(dom, CounterComponent);
+
+      expect(dom.innerHTML).toEqual("<div>Count: 0</div>");
+
+      setState("count", 5);
+      expect(dom.innerHTML).toEqual("<div>Count: 5</div>");
+    });
+
+    it("should not re-render the component if the state does not change", () => {
+      const dom = document.createElement("div");
+      const [state, setState] = createSignalStore({ count: 0 });
+      let renderCount = 0;
+
+      function CounterComponent() {
+        renderCount++;
+        return v("span", {}, `Count: ${state().count}`);
+      }
+
+      mount(dom, CounterComponent);
+
+      expect(renderCount).toEqual(1);
+      expect(dom.innerHTML).toEqual("<span>Count: 0</span>");
+
+      setState("count", 0);
+      expect(renderCount).toEqual(1);
+      expect(dom.innerHTML).toEqual("<span>Count: 0</span>");
+    });
+
+    it("should re-render components that depend on specific properties of the store", () => {
+      const dom = document.createElement("div");
+      const [state, setState] = createSignalStore({
+        countA: 1,
+        countB: 2
+      });
+
+      function DualCounterComponent() {
+        return v("span", {}, `Count A: ${state().countA} | Count B: ${state().countB}`);
+      }
+
+      mount(dom, DualCounterComponent);
+
+      expect(dom.innerHTML).toEqual("<span>Count A: 1 | Count B: 2</span>");
+
+      setState("countA", 5);
+      expect(dom.innerHTML).toEqual("<span>Count A: 5 | Count B: 2</span>");
+
+      setState("countB", 10);
+      expect(dom.innerHTML).toEqual("<span>Count A: 5 | Count B: 10</span>");
+    });
   });
 });

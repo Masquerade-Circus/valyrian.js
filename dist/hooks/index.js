@@ -29,6 +29,7 @@ __export(hooks_exports, {
 });
 module.exports = __toCommonJS(hooks_exports);
 var import_valyrian = require("valyrian.js");
+var import_utils = require("valyrian.js/utils");
 var componentToHooksWeakMap = /* @__PURE__ */ new WeakMap();
 var createHook = function createHook2({
   onCreate,
@@ -39,19 +40,17 @@ var createHook = function createHook2({
 }) {
   return (...args) => {
     const component = import_valyrian.current.component;
-    let hook = null;
-    if (componentToHooksWeakMap.has(component) === false) {
-      const HookCalls2 = { hooks: [], hook_calls: -1 };
-      componentToHooksWeakMap.set(component, HookCalls2);
+    let HookCalls = componentToHooksWeakMap.get(component);
+    if (!HookCalls) {
+      HookCalls = { hooks: [], hook_calls: -1 };
+      componentToHooksWeakMap.set(component, HookCalls);
       (0, import_valyrian.onUnmount)(() => componentToHooksWeakMap.delete(component));
     }
-    const HookCalls = componentToHooksWeakMap.get(component);
     (0, import_valyrian.onCleanup)(() => HookCalls.hook_calls = -1);
-    hook = HookCalls.hooks[++HookCalls.hook_calls];
+    let hook = HookCalls.hooks[++HookCalls.hook_calls];
     if (hook) {
-      onUpdateHook && onUpdateHook(hook, ...args);
-    }
-    if (!hook) {
+      onUpdateHook?.(hook, ...args);
+    } else {
       hook = onCreate(...args);
       HookCalls.hooks.push(hook);
       onRemove && (0, import_valyrian.onUnmount)(() => onRemove(hook));
@@ -60,27 +59,25 @@ var createHook = function createHook2({
     return returnValue ? returnValue(hook) : hook;
   };
 };
-var updateTimeout;
-function delayedUpdate() {
-  clearTimeout(updateTimeout);
-  updateTimeout = setTimeout(import_valyrian.update);
-}
+var timeout;
+var debouncedUpdate = () => {
+  clearTimeout(timeout);
+  timeout = setTimeout(import_valyrian.update, 5);
+};
 var useState = createHook({
   onCreate: (value) => {
+    let state = value;
     function get() {
-      return value;
+      return state;
     }
-    get.value = value;
-    get.toJSON = get.valueOf = get;
-    get.toString = () => `${value}`;
     function set(newValue) {
-      if (import_valyrian.current.event) {
+      if (import_valyrian.current.event && !import_valyrian.current.event.defaultPrevented) {
         import_valyrian.current.event.preventDefault();
       }
-      if (value !== newValue) {
-        value = newValue;
-        get.value = newValue;
-        delayedUpdate();
+      const resolvedValue = typeof newValue === "function" ? newValue(state) : newValue;
+      if ((0, import_utils.hasChanged)(state, resolvedValue)) {
+        state = resolvedValue;
+        debouncedUpdate();
       }
     }
     return [get, set];
@@ -106,17 +103,15 @@ var useEffect = createHook({
       hook.onCleanup = hook.effect();
       return;
     }
-    if (Array.isArray(changes)) {
-      for (let i = 0, l = changes.length; i < l; i++) {
-        if (changes[i] !== hook.prev[i]) {
-          hook.prev = changes;
-          if (typeof hook.onCleanup === "function") {
-            hook.onCleanup();
-          }
-          hook.onCleanup = hook.effect();
-          return;
-        }
+    if (Array.isArray(changes) && changes.length === 0) {
+      return;
+    }
+    if (Array.isArray(changes) && (0, import_utils.hasChanged)(hook.prev, changes)) {
+      hook.prev = changes;
+      if (typeof hook.onCleanup === "function") {
+        hook.onCleanup();
       }
+      hook.onCleanup = hook.effect();
     }
   },
   onRemove: (hook) => {
@@ -138,33 +133,25 @@ var useRef = createHook({
 });
 var useCallback = createHook({
   onCreate: (callback, changes) => {
-    callback();
     return { callback, changes };
   },
   onUpdate: (hook, callback, changes) => {
-    for (let i = 0, l = changes.length; i < l; i++) {
-      if (changes[i] !== hook.changes[i]) {
-        hook.changes = changes;
-        hook.callback();
-        return;
-      }
+    if ((0, import_utils.hasChanged)(hook.changes, changes)) {
+      hook.changes = changes;
+      hook.callback = callback;
     }
-  }
+  },
+  returnValue: (hook) => hook.callback
 });
 var useMemo = createHook({
   onCreate: (callback, changes) => {
     return { callback, changes, value: callback() };
   },
   onUpdate: (hook, callback, changes) => {
-    for (let i = 0, l = changes.length; i < l; i++) {
-      if (changes[i] !== hook.changes[i]) {
-        hook.changes = changes;
-        hook.value = callback();
-        return;
-      }
+    if ((0, import_utils.hasChanged)(hook.changes, changes)) {
+      hook.changes = changes;
+      hook.value = callback();
     }
   },
-  returnValue: (hook) => {
-    return hook.value;
-  }
+  returnValue: (hook) => hook.value
 });

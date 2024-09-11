@@ -16,22 +16,12 @@
   "types": "dist/**/*.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./lib/index.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
-    "./lib": {
-      "types": "./lib/index.ts",
-      "import": "./lib/index.ts",
-      "require": "./lib/index.ts"
-    },
-    "./lib/*": {
-      "types": "./lib/*/index.ts",
-      "import": "./lib/*/index.ts",
-      "require": "./lib/*/index.ts"
-    },
     "./*": {
-      "types": "./dist/*.d.ts",
+      "types": "./lib/*/index.ts",
       "import": "./dist/*/index.mjs",
       "require": "./dist/*/index.js"
     }
@@ -67,12 +57,13 @@
   },
   "scripts": {
     "dev:source": "NODE_ENV=development nodemon --enable-source-maps -e tsx,ts,json,css -w ./lib -w ./www source.js",
-    "dev:test": "nodemon --enable-source-maps -e mjs,js,ts,json,css,tsx,jsx -w ./lib -w ./test -w ./dist --exec 'mocha --bail --timeout 15000 --slow 0 --require ./register --enable-source-maps --reporter ./test/reporter.js \"test/**/*_test.js\"'",
+    "dev:test": "nodemon --enable-source-maps -e mjs,js,ts,json,css,tsx,jsx -w ./lib -w ./test -w ./dist --exec 'mocha --bail --timeout 15000 --slow 0 --require ./register --enable-source-maps --reporter ./test/reporter.js \"test/**/*_test.js*\"'",
     "dev:test:nyc": "nodemon --enable-source-maps -w ./test -w ./lib -w ./plugins --exec 'nyc --reporter=text --reporter=lcov mocha --timeout 15000 --slow 0 --require ./register \"test/**/*_test.js\"'",
     "dev:web": "browser-sync start --config 'www/bs-config.js'",
     "build": "npm run build:source && npm run remark",
     "build:source": "cross-env NODE_ENV=production node source.js",
     "test": "cross-env NODE_ENV=development nyc mocha --forbid-only --timeout 15000 --slow 0 --require ./register --enable-source-maps --exit \"test/**/*_test.js\"",
+    "test2": "cross-env NODE_ENV=development mocha --forbid-only --timeout 15000 --slow 0 --require ./register --enable-source-maps --exit \"test/**/*_test.ts\"",
     "coverage": "nyc report --reporter=lcov",
     "remark": "remark . -o",
     "commit": "git add . && git-cz",
@@ -91,7 +82,8 @@
     "ts-node": "^10.9.1",
     "tsc-prog": "^2.3.0",
     "tslib": "^2.6.2",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "valyrian.js": "^7.2.12"
   },
   "devDependencies": {
     "@release-it/conventional-changelog": "^7.0.2",

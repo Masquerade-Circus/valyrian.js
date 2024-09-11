@@ -1,22 +1,17 @@
 import { Component, POJOComponent, current, directive, onCleanup, onUnmount, update } from "valyrian.js";
+import { hasChanged } from "valyrian.js/utils";
 
 export type Hook = any;
 
 export interface HookDefinition {
-  // eslint-disable-next-line no-unused-vars
   onCreate: (...args: any[]) => any;
-  // eslint-disable-next-line no-unused-vars
   onUpdate?: (hook: Hook, ...args: any[]) => any;
-  // eslint-disable-next-line no-unused-vars
   onCleanup?: (hook: Hook) => any;
-  // eslint-disable-next-line no-unused-vars
   onRemove?: (hook: Hook) => any;
-  // eslint-disable-next-line no-unused-vars
   returnValue?: (hook: Hook) => any;
 }
 
 export interface CreateHook {
-  // eslint-disable-next-line no-unused-vars
   (HookDefinition: HookDefinition): (...args: any[]) => any;
 }
 
@@ -36,25 +31,20 @@ export const createHook = function createHook({
 }: HookDefinition): Hook {
   return (...args: any[]) => {
     const component = current.component as Component | POJOComponent;
-    let hook: any = null;
+    let HookCalls = componentToHooksWeakMap.get(component);
 
-    if (componentToHooksWeakMap.has(component) === false) {
-      const HookCalls = { hooks: [], hook_calls: -1 };
+    if (!HookCalls) {
+      HookCalls = { hooks: [], hook_calls: -1 };
       componentToHooksWeakMap.set(component, HookCalls);
       onUnmount(() => componentToHooksWeakMap.delete(component));
     }
 
-    const HookCalls = componentToHooksWeakMap.get(component) as HookCalls;
     onCleanup(() => (HookCalls.hook_calls = -1));
 
-    hook = HookCalls.hooks[++HookCalls.hook_calls];
-
+    let hook = HookCalls.hooks[++HookCalls.hook_calls];
     if (hook) {
-      onUpdateHook && onUpdateHook(hook, ...args);
-    }
-
-    // If the hook doesn't exist, create it
-    if (!hook) {
+      onUpdateHook?.(hook, ...args);
+    } else {
       hook = onCreate(...args);
       HookCalls.hooks.push(hook);
       onRemove && onUnmount(() => onRemove(hook));
@@ -65,31 +55,31 @@ export const createHook = function createHook({
   };
 } as unknown as CreateHook;
 
-let updateTimeout: any;
-function delayedUpdate() {
-  clearTimeout(updateTimeout);
-  updateTimeout = setTimeout(update);
-}
+let timeout: any;
+
+const debouncedUpdate = () => {
+  clearTimeout(timeout);
+  timeout = setTimeout(update, 5);
+};
 
 // Use state hook
 export const useState = createHook({
   onCreate: (value) => {
+    let state = value;
     function get() {
-      return value;
+      return state;
     }
-    get.value = value;
-    get.toJSON = get.valueOf = get;
-    get.toString = () => `${value}`;
 
     function set(newValue: any) {
-      if (current.event) {
+      if (current.event && !current.event.defaultPrevented) {
         current.event.preventDefault();
       }
 
-      if (value !== newValue) {
-        value = newValue;
-        get.value = newValue;
-        delayedUpdate();
+      const resolvedValue = typeof newValue === "function" ? newValue(state) : newValue;
+
+      if (hasChanged(state, resolvedValue)) {
+        state = resolvedValue;
+        debouncedUpdate();
       }
     }
 
@@ -97,7 +87,6 @@ export const useState = createHook({
   }
 });
 
-// Effect hook
 export const useEffect = createHook({
   onCreate: (effect: Function, changes: any[]) => {
     const hook: {
@@ -128,18 +117,18 @@ export const useEffect = createHook({
       return;
     }
 
+    if (Array.isArray(changes) && changes.length === 0) {
+      // Si las dependencias son un array vacío, no se debe volver a ejecutar.
+      return;
+    }
+
     // on update if there are changes
-    if (Array.isArray(changes)) {
-      for (let i = 0, l = changes.length; i < l; i++) {
-        if (changes[i] !== hook.prev[i]) {
-          hook.prev = changes;
-          if (typeof hook.onCleanup === "function") {
-            hook.onCleanup();
-          }
-          hook.onCleanup = hook.effect();
-          return;
-        }
+    if (Array.isArray(changes) && hasChanged(hook.prev, changes)) {
+      hook.prev = changes;
+      if (typeof hook.onCleanup === "function") {
+        hook.onCleanup();
       }
+      hook.onCleanup = hook.effect();
     }
   },
   onRemove: (hook) => {
@@ -163,18 +152,15 @@ export const useRef = createHook({
 
 export const useCallback = createHook({
   onCreate: (callback, changes) => {
-    callback();
     return { callback, changes };
   },
   onUpdate: (hook, callback, changes) => {
-    for (let i = 0, l = changes.length; i < l; i++) {
-      if (changes[i] !== hook.changes[i]) {
-        hook.changes = changes;
-        hook.callback();
-        return;
-      }
+    if (hasChanged(hook.changes, changes)) {
+      hook.changes = changes;
+      hook.callback = callback;
     }
-  }
+  },
+  returnValue: (hook) => hook.callback
 });
 
 export const useMemo = createHook({
@@ -182,15 +168,10 @@ export const useMemo = createHook({
     return { callback, changes, value: callback() };
   },
   onUpdate: (hook, callback, changes) => {
-    for (let i = 0, l = changes.length; i < l; i++) {
-      if (changes[i] !== hook.changes[i]) {
-        hook.changes = changes;
-        hook.value = callback();
-        return;
-      }
+    if (hasChanged(hook.changes, changes)) {
+      hook.changes = changes;
+      hook.value = callback();
     }
   },
-  returnValue: (hook) => {
-    return hook.value;
-  }
+  returnValue: (hook) => hook.value
 });
