@@ -915,9 +915,113 @@ function sw(file, options = {}) {
   fs3.writeFileSync(file, contents, "utf8");
 }
 
+// lib/node/utils/session-storage.ts
+import fs4 from "fs";
+import path2 from "path";
+var SessionStorage = class {
+  storage;
+  limit;
+  persist;
+  filePath;
+  directory = ".session-storage";
+  constructor({ persist = false, filePath = "./sessionData.json" } = {}) {
+    this.storage = {};
+    this.limit = 5 * 1024 * 1024;
+    this.persist = persist;
+    this.filePath = path2.resolve(this.directory, filePath);
+    if (!fs4.existsSync(this.directory)) {
+      fs4.mkdirSync(this.directory, { recursive: true });
+    }
+    if (this.persist) {
+      this.loadFromFile();
+    }
+  }
+  // Calculate total size in bytes of stored data
+  getStorageSize() {
+    return new TextEncoder().encode(JSON.stringify(this.storage)).length;
+  }
+  // Check if storage limit is exceeded
+  checkSizeLimit() {
+    const size = this.getStorageSize();
+    if (size > this.limit) {
+      throw new DOMException("Storage limit exceeded", "QuotaExceededError");
+    }
+  }
+  // Store value under the specified key
+  setItem(key, value) {
+    if (key === null || key === void 0) {
+      throw new TypeError("Failed to execute 'setItem' on 'Storage': 1 argument required, but only 0 present.");
+    }
+    if (value === null) {
+      value = "null";
+    } else if (value === void 0) {
+      value = "undefined";
+    }
+    this.storage[key] = String(value);
+    this.checkSizeLimit();
+    if (this.persist) {
+      this.saveToFile();
+    }
+  }
+  // Retrieve value stored under the specified key
+  getItem(key) {
+    if (key === null || key === void 0) {
+      throw new TypeError("Failed to execute 'getItem' on 'Storage': 1 argument required, but only 0 present.");
+    }
+    return this.storage[key] || null;
+  }
+  // Remove the value under the specified key
+  removeItem(key) {
+    if (key === null || key === void 0) {
+      throw new TypeError("Failed to execute 'removeItem' on 'Storage': 1 argument required, but only 0 present.");
+    }
+    delete this.storage[key];
+    if (this.persist) {
+      this.saveToFile();
+    }
+  }
+  // Clear all stored values
+  clear() {
+    this.storage = {};
+    if (this.persist) {
+      this.saveToFile();
+    }
+  }
+  // Return the number of stored items
+  get length() {
+    return Object.keys(this.storage).length;
+  }
+  // Return the key at the specified index
+  key(index) {
+    const keys = Object.keys(this.storage);
+    return keys[index] || null;
+  }
+  // Save data to a file (only if persistence is enabled)
+  saveToFile() {
+    try {
+      fs4.writeFileSync(this.filePath, JSON.stringify(this.storage), "utf-8");
+    } catch (error) {
+      throw new Error(`Error saving data to file: ${error.message}`);
+    }
+  }
+  // Load data from a file (only if persistence is enabled)
+  loadFromFile() {
+    try {
+      if (fs4.existsSync(this.filePath)) {
+        const data = fs4.readFileSync(this.filePath, "utf-8");
+        this.storage = JSON.parse(data || "{}");
+      }
+    } catch (error) {
+      throw new Error(`Error loading data from file: ${error.message}`);
+    }
+  }
+};
+
 // lib/node/index.ts
 global.FormData = FormData;
 global.document = document;
+global.sessionStorage = new SessionStorage();
+global.localStorage = new SessionStorage();
 function render(...args) {
   const Component = () => args;
   const result = mount("div", Component);

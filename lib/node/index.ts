@@ -2,13 +2,15 @@ import { document, domToHtml, domToHyperscript, htmlToDom, htmlToHyperscript } f
 import { mount, unmount } from "valyrian.js";
 
 import FormData from "form-data";
-// import fetch from "node-fetch";
 import { icons } from "./utils/icons";
 import { inline } from "./utils/inline";
 import { sw } from "./utils/sw";
+import { SessionStorage } from "./utils/session-storage";
 
 global.FormData = FormData as any;
 global.document = document as any;
+global.sessionStorage = new SessionStorage();
+global.localStorage = new SessionStorage();
 
 function render(...args: any[]) {
   const Component = () => args;

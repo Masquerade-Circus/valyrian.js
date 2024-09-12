@@ -20,12 +20,27 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // lib/native-store/index.ts
 var native_store_exports = {};
 __export(native_store_exports, {
+  StorageType: () => StorageType,
   createNativeStore: () => createNativeStore
 });
 module.exports = __toCommonJS(native_store_exports);
-var nativeStore = sessionStorage || localStorage;
+var import_valyrian = require("valyrian.js");
+var StorageType = /* @__PURE__ */ ((StorageType2) => {
+  StorageType2["Session"] = "session";
+  StorageType2["Local"] = "local";
+  return StorageType2;
+})(StorageType || {});
 var ids = /* @__PURE__ */ new Set();
-function createNativeStore(key, definition = {}, reuseIfExist = false) {
+function getStorage(storageType) {
+  if (import_valyrian.isNodeJs && typeof localStorage === "undefined") {
+    throw new Error(
+      `localStorage and sessionStorage are not available in Node.js, to use it in your project, you need to "import "valyrian.js/node"`
+    );
+  }
+  return storageType === "session" /* Session */ ? sessionStorage : localStorage;
+}
+function createNativeStore(key, definition = {}, storageType = "local" /* Local */, reuseIfExist = false) {
+  const nativeStore = getStorage(storageType);
   if (ids.has(key)) {
     if (reuseIfExist) {
       console.warn(`Store with key ${key} already exists and will be reused`);
@@ -34,34 +49,52 @@ function createNativeStore(key, definition = {}, reuseIfExist = false) {
     }
   }
   ids.add(key);
+  const id = key;
   const Store = {
     state: {},
     set(key2, value) {
-      this.state[key2] = value;
-      nativeStore.setItem(key2, JSON.stringify(this.state));
+      try {
+        this.state[key2] = value;
+        nativeStore.setItem(id, JSON.stringify(this.state));
+      } catch (e) {
+        console.error("Error setting item in storage:", e);
+      }
     },
     get(key2) {
-      if (!this.state) {
+      if (Object.keys(this.state).length === 0) {
         this.load();
       }
       return this.state[key2];
     },
     delete(key2) {
-      Reflect.deleteProperty(this.state, key2);
-      nativeStore.setItem(key2, JSON.stringify(this.state));
+      try {
+        Reflect.deleteProperty(this.state, key2);
+        nativeStore.setItem(id, JSON.stringify(this.state));
+      } catch (e) {
+        console.error("Error deleting item in storage:", e);
+      }
     },
     load() {
-      const state = nativeStore.getItem(key);
-      if (!state) {
+      try {
+        const state = nativeStore.getItem(id);
+        if (!state) {
+          this.state = {};
+          nativeStore.setItem(id, JSON.stringify(this.state));
+          return;
+        }
+        this.state = JSON.parse(state);
+      } catch (e) {
+        console.error("Error loading state from storage:", e);
         this.state = {};
-        nativeStore.setItem(key, JSON.stringify(this.state));
-        return;
       }
-      this.state = JSON.parse(state);
     },
     clear() {
-      this.state = {};
-      nativeStore.removeItem(key);
+      try {
+        this.state = {};
+        nativeStore.removeItem(id);
+      } catch (e) {
+        console.error("Error clearing storage:", e);
+      }
     },
     ...definition
   };

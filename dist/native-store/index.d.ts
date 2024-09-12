@@ -1,3 +1,7 @@
+export declare enum StorageType {
+    Session = "session",
+    Local = "local"
+}
 export interface NativeStorageInterface {
     state: Record<string, any>;
     set(key: string, value: any): void;
@@ -6,5 +10,5 @@ export interface NativeStorageInterface {
     load(): void;
     clear(): void;
 }
-export declare function createNativeStore<T>(key: string, definition?: Record<string, any>, reuseIfExist?: boolean): NativeStorageInterface & T;
+export declare function createNativeStore<T>(key: string, definition?: Record<string, any>, storageType?: StorageType, reuseIfExist?: boolean): NativeStorageInterface & T;
 //# sourceMappingURL=index.d.ts.map
