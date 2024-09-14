@@ -369,6 +369,10 @@ export function directive(name: string, directive: Directive) {
   reservedProps.add(directiveName);
 }
 
+export function setPropNameReserved(name: string) {
+  reservedProps.add(name);
+}
+
 const eventListenerNames = new Set<string>();
 
 function eventListener(e: Event) {
@@ -397,7 +401,7 @@ function sharedSetAttribute(name: string, value: any, newVnode: VnodeWithDom): v
   const newVnodeDom = newVnode.dom;
   if (typeof value === "function") {
     if (!eventListenerNames.has(name)) {
-      // We attatch the delegated event listener to the main vnode dom element, which is the root of the component
+      // We attach the delegated event listener to the main vnode dom element, which is the root of the component
       (mainVnode as VnodeWithDom).dom.addEventListener(name.slice(2), eventListener);
       eventListenerNames.add(name);
     }
@@ -732,10 +736,14 @@ export function update(): void | string {
   }
 }
 
-let updateTimeout: any;
+let debouncedUpdateTimeout: any;
+
+const clearDebouncedUpdateMethod = isNodeJs ? clearTimeout : cancelAnimationFrame;
+const setDebouncedUpdateMethod = isNodeJs ? () => setTimeout(update, 5) : () => requestAnimationFrame(update);
+
 export function debouncedUpdate() {
-  clearTimeout(updateTimeout);
-  updateTimeout = setTimeout(update, 5);
+  clearDebouncedUpdateMethod(debouncedUpdateTimeout);
+  debouncedUpdateTimeout = setDebouncedUpdateMethod();
 }
 
 export function unmount() {

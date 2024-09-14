@@ -1,4 +1,5 @@
 // lib/translate/index.ts
+import { directive, setPropNameReserved, update } from "valyrian.js";
 import { get } from "valyrian.js/utils";
 var translations = {};
 var lang = "en";
@@ -19,16 +20,18 @@ function t(path, params) {
     return `{${key}}`;
   });
 }
-function setTranslations(defaultTranslation, newTranslations) {
+function setTranslations(defaultTranslation, newTranslations = {}) {
   for (const lang2 in translations) {
     Reflect.deleteProperty(translations, lang2);
   }
+  translations.en = { ...defaultTranslation };
   for (const lang2 in newTranslations) {
     translations[lang2] = {
       ...defaultTranslation,
       ...newTranslations[lang2]
     };
   }
+  update();
 }
 function getTranslations() {
   return translations;
@@ -45,6 +48,7 @@ function setLang(newLang) {
     throw new Error(`Language ${newLang} not found`);
   }
   lang = parsedLang;
+  update();
 }
 function getLang() {
   return lang;
@@ -108,6 +112,13 @@ var NumberFormatter = class _NumberFormatter {
     return formatter.set(value, shiftDecimal);
   }
 };
+directive("t", (value, vnode) => {
+  const keys = typeof value === "string" ? [value] : vnode.children;
+  const params = vnode.props["v-t-params"] || {};
+  const children = keys.map((key) => typeof key === "string" && key.trim().length > 1 ? t(key.trim(), params) : key);
+  vnode.children = children;
+});
+setPropNameReserved("v-t-params");
 export {
   NumberFormatter,
   getLang,

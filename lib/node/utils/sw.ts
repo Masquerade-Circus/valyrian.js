@@ -24,3 +24,29 @@ export function sw(file: string, options = {}) {
 
   fs.writeFileSync(file, contents, "utf8");
 }
+
+/*
+  sw("sw.js", {
+    version: "1",
+    name: "Valyrian.js",
+    urls: ["/", "/index.html"],
+    debug: false
+  });
+
+
+  // On the client side
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/service-worker.js");
+
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      if (event.data && event.data.type === "NEW_VERSION") {
+        // Notify the user about the new version and ask if they want to update
+        if (confirm("Hay una nueva versión disponible. ¿Deseas actualizar?")) {
+          // Send a message to the service worker to skip the waiting
+          navigator.serviceWorker.controller.postMessage({ type: "SKIP_WAITING" });
+          window.location.reload();
+        }
+      }
+    });
+  }
+*/

@@ -28,6 +28,7 @@ __export(translate_exports, {
   t: () => t
 });
 module.exports = __toCommonJS(translate_exports);
+var import_valyrian = require("valyrian.js");
 var import_utils = require("valyrian.js/utils");
 var translations = {};
 var lang = "en";
@@ -48,16 +49,18 @@ function t(path, params) {
     return `{${key}}`;
   });
 }
-function setTranslations(defaultTranslation, newTranslations) {
+function setTranslations(defaultTranslation, newTranslations = {}) {
   for (const lang2 in translations) {
     Reflect.deleteProperty(translations, lang2);
   }
+  translations.en = { ...defaultTranslation };
   for (const lang2 in newTranslations) {
     translations[lang2] = {
       ...defaultTranslation,
       ...newTranslations[lang2]
     };
   }
+  (0, import_valyrian.update)();
 }
 function getTranslations() {
   return translations;
@@ -74,6 +77,7 @@ function setLang(newLang) {
     throw new Error(`Language ${newLang} not found`);
   }
   lang = parsedLang;
+  (0, import_valyrian.update)();
 }
 function getLang() {
   return lang;
@@ -137,3 +141,10 @@ var NumberFormatter = class _NumberFormatter {
     return formatter.set(value, shiftDecimal);
   }
 };
+(0, import_valyrian.directive)("t", (value, vnode) => {
+  const keys = typeof value === "string" ? [value] : vnode.children;
+  const params = vnode.props["v-t-params"] || {};
+  const children = keys.map((key) => typeof key === "string" && key.trim().length > 1 ? t(key.trim(), params) : key);
+  vnode.children = children;
+});
+(0, import_valyrian.setPropNameReserved)("v-t-params");

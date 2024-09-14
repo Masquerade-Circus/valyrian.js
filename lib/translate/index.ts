@@ -1,4 +1,5 @@
 /* eslint-disable no-console */
+import { directive, setPropNameReserved, update, VnodeWithDom } from "valyrian.js";
 import { get } from "valyrian.js/utils";
 
 const translations: Record<string, Record<string, any>> = {};
@@ -27,11 +28,13 @@ export function t(path: string, params?: Record<string, string>): string {
 
 export function setTranslations(
   defaultTranslation: Record<string, any>,
-  newTranslations: Record<string, Record<string, any>>
+  newTranslations: Record<string, Record<string, any>> = {}
 ) {
   for (const lang in translations) {
     Reflect.deleteProperty(translations, lang);
   }
+
+  translations.en = { ...defaultTranslation };
 
   for (const lang in newTranslations) {
     translations[lang] = {
@@ -39,6 +42,7 @@ export function setTranslations(
       ...newTranslations[lang]
     };
   }
+  update();
 }
 
 export function getTranslations(): Record<string, Record<string, any>> {
@@ -61,6 +65,7 @@ export function setLang(newLang: string): void {
   }
 
   lang = parsedLang;
+  update();
 }
 
 export function getLang(): string {
@@ -140,3 +145,12 @@ export class NumberFormatter {
     return formatter.set(value, shiftDecimal);
   }
 }
+
+directive("t", (value: string | null, vnode: VnodeWithDom): void => {
+  const keys = typeof value === "string" ? [value] : vnode.children;
+  const params = vnode.props["v-t-params"] || {};
+  const children = keys.map((key) => (typeof key === "string" && key.trim().length > 1 ? t(key.trim(), params) : key));
+  vnode.children = children;
+});
+
+setPropNameReserved("v-t-params");

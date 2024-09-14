@@ -1,5 +1,6 @@
 import expect from "expect";
 import { afterEach } from "mocha";
+import { mount, unmount, v } from "valyrian.js";
 import { t, setTranslations, getTranslations, setLang, getLang, NumberFormatter } from "valyrian.js/translate";
 
 describe("Translate", () => {
@@ -78,6 +79,9 @@ describe("Translate", () => {
       setTranslations({ hello: "Hello" }, { es: { goodbye: "Adiós" } });
       const translations = getTranslations();
       expect(translations).toEqual({
+        en: {
+          hello: "Hello"
+        },
         es: {
           hello: "Hello",
           goodbye: "Adiós"
@@ -157,6 +161,56 @@ describe("Translate", () => {
     it("should return the correct number of decimal places", () => {
       const formatter = NumberFormatter.create(1234.5678);
       expect(formatter.getDecimalPlaces()).toEqual(4);
+    });
+  });
+
+  describe("v-t directive", () => {
+    beforeEach(() => {
+      unmount();
+      setTranslations({}, {});
+      setLang("en");
+    });
+
+    afterEach(unmount);
+
+    it("should translate the text correctly", async () => {
+      const div = document.createElement("div");
+      setTranslations({ hello: "Hello" }, { es: { hello: "Hola" } });
+      const component = () => <div v-t="hello"></div>;
+      const result = mount(div, component);
+      expect(result).toEqual("<div>Hello</div>");
+
+      setLang("es");
+      expect(div.innerHTML).toEqual("<div>Hola</div>");
+    });
+
+    it("should translate the text with parameters correctly", () => {
+      const div = document.createElement("div");
+      setTranslations({ greeting: "Hello, {name}!" }, { es: { greeting: "Hola, {name}!" } });
+      const component = () => <div v-t="greeting" v-t-params={{ name: "John" }}></div>;
+      const result = mount(div, component);
+      expect(result).toEqual("<div>Hello, John!</div>");
+
+      setLang("es");
+      expect(div.innerHTML).toEqual("<div>Hola, John!</div>");
+    });
+
+    it("should translate the text with parameters correctly when using only children", () => {
+      const div = document.createElement("div");
+      setTranslations(
+        { greeting: "Hello, {name}!", welcome: "Welcome again {name}!" },
+        { es: { greeting: "Hola, {name}!", welcome: "Bienvenido de nuevo {name}!" } }
+      );
+      const component = () => (
+        <div v-t v-t-params={{ name: "John" }}>
+          {"greeting"} {"welcome"}
+        </div>
+      );
+      const result = mount(div, component);
+      expect(result).toEqual("<div>Hello, John! Welcome again John!</div>");
+
+      setLang("es");
+      expect(div.innerHTML).toEqual("<div>Hola, John! Bienvenido de nuevo John!</div>");
     });
   });
 });

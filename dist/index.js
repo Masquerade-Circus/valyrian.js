@@ -39,6 +39,7 @@ __export(lib_exports, {
   onUpdate: () => onUpdate,
   reservedProps: () => reservedProps,
   setAttribute: () => setAttribute,
+  setPropNameReserved: () => setPropNameReserved,
   trust: () => trust,
   unmount: () => unmount,
   update: () => update,
@@ -307,6 +308,9 @@ function directive(name, directive2) {
   const directiveName = `v-${name}`;
   directives[directiveName] = directive2;
   reservedProps.add(directiveName);
+}
+function setPropNameReserved(name) {
+  reservedProps.add(name);
 }
 var eventListenerNames = /* @__PURE__ */ new Set();
 function eventListener(e) {
@@ -604,10 +608,12 @@ function update() {
     }
   }
 }
-var updateTimeout;
+var debouncedUpdateTimeout;
+var clearDebouncedUpdateMethod = isNodeJs ? clearTimeout : cancelAnimationFrame;
+var setDebouncedUpdateMethod = isNodeJs ? () => setTimeout(update, 5) : () => requestAnimationFrame(update);
 function debouncedUpdate() {
-  clearTimeout(updateTimeout);
-  updateTimeout = setTimeout(update, 5);
+  clearDebouncedUpdateMethod(debouncedUpdateTimeout);
+  debouncedUpdateTimeout = setDebouncedUpdateMethod();
 }
 function unmount() {
   if (mainVnode) {

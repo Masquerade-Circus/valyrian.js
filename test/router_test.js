@@ -48,13 +48,12 @@ describe("Router", () => {
         () => Component
       )
       .add("/hello/:world", [() => console.log("Hello 7"), () => Component], () => console.log("Hello 7"))
-      .use(() => () => "Not ok");
+      .catch(() => () => "Not ok");
 
-    router.use("/ok", subrouter);
-    router.use(() => () => "Not found");
+    router.add("/ok", subrouter);
+    router.catch(() => () => "Not found");
 
     mountRouter("body", router);
-    await router.go("/ok/not/found/url?hello=world");
     // The /:hello route is setted before the /ok subrouter,
     // so it should enter in the /:hello route
     // instead of the /ok subrouter
@@ -175,7 +174,7 @@ describe("Router", () => {
 
     const router = new Router();
     router.add("/", () => Hello);
-    router.use(() => NotFound);
+    router.add(() => NotFound);
 
     mountRouter("body", router);
 
@@ -284,7 +283,7 @@ describe("Router", () => {
       });
 
     const router = new Router();
-    router.use("/hello/:world", subrouter);
+    router.add("/hello/:world", subrouter);
     mountRouter("body", router);
 
     const result = {};
@@ -355,7 +354,7 @@ describe("Router", () => {
     subrouter.add("/from/:country", () => Component).add("/", () => Component);
 
     const router = new Router();
-    router.use("/hello/:world", subrouter).add("/", () => Component);
+    router.add("/hello/:world", subrouter).add("/", () => Component);
 
     mountRouter("body", router);
 
@@ -463,7 +462,7 @@ describe("Router", () => {
 
     subrouter.add("/1", () => () => "1");
     subrouter.add("/2", () => () => "2");
-    subrouter.use("/3", async (req) => {
+    subrouter.add("/3", async (req) => {
       await req.redirect("/1");
       return false;
     });
@@ -472,7 +471,7 @@ describe("Router", () => {
     router.add("/", () => () => "home");
     router.add("/1", () => () => "1");
     router.add("/2", () => () => "2");
-    router.use("/sub", subrouter);
+    router.add("/sub", subrouter);
 
     expect(router.pathPrefix).toEqual("/test");
     expect(router.routes()).toEqual(["/test", "/test/1", "/test/2", "/test/sub/1", "/test/sub/2", "/test/sub/3"]);
@@ -541,10 +540,10 @@ describe("Router", () => {
     SubSubRouter.add("/deep", () => "Deep route");
 
     const SubRouter = new Router();
-    SubRouter.use("/sub", SubSubRouter);
+    SubRouter.add("/sub", SubSubRouter);
 
     const router = new Router();
-    router.use("/main", SubRouter);
+    router.add("/main", SubRouter);
 
     mountRouter("body", router);
 
@@ -572,7 +571,7 @@ describe("Router", () => {
     router.add("/", () => {
       throw new Error("Some error");
     });
-    router.use((req, e) => () => <div>Error handler: {e.message}</div>);
+    router.catch((req, e) => () => <div>Error handler: {e.message}</div>);
 
     mountRouter("body", router);
 
@@ -641,8 +640,8 @@ describe("Router", () => {
     subrouter2.add("/", () => SubComponent2);
 
     const router = new Router();
-    router.use("/sub1", subrouter1);
-    router.use("/sub2", subrouter2);
+    router.add("/sub1", subrouter1);
+    router.add("/sub2", subrouter2);
     mountRouter("body", router);
 
     const sub1Result = await router.go("/sub1");
@@ -656,7 +655,7 @@ describe("Router", () => {
     const middlewareLog = [];
 
     const router = new Router();
-    router.use(() => middlewareLog.push("Global Middleware")); // Global middleware
+    router.add(() => middlewareLog.push("Global Middleware")); // Global middleware
     router.add("/", () => middlewareLog.push("Local Middleware")); // Local middleware
 
     mountRouter("body", router);
@@ -786,7 +785,7 @@ describe("Router", () => {
       for (let j = 0; j < 1000; j++) {
         subrouter.add(`/:${String.fromCharCode(97 + j)}`, () => Component);
       }
-      router.use(`/${i}`, subrouter);
+      router.add(`/${i}`, subrouter);
     }
     console.timeEnd("Routes creation");
     mountRouter("body", router);
@@ -810,6 +809,7 @@ describe("Router", () => {
     router.add("/level/:param", (req) => <DynamicComponent param={req.params.param} />);
     router.add("/level/.*", ({ url }) => <WildcardComponent url={url} found="/level/.*" />);
     router.add("/.*", ({ url }) => <WildcardComponent url={url} found="/.*" />);
+    router.catch(() => () => "Not found");
 
     mountRouter("body", router);
 
@@ -817,12 +817,13 @@ describe("Router", () => {
     const wildcardResult = await router.go("/level/some/random/path");
 
     expect(dynamicResult).toEqual("<div>Dynamic Route 123</div>");
-    expect(wildcardResult).toEqual("<div>Wildcard Route /level/some/random/path -> /.*</div>");
+    expect(wildcardResult).toEqual("<div>Wildcard Route /level/some/random/path -> /level/.*</div>");
 
     const router2 = new Router();
     router2.add("/level/123", () => <DynamicComponent param="123" />);
     router2.add("/level/.*", ({ url }) => <WildcardComponent url={url} found="/level/.*" />);
     router2.add("/.*", ({ url }) => <WildcardComponent url={url} found="/.*" />);
+    router2.catch(() => () => "Not found");
 
     mountRouter("body", router2);
 
@@ -831,5 +832,56 @@ describe("Router", () => {
 
     expect(dynamicResult2).toEqual("<div>Dynamic Route 123</div>");
     expect(wildcardResult2).toEqual("<div>Wildcard Route /level/some/random/path -> /level/.*</div>");
+  });
+
+  it("Parent middlewares must be executed before child middlewares", async () => {
+    const logs = [];
+
+    const Component = () => <div>Hello World</div>;
+    const subrouter = new Router();
+    subrouter.add(() => logs.push("Child middleware"));
+    subrouter.add("/", () => Component);
+
+    const router = new Router();
+    router.add(() => logs.push("Parent middleware"));
+    router.add("/child", subrouter);
+
+    mountRouter("body", router);
+
+    await router.go("/child");
+
+    expect(logs).toEqual(["Parent middleware", "Child middleware"]);
+  });
+
+  it("Error handlers", async () => {
+    const router = new Router();
+
+    router
+      .add("/", async () => () => <div>Home</div>)
+      .add("/about", async () => () => <div>About</div>)
+      .add("/error", async () => {
+        throw new TypeError("Simulated TypeError");
+      })
+      .add("/simulated", async () => {
+        throw new Error("Simulated Error");
+      });
+
+    // Error handlers
+    router
+      .catch(404, (req, error) => () => <div>404 Not Found: {error.message}</div>)
+      .catch(TypeError, (req, error) => () => <div>Type Error: {error.message}</div>)
+      .catch((req, error) => () => <div>Generic Error: {error.message}</div>);
+
+    mountRouter("body", router);
+
+    const notFoundError = await router.go("/nonexistent"); // 404 Not Found
+    const typeError = await router.go("/error"); // TypeError
+    const genericError = await router.go("/simulated"); // Generic console.error(
+
+    expect(notFoundError).toEqual(
+      "<div>404 Not Found: The URL /nonexistent was not found in the router's registered paths.</div>"
+    );
+    expect(typeError).toEqual("<div>Type Error: Simulated TypeError</div>");
+    expect(genericError).toEqual("<div>Generic Error: Simulated Error</div>");
   });
 });

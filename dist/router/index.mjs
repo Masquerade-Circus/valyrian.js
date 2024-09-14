@@ -48,10 +48,10 @@ var RouteTree = class {
       }
       currentNode = currentNode.children.get(key);
     }
-    currentNode.middlewares = flat(middlewares);
+    currentNode.middlewares = middlewares;
   }
-  // Buscar una ruta en el árbol y extraer los parámetros si es necesario
-  // Buscar una ruta en el árbol y extraer los parámetros si es necesario
+  // Search for a route in the tree
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   findRoute(path) {
     const pathWithoutLastSlash = getPathWithoutLastSlash(path);
     const segments = pathWithoutLastSlash === "/" ? [pathWithoutLastSlash] : pathWithoutLastSlash.split("/").filter(Boolean);
@@ -95,6 +95,9 @@ var RouteTree = class {
     return { middlewares: allMiddlewares, params };
   }
 };
+var RouterError = class RouterError2 extends Error {
+  status = 500;
+};
 var Router = class _Router {
   routeTree = new RouteTree();
   container = null;
@@ -105,34 +108,46 @@ var Router = class _Router {
   params = {};
   matches = [];
   pathPrefix = "";
+  errorHandlers = /* @__PURE__ */ new Map();
   constructor(pathPrefix = "") {
     this.pathPrefix = pathPrefix;
   }
-  add(path, ...middlewares) {
-    const pathWithoutLastSlash = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
-    this.routeTree.addRoute(pathWithoutLastSlash, middlewares);
+  add(...args) {
+    const flatArgs = flat(args);
+    const path = getPathWithoutLastSlash(
+      `${this.pathPrefix}${typeof flatArgs[0] === "string" ? flatArgs.shift() : "/.*"}`
+    );
+    if (flatArgs.length === 1 && flatArgs[0] instanceof _Router) {
+      const subrouter = flatArgs[0];
+      for (const subroute of subrouter.routes()) {
+        const subroutePath = `${path}${subroute}`;
+        this.routeTree.addRoute(subroutePath, subrouter.routeTree.findRoute(subroute).middlewares || []);
+      }
+    } else {
+      if (flatArgs.some((item) => item instanceof _Router)) {
+        throw new RouterError("You cannot add middlewares when adding a subrouter.");
+      }
+      if (flatArgs.some((item) => typeof item !== "function")) {
+        throw new RouterError("All middlewares must be functions.");
+      }
+      this.routeTree.addRoute(path, flatArgs);
+    }
     return this;
   }
-  // Ajuste del método use para aceptar múltiples middlewares y subrouters
-  use(...args) {
-    let path = "/.*";
-    let start = 0;
-    if (typeof args[0] === "string") {
-      path = getPathWithoutLastSlash(`${this.pathPrefix}${args[0]}`);
-      start = 1;
+  catch(...args) {
+    const condition = typeof args[0] === "number" || typeof args[0] === "string" || args[0].name.includes("Error") ? args.shift() : "generic";
+    if (typeof condition !== "number" && typeof condition !== "string" && !condition.name.includes("Error")) {
+      throw new RouterError("The condition must be a number, string or an instance of Error.");
     }
-    for (let i = start; i < args.length; i++) {
-      const item = args[i];
-      if (item instanceof _Router) {
-        const subrouter = item;
-        for (const subroute of subrouter.routes()) {
-          const subroutePath = `${path}${subroute}`;
-          this.routeTree.addRoute(subroutePath, subrouter.routeTree.findRoute(subroute).middlewares || []);
-        }
-      } else if (typeof item === "function") {
-        this.routeTree.addRoute(path, [item]);
-      }
+    if (args.some((item) => typeof item !== "function")) {
+      throw new RouterError("All middlewares must be functions.");
     }
+    let handlers = this.errorHandlers.get(condition);
+    if (!handlers) {
+      handlers = [];
+      this.errorHandlers.set(condition, handlers);
+    }
+    handlers.push(...args);
     return this;
   }
   routes() {
@@ -140,10 +155,10 @@ var Router = class _Router {
   }
   async go(path, parentComponent) {
     if (!path) {
-      return this.handleError(new Error("The URL is empty."), parentComponent);
+      return this.handleError(new RouterError("The URL is empty."), parentComponent);
     }
     if (/%[^0-9A-Fa-f]{2}/.test(path)) {
-      return this.handleError(new Error(`The URL ${path} is malformed.`));
+      return this.handleError(new RouterError(`The URL ${path} is malformed.`));
     }
     const constructedPath = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
     const parts = constructedPath.split("?", 2);
@@ -151,12 +166,22 @@ var Router = class _Router {
     this.query = parseQuery(parts[1]);
     const finalPath = parts[0].replace(/(.+)\/$/, "$1").split("#")[0];
     this.path = path;
-    const route = this.routeTree.findRoute(finalPath);
+    let route = this.routeTree.findRoute(finalPath);
     if (!route || !route.middlewares) {
-      return this.handleError(
-        new Error(`The URL ${constructedPath} was not found in the router's registered paths.`),
-        parentComponent
-      );
+      const finalPathParts = finalPath.split("/");
+      while (finalPathParts.length > 0) {
+        finalPathParts.pop();
+        const wildcardRoute = this.routeTree.findRoute(finalPathParts.join("/") + "/.*");
+        if (wildcardRoute) {
+          route = wildcardRoute;
+          break;
+        }
+      }
+      if (!route || !route.middlewares) {
+        const error = new RouterError(`The URL ${constructedPath} was not found in the router's registered paths.`);
+        error.status = 404;
+        return this.handleError(error, parentComponent);
+      }
     }
     const { middlewares, params } = route;
     this.params = params;
@@ -166,7 +191,7 @@ var Router = class _Router {
     }
     if (!component) {
       return this.handleError(
-        new Error(`The URL ${constructedPath} did not return a valid component.`),
+        new RouterError(`The URL ${constructedPath} did not return a valid component.`),
         parentComponent
       );
     }
@@ -218,21 +243,54 @@ var Router = class _Router {
       redirect: (path) => this.go(path)
     };
   }
+  getErrorConditionMiddlewares(error) {
+    for (const [condition, middlewares] of this.errorHandlers) {
+      if (typeof condition !== "number" && typeof condition !== "string" && error instanceof condition && error.name === condition.name) {
+        return middlewares;
+      }
+    }
+    for (const [condition, middlewares] of this.errorHandlers) {
+      if (typeof condition === "number" && (error.status === condition || error.code === condition)) {
+        return middlewares;
+      }
+    }
+    for (const [condition, middlewares] of this.errorHandlers) {
+      if (typeof condition === "string" && (error.name === condition || error.message.includes(condition))) {
+        return middlewares;
+      }
+    }
+    return this.errorHandlers.get("generic") || false;
+  }
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   async handleError(error, parentComponent) {
-    const errorRoute = this.routeTree.findRoute("/.*");
+    const request = this.createRequest();
     let component = null;
-    if (errorRoute && errorRoute.middlewares) {
-      for (const errorMiddleware of errorRoute.middlewares) {
-        try {
-          const response = await errorMiddleware(this.createRequest(), error);
-          if (response !== void 0 && (isComponent(response) || isVnodeComponent(response))) {
-            component = response;
-            break;
-          }
-        } catch (err) {
-          throw error;
+    const middlewares = this.getErrorConditionMiddlewares(error);
+    if (middlewares === false) {
+      throw error;
+    }
+    let response;
+    try {
+      for (const middleware of middlewares) {
+        response = await middleware(request, error);
+        if (response !== void 0 && (isComponent(response) || isVnodeComponent(response))) {
+          component = response;
+          break;
+        }
+        if (response === false) {
+          return;
         }
       }
+    } catch (err) {
+      err.cause = error;
+      let errorCauseCount = 0;
+      while (err.cause) {
+        errorCauseCount++;
+      }
+      if (errorCauseCount > 20) {
+        throw new RouterError("Too many error causes. Possible circular error handling.");
+      }
+      return this.handleError(err, parentComponent);
     }
     if (component) {
       if (isComponent(parentComponent) || isVnodeComponent(parentComponent)) {
@@ -258,9 +316,8 @@ var Router = class _Router {
     let response;
     for (const middleware of middlewares) {
       try {
-        response = await middleware(request, response);
+        response = await middleware(request);
       } catch (error) {
-        console.error(`Error in middleware: ${error.message}`);
         return this.handleError(error, parentComponent);
       }
       if (response !== void 0 && (isComponent(response) || isVnodeComponent(response))) {
@@ -293,14 +350,14 @@ function mountRouter(elementContainer, router) {
     window.addEventListener("popstate", onPopStateGoToRoute2, false);
     onPopStateGoToRoute2();
   }
-  directive("route", (vnode) => {
-    const url = vnode.props["v-route"];
+  directive("route", (url, vnode) => {
     setAttribute("href", url, vnode);
     setAttribute("onclick", router.getOnClickHandler(url), vnode);
   });
 }
 export {
   Router,
+  RouterError,
   mountRouter,
   redirect
 };
