@@ -493,16 +493,17 @@ function patch(newVnode) {
   }
   for (let i = 0; i < childrenLength; i++) {
     const newChild = children[i];
+    const isText = newChild instanceof Vnode === false;
     const oldChild = oldDomChildren[i];
     if (!oldChild) {
-      if (newChild instanceof Vnode === false) {
+      if (isText) {
         newVnode.dom.appendChild(document.createTextNode(newChild));
         continue;
       }
       createNewElement(newChild, newVnode, null);
       continue;
     }
-    if (newChild instanceof Vnode === false) {
+    if (isText) {
       if (oldChild.nodeType !== 3) {
         newVnode.dom.replaceChild(document.createTextNode(newChild), oldChild);
         continue;
@@ -584,15 +585,14 @@ function unmount() {
     return result;
   }
 }
-function mount(domOrContent, component) {
-  const container = typeof component === "undefined" ? document.body : typeof domOrContent === "string" ? isNodeJs ? createElement(domOrContent, domOrContent === "svg") : document.querySelector(domOrContent) : domOrContent;
-  let finalComponent = typeof component === "undefined" ? domOrContent : component;
-  if (isComponent(finalComponent)) {
-    mainComponent = new Vnode(finalComponent, {}, []);
-  } else if (isVnodeComponent(finalComponent)) {
-    mainComponent = finalComponent;
+function mount(dom, component) {
+  const container = typeof dom === "string" ? isNodeJs ? createElement(dom, dom === "svg") : document.querySelector(dom) : dom;
+  if (isComponent(component)) {
+    mainComponent = v(component, {}, []);
+  } else if (isVnodeComponent(component)) {
+    mainComponent = component;
   } else {
-    mainComponent = new Vnode(() => finalComponent, {}, []);
+    mainComponent = v(() => component, {}, []);
   }
   mainVnode = hidrateDomToVnode(container);
   return update();

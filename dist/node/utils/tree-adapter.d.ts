@@ -65,6 +65,7 @@ export declare class DocumentFragment extends Element {
 }
 export declare class Document extends Element {
     constructor();
+    body: Element;
     createDocumentFragment(): DocumentFragment;
     createElement(type: string): Element;
     createElementNS(ns: string, type: string): Element;

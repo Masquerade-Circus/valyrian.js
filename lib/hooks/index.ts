@@ -39,7 +39,7 @@ export const createHook = function createHook({
       onUnmount(() => componentToHooksWeakMap.delete(component));
     }
 
-    onCleanup(() => (HookCalls.hook_calls = -1));
+    onCleanup(() => ((HookCalls as HookCalls).hook_calls = -1));
 
     let hook = HookCalls.hooks[++HookCalls.hook_calls];
     if (hook) {

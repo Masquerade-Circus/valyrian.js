@@ -115,6 +115,17 @@ describe("Mount and update", () => {
     });
   });
 
+  it("Mount with non component", () => {
+    const result = mount("body", "Hello world");
+    expect(result).toEqual("Hello world");
+
+    const result2 = mount("body", 123);
+    expect(result2).toEqual("123");
+
+    const result3 = mount("body", new Date(Date.UTC(2012, 11, 20, 3, 0, 0)));
+    expect(result3).toEqual("Wed Dec 19 2012 21:00:00 GMT-0600 (hora estándar central)");
+  });
+
   it("Handle multiple update calls", () => {
     const Component = {
       world: "World",
@@ -350,10 +361,10 @@ describe("Mount and update", () => {
     const InstanceClassComponent = new ClassComponent();
 
     // Class component
-    // const result9 = mount("body", InstanceClassComponent);
+    const result9 = mount("body", InstanceClassComponent);
 
     // Vnode component from class component
-    // const result10 = mount("body", <InstanceClassComponent.view />);
+    const result10 = mount("body", <InstanceClassComponent />);
 
     expect(result1).toEqual("Hello world");
     expect(result2).toEqual("Hello world 2");
@@ -363,8 +374,8 @@ describe("Mount and update", () => {
     expect(result6).toEqual("<span>Hello world 5</span> - 6");
     expect(result7).toEqual("<span>Hello world 5</span> - 7");
     expect(result8).toEqual("<div>Hello world 8</div>");
-    // expect(result9).toEqual("<div>Hello world 9</div>");
-    // expect(result10).toEqual("<div>Hello world 9</div>");
+    expect(result9).toEqual("<div>Hello world 9</div>");
+    expect(result10).toEqual("<div>Hello world 9</div>");
   });
 
   it("should test deepley nested components", () => {

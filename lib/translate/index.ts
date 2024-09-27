@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { directive, setPropNameReserved, update, VnodeWithDom } from "valyrian.js";
 import { get } from "valyrian.js/utils";
 
@@ -10,6 +9,7 @@ export function t(path: string, params?: Record<string, string>): string {
   const translation = get(langDef, path);
 
   if (typeof translation !== "string") {
+    // eslint-disable-next-line no-console
     console.warn(`Translation not found for ${path}`);
     return path;
   }
@@ -100,7 +100,7 @@ export class NumberFormatter {
 
   format(digits = 2, options: Intl.NumberFormatOptions = {}, customLocale?: Intl.LocalesArgument): string {
     const lang = customLocale || getLang();
-    const formatter = new Intl.NumberFormat(lang, {
+    const formatter = new Intl.NumberFormat(lang as string, {
       style: "currency",
       currency: "USD",
       minimumFractionDigits: digits,

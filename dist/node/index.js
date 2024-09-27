@@ -423,7 +423,9 @@ var Document = class extends Element {
     super();
     this.nodeType = 9;
     this.nodeName = "#document";
+    this.body = this.createElement("body");
   }
+  body;
   createDocumentFragment() {
     return new DocumentFragment();
   }
@@ -940,7 +942,7 @@ inline.uncss = async function(renderedHtml, css, options = {}) {
 var import_fs3 = __toESM(require("fs"));
 var import_path = __toESM(require("path"));
 function sw(file, options = {}) {
-  const swfiletemplate = import_path.default.resolve(__dirname, "./node.sw.tpl");
+  const swfiletemplate = import_path.default.resolve(__dirname, "./node.sw.js");
   const swTpl = import_fs3.default.readFileSync(swfiletemplate, "utf8");
   const opt = Object.assign(
     {

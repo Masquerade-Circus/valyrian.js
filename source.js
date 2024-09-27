@@ -74,6 +74,7 @@ async function build({
           declarationMap: emitDeclarations,
           noEmit: !emitDeclarations,
           declaration: emitDeclarations,
+          composite: emitDeclarations,
           outDir: outdir,
           emitDeclarationOnly: emitDeclarations
         }
@@ -131,7 +132,10 @@ async function build({
     if (minify) {
       const codeToMinify = minify === "esm" ? esm : cjs;
       if (codeToMinify) {
-        const code = convertToUMD(codeToMinify.outputFiles[1].text, globalName);
+        const code =
+          codeToMinify === "esm"
+            ? codeToMinify.outputFiles[1].text
+            : convertToUMD(codeToMinify.outputFiles[1].text, globalName);
         result2 = await terser.minify(code, {
           sourceMap: {
             content: codeToMinify.outputFiles[0].text.toString()
@@ -199,21 +203,12 @@ async function copy({ entryPoint, outfileName }) {
   const libCheck = !isDev;
   const emitDeclarations = !isDev;
   const clean = !isDev;
+  const minify = isDev ? false : "esm";
 
   const args = process.argv.slice(2);
   const onlyMain = args.includes("--only-main");
 
   const buildStart = hrtime();
-
-  await build({
-    globalName: "Valyrian",
-    entryPoint: "./lib/index.ts",
-    outfileName: "./dist/index",
-    clean,
-    minify: "esm",
-    libCheck,
-    emitDeclarations
-  });
 
   const otherModules = [
     "hooks",
@@ -227,6 +222,17 @@ async function copy({ entryPoint, outfileName }) {
     "native-store",
     "translate"
   ];
+
+  await build({
+    globalName: "Valyrian",
+    entryPoint: "./lib/index.ts",
+    outfileName: "./dist/index",
+    clean,
+    minify,
+    libCheck,
+    emitDeclarations,
+    external: [...otherModules.map((m) => `valyrian.js/${m}`)]
+  });
 
   if (!onlyMain) {
     for (const module of otherModules) {
@@ -242,7 +248,7 @@ async function copy({ entryPoint, outfileName }) {
         entryPoint,
         outfileName,
         clean: false,
-        minify: false,
+        minify: true,
         libCheck,
         external: ["valyrian.js", ...otherModules.map((m) => `valyrian.js/${m}`)]
       });
@@ -254,7 +260,6 @@ async function copy({ entryPoint, outfileName }) {
       outfileName: "./dist/node/index",
       clean: false,
       minify: false,
-      bundle: true,
       libCheck,
       external: [
         "fs",
@@ -273,34 +278,14 @@ async function copy({ entryPoint, outfileName }) {
     });
 
     copy({
-      entryPoint: "./lib/node/utils/node.sw.tpl",
-      outfileName: "./dist/node/utils/node.sw.tpl"
+      entryPoint: "./lib/node/utils/node.sw.js",
+      outfileName: "./dist/node/utils/node.sw.js"
     });
 
     copy({
-      entryPoint: "./lib/node/utils/node.sw.tpl",
-      outfileName: "./dist/node/node.sw.tpl"
+      entryPoint: "./lib/node/utils/node.sw.js",
+      outfileName: "./dist/node/node.sw.js"
     });
-
-    // await build({
-    //   globalName: "Valyrian",
-    //   entryPoint: "./www/lib.tsx",
-    //   outfileName: "./www/js/index",
-    //   clean: false,
-    //   minify: "esm",
-    //   embedSourceMap: true,
-    //   libCheck
-    // });
-
-    // await build({
-    //   globalName: "Valyrian",
-    //   entryPoint: "./www/implementation/v.ts",
-    //   outfileName: "./www/js/v",
-    //   clean: false,
-    //   minify: "esm",
-    //   embedSourceMap: true,
-    //   libCheck
-    // });
   }
 
   const buildEnd = hrtime(buildStart);

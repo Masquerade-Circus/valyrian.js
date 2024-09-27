@@ -656,27 +656,28 @@ function patch(newVnode: VnodeWithDom): void {
 
   for (let i = 0; i < childrenLength; i++) {
     const newChild = children[i] as VnodeWithDom;
+    const isText = newChild instanceof Vnode === false;
     const oldChild = oldDomChildren[i];
 
     if (!oldChild) {
-      if (newChild instanceof Vnode === false) {
-        newVnode.dom.appendChild(document.createTextNode(newChild));
+      if (isText) {
+        newVnode.dom.appendChild(document.createTextNode(newChild as unknown as string));
         continue;
       }
 
-      createNewElement(newChild, newVnode, null);
+      createNewElement(newChild as VnodeWithDom, newVnode, null);
       continue;
     }
 
-    if (newChild instanceof Vnode === false) {
+    if (isText) {
       if (oldChild.nodeType !== 3) {
-        newVnode.dom.replaceChild(document.createTextNode(newChild), oldChild);
+        newVnode.dom.replaceChild(document.createTextNode(newChild as unknown as string), oldChild);
         continue;
       }
 
       // eslint-disable-next-line eqeqeq
-      if (oldChild.nodeValue != newChild) {
-        oldChild.nodeValue = newChild;
+      if (oldChild.nodeValue != (newChild as unknown as string)) {
+        oldChild.nodeValue = newChild as unknown as string;
       }
       continue;
     }
@@ -699,7 +700,7 @@ function patch(newVnode: VnodeWithDom): void {
     }
 
     newChild.dom = oldChild;
-    updateAttributes(newChild as VnodeWithDom, oldChild.props || null);
+    updateAttributes(newChild, oldChild.props || null);
     oldChild.props = newChild.props;
     if ("v-text" in newChild.props) {
       // eslint-disable-next-line eqeqeq
@@ -766,24 +767,16 @@ export function unmount() {
   }
 }
 
-export function mount(domOrContent: string | DomElement | any, component?: any) {
+export function mount(dom: string | DomElement, component: ValyrianComponent | VnodeComponentInterface | any) {
   const container =
-    typeof component === "undefined"
-      ? document.body
-      : typeof domOrContent === "string"
-      ? isNodeJs
-        ? createElement(domOrContent, domOrContent === "svg")
-        : document.querySelector(domOrContent)
-      : domOrContent;
+    typeof dom === "string" ? (isNodeJs ? createElement(dom, dom === "svg") : document.querySelector(dom)) : dom;
 
-  let finalComponent = typeof component === "undefined" ? domOrContent : component;
-
-  if (isComponent(finalComponent)) {
-    mainComponent = new Vnode(finalComponent, {}, []) as VnodeComponentInterface;
-  } else if (isVnodeComponent(finalComponent)) {
-    mainComponent = finalComponent;
+  if (isComponent(component)) {
+    mainComponent = v(component, {}, []) as VnodeComponentInterface;
+  } else if (isVnodeComponent(component)) {
+    mainComponent = component;
   } else {
-    mainComponent = new Vnode(() => finalComponent, {}, []) as VnodeComponentInterface;
+    mainComponent = v(() => component, {}, []) as VnodeComponentInterface;
   }
 
   mainVnode = hidrateDomToVnode(container) as VnodeWithDom;

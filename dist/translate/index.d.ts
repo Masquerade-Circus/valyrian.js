@@ -1,5 +1,5 @@
 export declare function t(path: string, params?: Record<string, string>): string;
-export declare function setTranslations(defaultTranslation: Record<string, any>, newTranslations: Record<string, Record<string, any>>): void;
+export declare function setTranslations(defaultTranslation: Record<string, any>, newTranslations?: Record<string, Record<string, any>>): void;
 export declare function getTranslations(): Record<string, Record<string, any>>;
 export declare function setLang(newLang: string): void;
 export declare function getLang(): string;

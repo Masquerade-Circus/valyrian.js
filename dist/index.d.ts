@@ -63,6 +63,7 @@ export declare const onCleanup: (callback: Function) => Set<Function>;
 export declare const onUnmount: (callback: Function) => false | Set<Function>;
 export declare const directives: Record<string, Directive>;
 export declare function directive(name: string, directive: Directive): void;
+export declare function setPropNameReserved(name: string): void;
 export declare function setAttribute(name: string, value: any, newVnode: VnodeWithDom): void;
 export declare function updateAttributes(newVnode: VnodeWithDom, oldProps: VnodeProperties | null): void;
 export declare function createElement(tag: string, isSVG: boolean): DomElement;
@@ -70,6 +71,6 @@ export declare function updateVnode(vnode: VnodeWithDom): string | void;
 export declare function update(): void | string;
 export declare function debouncedUpdate(): void;
 export declare function unmount(): string | void;
-export declare function mount(domOrContent: string | DomElement | any, component?: any): string | void;
+export declare function mount(dom: string | DomElement, component: ValyrianComponent | VnodeComponentInterface | any): string | void;
 export {};
 //# sourceMappingURL=index.d.ts.map

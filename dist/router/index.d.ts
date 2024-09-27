@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { Component, POJOComponent, VnodeComponentInterface } from "valyrian.js";
 interface Request {
     params: Record<string, any>;
@@ -5,22 +6,32 @@ interface Request {
     url: string;
     path: string;
     matches: string[];
-    redirect: (path: string, parentComponent?: Component | POJOComponent | VnodeComponentInterface) => false;
+    redirect: (path: string) => Promise<string | void>;
 }
 interface Middleware {
-    (req: Request, res?: any): Promise<any | Component | POJOComponent | VnodeComponentInterface> | any | Component | POJOComponent | VnodeComponentInterface;
+    (req: Request, err?: any): Promise<any | Component | POJOComponent | VnodeComponentInterface> | any | Component | POJOComponent | VnodeComponentInterface;
 }
-interface Middlewares extends Array<Middleware> {
-}
-interface Path {
-    method: string;
-    path: string;
-    middlewares: Middlewares;
-    params: string[];
-    regexp: RegExp;
-}
-interface RouterInterface {
-    paths: Path[];
+export declare const RouterError: {
+    new (message?: string | undefined): {
+        status: number | undefined;
+        name: string;
+        message: string;
+        stack?: string | undefined;
+        cause?: unknown;
+    };
+    new (message?: string | undefined, options?: ErrorOptions | undefined): {
+        status: number | undefined;
+        name: string;
+        message: string;
+        stack?: string | undefined;
+        cause?: unknown;
+    };
+    captureStackTrace(targetObject: object, constructorOpt?: Function | undefined): void;
+    prepareStackTrace?: ((err: Error, stackTraces: NodeJS.CallSite[]) => any) | undefined;
+    stackTraceLimit: number;
+};
+export declare class Router {
+    private routeTree;
     container: Element | string | null;
     query: Record<string, string | number>;
     options: Record<string, any>;
@@ -29,27 +40,18 @@ interface RouterInterface {
     params: Record<string, string | number | any>;
     matches: string[];
     pathPrefix: string;
-    add(method: string, ...args: Middlewares): Router;
-    use(...args: (string | Middleware | Router)[]): Router;
+    private errorHandlers;
+    constructor(pathPrefix?: string);
+    add(...args: (string | Middleware | Router)[]): Router;
+    catch(...args: (number | string | Error | Middleware)[]): Router;
     routes(): string[];
     go(path: string, parentComponent?: Component | POJOComponent | VnodeComponentInterface): Promise<string | void>;
-}
-export declare class Router implements RouterInterface {
-    paths: Path[];
-    container: Element | string | null;
-    query: Record<string, string | number>;
-    options: Record<string, any>;
-    url: string;
-    path: string;
-    params: Record<string, string | number | any>;
-    matches: string[];
-    pathPrefix: string;
-    constructor(pathPrefix?: string);
-    add(path: string, ...middlewares: Middlewares): Router;
-    use(...middlewares: Middlewares | Router[] | string[]): Router;
-    routes(): string[];
-    go(path: string, parentComponent?: Component | POJOComponent | VnodeComponentInterface, preventPushState?: boolean): Promise<string | void>;
     getOnClickHandler(url: string): (e: MouseEvent) => void;
+    private getAllRoutes;
+    private createRequest;
+    private getErrorConditionMiddlewares;
+    private handleError;
+    private searchComponent;
 }
 export declare function redirect(url: string, parentComponent?: Component | POJOComponent | VnodeComponentInterface, preventPushState?: boolean): Promise<string | void>;
 export declare function mountRouter(elementContainer: string | any, router: Router): void;

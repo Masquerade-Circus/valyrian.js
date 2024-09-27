@@ -446,7 +446,10 @@ export class Document extends Element {
     super();
     this.nodeType = 9;
     this.nodeName = "#document";
+    this.body = this.createElement("body");
   }
+
+  body: Element;
 
   createDocumentFragment(): DocumentFragment {
     return new DocumentFragment();

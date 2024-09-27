@@ -30,5 +30,5 @@
     }
   },
   "include": ["./lib"],
-  "exclude": ["./dist"]
+  "exclude": ["./dist", "./lib/node/utils/node.sw.js"]
 }

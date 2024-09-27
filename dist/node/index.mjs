@@ -380,7 +380,9 @@ var Document = class extends Element {
     super();
     this.nodeType = 9;
     this.nodeName = "#document";
+    this.body = this.createElement("body");
   }
+  body;
   createDocumentFragment() {
     return new DocumentFragment();
   }
@@ -897,7 +899,7 @@ inline.uncss = async function(renderedHtml, css, options = {}) {
 import fs3 from "fs";
 import path from "path";
 function sw(file, options = {}) {
-  const swfiletemplate = path.resolve(__dirname, "./node.sw.tpl");
+  const swfiletemplate = path.resolve(__dirname, "./node.sw.js");
   const swTpl = fs3.readFileSync(swfiletemplate, "utf8");
   const opt = Object.assign(
     {
