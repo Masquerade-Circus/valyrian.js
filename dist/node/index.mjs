@@ -901,15 +901,13 @@ import path from "path";
 function sw(file, options = {}) {
   const swfiletemplate = path.resolve(__dirname, "./node.sw.js");
   const swTpl = fs3.readFileSync(swfiletemplate, "utf8");
-  const opt = Object.assign(
-    {
-      version: "v1::",
-      name: "Valyrian.js",
-      urls: ["/"],
-      debug: false
-    },
-    options
-  );
+  const opt = {
+    version: "v1::",
+    name: "Valyrian.js",
+    urls: ["/"],
+    debug: false,
+    ...options
+  };
   let contents = swTpl.replace("v1::", "v" + opt.version + "::").replace("Valyrian.js", opt.name).replace("['/']", '["' + opt.urls.join('","') + '"]');
   if (!opt.debug) {
     contents = contents.replace("console.log", "() => {}");

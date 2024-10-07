@@ -5,7 +5,7 @@ const config = {
   version: "v1.2::",
   name: "Valyrian.js",
   // Critical resources and offline page
-  urls: ["/", "/index.html", "/styles.css", "/app.js", "/offline.html"]
+  urls: ["/"]
 };
 
 const cacheName = config.version + config.name;

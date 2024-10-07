@@ -215,6 +215,7 @@ async function copy({ entryPoint, outfileName }) {
     "request",
     "sw",
     "flux-store",
+    "pulse-store",
     "router",
     "signals",
     "utils",

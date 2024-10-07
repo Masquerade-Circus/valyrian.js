@@ -3,8 +3,12 @@
 1. **Valyrian.js**
 
    - 1.1. What is Valyrian.js?
-   - 1.2. Key Features
-   - 1.3. Benefits and Use Cases
+   - 1.2. Objectives of Valyrian.js
+   - 1.3. Key Features
+   - 1.4. Differentiation from Other Frameworks
+   - 1.5. Common Problems in Current Frameworks Addressed by Valyrian.js
+   - 1.6. Benefits and Use Cases
+   - 1.7. Forge the Future of Web Development
 
 2. **Getting Started**
 
