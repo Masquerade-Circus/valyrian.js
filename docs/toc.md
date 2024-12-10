@@ -25,57 +25,69 @@
 
    - 3.1. Virtual DOM and Vnode
      - 3.1.1. What is a Vnode?
-     - 3.1.2. Creating and Using Vnodes
+     - 3.1.2. Hyperscript & JSX/TSX
+     - 3.1.3. Creating and Using Vnodes
    - 3.2. Components
      - 3.2.1. Functional Components
      - 3.2.2. Object-Based (POJO) and Class-Based Components
-     - 3.2.3. Component Lifecycle
-   - 3.3. Directives
-     - 3.3.1. Using Built-in Directives
-     - 3.3.2. Creating Custom Directives
-   - 3.4. Events and Handlers
-     - 3.4.1. Event Delegation
-     - 3.4.2. Handling Custom Events
+     - 3.2.3. Component Lifecycle (Vnode Lifecycle)
+   - 3.3. Events and Handlers
+     - 3.3.1. Event Delegation
+   - 3.4. Directives
+     - 3.4.1. Categories of Directives
+     - 3.4.2. Structural & Conditional Rendering Directives
+     - 3.4.3. Styling & Content Manipulation Directives
+     - 3.4.4. Data Binding Directive
+     - 3.4.5. Lifecycle-Related Directives
+     - 3.4.6. Reserved Words: `key` and `state`
+     - 3.4.7. Creating Custom Directives
 
 4. **Additional Modules**
 
-   - 4.1. flux-store
-     - 4.1.1. Introduction to flux-store
-     - 4.1.2. Creating Stores
-     - 4.1.3. Flux Patterns in the Library
-   - 4.2. hooks
-     - 4.2.1. What are Hooks?
+   - 4.1. Signals
+     - 4.1.1. Introduction to Signals
+     - 4.1.2. Using Signals in Components
+   - 4.2. Hooks
+     - 4.2.1. Introduction to Hooks
      - 4.2.2. Available Hooks
      - 4.2.3. Creating Custom Hooks
-   - 4.3. native-store
-     - 4.3.1. Using sessionStorage and localStorage
-     - 4.3.2. Client-Side Data Persistence
-   - 4.4. request
-     - 4.4.1. Making HTTP Requests
-     - 4.4.2. Node.js Configuration
-     - 4.4.3. Handling Errors and Responses
-   - 4.5. router
-     - 4.5.1. Defining Routes
-     - 4.5.2. Navigation and Links
-     - 4.5.3. Server-Side Routing
-   - 4.6. signals
-     - 4.6.1. Introduction to Signals
-     - 4.6.2. Reactivity and Auto-Update
-   - 4.7. suspense
-     - 4.7.1. Handling Asynchronous Loading
-     - 4.7.2. Implementing Suspense in Components
-   - 4.8. sw (Service Worker)
-     - 4.8.1. Introduction to Service Workers
-     - 4.8.2. Generating a Service Worker
-     - 4.8.3. Caching and Offline Strategies
-   - 4.9. translate
+   - 4.3. Pulse Store
+     - 4.3.1. Introduction to Pulse Store
+     - 4.3.2. Creating Stores
+   - 4.4. Flux Store
+     - 4.4.1. Introduction to flux-store
+     - 4.4.2. Creating Stores
+     - 4.4.3. Flux Patterns in the Library
+   - 4.5. Native Store
+     - 4.5.1. Using sessionStorage and localStorage
+     - 4.5.2. Client-Side Data Persistence
+   - 4.6. Request
+     - 4.6.1. Making HTTP Requests
+     - 4.6.2. Node.js Configuration
+     - 4.6.3. Handling Errors and Responses
+   - 4.7. Router
+     - 4.7.1. Defining Routes
+     - 4.7.2. Navigation and Links
+     - 4.7.3. Server-Side Routing
+   - 4.8. Suspense
+     - 4.8.1. Handling Asynchronous Loading
+     - 4.8.2. Implementing Suspense in Components
+   - 4.9. Translate
      - 4.9.1. i18n Setup
      - 4.9.2. Translating Content
      - 4.9.3. Number Formatting
-   - 4.10. utils
-     - 4.10.1. deep-freeze and unfreeze
-     - 4.10.2. Dot-Based Getter-Setter
-     - 4.10.3. has-changed
+   - 4.10. Sw (Service Worker)
+     - 4.10.1. Introduction to Service Workers
+     - 4.10.2. Generating a Service Worker
+     - 4.10.3. Caching and Offline Strategies
+   - 4.11. Utils
+     - 4.11.1. deep-freeze and unfreeze
+     - 4.11.2. Dot-Based Getter-Setter
+     - 4.11.3. has-changed
+   - 4.12. Node.js Integration
+     - 4.12.1. Using Valyrian.js with Node.js
+     - 4.12.2. Server-Side Rendering (SSR)
+     - 4.12.3. Utility Functions
 
 5. **Practical Guides**
 
@@ -98,35 +110,7 @@
 
 6. **API Reference**
 
-   - 6.1. Classes and Types
-     - 6.1.1. Vnode
-     - 6.1.2. VnodeProperties
-     - 6.1.3. Components and Interfaces
-   - 6.2. Key Functions and Methods
-     - 6.2.1. v()
-     - 6.2.2. mount()
-     - 6.2.3. update()
-     - 6.2.4. setAttribute()
-   - 6.3. Available Directives
-     - 6.3.1. Complete List of Directives
-     - 6.3.2. Description and Examples
-   - 6.4. Modules
-     - 6.4.1. signals
-     - 6.4.2. hooks
-     - 6.4.3. flux-store
-     - 6.4.4. native-store
-     - 6.4.5. router
-     - 6.4.6. request
-     - 6.4.7. suspense
-     - 6.4.8. translate
-     - 6.4.9. sw
-     - 6.4.10. utils
-
 7. **Troubleshooting**
-
-   - 7.1. Common Errors and Solutions
-   - 7.2. Frequently Asked Questions (FAQs)
-   - 7.3. Debugging Tools
 
 8. **Additional Resources**
 
