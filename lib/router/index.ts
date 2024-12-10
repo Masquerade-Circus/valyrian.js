@@ -37,10 +37,12 @@ interface Middleware {
 interface Middlewares extends Array<Middleware> {}
 
 interface RedirectFunction {
-  // eslint-disable-next-line no-unused-vars
   (
+    // eslint-disable-next-line no-unused-vars
     path: string,
+    // eslint-disable-next-line no-unused-vars
     parentComponent?: Component | POJOComponent | VnodeComponentInterface,
+    // eslint-disable-next-line no-unused-vars
     preventPushState?: boolean
   ): Promise<string | void>;
 }
@@ -250,6 +252,7 @@ export class Router {
     return this.getAllRoutes(this.routeTree.root, "");
   }
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   async go(
     path: string,
     parentComponent?: Component | POJOComponent | VnodeComponentInterface

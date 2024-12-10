@@ -3,6 +3,7 @@ import { get, set, hasChanged } from "valyrian.js/utils";
 
 const effectStack: Function[] = [];
 
+// eslint-disable-next-line no-unused-vars
 export type Signal<T> = [() => T, (newValue: T | ((current: T) => T)) => void, () => void];
 
 export function createSignal<T>(initialValue: T): Signal<T> {
@@ -36,7 +37,9 @@ export function createSignal<T>(initialValue: T): Signal<T> {
     return value;
   };
 
+  // eslint-disable-next-line no-unused-vars
   const write = (newValue: T | ((current: T) => T)) => {
+    // eslint-disable-next-line no-unused-vars
     const resolvedValue = typeof newValue === "function" ? (newValue as (current: T) => T)(value) : newValue;
 
     if (current.event && !current.event.defaultPrevented) {
@@ -71,13 +74,16 @@ export function createEffect(effect: Function) {
 // Path is a string with dot notation, e.g:
 // 'a.b.c' === obj.a.b.c
 // 'a.0.c' === obj.a[0].c
+// eslint-disable-next-line no-unused-vars
 export type SignalStore<T> = [() => T, (path: string, newValue: T | ((current: T) => T)) => void];
 
 export function createSignalStore<T>(initialState: T): SignalStore<T> {
-  const [state, _, runSubscribers] = createSignal(initialState);
+  const [state, , runSubscribers] = createSignal(initialState);
 
+  // eslint-disable-next-line no-unused-vars
   const setter = (path: string, newValue: T | ((current: T) => T)) => {
     const current = get(initialState, path);
+    // eslint-disable-next-line no-unused-vars
     const resolvedValue = typeof newValue === "function" ? (newValue as (current: T) => T)(current) : newValue;
 
     if (!hasChanged(current, resolvedValue)) {

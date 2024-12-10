@@ -29,8 +29,10 @@ var FluxStore = class _FluxStore {
   state;
   getters;
   init;
+  // eslint-disable-next-line no-use-before-define
   rootStore;
   namespace;
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   constructor({
     state = {},
     mutations = {},

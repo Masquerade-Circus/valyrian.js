@@ -153,6 +153,7 @@ var Router = class _Router {
   routes() {
     return this.getAllRoutes(this.routeTree.root, "");
   }
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   async go(path, parentComponent) {
     if (!path) {
       return this.handleError(new RouterError("The URL is empty."), parentComponent);

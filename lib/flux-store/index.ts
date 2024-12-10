@@ -3,15 +3,19 @@ import { deepCloneUnfreeze, deepFreeze } from "valyrian.js/utils";
 
 interface StoreOptions {
   state?: Record<string, any> | (() => Record<string, any>);
+  // eslint-disable-next-line no-unused-vars
   mutations?: Record<string, (state: Record<string, any>, ...args: any[]) => void>;
+  // eslint-disable-next-line no-unused-vars, no-use-before-define
   actions?: Record<string, (store: FluxStore, ...args: any[]) => any>;
   getters?: Record<
     string,
+    // eslint-disable-next-line no-unused-vars
     (state: Record<string, any>, getters: Record<string, any>, globalState?: any, globalGetters?: any) => any
   >;
   modules?: Record<string, StoreOptions>;
   shouldFreeze?: boolean;
   namespace?: string;
+  // eslint-disable-next-line no-use-before-define
   rootStore?: FluxStore;
 }
 
@@ -22,6 +26,7 @@ export class FluxStore {
   private init: {
     frozen: boolean;
     plugins: Function[];
+    // eslint-disable-next-line no-use-before-define
     modules: Record<string, FluxStore>;
     childModuleNamespaces: string[];
     listeners: Record<string, Function[]>;
@@ -29,9 +34,11 @@ export class FluxStore {
     mutations: StoreOptions["mutations"];
     actions: StoreOptions["actions"];
   };
+  // eslint-disable-next-line no-use-before-define
   public rootStore: FluxStore | null;
   public namespace: string | null;
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   constructor({
     state = {},
     mutations = {},

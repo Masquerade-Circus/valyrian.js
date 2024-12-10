@@ -26,16 +26,27 @@ interface SendOptions extends RequestOptionsWithUrls, RequestInit {
 }
 
 export interface RequestInterface {
+  // eslint-disable-next-line no-unused-vars
   (method: string, url: string, data?: Record<string, any>, options?: Partial<SendOptions>): any | Response;
+  // eslint-disable-next-line no-unused-vars
   new: (baseUrl: string, options?: RequestOptions) => RequestInterface;
+  // eslint-disable-next-line no-unused-vars
   setOptions: (key: string, value: any) => void;
+  // eslint-disable-next-line no-unused-vars
   getOptions: (key?: string) => RequestOptions | void;
+  // eslint-disable-next-line no-unused-vars
   get: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  // eslint-disable-next-line no-unused-vars
   post: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  // eslint-disable-next-line no-unused-vars
   put: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  // eslint-disable-next-line no-unused-vars
   patch: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  // eslint-disable-next-line no-unused-vars
   delete: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  // eslint-disable-next-line no-unused-vars
   head: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  // eslint-disable-next-line no-unused-vars
   options: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
   [key: string | number | symbol]: any;
 }
@@ -86,6 +97,7 @@ function parseUrl(url: string, options: RequestOptionsWithUrls) {
 
 const defaultOptions: RequestOptions = { allowedMethods: ["get", "post", "put", "patch", "delete", "head", "options"] };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
   const url = baseUrl.replace(/\/$/gi, "").trim();
   if (!options.urls) {

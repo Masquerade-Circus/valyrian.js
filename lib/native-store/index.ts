@@ -2,14 +2,19 @@ import { isNodeJs } from "valyrian.js";
 
 /* eslint-disable no-console */
 export enum StorageType {
+  // eslint-disable-next-line no-unused-vars
   Session = "session",
+  // eslint-disable-next-line no-unused-vars
   Local = "local"
 }
 
 export interface NativeStorageInterface {
   state: Record<string, any>;
+  // eslint-disable-next-line no-unused-vars
   set(key: string, value: any): void;
+  // eslint-disable-next-line no-unused-vars
   get(key: string): any;
+  // eslint-disable-next-line no-unused-vars
   delete(key: string): void;
   load(): void;
   clear(): void;

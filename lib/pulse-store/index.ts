@@ -5,6 +5,7 @@ import { deepCloneUnfreeze, deepFreeze, hasChanged } from "valyrian.js/utils";
 type State = Record<string, any>;
 
 // An action or pulse type definition
+// eslint-disable-next-line no-unused-vars
 export type Pulse<StateType> = (state: StateType, ...args: any[]) => void | Promise<void>;
 
 // A collection of pulses

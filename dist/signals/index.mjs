@@ -52,7 +52,7 @@ function createEffect(effect) {
   runEffect();
 }
 function createSignalStore(initialState) {
-  const [state, _, runSubscribers] = createSignal(initialState);
+  const [state, , runSubscribers] = createSignal(initialState);
   const setter = (path, newValue) => {
     const current2 = get(initialState, path);
     const resolvedValue = typeof newValue === "function" ? newValue(current2) : newValue;

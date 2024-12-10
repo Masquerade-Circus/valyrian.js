@@ -4,14 +4,20 @@ import { hasChanged } from "valyrian.js/utils";
 export type Hook = any;
 
 export interface HookDefinition {
+  // eslint-disable-next-line no-unused-vars
   onCreate: (...args: any[]) => any;
+  // eslint-disable-next-line no-unused-vars
   onUpdate?: (hook: Hook, ...args: any[]) => any;
+  // eslint-disable-next-line no-unused-vars
   onCleanup?: (hook: Hook) => any;
+  // eslint-disable-next-line no-unused-vars
   onRemove?: (hook: Hook) => any;
+  // eslint-disable-next-line no-unused-vars
   returnValue?: (hook: Hook) => any;
 }
 
 export interface CreateHook {
+  // eslint-disable-next-line no-unused-vars
   (HookDefinition: HookDefinition): (...args: any[]) => any;
 }
 

@@ -1,4 +1,5 @@
 // Utility function to check if dependencies have changed recursively
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function hasChanged(prev: any, current: any) {
   if (Array.isArray(prev)) {
     if (Array.isArray(current) === false) {
