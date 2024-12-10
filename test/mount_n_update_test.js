@@ -3,7 +3,7 @@ import "valyrian.js/node";
 
 import { mount, trust, update, v, unmount } from "valyrian.js";
 
-import expect from "expect";
+import { expect, describe, test as it, beforeEach, afterEach } from "bun:test";
 
 describe("Mount and update", () => {
   it("Mount and update with POJO component", () => {
@@ -123,7 +123,7 @@ describe("Mount and update", () => {
     expect(result2).toEqual("123");
 
     const result3 = mount("body", new Date(Date.UTC(2012, 11, 20, 3, 0, 0)));
-    expect(result3).toEqual("Wed Dec 19 2012 21:00:00 GMT-0600 (hora estándar central)");
+    expect(result3).toEqual("Thu Dec 20 2012 03:00:00 GMT+0000 (Coordinated Universal Time)");
   });
 
   it("Handle multiple update calls", () => {

@@ -1,5 +1,4 @@
-import { describe, it, beforeEach } from "mocha";
-import { expect } from "expect";
+import { expect, describe, test as it, beforeEach } from "bun:test";
 import "valyrian.js/node";
 import { createNativeStore, StorageType } from "valyrian.js/native-store";
 

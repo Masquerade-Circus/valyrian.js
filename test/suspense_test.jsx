@@ -1,5 +1,4 @@
-import { beforeEach, afterEach, describe, it } from "mocha";
-import expect from "expect";
+import { expect, describe, test as it, beforeEach, afterEach } from "bun:test";
 import { v, mount, unmount } from "valyrian.js";
 import { Suspense } from "valyrian.js/suspense";
 

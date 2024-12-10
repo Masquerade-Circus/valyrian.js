@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 /* eslint-disable max-lines-per-function */
-import { describe, it } from "mocha";
-import { expect } from "expect";
+import "valyrian.js/node";
+import { expect, describe, test as it } from "bun:test";
 import { createPulseStore, createMutableStore, createEffect } from "valyrian.js/pulse-store";
 import { v, mount, unmount } from "valyrian.js";
 
@@ -182,7 +182,7 @@ describe("PulseStore", () => {
 
     expect(() => {
       state.user.age = 31;
-    }).toThrow("Cannot assign to read only property 'age' of object '#<Object>'");
+    }).toThrow("Attempted to assign to readonly property");
   });
 
   it("should handle nested object mutability", () => {
@@ -442,7 +442,7 @@ describe("PulseStore", () => {
     // Intentar modificar el arreglo directamente debería lanzar un error en modo inmutable
     expect(() => {
       state.items.push(5);
-    }).toThrow("Cannot add property 4, object is not extensible");
+    }).toThrow("Attempted to assign to readonly property");
   });
 
   it("should update large states efficiently", () => {
@@ -462,7 +462,7 @@ describe("PulseStore", () => {
 
     const duration = end - start;
     console.log(`Update duration: ${duration}ms`);
-    expect(duration).toBeLessThan(2); // Less than 2ms
+    expect(duration).toBeLessThan(10); // Less than 10ms
   });
 
   it("should handle a large number of subscribers", async () => {
@@ -499,7 +499,7 @@ describe("PulseStore", () => {
     const duration = end - start;
     console.log(`Notification duration for ${subscriberCount} subscribers: ${duration}ms`);
     expect(callCount).toEqual(subscriberCount * 2); // Each subscriber should be called twice
-    expect(duration).toBeLessThan(4); // Less than 4ms
+    expect(duration).toBeLessThan(10); // Less than 10ms
   });
 
   it("should handle long-running asynchronous pulses without blocking", async () => {

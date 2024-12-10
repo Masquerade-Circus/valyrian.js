@@ -1,7 +1,6 @@
 import "valyrian.js/node";
 
-import { describe } from "mocha";
-import expect from "expect";
+import { expect, describe, test as it } from "bun:test";
 import { htmlToDom } from "valyrian.js/node";
 
 describe("Html to Tree index", () => {

@@ -4,7 +4,7 @@ import "valyrian.js/node";
 import { directive, mount, setAttribute, trust, unmount, update, v } from "valyrian.js";
 
 import dayjs from "dayjs";
-import expect from "expect";
+import { expect, describe, test as it } from "bun:test";
 
 // eslint-disable-next-line max-lines-per-function
 describe("Directives", () => {

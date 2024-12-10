@@ -1,5 +1,4 @@
-import expect from "expect";
-import { describe, it } from "mocha";
+import { expect, describe, test as it } from "bun:test";
 
 import { v, mount } from "valyrian.js";
 import { createSignalStore, createSignal, createEffect } from "valyrian.js/signals";

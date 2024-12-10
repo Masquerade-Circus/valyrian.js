@@ -56,20 +56,16 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "dev:source": "NODE_ENV=development nodemon --enable-source-maps -e tsx,ts,json,css -w ./lib -w ./www source.js",
-    "dev:test": "nodemon --enable-source-maps -e mjs,js,ts,json,css,tsx,jsx -w ./lib -w ./test -w ./dist --exec 'mocha --bail --timeout 15000 --slow 0 --require ./register --enable-source-maps --reporter ./test/reporter.js \"test/**/*_test.js*\"'",
-    "dev:test:nyc": "nodemon --enable-source-maps -w ./test -w ./lib -w ./plugins --exec 'nyc --reporter=text --reporter=lcov mocha --timeout 15000 --slow 0 --require ./register \"test/**/*_test.js\"'",
+    "dev:source": "NODE_ENV=development chokidar './lib/**/*.ts' -c 'bun run source.js'",
+    "dev:test": "bun test --bail --watch",
     "dev:web": "browser-sync start --config 'www/bs-config.js'",
-    "build": "npm run build:source && npm run remark",
-    "build:source": "cross-env NODE_ENV=production node source.js",
-    "test": "cross-env NODE_ENV=development nyc mocha --forbid-only --timeout 15000 --slow 0 --require ./register --enable-source-maps --exit \"test/**/*_test.js\"",
-    "test2": "cross-env NODE_ENV=development mocha --forbid-only --timeout 15000 --slow 0 --require ./register --enable-source-maps --exit \"test/**/*_test.ts\"",
-    "coverage": "nyc report --reporter=lcov",
+    "build": "bun run build:source && bun run remark",
+    "build:source": "cross-env NODE_ENV=production bun run source.js",
+    "test": "cross-env NODE_ENV=development bun test --bail",
     "remark": "remark . -o",
     "commit": "git add . && git-cz && git push",
     "release": "release-it --verbose",
-    "release-test": "release-it --dry-run --verbose",
-    "bench": "nodemon -e js,ts,json,css,tsx -w ./bench -w ./lib -w ./plugins --exec 'NODE_OPTIONS=--enable-source-maps buffalo-test --require ./register'"
+    "release-test": "release-it --dry-run --verbose"
   },
   "dependencies": {
     "clean-css": "^5.3.2",
@@ -95,6 +91,7 @@
     "@typescript-eslint/eslint-plugin": "^6.7.3",
     "@typescript-eslint/parser": "^6.7.3",
     "buffalo-test": "^2.0.0",
+    "chokidar-cli": "^3.0.0",
     "compression": "^1.7.4",
     "cross-env": "^7.0.3",
     "cz-conventional-changelog": "^3.3.0",
@@ -104,9 +101,6 @@
     "expect": "^29.7.0",
     "fastify": "^4.23.2",
     "gzip-size": "^7.0.0",
-    "mocha": "^10.2.0",
-    "nodemon": "^3.0.1",
-    "nyc": "^15.1.0",
     "pirates": "^4.0.6",
     "release-it": "^16.2.1",
     "remark-cli": "^11.0.0",
@@ -115,12 +109,6 @@
   "overrides": {
     "minimist": "^1.2.8",
     "source-map-support": "^0.5.21"
-  },
-  "nyc": {
-    "exclude": [
-      "test",
-      "register.js"
-    ]
   },
   "remarkConfig": {
     "plugins": [
@@ -202,14 +190,14 @@
     },
     "hooks": {
       "before:init": [
-        "npm run build",
-        "npm run test"
+        "bun run build",
+        "bun run test"
       ],
       "after:bump": [
-        "npm run remark"
+        "bun run remark"
       ],
       "after:@release-it/conventional-changelog": [
-        "npm run remark"
+        "bun run remark"
       ]
     }
   }

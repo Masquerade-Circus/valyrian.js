@@ -1,6 +1,6 @@
 import { htmlToHyperscript, icons, inline, render, sw, htmlToDom, domToHtml } from "valyrian.js/node";
 
-import expect from "expect";
+import { expect, describe, test as it } from "bun:test";
 import fs from "fs";
 import packageJson from "../package.json";
 // eslint-disable-next-line no-unused-vars

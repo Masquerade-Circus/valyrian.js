@@ -2,7 +2,7 @@ import "valyrian.js/node";
 
 import { trust, v } from "valyrian.js";
 
-import expect from "expect";
+import { expect, describe, test as it } from "bun:test";
 
 describe("Hyperscript", () => {
   it("should create a div element", () => {

@@ -1,6 +1,6 @@
 import "valyrian.js/node";
 
-import expect from "expect";
+import { expect, describe, test as it } from "bun:test";
 import { request as exportedRequest } from "valyrian.js/request";
 import fastify from "fastify";
 

@@ -4,7 +4,7 @@ import "valyrian.js/node";
 import { Router, mountRouter } from "valyrian.js/router";
 import { update, v } from "valyrian.js";
 
-import expect from "expect";
+import { expect, describe, test as it } from "bun:test";
 
 // eslint-disable-next-line max-lines-per-function
 describe("Router", () => {

@@ -1,5 +1,4 @@
-import expect from "expect";
-import { afterEach } from "mocha";
+import { expect, describe, test as it, beforeEach, afterEach } from "bun:test";
 import { mount, unmount, v } from "valyrian.js";
 import { t, setTranslations, getTranslations, setLang, getLang, NumberFormatter } from "valyrian.js/translate";
 

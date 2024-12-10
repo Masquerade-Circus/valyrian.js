@@ -292,5 +292,7 @@ async function copy({ entryPoint, outfileName }) {
   const buildEnd = hrtime(buildStart);
 
   // Log the build time in seconds with two decimal places
+  console.log("\n-------------------------------------");
   console.log(`Build time: ${(buildEnd[0] + buildEnd[1] / 1e9).toFixed(2)} seconds`);
+  console.log("-------------------------------------");
 })();

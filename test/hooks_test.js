@@ -1,11 +1,12 @@
 import "valyrian.js/node";
+import { afterEach } from "bun:test";
 
 // eslint-disable-next-line no-unused-vars
 import { mount, onCleanup, unmount, update, v } from "valyrian.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "valyrian.js/hooks";
 
 /* eslint-disable max-lines-per-function */
-import expect from "expect";
+import { expect, describe, test as it } from "bun:test";
 
 describe("Hooks", () => {
   afterEach(unmount);

@@ -1,5 +1,5 @@
 import { FluxStore } from "valyrian.js/flux-store";
-import expect from "expect";
+import { expect, describe, test as it } from "bun:test";
 
 // eslint-disable-next-line max-lines-per-function
 describe("FluxStore", () => {
@@ -75,8 +75,8 @@ describe("FluxStore", () => {
 
   it("Throw error if you try to mutate a deeper property of the state directly", () => {
     const store = getNewStore();
-    expect(() => store.state.b.push(1)).toThrowError("Cannot add property 1, object is not extensible");
-    expect(() => (store.state.c.a = 2)).toThrowError("Cannot assign to read only property 'a' of object '#<Object>'");
+    expect(() => store.state.b.push(1)).toThrowError("Attempted to assign to readonly property.");
+    expect(() => (store.state.c.a = 2)).toThrowError("Attempted to assign to readonly property.");
     expect(store.state.c.a).toEqual(1);
   });
 
@@ -87,7 +87,7 @@ describe("FluxStore", () => {
 
   it("Fail silently if you try to remove a deeper property directly", () => {
     const store = getNewStore();
-    expect(() => delete store.state.c.a).toThrowError("Cannot delete property 'a' of #<Object>");
+    expect(() => delete store.state.c.a).toThrowError("Unable to delete property.");
     expect(store.state.c.a).toEqual(1);
   });
 
@@ -116,7 +116,7 @@ describe("FluxStore", () => {
 
   it("Throw error if you try to dispatch an undefined action", () => {
     const store = getNewStore();
-    expect(() => store.dispatch("hello")).rejects.toThrowError('The action "hello" does not exists.');
+    expect(() => store.dispatch("hello")).toThrowError('The action "hello" does not exists.');
   });
 
   it("Use a getter to obtain a property from the state", () => {
@@ -581,9 +581,7 @@ describe("FluxStore", () => {
       }
     });
 
-    expect(() => store.dispatch("my.module.not.change")).rejects.toThrowError(
-      'The module "my.module.not" does not exists.'
-    );
+    expect(() => store.dispatch("my.module.not.change")).toThrowError('The module "my.module.not" does not exists.');
   });
 
   it("Throw error if action of a nested module does not exists", () => {
@@ -602,9 +600,7 @@ describe("FluxStore", () => {
       }
     });
 
-    expect(() => store.dispatch("my.module.not-change")).rejects.toThrowError(
-      'The action "not-change" does not exists.'
-    );
+    expect(() => store.dispatch("my.module.not-change")).toThrowError('The action "not-change" does not exists.');
   });
 
   it("Use a getter to obtain a property from the nested module state", () => {
