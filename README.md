@@ -36,9 +36,9 @@ Lightweight steel to forge PWAs. (Minimal Frontend Framework with server side re
 
 ## Table of Contents
 
-*   [Tests](#tests)
-*   [Contributing](#contributing)
-*   [Legal](#legal)
+* [Tests](#tests)
+* [Contributing](#contributing)
+* [Legal](#legal)
 
 ## Tests
 
@@ -48,9 +48,9 @@ For development use `yarn dev:test`
 
 ## Contributing
 
-*   Use prettify and eslint to lint your code.
-*   Add tests for any new or changed functionality.
-*   Update the readme with an example if you add or change any functionality.
+* Use prettify and eslint to lint your code.
+* Add tests for any new or changed functionality.
+* Update the readme with an example if you add or change any functionality.
 
 ## Legal
 
