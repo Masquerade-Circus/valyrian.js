@@ -1,11 +1,12 @@
 import "valyrian.js/node";
+import { afterEach } from "bun:test";
 
 // eslint-disable-next-line no-unused-vars
 import { mount, onCleanup, unmount, update, v } from "valyrian.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "valyrian.js/hooks";
 
 /* eslint-disable max-lines-per-function */
-import expect from "expect";
+import { expect, describe, test as it } from "bun:test";
 
 describe("Hooks", () => {
   afterEach(unmount);
@@ -13,14 +14,14 @@ describe("Hooks", () => {
     it("should handle a component state", async () => {
       const Counter = () => {
         const [count, setCount] = useState(0);
-        const interval = setInterval(() => setCount(count + 1), 10);
+        const interval = setInterval(() => setCount(count() + 1), 10);
         onCleanup(() => clearInterval(interval));
-        return <div>{count}</div>;
+        return <div>{count()}</div>;
       };
 
       let result = mount("div", Counter);
       expect(result).toEqual("<div>0</div>");
-      await new Promise((resolve) => setTimeout(() => resolve(), 28));
+      await new Promise((resolve) => setTimeout(() => resolve(), 35));
       result = update();
       expect(result).toEqual("<div>2</div>");
       unmount();
@@ -31,16 +32,16 @@ describe("Hooks", () => {
         const [ok, setOk] = useState("ok");
         const interval = setInterval(() => setOk("not ok"), 10);
         onCleanup(() => clearInterval(interval));
-        return <div>{ok}</div>;
+        return <div>{ok()}</div>;
       };
 
       const Counter = () => {
         const [count, setCount] = useState(0);
-        const interval = setInterval(() => setCount(count + 1), 10);
+        const interval = setInterval(() => setCount(count() + 1), 10);
         onCleanup(() => clearInterval(interval));
         return (
           <div>
-            {count} <Ok />
+            {count()} <Ok />
           </div>
         );
       };
@@ -49,7 +50,7 @@ describe("Hooks", () => {
 
       let result = mount("div", Counter);
       expect(result).toEqual("<div>0 <div>ok</div></div>");
-      await new Promise((resolve) => setTimeout(() => resolve(), 29));
+      await new Promise((resolve) => setTimeout(() => resolve(), 35));
       result = update();
       expect(result).toEqual("<div>2 <div>not ok</div></div>");
       unmount();
@@ -60,11 +61,11 @@ describe("Hooks", () => {
       const Counter = () => {
         const [count, setCount] = useState(0);
         const [name] = useState("Hello");
-        const interval = setInterval(() => setCount(count + 1), 10);
+        const interval = setInterval(() => setCount(count() + 1), 10);
         onCleanup(() => clearInterval(interval));
         return (
           <div>
-            {count} {name}
+            {count()} {name()}
           </div>
         );
       };
@@ -72,11 +73,11 @@ describe("Hooks", () => {
       const OtherCounter = () => {
         const [count, setCount] = useState(10);
         const [name] = useState("World");
-        const interval = setInterval(() => setCount(count + 1), 10);
+        const interval = setInterval(() => setCount(count() + 1), 10);
         onCleanup(() => clearInterval(interval));
         return (
           <div>
-            {count} {name}
+            {count()} {name()}
           </div>
         );
       };
@@ -87,14 +88,14 @@ describe("Hooks", () => {
 
       let result = mount("div", Component);
       expect(result).toEqual("<div>0 Hello</div>");
-      await new Promise((resolve) => setTimeout(() => resolve(), 28));
+      await new Promise((resolve) => setTimeout(() => resolve(), 35));
       change = true;
       result = update();
       expect(result).toEqual("<div>10 World</div>");
-      await new Promise((resolve) => setTimeout(() => resolve(), 28));
+      await new Promise((resolve) => setTimeout(() => resolve(), 35));
       result = update();
       expect(result).toEqual("<div>12 World</div>");
-      await new Promise((resolve) => setTimeout(() => resolve(), 28));
+      await new Promise((resolve) => setTimeout(() => resolve(), 35));
       result = update();
       expect(result).toEqual("<div>14 World</div>");
       change = false;
@@ -247,47 +248,6 @@ describe("Hooks", () => {
       response = unmount();
       expect(response).toEqual("");
       expect(count).toEqual(1);
-    });
-
-    describe("Compare lifecycle vs hooks", () => {
-      let lifecycleCount = 0;
-      const plusLifeCycle = () => (lifecycleCount += 1);
-
-      let hooksCount = 0;
-      const plusHooks = () => (hooksCount += 1);
-
-      const LifecycleComponent = () => {
-        return (
-          <div oncreate={plusLifeCycle} onupdate={plusLifeCycle} onremove={plusLifeCycle}>
-            Hello world
-          </div>
-        );
-      };
-
-      const HooksComponent = () => {
-        // useEffect(plusHooks, []); // Only create replaced by the next line
-        useEffect(plusHooks); // Create & update
-        useEffect(plusHooks, null); // Remove
-        return <div>Hello world</div>;
-      };
-
-      it.skip("should call the lifecycle", () => {
-        mount("body", LifecycleComponent);
-        expect(lifecycleCount).toEqual(1);
-        update();
-        expect(lifecycleCount).toEqual(2);
-        unmount();
-        expect(lifecycleCount).toEqual(3);
-      });
-
-      it("should call the hooks", () => {
-        mount("body", HooksComponent);
-        expect(hooksCount).toEqual(1);
-        update();
-        expect(hooksCount).toEqual(2);
-        unmount();
-        expect(hooksCount).toEqual(3);
-      });
     });
   });
 

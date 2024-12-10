@@ -1,6 +1,6 @@
 import "valyrian.js/node";
 
-import expect from "expect";
+import { expect, describe, test as it } from "bun:test";
 import { request as exportedRequest } from "valyrian.js/request";
 import fastify from "fastify";
 
@@ -160,6 +160,7 @@ describe("Request", () => {
         const res = await request.get(`${server.baseUrl}/posts/`, {
           userId: 1
         });
+
         expect(res).toEqual(expect.any(Array));
         expect(res.length).toEqual(10);
         await server.close();

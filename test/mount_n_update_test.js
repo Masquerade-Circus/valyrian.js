@@ -3,7 +3,7 @@ import "valyrian.js/node";
 
 import { mount, trust, update, v, unmount } from "valyrian.js";
 
-import expect from "expect";
+import { expect, describe, test as it, beforeEach, afterEach } from "bun:test";
 
 describe("Mount and update", () => {
   it("Mount and update with POJO component", () => {
@@ -113,6 +113,17 @@ describe("Mount and update", () => {
       before: '<div id="example">Hello World</div>',
       after: '<div id="example">Hello John Doe</div>'
     });
+  });
+
+  it("Mount with non component", () => {
+    const result = mount("body", "Hello world");
+    expect(result).toEqual("Hello world");
+
+    const result2 = mount("body", 123);
+    expect(result2).toEqual("123");
+
+    const result3 = mount("body", new Date(Date.UTC(2012, 11, 20, 3, 0, 0)));
+    expect(result3).toEqual("Thu Dec 20 2012 03:00:00 GMT+0000 (Coordinated Universal Time)");
   });
 
   it("Handle multiple update calls", () => {
@@ -350,10 +361,10 @@ describe("Mount and update", () => {
     const InstanceClassComponent = new ClassComponent();
 
     // Class component
-    // const result9 = mount("body", InstanceClassComponent);
+    const result9 = mount("body", InstanceClassComponent);
 
     // Vnode component from class component
-    // const result10 = mount("body", <InstanceClassComponent.view />);
+    const result10 = mount("body", <InstanceClassComponent />);
 
     expect(result1).toEqual("Hello world");
     expect(result2).toEqual("Hello world 2");
@@ -363,8 +374,8 @@ describe("Mount and update", () => {
     expect(result6).toEqual("<span>Hello world 5</span> - 6");
     expect(result7).toEqual("<span>Hello world 5</span> - 7");
     expect(result8).toEqual("<div>Hello world 8</div>");
-    // expect(result9).toEqual("<div>Hello world 9</div>");
-    // expect(result10).toEqual("<div>Hello world 9</div>");
+    expect(result9).toEqual("<div>Hello world 9</div>");
+    expect(result10).toEqual("<div>Hello world 9</div>");
   });
 
   it("should test deepley nested components", () => {
@@ -396,5 +407,43 @@ describe("Mount and update", () => {
     /* for (let i = 0; i < 1000000; i++) {
       update();
     } */
+  });
+});
+
+describe("Benchmark Test: Mount and update", function () {
+  beforeEach(unmount);
+  afterEach(unmount);
+
+  it("should benchmark mount and update times", function () {
+    const iterations = 1000;
+    const createComponent = (index) =>
+      v("div", { id: `test-${index}`, class: `class-${index}` }, [
+        v("span", { "data-index": index }, `Texto del nodo ${index}`),
+        v("input", { type: "text", value: `input-${index}` })
+      ]);
+
+    const children = [];
+    for (let i = 0; i < iterations; i++) {
+      children.push(createComponent(i));
+    }
+    function Component() {
+      return v("div", null, children);
+    }
+
+    // eslint-disable-next-line no-console
+    console.time("Mount");
+    mount("body", Component);
+    // eslint-disable-next-line no-console
+    console.timeEnd("Mount");
+
+    children.length = 0;
+    // eslint-disable-next-line no-console
+    console.time("Update");
+    for (let i = 0; i < iterations; i++) {
+      children.push(createComponent(i));
+      update();
+    }
+    // eslint-disable-next-line no-console
+    console.timeEnd("Update");
   });
 });

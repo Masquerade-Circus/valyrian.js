@@ -3,7 +3,7 @@ const { transformSync } = require("esbuild");
 
 addHook(
   (code, filePath) => {
-    let esbuildOptions = {
+    const esbuildOptions = {
       sourcefile: filePath,
       sourcemap: "inline",
       sourcesContent: true,
@@ -15,7 +15,7 @@ addHook(
       format: "cjs"
     };
 
-    let result = transformSync(code, esbuildOptions);
+    const result = transformSync(code, esbuildOptions);
 
     if (!/^"use strict";/.test(result.code)) {
       result.code = `"use strict";${result.code}`;

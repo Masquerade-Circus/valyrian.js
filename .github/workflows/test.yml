@@ -11,21 +11,17 @@ jobs:
     name: "Test"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: "Use Node.js 18.x"
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.x
-      - run: npm ci
-      - run: npm run build:source
-      - run: npm run test
-      - if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18.x
-      - run: npm run coverage
-      - if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
-        name: Coveralls
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - name: Debug dependencies
+        run: ls -la && bun --version
+      - name: Install dependencies
+        run: bun install
+      - name: Run tests
+        run: bun test
+        continue-on-error: false
+      - name: Coveralls
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

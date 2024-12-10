@@ -2,7 +2,7 @@ import "valyrian.js/node";
 
 import { mount, update, v } from "valyrian.js";
 
-import expect from "expect";
+import { expect, describe, test as it } from "bun:test";
 
 describe("Keyed lists", () => {
   const set = [1, 2, 3, 4, 5];

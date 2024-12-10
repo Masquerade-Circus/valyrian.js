@@ -1,6 +1,6 @@
 import { htmlToHyperscript, icons, inline, render, sw, htmlToDom, domToHtml } from "valyrian.js/node";
 
-import expect from "expect";
+import { expect, describe, test as it } from "bun:test";
 import fs from "fs";
 import packageJson from "../package.json";
 // eslint-disable-next-line no-unused-vars
@@ -173,11 +173,11 @@ span.hello{display: inline-block}
 
   it("should inline js", async () => {
     const { raw: indexTs } = await inline("./lib/index.ts", { compact: true, noValidate: true });
-    const { raw: indexOld } = await inline("./bench/index-old.js", { compact: true });
+    // const { raw: indexOld } = await inline("./bench/index-old.js", { compact: true });
     // eslint-disable-next-line no-console
     console.log(indexTs.length);
     // eslint-disable-next-line no-console
-    console.log(indexOld.length);
+    // console.log(indexOld.length);
   });
 
   it("should convert tsx to hyperscript by default", async () => {

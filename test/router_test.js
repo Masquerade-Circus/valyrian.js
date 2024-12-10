@@ -4,7 +4,7 @@ import "valyrian.js/node";
 import { Router, mountRouter } from "valyrian.js/router";
 import { update, v } from "valyrian.js";
 
-import expect from "expect";
+import { expect, describe, test as it } from "bun:test";
 
 // eslint-disable-next-line max-lines-per-function
 describe("Router", () => {
@@ -20,7 +20,7 @@ describe("Router", () => {
       .add("/hello", [() => console.log("Hello 2"), () => Component])
       .add("/hello/", [() => console.log("Hello 3"), () => Component])
       .add("/:hello", [() => console.log("Hello 4"), () => Component])
-      .add("/hello/(.*)", [() => console.log("Hello 5"), () => Component])
+      .add("/hello/.*", [() => console.log("Hello 5"), () => Component])
       .add(
         "/:hello/world",
         () => console.log("Hello 6"),
@@ -40,7 +40,7 @@ describe("Router", () => {
       .add("/hello", [() => console.log("Hello 2"), () => Component])
       .add("/hello/", [() => console.log("Hello 3"), () => Component])
       .add("/:hello", [() => console.log("Hello 4"), () => Component])
-      .add("/hello/(.*)", [() => console.log("Hello 5"), () => Component])
+      .add("/hello/.*", [() => console.log("Hello 5"), () => Component])
       .add(
         "/:hello/world",
         () => console.log("Hello 6"),
@@ -48,14 +48,18 @@ describe("Router", () => {
         () => Component
       )
       .add("/hello/:world", [() => console.log("Hello 7"), () => Component], () => console.log("Hello 7"))
-      .use(() => () => "Not ok");
+      .catch(() => () => "Not ok");
 
-    router.use("/ok", subrouter);
-    router.use(() => () => "Not found");
+    router.add("/ok", subrouter);
+    router.catch(() => () => "Not found");
 
     mountRouter("body", router);
-    expect(await router.go("/ok/not/found/url?hello=world")).toEqual("Not ok");
+    // The /:hello route is setted before the /ok subrouter,
+    // so it should enter in the /:hello route
+    // instead of the /ok subrouter
+    expect(await router.go("/ok/not/found/url?hello=world")).toEqual("Not found");
     expect(await router.go("/not/found/url?hello=world")).toEqual("Not found");
+    expect(await router.go("/hello/world")).toEqual("<div>Hello world</div>");
   });
 
   it("Mount and update with POJO component", async () => {
@@ -170,7 +174,7 @@ describe("Router", () => {
 
     const router = new Router();
     router.add("/", () => Hello);
-    router.use(() => NotFound);
+    router.add(() => NotFound);
 
     mountRouter("body", router);
 
@@ -279,7 +283,7 @@ describe("Router", () => {
       });
 
     const router = new Router();
-    router.use("/hello/:world", subrouter);
+    router.add("/hello/:world", subrouter);
     mountRouter("body", router);
 
     const result = {};
@@ -324,7 +328,7 @@ describe("Router", () => {
       err = error.message;
     }
 
-    expect(err).toEqual("router.url.required");
+    expect(err).toEqual("The URL is empty.");
   });
 
   it("Test show error when no component is returned", async () => {
@@ -341,7 +345,7 @@ describe("Router", () => {
       err = error.message;
     }
 
-    expect(err).toEqual("The url / requested wasn't found");
+    expect(err).toEqual("The URL / did not return a valid component.");
   });
 
   it("Test get routes", () => {
@@ -350,11 +354,11 @@ describe("Router", () => {
     subrouter.add("/from/:country", () => Component).add("/", () => Component);
 
     const router = new Router();
-    router.use("/hello/:world", subrouter).add("/", () => Component);
+    router.add("/hello/:world", subrouter).add("/", () => Component);
 
     mountRouter("body", router);
 
-    expect(router.routes()).toEqual(["/hello/:world/from/:country", "/hello/:world", "/"]);
+    expect(router.routes()).toEqual(["/hello/:world", "/hello/:world/from/:country", "/"]);
   });
 
   it("Test the onClick handler for a single route", async () => {
@@ -370,7 +374,7 @@ describe("Router", () => {
     };
 
     const handler = router.getOnClickHandler("/other");
-    handler({ preventDefault: () => {} });
+    handler({ preventDefault: () => {}, button: 0 });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
 
@@ -395,7 +399,7 @@ describe("Router", () => {
     };
 
     const handler = router.getOnClickHandler("/Mike");
-    handler({ preventDefault: () => {} });
+    handler({ preventDefault: () => {}, button: 0 });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
 
@@ -418,7 +422,7 @@ describe("Router", () => {
     };
 
     const handler = router.getOnClickHandler("/world?world=Mike");
-    handler({ preventDefault: () => {} });
+    handler({ preventDefault: () => {}, button: 0 });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
 
@@ -441,7 +445,7 @@ describe("Router", () => {
     };
 
     const handler = router.getOnClickHandler("/world#Mike");
-    handler({ preventDefault: () => {} });
+    handler({ preventDefault: () => {}, button: 0 });
 
     await new Promise((resolve) => setTimeout(resolve, 10));
 
@@ -458,7 +462,7 @@ describe("Router", () => {
 
     subrouter.add("/1", () => () => "1");
     subrouter.add("/2", () => () => "2");
-    subrouter.use("/3", async (req) => {
+    subrouter.add("/3", async (req) => {
       await req.redirect("/1");
       return false;
     });
@@ -467,10 +471,10 @@ describe("Router", () => {
     router.add("/", () => () => "home");
     router.add("/1", () => () => "1");
     router.add("/2", () => () => "2");
-    router.use("/sub", subrouter);
+    router.add("/sub", subrouter);
 
     expect(router.pathPrefix).toEqual("/test");
-    expect(router.routes()).toEqual(["/test", "/test/1", "/test/2", "/test/sub/1", "/test/sub/2"]);
+    expect(router.routes()).toEqual(["/test", "/test/1", "/test/2", "/test/sub/1", "/test/sub/2", "/test/sub/3"]);
     expect(router.url).toEqual("");
     expect(router.path).toEqual("");
 
@@ -497,5 +501,387 @@ describe("Router", () => {
     expect(res4).toBeUndefined();
     expect(router.path).toEqual("/1");
     expect(router.url).toEqual("/test/1");
+  });
+
+  it("Test interruption of middleware chain", async () => {
+    const middlewareLog = [];
+    const router = new Router();
+    router.add(
+      "/",
+      () => middlewareLog.push("Middleware 1"),
+      () => false, // Interrumpir la cadena
+      () => middlewareLog.push("Middleware 2")
+    );
+    mountRouter("body", router);
+
+    await router.go("/");
+
+    expect(middlewareLog).toEqual(["Middleware 1"]); // Middleware 2 no se ejecuta
+  });
+
+  it("Test redirect within middleware", async () => {
+    const dom = document.createElement("div");
+    const Component = () => <div>Final Route</div>;
+    const router = new Router();
+    router.add("/start", (req) => {
+      return req.redirect("/final");
+    });
+    router.add("/final", () => Component);
+    mountRouter(dom, router);
+
+    const result = await router.go("/start");
+
+    expect(result).toEqual("<div>Final Route</div>");
+    expect(dom.innerHTML).toEqual("<div>Final Route</div>");
+  });
+
+  it("Test nested subrouters", async () => {
+    const SubSubRouter = new Router();
+    SubSubRouter.add("/deep", () => "Deep route");
+
+    const SubRouter = new Router();
+    SubRouter.add("/sub", SubSubRouter);
+
+    const router = new Router();
+    router.add("/main", SubRouter);
+
+    mountRouter("body", router);
+
+    const result = await router.go("/main/sub/deep");
+
+    expect(result).toEqual("Deep route");
+  });
+
+  it("Should throw an error for malformed URL", async () => {
+    const router = new Router();
+    router.add("/", () => "Home");
+
+    let errorMessage;
+    try {
+      await router.go("/%%%");
+    } catch (error) {
+      errorMessage = error.message;
+    }
+
+    expect(errorMessage).toEqual("The URL /%%% is malformed.");
+  });
+
+  it("Should go to the error handler when a route throws an error", async () => {
+    const router = new Router();
+    router.add("/", () => {
+      throw new Error("Some error");
+    });
+    router.catch((req, e) => () => <div>Error handler: {e.message}</div>);
+
+    mountRouter("body", router);
+
+    const result = await router.go("/");
+
+    expect(result).toEqual("<div>Error handler: Some error</div>");
+  });
+
+  it("Test multiple dynamic parameters", async () => {
+    const Component = ({ userId, postId }) => (
+      <div>
+        User {userId} Post {postId}
+      </div>
+    );
+
+    const router = new Router();
+    router.add("/user/:userId/posts/:postId", (req) => (
+      <Component userId={req.params.userId} postId={req.params.postId} />
+    ));
+    mountRouter("body", router);
+
+    const result = await router.go("/user/123/posts/456");
+    expect(result).toEqual("<div>User 123 Post 456</div>");
+  });
+
+  it("Test route conflict between static and dynamic segments", async () => {
+    const StaticComponent = () => <div>Static Route</div>;
+    const DynamicComponent = ({ id }) => <div>Dynamic Route {id}</div>;
+
+    const router = new Router();
+    router.add("/user", () => StaticComponent);
+    router.add("/user/:id", (req) => <DynamicComponent id={req.params.id} />);
+    mountRouter("body", router);
+
+    const staticResult = await router.go("/user");
+    const dynamicResult = await router.go("/user/123");
+
+    expect(staticResult).toEqual("<div>Static Route</div>");
+    expect(dynamicResult).toEqual("<div>Dynamic Route 123</div>");
+  });
+
+  it("Test prefixed wildcard route and dynamic route", async () => {
+    const WildcardComponent = () => <div>Wildcard Route</div>;
+    const DynamicComponent = ({ hello }) => <div>Dynamic Route {hello}</div>;
+
+    const router = new Router();
+    router.add("/hello/.*", () => WildcardComponent);
+    router.add("/:hello", (req) => <DynamicComponent hello={req.params.hello} />);
+    mountRouter("body", router);
+
+    const wildcardResult = await router.go("/hello/anything");
+    const dynamicResult = await router.go("/hi");
+
+    expect(wildcardResult).toEqual("<div>Wildcard Route</div>");
+    expect(dynamicResult).toEqual("<div>Dynamic Route hi</div>");
+  });
+
+  it("Test multiple subrouters mounted under the same prefix", async () => {
+    const SubComponent1 = () => <div>Sub Route 1</div>;
+    const SubComponent2 = () => <div>Sub Route 2</div>;
+
+    const subrouter1 = new Router();
+    subrouter1.add("/", () => SubComponent1);
+
+    const subrouter2 = new Router();
+    subrouter2.add("/", () => SubComponent2);
+
+    const router = new Router();
+    router.add("/sub1", subrouter1);
+    router.add("/sub2", subrouter2);
+    mountRouter("body", router);
+
+    const sub1Result = await router.go("/sub1");
+    const sub2Result = await router.go("/sub2");
+
+    expect(sub1Result).toEqual("<div>Sub Route 1</div>");
+    expect(sub2Result).toEqual("<div>Sub Route 2</div>");
+  });
+
+  it("Test middleware order: global vs local", async () => {
+    const middlewareLog = [];
+
+    const router = new Router();
+    router.add(() => middlewareLog.push("Global Middleware")); // Global middleware
+    router.add("/", () => middlewareLog.push("Local Middleware")); // Local middleware
+
+    mountRouter("body", router);
+
+    await router.go("/");
+    expect(middlewareLog).toEqual(["Global Middleware", "Local Middleware"]);
+  });
+
+  it("Test invalid routes do not corrupt the route tree", async () => {
+    const Component = () => <div>Valid Route</div>;
+
+    const router = new Router();
+    router.add("/valid", () => Component);
+
+    // Simulate adding an invalid route
+    try {
+      router.add(null, () => Component);
+    } catch (error) {
+      // Expect it to throw
+    }
+
+    mountRouter("body", router);
+
+    const result = await router.go("/valid");
+    expect(result).toEqual("<div>Valid Route</div>");
+  });
+
+  it("Test multiple wildcards in different levels of the route tree", async () => {
+    const Component1 = () => <div>Wildcard Level 1</div>;
+    const Component2 = () => <div>Wildcard Level 2</div>;
+
+    const router = new Router();
+    router.add("/level1/.*", () => Component1);
+    router.add("/level2/.*", () => Component2);
+
+    mountRouter("body", router);
+
+    const result1 = await router.go("/level1/something");
+    const result2 = await router.go("/level2/else");
+
+    expect(result1).toEqual("<div>Wildcard Level 1</div>");
+    expect(result2).toEqual("<div>Wildcard Level 2</div>");
+  });
+
+  it("Test middleware returning null or undefined does not break the chain", async () => {
+    const middlewareLog = [];
+
+    const router = new Router();
+    router.add(
+      "/",
+      () => middlewareLog.push("Middleware 1"),
+      () => null, // Should not break the chain
+      () => middlewareLog.push("Middleware 2")
+    );
+    mountRouter("body", router);
+
+    await router.go("/");
+
+    expect(middlewareLog).toEqual(["Middleware 1", "Middleware 2"]);
+  });
+
+  it("Test multiple redirections within middleware chain", async () => {
+    const FinalComponent = () => <div>Final Route</div>;
+
+    const router = new Router();
+    router.add("/start", (req) => req.redirect("/intermediate"));
+    router.add("/intermediate", (req) => req.redirect("/final"));
+    router.add("/final", () => FinalComponent);
+
+    mountRouter("body", router);
+
+    const result = await router.go("/start");
+    expect(result).toEqual("<div>Final Route</div>");
+  });
+
+  it("Test query parameters in redirection are preserved", async () => {
+    const Component = ({ world }) => <div>Hello {world}</div>;
+
+    const router = new Router();
+    router.add("/redirect", (req) => req.redirect(`/world?world=${req.query.world}`));
+    router.add("/world", (req) => <Component world={req.query.world} />);
+
+    mountRouter("body", router);
+
+    const result = await router.go("/redirect?world=Mars");
+    expect(result).toEqual("<div>Hello Mars</div>");
+  });
+
+  it("Test onClick handler with ctrl key (should prevent navigation)", async () => {
+    const Component = () => <div>Hello World</div>;
+
+    const router = new Router();
+    router.add("/", () => Component);
+
+    mountRouter("body", router);
+
+    const handler = router.getOnClickHandler("/");
+    const mockEvent = { preventDefault: () => {}, button: 0, ctrlKey: true }; // Simulating Ctrl+Click
+
+    handler(mockEvent);
+
+    const result = await router.go("/");
+    expect(result).toEqual("<div>Hello World</div>"); // Navigation should not happen
+  });
+
+  it("Test handling multiple redirects in middlewares", async () => {
+    const Component = () => <div>Final Destination</div>;
+
+    const router = new Router();
+    router.add("/first", (req) => req.redirect("/second"));
+    router.add("/second", (req) => req.redirect("/third"));
+    router.add("/third", () => Component);
+
+    mountRouter("body", router);
+
+    const result = await router.go("/first");
+    expect(result).toEqual("<div>Final Destination</div>");
+  });
+
+  it("Performance test: 1000 routes with 1000 subroutes with :${[a-z]} param", async () => {
+    const Component = () => <div>Hello World</div>;
+
+    console.time("Routes creation");
+    const router = new Router();
+    for (let i = 0; i < 1000; i++) {
+      const subrouter = new Router();
+      for (let j = 0; j < 1000; j++) {
+        subrouter.add(`/:${String.fromCharCode(97 + j)}`, () => Component);
+      }
+      router.add(`/${i}`, subrouter);
+    }
+    console.timeEnd("Routes creation");
+    mountRouter("body", router);
+
+    console.time("Routes navigation");
+    for (let i = 0; i < 1000; i++) {
+      await router.go(`/${i}/${String.fromCharCode(97 + 1)}`);
+    }
+    console.timeEnd("Routes navigation");
+  });
+
+  it("Test conflict between dynamic and wildcard routes on multiple levels", async () => {
+    const DynamicComponent = ({ param }) => <div>Dynamic Route {param}</div>;
+    const WildcardComponent = ({ url, found }) => (
+      <div>
+        Wildcard Route {url} {"->"} {found}
+      </div>
+    );
+
+    const router = new Router();
+    router.add("/level/:param", (req) => <DynamicComponent param={req.params.param} />);
+    router.add("/level/.*", ({ url }) => <WildcardComponent url={url} found="/level/.*" />);
+    router.add("/.*", ({ url }) => <WildcardComponent url={url} found="/.*" />);
+    router.catch(() => () => "Not found");
+
+    mountRouter("body", router);
+
+    const dynamicResult = await router.go("/level/123");
+    const wildcardResult = await router.go("/level/some/random/path");
+
+    expect(dynamicResult).toEqual("<div>Dynamic Route 123</div>");
+    expect(wildcardResult).toEqual("<div>Wildcard Route /level/some/random/path -> /level/.*</div>");
+
+    const router2 = new Router();
+    router2.add("/level/123", () => <DynamicComponent param="123" />);
+    router2.add("/level/.*", ({ url }) => <WildcardComponent url={url} found="/level/.*" />);
+    router2.add("/.*", ({ url }) => <WildcardComponent url={url} found="/.*" />);
+    router2.catch(() => () => "Not found");
+
+    mountRouter("body", router2);
+
+    const dynamicResult2 = await router2.go("/level/123");
+    const wildcardResult2 = await router2.go("/level/some/random/path");
+
+    expect(dynamicResult2).toEqual("<div>Dynamic Route 123</div>");
+    expect(wildcardResult2).toEqual("<div>Wildcard Route /level/some/random/path -> /level/.*</div>");
+  });
+
+  it("Parent middlewares must be executed before child middlewares", async () => {
+    const logs = [];
+
+    const Component = () => <div>Hello World</div>;
+    const subrouter = new Router();
+    subrouter.add(() => logs.push("Child middleware"));
+    subrouter.add("/", () => Component);
+
+    const router = new Router();
+    router.add(() => logs.push("Parent middleware"));
+    router.add("/child", subrouter);
+
+    mountRouter("body", router);
+
+    await router.go("/child");
+
+    expect(logs).toEqual(["Parent middleware", "Child middleware"]);
+  });
+
+  it("Error handlers", async () => {
+    const router = new Router();
+
+    router
+      .add("/", async () => () => <div>Home</div>)
+      .add("/about", async () => () => <div>About</div>)
+      .add("/error", async () => {
+        throw new TypeError("Simulated TypeError");
+      })
+      .add("/simulated", async () => {
+        throw new Error("Simulated Error");
+      });
+
+    // Error handlers
+    router
+      .catch(404, (req, error) => () => <div>404 Not Found: {error.message}</div>)
+      .catch(TypeError, (req, error) => () => <div>Type Error: {error.message}</div>)
+      .catch((req, error) => () => <div>Generic Error: {error.message}</div>);
+
+    mountRouter("body", router);
+
+    const notFoundError = await router.go("/nonexistent"); // 404 Not Found
+    const typeError = await router.go("/error"); // TypeError
+    const genericError = await router.go("/simulated"); // Generic console.error(
+
+    expect(notFoundError).toEqual(
+      "<div>404 Not Found: The URL /nonexistent was not found in the router's registered paths.</div>"
+    );
+    expect(typeError).toEqual("<div>Type Error: Simulated TypeError</div>");
+    expect(genericError).toEqual("<div>Generic Error: Simulated Error</div>");
   });
 });

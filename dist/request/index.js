@@ -24,30 +24,40 @@ __export(request_exports, {
 });
 module.exports = __toCommonJS(request_exports);
 var import_valyrian = require("valyrian.js");
+var import_utils = require("valyrian.js/utils");
 function serialize(obj, prefix = "") {
-  return Object.keys(obj).map((prop) => {
-    const k = prefix ? `${prefix}[${prop}]` : prop;
-    return typeof obj[prop] === "object" ? serialize(obj[prop], k) : `${encodeURIComponent(k)}=${encodeURIComponent(obj[prop])}`;
-  }).join("&");
+  const params = new URLSearchParams();
+  Object.keys(obj).forEach((prop) => {
+    const key = prefix ? `${prefix}[${prop}]` : prop;
+    if (typeof obj[prop] === "object") {
+      params.append(key, serialize(obj[prop], key).toString());
+    } else {
+      params.append(key, obj[prop]);
+    }
+  });
+  return params;
+}
+function serializeFormData(data) {
+  return Object.entries(data).reduce((fd, [key, value]) => {
+    fd.append(key, value);
+    return fd;
+  }, new FormData());
 }
 function parseUrl(url, options) {
-  let u = /^https?/gi.test(url) ? url : options.urls.base + url;
-  const parts = u.split("?");
-  u = parts[0].trim().replace(/^\/\//, "/").replace(/\/$/, "").trim();
-  if (parts[1]) {
-    u += `?${parts[1]}`;
-  }
+  const urlWithoutSlash = url.replace(/\/+$/, "").trim();
+  const u = /^https?/gi.test(urlWithoutSlash) ? urlWithoutSlash : `${options.urls.base}${urlWithoutSlash}`;
   if (import_valyrian.isNodeJs && typeof options.urls.node === "string") {
-    options.urls.node = options.urls.node;
     if (typeof options.urls.api === "string") {
-      options.urls.api = options.urls.api.replace(/\/$/gi, "").trim();
-      u = u.replace(options.urls.api, options.urls.node);
+      return new URL(u.replace(options.urls.api, options.urls.node));
     }
     if (!/^https?/gi.test(u)) {
-      u = options.urls.node + u;
+      return new URL(u, options.urls.node);
     }
   }
-  return u;
+  if (/^https?/gi.test(u)) {
+    return new URL(u);
+  }
+  return new URL(u, options.urls.base);
 }
 var defaultOptions = { allowedMethods: ["get", "post", "put", "patch", "delete", "head", "options"] };
 function Requester(baseUrl = "", options = defaultOptions) {
@@ -78,39 +88,33 @@ function Requester(baseUrl = "", options = defaultOptions) {
       ...opts,
       ...options2
     };
+    innerOptions.headers = { ...innerOptions.headers, ...opts.headers, ...options2.headers };
     if (!innerOptions.headers.Accept) {
       innerOptions.headers.Accept = "application/json";
     }
     const acceptType = innerOptions.headers.Accept;
     const contentType = innerOptions.headers["Content-Type"] || innerOptions.headers["content-type"] || "";
-    if (innerOptions.allowedMethods.indexOf(method) === -1) {
-      throw new Error("Method not allowed");
+    if (!innerOptions.allowedMethods.includes(method)) {
+      throw new Error(`Method ${method} not allowed. Allowed methods: ${innerOptions.allowedMethods.join(", ")}`);
+    }
+    let finalUrl;
+    try {
+      finalUrl = parseUrl(url2, opts);
+    } catch (error) {
+      throw new Error(`Failed to parse URL: ${url2}`);
     }
     if (data) {
+      const isJson = /json/gi.test(contentType);
       if (innerOptions.method === "GET" && typeof data === "object") {
-        url2 += `?${serialize(data)}`;
-      }
-      if (innerOptions.method !== "GET") {
-        if (/json/gi.test(contentType)) {
-          innerOptions.body = JSON.stringify(data);
-        } else {
-          let formData;
-          if (data instanceof FormData) {
-            formData = data;
-          } else {
-            formData = new FormData();
-            for (const i in data) {
-              formData.append(i, data[i]);
-            }
-          }
-          innerOptions.body = formData;
-        }
+        finalUrl.search = serialize(data).toString();
+      } else if (innerOptions.method !== "GET") {
+        innerOptions.body = isJson ? JSON.stringify(data) : serializeFormData(data);
       }
     }
-    const response = await fetch(parseUrl(url2, opts), innerOptions);
+    const response = await fetch(finalUrl.toString(), innerOptions);
     let body = null;
     if (!response.ok) {
-      const err = new Error(response.statusText);
+      const err = new Error(`${response.status}: ${response.statusText}`);
       err.response = response;
       if (/text/gi.test(acceptType)) {
         err.body = await response.text();
@@ -119,6 +123,8 @@ function Requester(baseUrl = "", options = defaultOptions) {
         try {
           err.body = await response.json();
         } catch (error) {
+          err.body = null;
+          console.warn("Failed to parse JSON response:", error);
         }
       }
       throw err;
@@ -128,66 +134,39 @@ function Requester(baseUrl = "", options = defaultOptions) {
     }
     if (/text/gi.test(acceptType)) {
       body = await response.text();
-      return body;
-    }
-    if (/json/gi.test(acceptType)) {
+    } else if (/json/gi.test(acceptType)) {
       try {
         body = await response.json();
-        return body;
       } catch (error) {
+        console.warn("Failed to parse JSON response:", error);
+        body = null;
       }
+    } else if (/blob/gi.test(acceptType)) {
+      body = await response.blob();
+    } else if (/arraybuffer/gi.test(acceptType)) {
+      body = await response.arrayBuffer();
+    } else {
+      body = response;
     }
-    return response;
+    return body || response;
   };
   request2.new = (baseUrl2, options2) => Requester(baseUrl2, { ...opts, ...options2 || {} });
   request2.setOption = (key, value) => {
-    let result = opts;
-    const parsed = key.split(".");
-    let next;
-    while (parsed.length) {
-      next = parsed.shift();
-      const nextIsArray = next.indexOf("[") > -1;
-      if (nextIsArray) {
-        const idx = next.replace(/\D/gi, "");
-        next = next.split("[")[0];
-        parsed.unshift(idx);
-      }
-      if (parsed.length > 0 && typeof result[next] !== "object") {
-        result[next] = nextIsArray ? [] : {};
-      }
-      if (parsed.length === 0 && typeof value !== "undefined") {
-        result[next] = value;
-      }
-      result = result[next];
-    }
-    return result;
+    (0, import_utils.set)(opts, key, value);
+    return opts;
   };
   request2.getOptions = (key) => {
-    if (!key) {
-      return opts;
+    if (key) {
+      return (0, import_utils.get)(opts, key);
     }
-    let result = opts;
-    const parsed = key.split(".");
-    let next;
-    while (parsed.length) {
-      next = parsed.shift();
-      const nextIsArray = next.indexOf("[") > -1;
-      if (nextIsArray) {
-        const idx = next.replace(/\D/gi, "");
-        next = next.split("[")[0];
-        parsed.unshift(idx);
-      }
-      if (parsed.length > 0 && typeof result[next] !== "object") {
-        return null;
-      }
-      if (parsed.length === 0) {
-        return result[next];
-      }
-      result = result[next];
-    }
+    return opts;
   };
-  opts.allowedMethods.forEach(
-    (method) => request2[method] = (url2, data, options2) => request2(method, url2, data, options2)
+  Object.assign(
+    request2,
+    opts.allowedMethods.reduce((acc, method) => {
+      acc[method] = (url2, data, options2) => request2(method, url2, data, options2);
+      return acc;
+    }, {})
   );
   return request2;
 }

@@ -23,11 +23,13 @@ __export(lib_exports, {
   Vnode: () => Vnode,
   createElement: () => createElement,
   current: () => current,
+  debouncedUpdate: () => debouncedUpdate,
   directive: () => directive,
   directives: () => directives,
-  domToVnode: () => domToVnode,
+  hidrateDomToVnode: () => hidrateDomToVnode,
   isComponent: () => isComponent,
   isNodeJs: () => isNodeJs,
+  isPOJOComponent: () => isPOJOComponent,
   isVnode: () => isVnode,
   isVnodeComponent: () => isVnodeComponent,
   mount: () => mount,
@@ -35,9 +37,9 @@ __export(lib_exports, {
   onMount: () => onMount,
   onUnmount: () => onUnmount,
   onUpdate: () => onUpdate,
-  patch: () => patch,
   reservedProps: () => reservedProps,
   setAttribute: () => setAttribute,
+  setPropNameReserved: () => setPropNameReserved,
   trust: () => trust,
   unmount: () => unmount,
   update: () => update,
@@ -56,7 +58,8 @@ var Vnode = class {
     this.isSVG = isSVG;
   }
 };
-var isComponent = (component) => Boolean(typeof component === "function" || component && typeof component === "object" && "view" in component);
+var isPOJOComponent = (component) => Boolean(component && typeof component === "object" && "view" in component);
+var isComponent = (component) => Boolean(typeof component === "function" || isPOJOComponent(component));
 var isVnode = (object) => object instanceof Vnode;
 var isVnodeComponent = (object) => {
   return isVnode(object) && isComponent(object.tag);
@@ -65,7 +68,7 @@ function v(tagOrComponent, props, ...children) {
   return new Vnode(tagOrComponent, props, children);
 }
 v.fragment = (_, ...children) => children;
-function domToVnode(dom) {
+function hidrateDomToVnode(dom) {
   if (dom.nodeType === 3) {
     return dom.nodeValue;
   }
@@ -78,7 +81,7 @@ function domToVnode(dom) {
       if (childDom.nodeType === 3) {
         children.push(childDom.nodeValue);
       } else if (childDom.nodeType === 1) {
-        const childVnode = domToVnode(childDom);
+        const childVnode = hidrateDomToVnode(childDom);
         children.push(childVnode);
       }
     }
@@ -87,13 +90,16 @@ function domToVnode(dom) {
       const attr = attributes[i];
       props[attr.nodeName] = attr.nodeValue;
     }
-    return new Vnode(tag, props, children, dom, tag === "svg");
+    const vnode = new Vnode(tag, props, children);
+    vnode.dom = dom;
+    vnode.isSVG = tag === "svg";
+    return vnode;
   }
 }
 function trust(htmlString) {
   const div = document.createElement("div");
   div.innerHTML = htmlString.trim();
-  return Array.from(div.childNodes).map(domToVnode);
+  return Array.from(div.childNodes).map(hidrateDomToVnode);
 }
 var mainComponent = null;
 var mainVnode = null;
@@ -132,44 +138,41 @@ var callSet = (set) => {
   }
   set.clear();
 };
-var handleVIf = (shouldRender) => {
-  return (value, vnode) => {
-    const bool = shouldRender !== Boolean(value);
-    if (bool) {
+var directives = {
+  "v-if": (value, vnode) => {
+    if (!Boolean(value)) {
       const parentNode = vnode.dom?.parentNode;
       if (parentNode) {
-        const newdom = document.createTextNode("");
-        parentNode.replaceChild(newdom, vnode.dom);
+        parentNode.replaceChild(document.createTextNode(""), vnode.dom);
       }
       return false;
     }
-  };
-};
-var directives = {
-  "v-if": handleVIf(true),
-  "v-unless": handleVIf(false),
+  },
   "v-show": (value, vnode) => {
     const bool = Boolean(value);
     vnode.dom.style.display = bool ? "" : "none";
   },
   "v-html": (value, vnode) => {
-    vnode.children = [trust(value)];
+    vnode.children = trust(value);
   },
   // The "v-model" directive binds the value of an input element to a model property
-  "v-model": (val, vnode) => {
-    let [model, property, event] = val;
+  "v-model": (model, vnode) => {
+    if ("name" in vnode.props === false) {
+      return;
+    }
     let value;
+    const property = vnode.props.name;
+    let event = "oninput";
     let handler = (e) => model[property] = e.target.value;
     if (vnode.tag === "input") {
-      event = event || "oninput";
       switch (vnode.props.type) {
         case "checkbox": {
           if (Array.isArray(model[property])) {
             handler = (e) => {
-              const val2 = e.target.value;
-              const idx = model[property].indexOf(val2);
+              const val = e.target.value;
+              const idx = model[property].indexOf(val);
               if (idx === -1) {
-                model[property].push(val2);
+                model[property].push(val);
               } else {
                 model[property].splice(idx, 1);
               }
@@ -200,20 +203,20 @@ var directives = {
         }
       }
     } else if (vnode.tag === "select") {
-      event = event || "onclick";
+      event = "onclick";
       if (vnode.props.multiple) {
         handler = (e) => {
-          const val2 = e.target.value;
+          const val = e.target.value;
           if (e.ctrlKey) {
-            const idx = model[property].indexOf(val2);
+            const idx = model[property].indexOf(val);
             if (idx === -1) {
-              model[property].push(val2);
+              model[property].push(val);
             } else {
               model[property].splice(idx, 1);
             }
           } else {
             model[property].splice(0, model[property].length);
-            model[property].push(val2);
+            model[property].push(val);
           }
         };
         vnode.children.forEach((child) => {
@@ -231,7 +234,6 @@ var directives = {
         });
       }
     } else if (vnode.tag === "textarea") {
-      event = event || "oninput";
       vnode.children = [model[property]];
     }
     const prevHandler = vnode.props[event];
@@ -307,6 +309,9 @@ function directive(name, directive2) {
   directives[directiveName] = directive2;
   reservedProps.add(directiveName);
 }
+function setPropNameReserved(name) {
+  reservedProps.add(name);
+}
 var eventListenerNames = /* @__PURE__ */ new Set();
 function eventListener(e) {
   current.event = e;
@@ -350,89 +355,89 @@ function setAttribute(name, value, newVnode) {
     sharedSetAttribute(name, value, newVnode);
   }
 }
-function removeAttributes(vnode, oldProps) {
-  if (!oldProps) {
-    return;
-  }
-  const vnodeDom = vnode.dom;
-  const vnodeProps = vnode.props;
-  for (const name in oldProps) {
-    if (name in vnodeProps === false && !eventListenerNames.has(name) && !reservedProps.has(name)) {
-      if (name in vnodeDom) {
-        vnodeDom[name] = null;
-      } else {
-        vnodeDom.removeAttribute(name);
+function updateAttributes(newVnode, oldProps) {
+  const vnodeDom = newVnode.dom;
+  const vnodeProps = newVnode.props;
+  if (oldProps) {
+    for (const name in oldProps) {
+      if (name in vnodeProps === false && !eventListenerNames.has(name) && !reservedProps.has(name)) {
+        if (name in vnodeDom) {
+          vnodeDom[name] = null;
+        } else {
+          vnodeDom.removeAttribute(name);
+        }
       }
     }
   }
-}
-function addProperties(vnode, oldProps) {
-  const vnodeProps = vnode.props;
   for (const name in vnodeProps) {
     if (directives[name]) {
-      if (directives[name](vnodeProps[name], vnode, oldProps) === false) {
+      if (directives[name](vnodeProps[name], newVnode, oldProps) === false) {
         break;
       }
       continue;
     }
-    if (reservedProps.has(name)) {
-      continue;
+    if (!reservedProps.has(name)) {
+      sharedSetAttribute(name, vnodeProps[name], newVnode);
     }
-    sharedSetAttribute(name, vnodeProps[name], vnode);
   }
-}
-function updateAttributes(newVnode, oldProps) {
-  removeAttributes(newVnode, oldProps);
-  addProperties(newVnode, oldProps);
 }
 function createElement(tag, isSVG) {
   return isSVG ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag);
 }
-function flatTree(newVnode, children) {
+function flatTree(newVnode) {
   current.vnode = newVnode;
+  if ("v-for" in newVnode.props) {
+    const children2 = [];
+    const set = newVnode.props["v-for"];
+    const l = set.length;
+    const callback = newVnode.children[0];
+    for (let i2 = 0; i2 < l; i2++) {
+      const newChild = callback(set[i2], i2);
+      if (newChild instanceof Vnode) {
+        newChild.props = newChild.props || {};
+        newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
+      }
+      children2[i2] = newChild;
+    }
+    return children2;
+  }
   let i = 0;
+  const originalChildren = newVnode.children;
+  let children = originalChildren;
   while (i < children.length) {
     const newChild = children[i];
     if (newChild == null) {
+      if (children === originalChildren) {
+        children = [...originalChildren];
+      }
       children.splice(i, 1);
       continue;
     }
     if (Array.isArray(newChild)) {
+      if (children === originalChildren) {
+        children = [...originalChildren];
+      }
       children.splice(i, 1, ...newChild);
       continue;
     }
     if (newChild instanceof Vnode) {
-      if (newChild.props === null) {
-        newChild.props = {};
-      }
+      newChild.props = newChild.props || {};
+      newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
       if (typeof newChild.tag !== "string") {
-        const component = newChild.tag;
-        current.component = newChild.tag;
-        children[i] = ("view" in component ? component.view : component).bind(component)(
+        if (children === originalChildren) {
+          children = [...originalChildren];
+        }
+        const component = current.component = newChild.tag;
+        children[i] = (isPOJOComponent(component) ? component.view : component).bind(component)(
           newChild.props,
           newChild.children
         );
         continue;
-      } else {
-        newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
       }
     }
     i++;
   }
   return children;
-}
-function handleVFor(newVnode) {
-  if ("v-for" in newVnode.props) {
-    const set = newVnode.props["v-for"];
-    const children = [];
-    const callback = newVnode.children[0];
-    children.length = set.length;
-    for (let i = 0, l = set.length; i < l; i++) {
-      children[i] = callback(set[i], i);
-    }
-    return children;
-  }
-  return [...newVnode.children];
 }
 function createNewElement(newChild, newVnode, oldChild) {
   const dom = createElement(newChild.tag, newChild.isSVG);
@@ -442,13 +447,13 @@ function createNewElement(newChild, newVnode, oldChild) {
     newVnode.dom.appendChild(dom);
   }
   newChild.dom = dom;
-  addProperties(newChild, null);
+  updateAttributes(newChild, null);
   newChild.dom.props = newChild.props;
   if ("v-text" in newChild.props) {
     newChild.dom.textContent = newChild.props["v-text"];
     return;
   }
-  const children = flatTree(newChild, handleVFor(newChild));
+  const children = flatTree(newChild);
   if (children.length === 0) {
     newChild.dom.textContent = "";
     return;
@@ -506,7 +511,7 @@ function patchKeyed(newVnode, children) {
   }
 }
 function patch(newVnode) {
-  const children = flatTree(newVnode, handleVFor(newVnode));
+  const children = flatTree(newVnode);
   const dom = newVnode.dom;
   if (children.length === 0) {
     if (dom.childNodes.length) {
@@ -536,13 +541,18 @@ function patch(newVnode) {
     return;
   }
   for (let i = 0; i < childrenLength; i++) {
-    const oldChild = oldDomChildren[i];
     const newChild = children[i];
+    const isText = newChild instanceof Vnode === false;
+    const oldChild = oldDomChildren[i];
     if (!oldChild) {
+      if (isText) {
+        newVnode.dom.appendChild(document.createTextNode(newChild));
+        continue;
+      }
       createNewElement(newChild, newVnode, null);
       continue;
     }
-    if (newChild instanceof Vnode === false) {
+    if (isText) {
       if (oldChild.nodeType !== 3) {
         newVnode.dom.replaceChild(document.createTextNode(newChild), oldChild);
         continue;
@@ -589,15 +599,22 @@ function updateVnode(vnode) {
   isMounted = true;
   current.vnode = null;
   current.component = null;
-  if (isNodeJs) {
-    return vnode.dom.innerHTML;
-  }
 }
 function update() {
   if (mainVnode) {
     mainVnode.children = [mainComponent];
-    return updateVnode(mainVnode);
+    updateVnode(mainVnode);
+    if (isNodeJs) {
+      return mainVnode.dom.innerHTML;
+    }
   }
+}
+var debouncedUpdateTimeout;
+var clearDebouncedUpdateMethod = isNodeJs ? clearTimeout : cancelAnimationFrame;
+var setDebouncedUpdateMethod = isNodeJs ? () => setTimeout(update, 5) : () => requestAnimationFrame(update);
+function debouncedUpdate() {
+  clearDebouncedUpdateMethod(debouncedUpdateTimeout);
+  debouncedUpdateTimeout = setDebouncedUpdateMethod();
 }
 function unmount() {
   if (mainVnode) {
@@ -620,12 +637,12 @@ function unmount() {
 function mount(dom, component) {
   const container = typeof dom === "string" ? isNodeJs ? createElement(dom, dom === "svg") : document.querySelector(dom) : dom;
   if (isComponent(component)) {
-    mainComponent = new Vnode(component, {}, []);
+    mainComponent = v(component, {}, []);
   } else if (isVnodeComponent(component)) {
     mainComponent = component;
   } else {
-    mainComponent = new Vnode(() => component, {}, []);
+    mainComponent = v(() => component, {}, []);
   }
-  mainVnode = domToVnode(container);
+  mainVnode = hidrateDomToVnode(container);
   return update();
 }

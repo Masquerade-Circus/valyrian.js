@@ -1,4 +1,5 @@
 import { isNodeJs } from "valyrian.js";
+import { get, set } from "valyrian.js/utils";
 
 interface UrlOptions {
   base: string; // Used to prefix the url for scoped requests.
@@ -51,41 +52,47 @@ export interface RequestInterface {
 }
 
 // This method is used to serialize an object into a query string.
-function serialize(obj: Record<string, any>, prefix: string = ""): string {
-  return Object.keys(obj)
-    .map((prop: string) => {
-      const k = prefix ? `${prefix}[${prop}]` : prop;
-      return typeof obj[prop] === "object"
-        ? serialize(obj[prop], k)
-        : `${encodeURIComponent(k)}=${encodeURIComponent(obj[prop])}`;
-    })
-    .join("&");
+function serialize(obj: Record<string, any>, prefix: string = ""): URLSearchParams {
+  const params = new URLSearchParams();
+
+  Object.keys(obj).forEach((prop: string) => {
+    const key = prefix ? `${prefix}[${prop}]` : prop;
+    if (typeof obj[prop] === "object") {
+      params.append(key, serialize(obj[prop], key).toString());
+    } else {
+      params.append(key, obj[prop]);
+    }
+  });
+
+  return params;
+}
+
+function serializeFormData(data: Record<string, any>): FormData {
+  return Object.entries(data).reduce((fd, [key, value]) => {
+    fd.append(key, value);
+    return fd;
+  }, new FormData());
 }
 
 function parseUrl(url: string, options: RequestOptionsWithUrls) {
-  let u = /^https?/gi.test(url) ? url : options.urls.base + url;
-
-  const parts = u.split("?");
-  u = parts[0].trim().replace(/^\/\//, "/").replace(/\/$/, "").trim();
-
-  if (parts[1]) {
-    u += `?${parts[1]}`;
-  }
+  const urlWithoutSlash = url.replace(/\/+$/, "").trim();
+  const u = /^https?/gi.test(urlWithoutSlash) ? urlWithoutSlash : `${options.urls.base}${urlWithoutSlash}`;
 
   if (isNodeJs && typeof options.urls.node === "string") {
-    options.urls.node = options.urls.node;
-
     if (typeof options.urls.api === "string") {
-      options.urls.api = options.urls.api.replace(/\/$/gi, "").trim();
-      u = u.replace(options.urls.api, options.urls.node);
+      return new URL(u.replace(options.urls.api, options.urls.node));
     }
 
     if (!/^https?/gi.test(u)) {
-      u = options.urls.node + u;
+      return new URL(u, options.urls.node);
     }
   }
 
-  return u;
+  if (/^https?/gi.test(u)) {
+    return new URL(u);
+  }
+
+  return new URL(u, options.urls.base);
 }
 
 const defaultOptions: RequestOptions = { allowedMethods: ["get", "post", "put", "patch", "delete", "head", "options"] };
@@ -114,7 +121,13 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
     }
   };
 
-  const request = async function request(method: string, url: string, data?: Record<string, any>, options = {}) {
+  // eslint-disable-next-line complexity
+  const request = async function request(
+    method: string,
+    url: string,
+    data?: Record<string, any>,
+    options: Record<string, any> = {}
+  ) {
     const innerOptions: SendOptions = {
       method: method.toUpperCase(),
       headers: {},
@@ -123,6 +136,8 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
       ...options
     } as SendOptions;
 
+    innerOptions.headers = { ...innerOptions.headers, ...opts.headers, ...options.headers };
+
     if (!innerOptions.headers.Accept) {
       innerOptions.headers.Accept = "application/json";
     }
@@ -130,37 +145,31 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
     const acceptType = innerOptions.headers.Accept;
     const contentType = innerOptions.headers["Content-Type"] || innerOptions.headers["content-type"] || "";
 
-    if (innerOptions.allowedMethods.indexOf(method) === -1) {
-      throw new Error("Method not allowed");
+    if (!innerOptions.allowedMethods.includes(method)) {
+      throw new Error(`Method ${method} not allowed. Allowed methods: ${innerOptions.allowedMethods.join(", ")}`);
+    }
+
+    let finalUrl: URL;
+    try {
+      finalUrl = parseUrl(url, opts);
+    } catch (error) {
+      throw new Error(`Failed to parse URL: ${url}`);
     }
 
     if (data) {
-      if (innerOptions.method === "GET" && typeof data === "object") {
-        url += `?${serialize(data)}`;
-      }
+      const isJson = /json/gi.test(contentType);
 
-      if (innerOptions.method !== "GET") {
-        if (/json/gi.test(contentType)) {
-          innerOptions.body = JSON.stringify(data);
-        } else {
-          let formData;
-          if (data instanceof FormData) {
-            formData = data;
-          } else {
-            formData = new FormData();
-            for (const i in data) {
-              formData.append(i, data[i]);
-            }
-          }
-          innerOptions.body = formData;
-        }
+      if (innerOptions.method === "GET" && typeof data === "object") {
+        finalUrl.search = serialize(data).toString();
+      } else if (innerOptions.method !== "GET") {
+        innerOptions.body = isJson ? JSON.stringify(data) : serializeFormData(data);
       }
     }
 
-    const response = await fetch(parseUrl(url, opts), innerOptions);
+    const response = await fetch(finalUrl.toString(), innerOptions);
     let body = null;
     if (!response.ok) {
-      const err = new Error(response.statusText) as Error & { response?: any; body?: any };
+      const err = new Error(`${response.status}: ${response.statusText}`) as Error & { response?: any; body?: any };
       err.response = response;
       if (/text/gi.test(acceptType)) {
         err.body = await response.text();
@@ -170,7 +179,9 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
         try {
           err.body = await response.json();
         } catch (error) {
-          // ignore
+          err.body = null;
+          // eslint-disable-next-line no-console
+          console.warn("Failed to parse JSON response:", error);
         }
       }
 
@@ -183,88 +194,47 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
 
     if (/text/gi.test(acceptType)) {
       body = await response.text();
-      return body;
-    }
-
-    if (/json/gi.test(acceptType)) {
+    } else if (/json/gi.test(acceptType)) {
       try {
         body = await response.json();
-        return body;
       } catch (error) {
-        // ignore
+        // eslint-disable-next-line no-console
+        console.warn("Failed to parse JSON response:", error);
+        body = null;
       }
+    } else if (/blob/gi.test(acceptType)) {
+      body = await response.blob();
+    } else if (/arraybuffer/gi.test(acceptType)) {
+      body = await response.arrayBuffer();
+    } else {
+      body = response;
     }
 
-    return response;
+    return body || response;
   } as unknown as RequestInterface;
 
   request.new = (baseUrl: string, options?: RequestOptions) => Requester(baseUrl, { ...opts, ...(options || {}) });
 
   request.setOption = (key: string, value: any) => {
-    let result = opts;
-
-    const parsed = key.split(".");
-    let next;
-
-    while (parsed.length) {
-      next = parsed.shift() as string;
-
-      const nextIsArray = next.indexOf("[") > -1;
-      if (nextIsArray) {
-        const idx = next.replace(/\D/gi, "");
-        next = next.split("[")[0];
-        parsed.unshift(idx);
-      }
-
-      if (parsed.length > 0 && typeof result[next] !== "object") {
-        result[next] = nextIsArray ? [] : {};
-      }
-
-      if (parsed.length === 0 && typeof value !== "undefined") {
-        result[next] = value;
-      }
-
-      result = result[next];
-    }
-
-    return result;
+    set(opts, key, value);
+    return opts;
   };
 
   request.getOptions = (key?: string) => {
-    if (!key) {
-      return opts;
+    if (key) {
+      return get(opts, key);
     }
 
-    let result = opts;
-    const parsed = key.split(".");
-    let next;
-
-    while (parsed.length) {
-      next = parsed.shift() as string;
-
-      const nextIsArray = next.indexOf("[") > -1;
-      if (nextIsArray) {
-        const idx = next.replace(/\D/gi, "");
-        next = next.split("[")[0];
-        parsed.unshift(idx);
-      }
-
-      if (parsed.length > 0 && typeof result[next] !== "object") {
-        return null;
-      }
-
-      if (parsed.length === 0) {
-        return result[next];
-      }
-
-      result = result[next];
-    }
+    return opts;
   };
 
-  opts.allowedMethods.forEach(
-    (method) =>
-      (request[method] = (url: string, data?: Record<string, any>, options?: Record<string, any>) =>
-        request(method, url, data, options))
+  Object.assign(
+    request,
+    opts.allowedMethods.reduce((acc: Record<string, any>, method) => {
+      acc[method] = (url: string, data?: Record<string, any>, options?: Record<string, any>) =>
+        request(method, url, data, options);
+      return acc;
+    }, {})
   );
 
   return request;

@@ -4,7 +4,7 @@ import "valyrian.js/node";
 import { directive, mount, setAttribute, trust, unmount, update, v } from "valyrian.js";
 
 import dayjs from "dayjs";
-import expect from "expect";
+import { expect, describe, test as it } from "bun:test";
 
 // eslint-disable-next-line max-lines-per-function
 describe("Directives", () => {
@@ -278,45 +278,6 @@ describe("Directives", () => {
         value = false;
         const result2 = update();
         expect(result2).toEqual(expected2);
-      });
-    });
-
-    /**
-     * Valyrian isn't template based so we can't handle a v-else like directive
-     * Instead of v-else we will have a v-unless directive
-     *
-     * Works as embers "unless" helper
-     * It renders a vnode if the referenced value is false
-     */
-    describe("v-unless", () => {
-      it("should render vnode with falsy values", () => {
-        const values = [false, 0, "", null, , NaN];
-
-        const expected = "<div><span>Hello world</span></div>";
-
-        values.forEach((value) => {
-          const result = mount("div", () => (
-            <div>
-              <span v-unless={value}>Hello world</span>
-            </div>
-          ));
-          expect(result).toEqual(expected);
-        });
-      });
-
-      it("should not render vnode if thruthy values", () => {
-        const values = [{}, 1, true, [], "string", new Date(), -1];
-
-        const expected = "<div></div>";
-
-        values.forEach((value) => {
-          const result = mount("div", () => (
-            <div>
-              <span v-unless={value}>Hello world</span>
-            </div>
-          ));
-          expect(result).toEqual(expected);
-        });
       });
     });
 

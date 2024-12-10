@@ -41,14 +41,15 @@ export interface VnodeWithDom extends Vnode {
     dom: DomElement;
     props: VnodeProperties;
 }
+export declare const isPOJOComponent: (component: unknown) => component is POJOComponent;
 export declare const isComponent: (component: unknown) => component is Component;
 export declare const isVnode: (object?: unknown) => object is Vnode;
 export declare const isVnodeComponent: (object?: unknown) => object is VnodeComponentInterface;
-export declare function v(tagOrComponent: string | Component, props: VnodeProperties, ...children: Children): Vnode;
+export declare function v(tagOrComponent: string | ValyrianComponent, props: VnodeProperties, ...children: Children): Vnode;
 export declare namespace v {
     var fragment: (_: VnodeProperties, ...children: Children) => Children;
 }
-export declare function domToVnode(dom: any): VnodeWithDom | void;
+export declare function hidrateDomToVnode(dom: any): VnodeWithDom | void;
 export declare function trust(htmlString: string): (void | VnodeWithDom)[];
 export declare const current: {
     vnode: Vnode | null;
@@ -62,13 +63,14 @@ export declare const onCleanup: (callback: Function) => Set<Function>;
 export declare const onUnmount: (callback: Function) => false | Set<Function>;
 export declare const directives: Record<string, Directive>;
 export declare function directive(name: string, directive: Directive): void;
+export declare function setPropNameReserved(name: string): void;
 export declare function setAttribute(name: string, value: any, newVnode: VnodeWithDom): void;
 export declare function updateAttributes(newVnode: VnodeWithDom, oldProps: VnodeProperties | null): void;
 export declare function createElement(tag: string, isSVG: boolean): DomElement;
-export declare function patch(newVnode: VnodeWithDom): void;
 export declare function updateVnode(vnode: VnodeWithDom): string | void;
 export declare function update(): void | string;
+export declare function debouncedUpdate(): void;
 export declare function unmount(): string | void;
-export declare function mount(dom: string | DomElement, component: any): string | void;
+export declare function mount(dom: string | DomElement, component: ValyrianComponent | VnodeComponentInterface | any): string | void;
 export {};
 //# sourceMappingURL=index.d.ts.map

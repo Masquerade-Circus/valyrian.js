@@ -21,6 +21,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var router_exports = {};
 __export(router_exports, {
   Router: () => Router,
+  RouterError: () => RouterError,
   mountRouter: () => mountRouter,
   redirect: () => redirect
 });
@@ -39,83 +40,85 @@ function getPathWithoutLastSlash(path) {
   }
   return pathWithoutLastSlash;
 }
-var addPath = ({
-  router,
-  method,
-  path,
-  middlewares
-}) => {
-  if (!method || !path || !Array.isArray(middlewares) || middlewares.length === 0) {
-    throw new Error(`Invalid route input: ${method} ${path} ${middlewares}`);
-  }
-  const realpath = path.replace(/(\S)(\/+)$/, "$1");
-  const params = (realpath.match(/:(\w+)?/gi) || []).map((param) => param.slice(1));
-  const regexpPath = "^" + realpath.replace(/:(\w+)/gi, "([^\\/\\s]+)") + "$";
-  router.paths.push({
-    method,
-    path: realpath,
-    middlewares: flat(middlewares),
-    params,
-    regexp: new RegExp(regexpPath, "i")
-  });
-};
 function parseQuery(queryParts) {
   const parts = queryParts ? queryParts.split("&") : [];
   const query = {};
   for (const nameValue of parts) {
     const [name, value] = nameValue.split("=", 2);
-    query[name] = value || "";
+    query[name] = isNaN(Number(value)) === false ? Number(value) : value === "true" ? true : value === "false" ? false : value;
   }
   return query;
 }
-function searchMiddlewares(router, path) {
-  const middlewares = [];
-  const params = {};
-  const matches = [];
-  for (const item of router.paths) {
-    const match = item.regexp.exec(path);
-    if (Array.isArray(match)) {
-      middlewares.push(...item.middlewares);
-      match.shift();
-      for (const [index, key] of item.params.entries()) {
-        params[key] = match[index];
+var RouteTree = class {
+  root = { segment: "", children: /* @__PURE__ */ new Map(), isDynamic: false };
+  addRoute(path, middlewares) {
+    const segments = path === "/" ? [path] : path.split("/").filter(Boolean);
+    let currentNode = this.root;
+    for (const segment of segments) {
+      const isDynamic = segment.startsWith(":");
+      const key = isDynamic ? ":" : segment;
+      if (!currentNode.children.has(key)) {
+        currentNode.children.set(key, {
+          segment,
+          children: /* @__PURE__ */ new Map(),
+          isDynamic,
+          paramKey: isDynamic ? segment.slice(1) : void 0
+        });
       }
-      matches.push(...match);
-      if (item.method === "add") {
-        router.path = getPathWithoutPrefix(item.path, router.pathPrefix);
+      currentNode = currentNode.children.get(key);
+    }
+    currentNode.middlewares = middlewares;
+  }
+  // Search for a route in the tree
+  // eslint-disable-next-line sonarjs/cognitive-complexity
+  findRoute(path) {
+    const pathWithoutLastSlash = getPathWithoutLastSlash(path);
+    const segments = pathWithoutLastSlash === "/" ? [pathWithoutLastSlash] : pathWithoutLastSlash.split("/").filter(Boolean);
+    let currentNode = this.root;
+    const params = {};
+    const wildcardMiddlewares = [];
+    const segmentsLength = segments.length;
+    for (let i = 0; i < segmentsLength; i++) {
+      if (!currentNode) {
         break;
       }
+      const segment = segments[i];
+      let found = false;
+      for (const [key, child] of currentNode.children) {
+        if (key === segment) {
+          currentNode = child;
+          found = true;
+          break;
+        }
+        if (segment !== ".*" && key === ":") {
+          currentNode = child;
+          params[child.paramKey] = segment;
+          found = true;
+          break;
+        }
+        if (key === ".*" && !found) {
+          wildcardMiddlewares.push(...child.middlewares || []);
+        }
+      }
+      if (!found) {
+        if (currentNode.children.has(".*")) {
+          return { middlewares: wildcardMiddlewares, params };
+        }
+        return null;
+      }
     }
+    const allMiddlewares = [...wildcardMiddlewares, ...currentNode.middlewares || []];
+    if (allMiddlewares.length === 0) {
+      return null;
+    }
+    return { middlewares: allMiddlewares, params };
   }
-  router.params = params;
-  router.matches = matches;
-  return middlewares;
-}
-async function searchComponent(router, middlewares) {
-  const request = {
-    params: router.params,
-    query: router.query,
-    url: router.url,
-    path: router.path,
-    matches: router.matches,
-    redirect: (path, parentComponent) => {
-      router.go(path, parentComponent);
-      return false;
-    }
-  };
-  let response;
-  for (const middleware of middlewares) {
-    response = await middleware(request, response);
-    if (response !== void 0 && ((0, import_valyrian.isComponent)(response) || (0, import_valyrian.isVnodeComponent)(response))) {
-      return response;
-    }
-    if (response === false) {
-      return false;
-    }
-  }
-}
+};
+var RouterError = class RouterError2 extends Error {
+  status = 500;
+};
 var Router = class _Router {
-  paths = [];
+  routeTree = new RouteTree();
   container = null;
   query = {};
   options = {};
@@ -124,55 +127,93 @@ var Router = class _Router {
   params = {};
   matches = [];
   pathPrefix = "";
+  errorHandlers = /* @__PURE__ */ new Map();
   constructor(pathPrefix = "") {
     this.pathPrefix = pathPrefix;
   }
-  add(path, ...middlewares) {
-    const pathWithoutLastSlash = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
-    addPath({ router: this, method: "add", path: pathWithoutLastSlash, middlewares });
-    return this;
-  }
-  use(...middlewares) {
+  add(...args) {
+    const flatArgs = flat(args);
     const path = getPathWithoutLastSlash(
-      `${this.pathPrefix}${typeof middlewares[0] === "string" ? middlewares.shift() : "/"}`
+      `${this.pathPrefix}${typeof flatArgs[0] === "string" ? flatArgs.shift() : "/.*"}`
     );
-    for (const item of middlewares) {
-      if (item instanceof _Router) {
-        const subrouter = item;
-        for (const subpath of subrouter.paths) {
-          addPath({
-            router: this,
-            method: subpath.method,
-            path: `${path}${subpath.path}`.replace(/^\/\//, "/"),
-            middlewares: subpath.middlewares
-          });
-        }
-        continue;
+    if (flatArgs.length === 1 && flatArgs[0] instanceof _Router) {
+      const subrouter = flatArgs[0];
+      for (const subroute of subrouter.routes()) {
+        const subroutePath = `${path}${subroute}`;
+        this.routeTree.addRoute(subroutePath, subrouter.routeTree.findRoute(subroute).middlewares || []);
       }
-      if (typeof item === "function") {
-        addPath({ router: this, method: "use", path: `${path}.*`, middlewares: [item] });
+    } else {
+      if (flatArgs.some((item) => item instanceof _Router)) {
+        throw new RouterError("You cannot add middlewares when adding a subrouter.");
       }
+      if (flatArgs.some((item) => typeof item !== "function")) {
+        throw new RouterError("All middlewares must be functions.");
+      }
+      this.routeTree.addRoute(path, flatArgs);
     }
     return this;
   }
-  routes() {
-    return this.paths.filter((path) => path.method === "add").map((path) => path.path);
+  catch(...args) {
+    const condition = typeof args[0] === "number" || typeof args[0] === "string" || args[0].name.includes("Error") ? args.shift() : "generic";
+    if (typeof condition !== "number" && typeof condition !== "string" && !condition.name.includes("Error")) {
+      throw new RouterError("The condition must be a number, string or an instance of Error.");
+    }
+    if (args.some((item) => typeof item !== "function")) {
+      throw new RouterError("All middlewares must be functions.");
+    }
+    let handlers = this.errorHandlers.get(condition);
+    if (!handlers) {
+      handlers = [];
+      this.errorHandlers.set(condition, handlers);
+    }
+    handlers.push(...args);
+    return this;
   }
-  async go(path, parentComponent, preventPushState = false) {
+  routes() {
+    return this.getAllRoutes(this.routeTree.root, "");
+  }
+  // eslint-disable-next-line sonarjs/cognitive-complexity
+  async go(path, parentComponent) {
     if (!path) {
-      throw new Error("router.url.required");
+      return this.handleError(new RouterError("The URL is empty."), parentComponent);
+    }
+    if (/%[^0-9A-Fa-f]{2}/.test(path)) {
+      return this.handleError(new RouterError(`The URL ${path} is malformed.`));
     }
     const constructedPath = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
     const parts = constructedPath.split("?", 2);
     this.url = constructedPath;
     this.query = parseQuery(parts[1]);
-    const middlewares = searchMiddlewares(this, parts[0].replace(/(.+)\/$/, "$1").split("#")[0]);
-    let component = await searchComponent(this, middlewares);
+    const finalPath = parts[0].replace(/(.+)\/$/, "$1").split("#")[0];
+    this.path = path;
+    let route = this.routeTree.findRoute(finalPath);
+    if (!route || !route.middlewares) {
+      const finalPathParts = finalPath.split("/");
+      while (finalPathParts.length > 0) {
+        finalPathParts.pop();
+        const wildcardRoute = this.routeTree.findRoute(finalPathParts.join("/") + "/.*");
+        if (wildcardRoute) {
+          route = wildcardRoute;
+          break;
+        }
+      }
+      if (!route || !route.middlewares) {
+        const error = new RouterError(`The URL ${constructedPath} was not found in the router's registered paths.`);
+        error.status = 404;
+        return this.handleError(error, parentComponent);
+      }
+    }
+    const { middlewares, params } = route;
+    this.params = params;
+    let component = await this.searchComponent(middlewares, parentComponent);
     if (component === false) {
       return;
     }
     if (!component) {
-      throw new Error(`The url ${constructedPath} requested wasn't found`);
+      return this.handleError(
+        new RouterError(`The URL ${constructedPath} did not return a valid component.`),
+        parentComponent
+      );
     }
     if ((0, import_valyrian.isComponent)(parentComponent) || (0, import_valyrian.isVnodeComponent)(parentComponent)) {
       const childComponent = (0, import_valyrian.isVnodeComponent)(component) ? component : (0, import_valyrian.v)(component, {});
@@ -183,7 +224,7 @@ var Router = class _Router {
         component = (0, import_valyrian.v)(parentComponent, {}, childComponent);
       }
     }
-    if (!import_valyrian.isNodeJs && !preventPushState) {
+    if (!import_valyrian.isNodeJs && window.location.pathname + window.location.search !== constructedPath) {
       window.history.pushState(null, "", constructedPath);
     }
     if (this.container) {
@@ -192,17 +233,128 @@ var Router = class _Router {
   }
   getOnClickHandler(url) {
     return (e) => {
+      if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.defaultPrevented) {
+        return;
+      }
       if (typeof url === "string" && url.length > 0) {
         this.go(url);
       }
       e.preventDefault();
     };
   }
+  getAllRoutes(node, prefix) {
+    const routes = [];
+    for (const [key, child] of node.children) {
+      const newPrefix = `${prefix}/${child.isDynamic ? `:${child.paramKey}` : key}`.replace(/\/$/, "");
+      if (child.middlewares) {
+        routes.push(newPrefix);
+      }
+      routes.push(...this.getAllRoutes(child, newPrefix));
+    }
+    return routes;
+  }
+  createRequest() {
+    return {
+      params: this.params,
+      query: this.query,
+      url: this.url,
+      path: this.path,
+      matches: this.matches,
+      redirect: (path) => this.go(path)
+    };
+  }
+  getErrorConditionMiddlewares(error) {
+    for (const [condition, middlewares] of this.errorHandlers) {
+      if (typeof condition !== "number" && typeof condition !== "string" && error instanceof condition && error.name === condition.name) {
+        return middlewares;
+      }
+    }
+    for (const [condition, middlewares] of this.errorHandlers) {
+      if (typeof condition === "number" && (error.status === condition || error.code === condition)) {
+        return middlewares;
+      }
+    }
+    for (const [condition, middlewares] of this.errorHandlers) {
+      if (typeof condition === "string" && (error.name === condition || error.message.includes(condition))) {
+        return middlewares;
+      }
+    }
+    return this.errorHandlers.get("generic") || false;
+  }
+  // eslint-disable-next-line sonarjs/cognitive-complexity
+  async handleError(error, parentComponent) {
+    const request = this.createRequest();
+    let component = null;
+    const middlewares = this.getErrorConditionMiddlewares(error);
+    if (middlewares === false) {
+      throw error;
+    }
+    let response;
+    try {
+      for (const middleware of middlewares) {
+        response = await middleware(request, error);
+        if (response !== void 0 && ((0, import_valyrian.isComponent)(response) || (0, import_valyrian.isVnodeComponent)(response))) {
+          component = response;
+          break;
+        }
+        if (response === false) {
+          return;
+        }
+      }
+    } catch (err) {
+      err.cause = error;
+      let errorCauseCount = 0;
+      while (err.cause) {
+        errorCauseCount++;
+      }
+      if (errorCauseCount > 20) {
+        throw new RouterError("Too many error causes. Possible circular error handling.");
+      }
+      return this.handleError(err, parentComponent);
+    }
+    if (component) {
+      if ((0, import_valyrian.isComponent)(parentComponent) || (0, import_valyrian.isVnodeComponent)(parentComponent)) {
+        const childComponent = (0, import_valyrian.isVnodeComponent)(component) ? component : (0, import_valyrian.v)(component, {});
+        if ((0, import_valyrian.isVnodeComponent)(parentComponent)) {
+          parentComponent.children.push(childComponent);
+          component = parentComponent;
+        } else {
+          component = (0, import_valyrian.v)(parentComponent, {}, childComponent);
+        }
+      }
+      if (!import_valyrian.isNodeJs && window.location.pathname + window.location.search !== this.url) {
+        window.history.pushState(null, "", this.url);
+      }
+      if (this.container) {
+        return (0, import_valyrian.mount)(this.container, component);
+      }
+    }
+    throw error;
+  }
+  async searchComponent(middlewares, parentComponent) {
+    const request = this.createRequest();
+    let response;
+    for (const middleware of middlewares) {
+      try {
+        response = await middleware(request);
+      } catch (error) {
+        return this.handleError(error, parentComponent);
+      }
+      if (response !== void 0 && ((0, import_valyrian.isComponent)(response) || (0, import_valyrian.isVnodeComponent)(response))) {
+        return response;
+      }
+      if (response === false) {
+        return false;
+      }
+    }
+    return response;
+  }
 };
 var localRedirect;
-function redirect(url, parentComponent, preventPushState = false) {
+async function redirect(url, parentComponent, preventPushState = false) {
   if (!localRedirect) {
-    throw new Error("router.redirect.not.found");
+    console.warn("Redirect function is not initialized. Please mount the router first.");
+    return;
   }
   return localRedirect(url, parentComponent, preventPushState);
 }
@@ -212,14 +364,13 @@ function mountRouter(elementContainer, router) {
   if (!import_valyrian.isNodeJs) {
     let onPopStateGoToRoute2 = function() {
       const pathWithoutPrefix = getPathWithoutPrefix(document.location.pathname, router.pathPrefix);
-      router.go(pathWithoutPrefix, void 0, true);
+      router.go(pathWithoutPrefix);
     };
     var onPopStateGoToRoute = onPopStateGoToRoute2;
     window.addEventListener("popstate", onPopStateGoToRoute2, false);
     onPopStateGoToRoute2();
   }
-  (0, import_valyrian.directive)("route", (vnode) => {
-    const url = vnode.props["v-route"];
+  (0, import_valyrian.directive)("route", (url, vnode) => {
     (0, import_valyrian.setAttribute)("href", url, vnode);
     (0, import_valyrian.setAttribute)("onclick", router.getOnClickHandler(url), vnode);
   });
