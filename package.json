@@ -61,7 +61,7 @@
     "dev:web": "browser-sync start --config 'www/bs-config.js'",
     "build": "bun run build:source && bun run remark",
     "build:source": "cross-env NODE_ENV=production bun run source.js",
-    "test": "cross-env NODE_ENV=development bun test --bail",
+    "test": "cross-env NODE_ENV=development bun test --bail --coverage --coverage-reporter=lcov --coverage-reporter=text",
     "remark": "remark . -o",
     "commit": "git add . && git-cz && git push",
     "release": "release-it --verbose",
