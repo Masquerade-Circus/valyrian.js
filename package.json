@@ -193,7 +193,6 @@
     "hooks": {
       "before:init": [
         "bun run build",
-        "bun link",
         "bun run test"
       ],
       "after:bump": [

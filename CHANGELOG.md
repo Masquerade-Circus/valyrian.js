@@ -1,5 +1,3 @@
-
-
 ## [8.0.1](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.0...8.0.1) (2024-12-11)
 
 ### Styles
