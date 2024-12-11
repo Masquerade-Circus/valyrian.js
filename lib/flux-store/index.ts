@@ -234,8 +234,19 @@ export class FluxStore {
   }
 
   // This method will add a listener to the store
-  public on(event: string, listener: Function) {
+  public on(event: string, listener: Function, namespace?: string) {
     this.isFunction("listener", listener);
+
+    if (namespace) {
+      const { store, key } = this.getStore(this, namespace);
+      this.keyExists("event", store.init.listeners, event);
+      if (store.init.listeners[event].indexOf(listener) === -1) {
+        store.init.listeners[event].push(listener);
+        this.trigger("addlistener", event, listener);
+      }
+      return () => this.off(event, listener);
+    }
+
     this.keyExists("event", this.init.listeners, event);
     if (this.init.listeners[event].indexOf(listener) === -1) {
       this.init.listeners[event].push(listener);

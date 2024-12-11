@@ -44,7 +44,9 @@ var createHook = function createHook2({
     if (!HookCalls) {
       HookCalls = { hooks: [], hook_calls: -1 };
       componentToHooksWeakMap.set(component, HookCalls);
-      (0, import_valyrian.onUnmount)(() => componentToHooksWeakMap.delete(component));
+      (0, import_valyrian.onUnmount)(() => {
+        componentToHooksWeakMap.delete(component);
+      });
     }
     (0, import_valyrian.onCleanup)(() => HookCalls.hook_calls = -1);
     let hook = HookCalls.hooks[++HookCalls.hook_calls];

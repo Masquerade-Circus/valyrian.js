@@ -6,7 +6,7 @@
     "target": "ESNext",
 
     "moduleResolution": "NodeNext",
-    "noEmit": false,
+    "noEmit": true,
     "moduleDetection": "force",
 
     "jsx": "react", // support JSX
@@ -22,13 +22,14 @@
     "composite": true,
     "downlevelIteration": true,
     "allowSyntheticDefaultImports": true,
+    "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
 
-    "rootDir": "lib",
+    "rootDir": "/",
     "paths": {
       "node_modules/*": ["./node_modules/*"]
     }
   },
-  "include": ["./lib"],
-  "exclude": ["./dist", "./lib/node/utils/node.sw.js"]
+  "include": ["./lib", "./test"],
+  "exclude": ["./lib/node/utils/node.sw.js"]
 }

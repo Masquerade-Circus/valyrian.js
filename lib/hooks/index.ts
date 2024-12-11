@@ -40,9 +40,11 @@ export const createHook = function createHook({
     let HookCalls = componentToHooksWeakMap.get(component);
 
     if (!HookCalls) {
-      HookCalls = { hooks: [], hook_calls: -1 };
+      HookCalls = { hooks: [], hook_calls: -1 } as HookCalls;
       componentToHooksWeakMap.set(component, HookCalls);
-      onUnmount(() => componentToHooksWeakMap.delete(component));
+      onUnmount(() => {
+        componentToHooksWeakMap.delete(component);
+      });
     }
 
     onCleanup(() => ((HookCalls as HookCalls).hook_calls = -1));

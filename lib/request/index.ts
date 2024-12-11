@@ -2,9 +2,9 @@ import { isNodeJs } from "valyrian.js";
 import { get, set } from "valyrian.js/utils";
 
 interface UrlOptions {
-  base: string; // Used to prefix the url for scoped requests.
-  node: string | null; // Used to redirect local requests to node server for server side rendering.
-  api: string | null; // Used to redirect api requests to node server for server side rendering.
+  base?: string; // Used to prefix the url for scoped requests.
+  node?: string | null; // Used to redirect local requests to node server for server side rendering.
+  api?: string | null; // Used to redirect api requests to node server for server side rendering.
 }
 
 interface RequestOptions {
@@ -27,7 +27,7 @@ interface SendOptions extends RequestOptionsWithUrls, RequestInit {
 
 export interface RequestInterface {
   // eslint-disable-next-line no-unused-vars
-  (method: string, url: string, data?: Record<string, any>, options?: Partial<SendOptions>): any | Response;
+  (method: string, url: string, data?: Record<string, any> | null, options?: Partial<SendOptions>): any | Response;
   // eslint-disable-next-line no-unused-vars
   new: (baseUrl: string, options?: RequestOptions) => RequestInterface;
   // eslint-disable-next-line no-unused-vars
@@ -35,19 +35,19 @@ export interface RequestInterface {
   // eslint-disable-next-line no-unused-vars
   getOptions: (key?: string) => RequestOptions | void;
   // eslint-disable-next-line no-unused-vars
-  get: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  get: (url: string, data?: Record<string, any> | null, options?: Record<string, any>) => any | Response;
   // eslint-disable-next-line no-unused-vars
-  post: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  post: (url: string, data?: Record<string, any> | null, options?: Record<string, any>) => any | Response;
   // eslint-disable-next-line no-unused-vars
-  put: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  put: (url: string, data?: Record<string, any> | null, options?: Record<string, any>) => any | Response;
   // eslint-disable-next-line no-unused-vars
-  patch: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  patch: (url: string, data?: Record<string, any> | null, options?: Record<string, any>) => any | Response;
   // eslint-disable-next-line no-unused-vars
-  delete: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  delete: (url: string, data?: Record<string, any> | null, options?: Record<string, any>) => any | Response;
   // eslint-disable-next-line no-unused-vars
-  head: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  head: (url: string, data?: Record<string, any> | null, options?: Record<string, any>) => any | Response;
   // eslint-disable-next-line no-unused-vars
-  options: (url: string, data?: Record<string, any>, options?: Record<string, any>) => any | Response;
+  options: (url: string, data?: Record<string, any> | null, options?: Record<string, any>) => any | Response;
   [key: string | number | symbol]: any;
 }
 
@@ -125,7 +125,7 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
   const request = async function request(
     method: string,
     url: string,
-    data?: Record<string, any>,
+    data?: Record<string, any> | null,
     options: Record<string, any> = {}
   ) {
     const innerOptions: SendOptions = {
@@ -231,7 +231,7 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
   Object.assign(
     request,
     opts.allowedMethods.reduce((acc: Record<string, any>, method) => {
-      acc[method] = (url: string, data?: Record<string, any>, options?: Record<string, any>) =>
+      acc[method] = (url: string, data?: Record<string, any> | null, options?: Record<string, any>) =>
         request(method, url, data, options);
       return acc;
     }, {})

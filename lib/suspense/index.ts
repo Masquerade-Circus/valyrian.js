@@ -8,7 +8,7 @@ export function Suspense(
   }: // eslint-disable-next-line no-unused-vars
   { fallback: any | Vnode | ValyrianComponent; error?: (e: Error) => any | Vnode | ValyrianComponent },
   children: Children
-): ValyrianComponent {
+) {
   const [loadedChildren, setLoadedChildren] = useState(null);
   const [err, setErr] = useState(null);
 
@@ -53,5 +53,5 @@ export function Suspense(
       });
 
     return fallback;
-  }, {}) as unknown as ValyrianComponent;
+  }, {});
 }

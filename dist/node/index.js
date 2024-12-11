@@ -903,6 +903,7 @@ async function inline(file, options = {}) {
   } else if (typeof file === "object" && "raw" in file) {
     return { map: null, ...file };
   }
+  throw new Error(`Unknown file type: ${file}`);
 }
 inline.uncss = async function(renderedHtml, css, options = {}) {
   const html = await Promise.all(renderedHtml);

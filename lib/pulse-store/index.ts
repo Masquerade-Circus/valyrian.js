@@ -23,18 +23,25 @@ type ProxyState<StateType> = StateType & {
 // The effect stack
 const effectStack: Function[] = [];
 
+type StorePulses<PulsesType> = {
+  [K in keyof PulsesType]: PulsesType[K] extends (state: any, ...args: infer Args) => infer R
+    ? (...args: Args) => R
+    : never;
+};
+
 // Creates the store
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function createStore<StateType extends State, PulsesType extends Pulses<StateType>>(
-  initialState: StateType | (() => StateType),
+  initialState: StateType | (() => StateType) | null,
   pulses: PulsesType,
   immutable = false
-): () => [ProxyState<StateType>, PulsesType] {
+): () => [ProxyState<StateType>, StorePulses<PulsesType>] {
   const subscribers = new Set<Function>();
   const vnodesToUpdate = new WeakSet<Vnode>();
 
   // Initialize the localState for this store
-  const localState = (typeof initialState === "function" ? initialState() : initialState) || {};
+  const localState: StateType =
+    (typeof initialState === "function" ? initialState() : initialState) || ({} as StateType);
 
   function isMutable() {
     if (immutable) {
@@ -43,7 +50,7 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
   }
 
   // We create a proxy for the state
-  const proxyState = new Proxy(localState || {}, {
+  const proxyState = new Proxy(localState, {
     get: (state, prop: string) => {
       const currentEffect = effectStack[effectStack.length - 1];
       if (currentEffect && !subscribers.has(currentEffect)) {
@@ -138,8 +145,8 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
     }
   });
 
-  function usePulseStore(): [ProxyState<StateType>, PulsesType] {
-    return [proxyState, pulsesProxy as PulsesType];
+  function usePulseStore(): [ProxyState<StateType>, StorePulses<PulsesType>] {
+    return [proxyState, pulsesProxy as StorePulses<PulsesType>];
   }
 
   syncState(localState);
@@ -151,7 +158,7 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
 export function createPulseStore<StateType extends State, PulsesType extends Pulses<StateType>>(
   initialState: StateType,
   pulses: PulsesType
-): () => [ProxyState<StateType>, PulsesType] {
+): () => [ProxyState<StateType>, StorePulses<PulsesType>] {
   return createStore(initialState, pulses, true);
 }
 
@@ -159,7 +166,7 @@ export function createPulseStore<StateType extends State, PulsesType extends Pul
 export function createMutableStore<StateType extends State, PulsesType extends Pulses<StateType>>(
   initialState: StateType,
   pulses: PulsesType
-): () => [ProxyState<StateType>, PulsesType] {
+): () => [ProxyState<StateType>, StorePulses<PulsesType>] {
   console.warn(
     "Warning: You are working with a mutable state. This can lead to unpredictable behavior. All state changes made outside of a pulse will not trigger a re-render."
   );

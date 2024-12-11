@@ -1,7 +1,7 @@
 import fs from "fs";
 import { htmlToHyperscript } from "./tree-adapter";
 
-interface IconsOptions {
+export interface IconsOptions {
   iconsPath: string | null;
   linksViewPath: string | null;
   logging: boolean;
@@ -12,12 +12,12 @@ interface IconsOptions {
   appDescription?: string;
   developerName?: string;
   developerURL?: string;
-  dir?: "auto" | "ltr" | "rtl";
+  dir?: "auto" | "ltr" | "rtl" | string;
   lang?: string;
   background?: string;
   theme_color?: string;
-  display?: "browser" | "standalone";
-  orientation?: "any" | "portrait" | "landscape";
+  display?: "browser" | "standalone" | string;
+  orientation?: "any" | "portrait" | "landscape" | string;
   start_url?: string;
   version?: string;
   icons: {

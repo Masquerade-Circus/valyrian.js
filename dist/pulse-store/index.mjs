@@ -11,7 +11,7 @@ function createStore(initialState, pulses, immutable = false) {
       throw new Error("You need to call a pulse to modify the state");
     }
   }
-  const proxyState = new Proxy(localState || {}, {
+  const proxyState = new Proxy(localState, {
     get: (state, prop) => {
       const currentEffect = effectStack[effectStack.length - 1];
       if (currentEffect && !subscribers.has(currentEffect)) {

@@ -14,7 +14,7 @@ import {
   v
 } from "valyrian.js";
 
-interface Request {
+export interface Request {
   params: Record<string, any>;
   query: Record<string, any>;
   url: string;
@@ -24,7 +24,7 @@ interface Request {
   redirect: (path: string) => Promise<string | void>;
 }
 
-interface Middleware {
+export interface Middleware {
   // eslint-disable-next-line no-unused-vars
   (req: Request, err?: any):
     | Promise<any | Component | POJOComponent | VnodeComponentInterface>
@@ -176,6 +176,8 @@ export const RouterError = class RouterError extends Error {
   status: number | undefined = 500;
 };
 
+type RouteParams = string | Middleware | Router | (string | Middleware | Router | RouteParams)[];
+
 export class Router {
   private routeTree = new RouteTree();
   container: Element | string | null = null;
@@ -193,7 +195,7 @@ export class Router {
     this.pathPrefix = pathPrefix;
   }
 
-  add(...args: (string | Middleware | Router)[]): Router {
+  add(...args: RouteParams[]): Router {
     const flatArgs = flat(args);
     const path = getPathWithoutLastSlash(
       `${this.pathPrefix}${typeof flatArgs[0] === "string" ? flatArgs.shift() : "/.*"}`
@@ -223,7 +225,7 @@ export class Router {
     return this;
   }
 
-  catch(...args: (number | string | Error | Middleware)[]): Router {
+  catch(...args: (number | string | Error | typeof Error | Middleware)[]): Router {
     const condition =
       typeof args[0] === "number" || typeof args[0] === "string" || args[0].name.includes("Error")
         ? (args.shift() as number | string | Error)

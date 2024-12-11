@@ -15,7 +15,9 @@ var createHook = function createHook2({
     if (!HookCalls) {
       HookCalls = { hooks: [], hook_calls: -1 };
       componentToHooksWeakMap.set(component, HookCalls);
-      onUnmount(() => componentToHooksWeakMap.delete(component));
+      onUnmount(() => {
+        componentToHooksWeakMap.delete(component);
+      });
     }
     onCleanup(() => HookCalls.hook_calls = -1);
     let hook = HookCalls.hooks[++HookCalls.hook_calls];

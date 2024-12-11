@@ -57,7 +57,7 @@
   },
   "scripts": {
     "dev:source": "NODE_ENV=development chokidar './lib/**/*.ts' -c 'bun run source.js'",
-    "dev:test": "bun test --bail --watch",
+    "dev:test": "bun test --watch",
     "dev:web": "browser-sync start --config 'www/bs-config.js'",
     "build": "bun run build:source && bun run remark",
     "build:source": "cross-env NODE_ENV=production bun run source.js",
@@ -83,6 +83,7 @@
   },
   "devDependencies": {
     "@release-it/conventional-changelog": "^9.0.3",
+    "@types/bun": "^1.1.14",
     "@types/clean-css": "^4.2.11",
     "@types/node": "^22.10.1",
     "@types/node-fetch": "^2.6.12",

@@ -3,19 +3,23 @@ declare global {
   var document: Document;
   namespace JSX {
     interface IntrinsicElements extends DefaultRecord {}
+    type Element = ReturnType<
+      typeof v | ((...args: any) => string | number | null | undefined | boolean | Promise<any>)
+    >;
+    type ComponentReturnType = string | number | null | undefined | boolean | Element | Element[];
   }
 }
 
 interface DefaultRecord extends Record<string | number | symbol, any> {}
 
-export interface VnodeProperties extends DefaultRecord {
+export interface Properties extends DefaultRecord {
   key?: string | number;
 }
 
 export interface DomElement extends Element, DefaultRecord {}
 
 export interface Component extends DefaultRecord {
-  (props: VnodeProperties, children: any[]): Vnode | any;
+  (props: Properties, children: any[]): Vnode | any;
 }
 
 export interface POJOComponent extends DefaultRecord {
@@ -31,7 +35,7 @@ export interface VnodeComponentInterface extends Vnode {
 export interface Children extends Array<Vnode | VnodeComponentInterface | ValyrianComponent | any> {}
 
 export interface Directive {
-  (value: any, vnode: VnodeWithDom, oldProps: VnodeProperties | null): void | boolean;
+  (value: any, vnode: VnodeWithDom, oldProps: Properties | null): false | void | any;
 }
 
 export const isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
@@ -39,7 +43,7 @@ export const isNodeJs = Boolean(typeof process !== "undefined" && process.versio
 export class Vnode {
   constructor(
     public tag: string | Component | POJOComponent,
-    public props: null | VnodeProperties,
+    public props: null | Properties,
     public children: Children,
     public dom?: DomElement,
     public isSVG?: boolean
@@ -49,7 +53,7 @@ export class Vnode {
 export interface VnodeWithDom extends Vnode {
   tag: string;
   dom: DomElement;
-  props: VnodeProperties;
+  props: Properties;
 }
 
 export const isPOJOComponent = (component: unknown): component is POJOComponent =>
@@ -63,11 +67,11 @@ export const isVnodeComponent = (object?: unknown): object is VnodeComponentInte
   return isVnode(object) && isComponent(object.tag);
 };
 
-export function v(tagOrComponent: string | ValyrianComponent, props: VnodeProperties, ...children: Children) {
+export function v(tagOrComponent: string | ValyrianComponent, props: Properties | null, ...children: Children) {
   return new Vnode(tagOrComponent, props, children);
 }
 
-v.fragment = (_: VnodeProperties, ...children: Children) => children;
+v.fragment = (_: Properties, ...children: Children) => children;
 
 export function hidrateDomToVnode(dom: any): VnodeWithDom | void {
   if (dom.nodeType === 3) {
@@ -76,7 +80,7 @@ export function hidrateDomToVnode(dom: any): VnodeWithDom | void {
 
   if (dom.nodeType === 1) {
     const tag = dom.nodeName.toLowerCase();
-    const props = {} as VnodeProperties;
+    const props = {} as Properties;
     const children = [] as Children;
 
     for (let i = 0, l = dom.childNodes.length; i < l; i++) {
@@ -427,7 +431,7 @@ export function setAttribute(name: string, value: any, newVnode: VnodeWithDom): 
   }
 }
 
-export function updateAttributes(newVnode: VnodeWithDom, oldProps: VnodeProperties | null): void {
+export function updateAttributes(newVnode: VnodeWithDom, oldProps: Properties | null): void {
   const vnodeDom = newVnode.dom;
   const vnodeProps = newVnode.props;
 
@@ -727,7 +731,7 @@ export function updateVnode(vnode: VnodeWithDom): string | void {
   current.component = null;
 }
 
-export function update(): void | string {
+export function update(): string {
   if (mainVnode) {
     mainVnode.children = [mainComponent];
     updateVnode(mainVnode as VnodeWithDom);
@@ -735,6 +739,7 @@ export function update(): void | string {
       return mainVnode.dom.innerHTML;
     }
   }
+  return "";
 }
 
 let debouncedUpdateTimeout: any;
@@ -765,6 +770,8 @@ export function unmount() {
     current.event = null;
     return result;
   }
+
+  return "";
 }
 
 export function mount(dom: string | DomElement, component: ValyrianComponent | VnodeComponentInterface | any) {

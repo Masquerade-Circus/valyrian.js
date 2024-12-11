@@ -490,7 +490,7 @@ const selfClosingTags = [
   "!doctype"
 ];
 
-export function domToHtml(dom: Element): string {
+export function domToHtml(dom: Element | Text | DocumentFragment): string {
   if (dom.nodeType === 3) {
     return dom.textContent;
   }
