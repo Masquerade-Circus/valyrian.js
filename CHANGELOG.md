@@ -1,12 +1,18 @@
 
 
+## [8.0.1](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.0...8.0.1) (2024-12-11)
+
+### Styles
+
+* update types and tests ([e9928d0](https://github.com/Masquerade-Circus/valyrian.js/commit/e9928d0ccfdf373fce004680b752a3aa0c53b369))
+
 ## [8.0.0](https://github.com/Masquerade-Circus/valyrian.js/compare/7.2.12...8.0.0) (2024-12-10)
 
 ### ⚠ BREAKING CHANGES
 
 * **fluxstore:** Change Store module to FluxStore
 * Changed the way v-model works. Now it will pass the model and the key will be
-obtained from the name of the input.
+  obtained from the name of the input.
 
 ### Features
 

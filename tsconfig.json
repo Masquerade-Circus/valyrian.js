@@ -25,11 +25,11 @@
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
 
-    "rootDir": "/",
+    "rootDir": "./lib",
     "paths": {
       "node_modules/*": ["./node_modules/*"]
     }
   },
-  "include": ["./lib", "./test"],
+  "include": ["./lib", "./test", "./package.json"],
   "exclude": ["./lib/node/utils/node.sw.js"]
 }

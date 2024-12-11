@@ -1,6 +1,6 @@
 {
   "name": "valyrian.js",
-  "version": "8.0.0",
+  "version": "8.0.1",
   "description": "Lightweight steel to forge PWAs. (Minimal Frontend Framework with server side rendering and other capabilities)",
   "repository": "git@github.com:Masquerade-Circus/valyrian.js.git",
   "author": "Masquerade <christian@masquerade-circus.net>",
@@ -193,6 +193,7 @@
     "hooks": {
       "before:init": [
         "bun run build",
+        "bun link",
         "bun run test"
       ],
       "after:bump": [
