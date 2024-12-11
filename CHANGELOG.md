@@ -1,3 +1,11 @@
+
+
+## [8.0.2](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.1...8.0.2) (2024-12-11)
+
+### Build System
+
+* update tsconfig and package.json ([c9aee13](https://github.com/Masquerade-Circus/valyrian.js/commit/c9aee130e8f82498460e39c026fa47fe49e7721b))
+
 ## [8.0.1](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.0...8.0.1) (2024-12-11)
 
 ### Styles
