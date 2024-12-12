@@ -1,5 +1,11 @@
 
 
+## [8.0.4](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.3...8.0.4) (2024-12-12)
+
+### Bug Fixes
+
+* fix setting class and id to svg elements ([e75a3bf](https://github.com/Masquerade-Circus/valyrian.js/commit/e75a3bfb53fc37786ee13b1b6d018c6c3e00b2c3))
+
 ## [8.0.3](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.2...8.0.3) (2024-12-12)
 
 ### Bug Fixes
