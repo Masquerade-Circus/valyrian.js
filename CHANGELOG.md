@@ -1,5 +1,11 @@
 
 
+## [8.0.3](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.2...8.0.3) (2024-12-12)
+
+### Bug Fixes
+
+* fix setting attributes in svg elements ([e2b41d7](https://github.com/Masquerade-Circus/valyrian.js/commit/e2b41d71c466896cbc76fde1f569bf2fc434020a))
+
 ## [8.0.2](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.1...8.0.2) (2024-12-11)
 
 ### Build System
