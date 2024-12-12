@@ -412,7 +412,7 @@ function sharedSetAttribute(name: string, value: any, newVnode: VnodeWithDom): v
     return;
   }
 
-  if (name in newVnodeDom) {
+  if (!newVnode.isSVG && name in newVnodeDom) {
     newVnodeDom[name] = value;
     return;
   }
@@ -438,7 +438,7 @@ export function updateAttributes(newVnode: VnodeWithDom, oldProps: Properties | 
   if (oldProps) {
     for (const name in oldProps) {
       if (name in vnodeProps === false && !eventListenerNames.has(name) && !reservedProps.has(name)) {
-        if (name in vnodeDom) {
+        if (!newVnode.isSVG && name in vnodeDom) {
           vnodeDom[name] = null;
         } else {
           vnodeDom.removeAttribute(name);
