@@ -342,6 +342,10 @@ export const directives: Record<string, Directive> = {
   // Frequent used properties
   class(value, vnode) {
     if (vnode.dom.className !== value) {
+      if (vnode.isSVG) {
+        vnode.dom.setAttribute("class", value);
+        return;
+      }
       vnode.dom.className = value;
     }
   },
@@ -351,14 +355,28 @@ export const directives: Record<string, Directive> = {
   },
 
   id: (value, vnode) => {
-    vnode.dom.id = value;
+    if (vnode.dom.id !== value) {
+      if (vnode.isSVG) {
+        vnode.dom.setAttribute("id", value);
+        return;
+      }
+      vnode.dom.id = value;
+    }
   },
 
   style: (value, vnode) => {
     if (typeof value === "string") {
+      if (vnode.isSVG) {
+        vnode.dom.setAttribute("style", value);
+        return;
+      }
       vnode.dom.style = value;
     } else if (typeof value === "object") {
-      vnode.dom.style = "";
+      if (vnode.isSVG) {
+        vnode.dom.setAttribute("style", "");
+      } else {
+        vnode.dom.style = "";
+      }
       const domStyle = vnode.dom.style;
       for (const name in value) {
         domStyle[name] = value[name];
