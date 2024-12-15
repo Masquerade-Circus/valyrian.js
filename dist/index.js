@@ -487,14 +487,12 @@ function patchKeyed(newVnode, children) {
   const oldTree = [...Array.from(newVnode.dom.childNodes)];
   const childNodes = newVnode.dom.childNodes;
   const oldKeyedList = {};
-  const newKeyedList = {};
   for (let i = 0, l = oldTree.length; i < l; i++) {
-    if ("vnode" in oldTree[i]) {
-      oldKeyedList[oldTree[i].vnode.props.key] = i;
+    const oldVnode = oldTree[i].vnode;
+    if (!oldVnode || "key" in oldVnode.props === false) {
+      continue;
     }
-    if (i < children.length && children[i] instanceof Vnode) {
-      newKeyedList[children[i].props.key] = i;
-    }
+    oldKeyedList[oldVnode.props.key] = i;
   }
   for (let i = 0, l = children.length; i < l; i++) {
     const newChild = children[i];
@@ -536,14 +534,6 @@ function patch(newVnode) {
   }
   const oldDomChildren = dom.childNodes;
   const oldChildrenLength = oldDomChildren.length;
-  if (oldChildrenLength > 0) {
-    const firstOldVnode = oldDomChildren[0].vnode;
-    const firstVnode = children[0];
-    if (firstOldVnode && firstVnode instanceof Vnode && "key" in firstVnode.props && "key" in firstOldVnode.props) {
-      patchKeyed(newVnode, children);
-      return;
-    }
-  }
   const childrenLength = children.length;
   if (oldChildrenLength === 0) {
     for (let i = 0; i < childrenLength; i++) {
@@ -553,6 +543,17 @@ function patch(newVnode) {
       }
       createNewElement(children[i], newVnode, null);
     }
+    return;
+  }
+  let shouldPatchKeyed = true;
+  for (let i = 0; i < childrenLength; i++) {
+    if (children[i] instanceof Vnode === false || !("key" in children[i].props)) {
+      shouldPatchKeyed = false;
+      break;
+    }
+  }
+  if (shouldPatchKeyed) {
+    patchKeyed(newVnode, children);
     return;
   }
   for (let i = 0; i < childrenLength; i++) {
