@@ -1,5 +1,11 @@
 
 
+## [8.0.6](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.5...8.0.6) (2024-12-15)
+
+### Code Refactoring
+
+* optimize patchKeyed ([30b103c](https://github.com/Masquerade-Circus/valyrian.js/commit/30b103cb9ed18c9b9215e76f69bc608f142df7f8))
+
 ## [8.0.5](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.4...8.0.5) (2024-12-15)
 
 ### Documentation
