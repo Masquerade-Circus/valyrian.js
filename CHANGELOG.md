@@ -1,5 +1,15 @@
 
 
+## [8.0.5](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.4...8.0.5) (2024-12-15)
+
+### Documentation
+
+* update pulse store documentation ([7466abc](https://github.com/Masquerade-Circus/valyrian.js/commit/7466abcc84fcd7663d4e8393d29f341dec3a2c0a))
+
+### Code Refactoring
+
+* refactor pulse store ([33e1c55](https://github.com/Masquerade-Circus/valyrian.js/commit/33e1c55dc839b790404c4a509efca9019cce13b6))
+
 ## [8.0.4](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.3...8.0.4) (2024-12-12)
 
 ### Bug Fixes
