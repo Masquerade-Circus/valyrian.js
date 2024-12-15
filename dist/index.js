@@ -92,6 +92,7 @@ function hidrateDomToVnode(dom) {
     }
     const vnode = new Vnode(tag, props, children);
     vnode.dom = dom;
+    dom.vnode = vnode;
     vnode.isSVG = tag === "svg";
     return vnode;
   }
@@ -336,9 +337,9 @@ function eventListener(e) {
   let dom = e.target;
   const name = `on${e.type}`;
   while (dom) {
-    const oldProps = dom.props;
-    if (oldProps && oldProps[name]) {
-      oldProps[name](e, dom);
+    const oldVnode = dom.vnode;
+    if (oldVnode && oldVnode.props[name]) {
+      oldVnode.props[name](e, oldVnode);
       if (!e.defaultPrevented) {
         update();
       }
@@ -376,6 +377,7 @@ function setAttribute(name, value, newVnode) {
 function updateAttributes(newVnode, oldProps) {
   const vnodeDom = newVnode.dom;
   const vnodeProps = newVnode.props;
+  vnodeDom.vnode = newVnode;
   if (oldProps) {
     for (const name in oldProps) {
       if (name in vnodeProps === false && !eventListenerNames.has(name) && !reservedProps.has(name)) {
@@ -404,24 +406,22 @@ function createElement(tag, isSVG) {
 }
 function flatTree(newVnode) {
   current.vnode = newVnode;
-  if ("v-for" in newVnode.props) {
-    const children2 = [];
-    const set = newVnode.props["v-for"];
-    const l = set.length;
-    const callback = newVnode.children[0];
-    for (let i2 = 0; i2 < l; i2++) {
-      const newChild = callback(set[i2], i2);
-      if (newChild instanceof Vnode) {
-        newChild.props = newChild.props || {};
-        newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
-      }
-      children2[i2] = newChild;
-    }
-    return children2;
-  }
   let i = 0;
   const originalChildren = newVnode.children;
   let children = originalChildren;
+  if ("v-for" in newVnode.props) {
+    children = [];
+    const set = newVnode.props["v-for"];
+    const l = set.length;
+    const callback = newVnode.children[0];
+    if (typeof callback !== "function") {
+      console.warn("v-for directive must have a callback function as children");
+      return children;
+    }
+    for (let i2 = 0; i2 < l; i2++) {
+      children[i2] = callback(set[i2], i2);
+    }
+  }
   while (i < children.length) {
     const newChild = children[i];
     if (newChild == null) {
@@ -466,7 +466,6 @@ function createNewElement(newChild, newVnode, oldChild) {
   }
   newChild.dom = dom;
   updateAttributes(newChild, null);
-  newChild.dom.props = newChild.props;
   if ("v-text" in newChild.props) {
     newChild.dom.textContent = newChild.props["v-text"];
     return;
@@ -490,9 +489,8 @@ function patchKeyed(newVnode, children) {
   const oldKeyedList = {};
   const newKeyedList = {};
   for (let i = 0, l = oldTree.length; i < l; i++) {
-    const oldProps = oldTree[i].props;
-    if (oldProps) {
-      oldKeyedList[oldProps.key] = i;
+    if ("vnode" in oldTree[i]) {
+      oldKeyedList[oldTree[i].vnode.props.key] = i;
     }
     if (i < children.length && children[i] instanceof Vnode) {
       newKeyedList[children[i].props.key] = i;
@@ -512,9 +510,8 @@ function patchKeyed(newVnode, children) {
     } else if (currentChild !== oldChild) {
       newVnode.dom.replaceChild(oldChild, currentChild);
     }
-    if ("v-keep" in newChild.props === false || oldChild.props["v-keep"] !== newChild.props["v-keep"]) {
-      updateAttributes(newChild, oldChild.props);
-      oldChild.props = newChild.props;
+    if ("v-keep" in newChild.props === false || !oldChild.vnode || oldChild.props["v-keep"] !== newChild.props["v-keep"]) {
+      updateAttributes(newChild, oldChild.vnode.props);
       if ("v-text" in newChild.props) {
         if (oldChild.textContent != newChild.props["v-text"]) {
           oldChild.textContent = newChild.props["v-text"];
@@ -525,7 +522,7 @@ function patchKeyed(newVnode, children) {
     }
   }
   for (let i = children.length, l = childNodes.length; i < l; i++) {
-    childNodes[i]?.remove();
+    childNodes[childNodes.length - 1]?.remove();
   }
 }
 function patch(newVnode) {
@@ -540,9 +537,9 @@ function patch(newVnode) {
   const oldDomChildren = dom.childNodes;
   const oldChildrenLength = oldDomChildren.length;
   if (oldChildrenLength > 0) {
-    const firstOldProps = oldDomChildren[0].props;
+    const firstOldVnode = oldDomChildren[0].vnode;
     const firstVnode = children[0];
-    if (firstOldProps && firstVnode instanceof Vnode && "key" in firstVnode.props && "key" in firstOldProps) {
+    if (firstOldVnode && firstVnode instanceof Vnode && "key" in firstVnode.props && "key" in firstOldVnode.props) {
       patchKeyed(newVnode, children);
       return;
     }
@@ -581,11 +578,11 @@ function patch(newVnode) {
       continue;
     }
     if ("v-keep" in newChild.props) {
-      if (oldChild.props && oldChild.props["v-keep"] === newChild.props["v-keep"]) {
+      if (oldChild.vnode && oldChild.vnode.props["v-keep"] === newChild.props["v-keep"]) {
         continue;
       }
       const nextOldChild = oldDomChildren[i + 1];
-      if (nextOldChild && nextOldChild.props && nextOldChild.props["v-keep"] === newChild.props["v-keep"]) {
+      if (nextOldChild && nextOldChild.vnode && nextOldChild.vnode.props["v-keep"] === newChild.props["v-keep"]) {
         oldChild.remove();
         continue;
       }
@@ -595,8 +592,7 @@ function patch(newVnode) {
       continue;
     }
     newChild.dom = oldChild;
-    updateAttributes(newChild, oldChild.props || null);
-    oldChild.props = newChild.props;
+    updateAttributes(newChild, oldChild.vnode ? oldChild.vnode.props : null);
     if ("v-text" in newChild.props) {
       if (newChild.dom.textContent != newChild.props["v-text"]) {
         newChild.dom.textContent = newChild.props["v-text"];
@@ -629,11 +625,13 @@ function update() {
   return "";
 }
 var debouncedUpdateTimeout;
-var clearDebouncedUpdateMethod = isNodeJs ? clearTimeout : cancelAnimationFrame;
-var setDebouncedUpdateMethod = isNodeJs ? () => setTimeout(update, 5) : () => requestAnimationFrame(update);
-function debouncedUpdate() {
-  clearDebouncedUpdateMethod(debouncedUpdateTimeout);
-  debouncedUpdateTimeout = setDebouncedUpdateMethod();
+var debouncedUpdateMethod = isNodeJs ? update : () => requestAnimationFrame(update);
+function debouncedUpdate(timeout = 42) {
+  if (current.event) {
+    current.event.preventDefault();
+  }
+  clearTimeout(debouncedUpdateTimeout);
+  debouncedUpdateTimeout = setTimeout(debouncedUpdateMethod, timeout);
 }
 function unmount() {
   if (mainVnode) {

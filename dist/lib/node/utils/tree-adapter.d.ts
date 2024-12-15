@@ -21,6 +21,8 @@ export declare class Node implements Node {
     parent_node: Node | null;
     get parentNode(): Node | null;
     set parentNode(node: Node | null);
+    get parentElement(): Element | null;
+    set parentElement(node: Element | null);
     get dataset(): Record<string | number, any>;
     set dataset(value: Record<string | number, any>);
     constructor();

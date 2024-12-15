@@ -30,7 +30,17 @@ var import_utils = require("valyrian.js/utils");
 var effectStack = [];
 function createStore(initialState, pulses, immutable = false) {
   const subscribers = /* @__PURE__ */ new Set();
-  const vnodesToUpdate = /* @__PURE__ */ new WeakSet();
+  const domWithVnodesToUpdate = /* @__PURE__ */ new WeakSet();
+  const boundPulses = {};
+  for (const key in pulses) {
+    if (typeof pulses[key] !== "function") {
+      throw new Error(`Pulse '${key}' must be a function`);
+    }
+    if (key === "state") {
+      throw new Error(`A pulse cannot be named 'state'`);
+    }
+    boundPulses[key] = getPulseMethod(key);
+  }
   const localState = (typeof initialState === "function" ? initialState() : initialState) || {};
   function isMutable() {
     if (immutable) {
@@ -44,27 +54,26 @@ function createStore(initialState, pulses, immutable = false) {
         subscribers.add(currentEffect);
       }
       const currentVnode = import_valyrian.current.vnode;
-      if (currentVnode && !vnodesToUpdate.has(currentVnode)) {
+      if (currentVnode && !domWithVnodesToUpdate.has(currentVnode.dom)) {
+        const dom = currentVnode.dom;
         const subscription = () => {
-          if (!currentVnode.dom) {
+          if (!dom.parentNode) {
             subscribers.delete(subscription);
-            vnodesToUpdate.delete(currentVnode);
+            domWithVnodesToUpdate.delete(dom);
             return;
           }
-          (0, import_valyrian.updateVnode)(currentVnode);
+          (0, import_valyrian.updateVnode)(dom.vnode);
         };
         subscribers.add(subscription);
-        vnodesToUpdate.add(currentVnode);
+        domWithVnodesToUpdate.add(dom);
       }
       return state[prop];
     },
-    // If the user tries to set directly it will throw an error
     set: (state, prop, value) => {
       isMutable();
       Reflect.set(state, prop, value);
       return true;
     },
-    // If the user tries to delete directly it will throw an error
     deleteProperty: (state, prop) => {
       isMutable();
       Reflect.deleteProperty(state, prop);
@@ -81,12 +90,17 @@ function createStore(initialState, pulses, immutable = false) {
       }
     }
   }
+  let debounceTimeout = null;
+  function debouncedUpdate() {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => subscribers.forEach((subscriber) => subscriber()), 0);
+  }
   function setState(newState) {
     if (!(0, import_utils.hasChanged)(localState, newState)) {
       return;
     }
     syncState(newState);
-    subscribers.forEach((subscriber) => subscriber());
+    debouncedUpdate();
   }
   function getPulseMethod(key) {
     return (...args) => {
@@ -100,26 +114,19 @@ function createStore(initialState, pulses, immutable = false) {
       setState(currentState);
     };
   }
-  const boundPulses = {};
-  for (const key in pulses) {
-    if (typeof pulses[key] !== "function") {
-      throw new Error(`Pulse '${key}' must be a function`);
-    }
-    boundPulses[key] = getPulseMethod(key);
-  }
+  syncState(localState);
   const pulsesProxy = new Proxy(boundPulses, {
     get: (pulses2, prop) => {
+      if (prop === "state") {
+        return proxyState;
+      }
       if (!(prop in pulses2)) {
         throw new Error(`Pulse '${prop}' does not exist`);
       }
       return pulses2[prop];
     }
   });
-  function usePulseStore() {
-    return [proxyState, pulsesProxy];
-  }
-  syncState(localState);
-  return usePulseStore;
+  return pulsesProxy;
 }
 function createPulseStore(initialState, pulses) {
   return createStore(initialState, pulses, true);
@@ -130,7 +137,7 @@ function createMutableStore(initialState, pulses) {
   );
   return createStore(initialState, pulses, false);
 }
-function createEffect(effect) {
+function createEffect(effect, dependencies) {
   const runEffect = () => {
     try {
       effectStack.push(runEffect);

@@ -1,26 +1,23 @@
 /* eslint-disable no-console */
-import { updateVnode, Vnode, VnodeWithDom, current } from "valyrian.js";
+import { updateVnode, Vnode, VnodeWithDom, current, DomElement } from "valyrian.js";
 import { deepCloneUnfreeze, deepFreeze, hasChanged } from "valyrian.js/utils";
 
 type State = Record<string, any>;
 
-// An action or pulse type definition
-// eslint-disable-next-line no-unused-vars
+// Tipo de acción o pulso
 export type Pulse<StateType> = (state: StateType, ...args: any[]) => void | Promise<void>;
 
-// A collection of pulses
+// Colección de pulsos
 export type Pulses<StateType> = {
   [key: string]: Pulse<StateType>;
 };
 
-// A proxy state
-// This is a state that is proxied to automatically subscribe to changes
-// And is used internally to update the vnode when the state changes
+// Estado proxy que observará el acceso y las mutaciones del estado
 type ProxyState<StateType> = StateType & {
   [key: string]: any;
 };
 
-// The effect stack
+// Pila de efectos
 const effectStack: Function[] = [];
 
 type StorePulses<PulsesType> = {
@@ -29,17 +26,26 @@ type StorePulses<PulsesType> = {
     : never;
 };
 
-// Creates the store
-// eslint-disable-next-line sonarjs/cognitive-complexity
+// Crea la tienda
 function createStore<StateType extends State, PulsesType extends Pulses<StateType>>(
   initialState: StateType | (() => StateType) | null,
   pulses: PulsesType,
   immutable = false
-): () => [ProxyState<StateType>, StorePulses<PulsesType>] {
+): StorePulses<PulsesType> & { state: ProxyState<StateType> } {
   const subscribers = new Set<Function>();
-  const vnodesToUpdate = new WeakSet<Vnode>();
+  const domWithVnodesToUpdate = new WeakSet<DomElement>();
 
-  // Initialize the localState for this store
+  const boundPulses: Record<string, Pulse<StateType>> = {};
+  for (const key in pulses) {
+    if (typeof pulses[key] !== "function") {
+      throw new Error(`Pulse '${key}' must be a function`);
+    }
+    if (key === "state") {
+      throw new Error(`A pulse cannot be named 'state'`);
+    }
+    boundPulses[key] = getPulseMethod(key);
+  }
+
   const localState: StateType =
     (typeof initialState === "function" ? initialState() : initialState) || ({} as StateType);
 
@@ -49,7 +55,6 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
     }
   }
 
-  // We create a proxy for the state
   const proxyState = new Proxy(localState, {
     get: (state, prop: string) => {
       const currentEffect = effectStack[effectStack.length - 1];
@@ -58,30 +63,28 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
       }
 
       const currentVnode = current.vnode as VnodeWithDom;
-      if (currentVnode && !vnodesToUpdate.has(currentVnode)) {
+      if (currentVnode && !domWithVnodesToUpdate.has(currentVnode.dom)) {
+        const dom = currentVnode.dom;
         const subscription = () => {
-          if (!currentVnode.dom) {
+          if (!dom.parentNode) {
             subscribers.delete(subscription);
-            vnodesToUpdate.delete(currentVnode);
+            domWithVnodesToUpdate.delete(dom);
             return;
           }
-
-          updateVnode(currentVnode);
+          updateVnode(dom.vnode);
         };
 
         subscribers.add(subscription);
-        vnodesToUpdate.add(currentVnode);
+        domWithVnodesToUpdate.add(dom);
       }
 
       return state[prop];
     },
-    // If the user tries to set directly it will throw an error
     set: (state, prop: string, value: any) => {
       isMutable();
       Reflect.set(state, prop, value);
       return true;
     },
-    // If the user tries to delete directly it will throw an error
     deleteProperty: (state, prop: string) => {
       isMutable();
       Reflect.deleteProperty(state, prop);
@@ -101,14 +104,19 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
     }
   }
 
+  let debounceTimeout: any = null;
+  function debouncedUpdate() {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => subscribers.forEach((subscriber) => subscriber()), 0);
+  }
+
   function setState(newState: StateType) {
     if (!hasChanged(localState, newState)) {
       return;
     }
 
     syncState(newState);
-
-    subscribers.forEach((subscriber) => subscriber());
+    debouncedUpdate();
   }
 
   function getPulseMethod(key: string) {
@@ -128,16 +136,14 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
     };
   }
 
-  const boundPulses: Record<string, Pulse<StateType>> = {};
-  for (const key in pulses) {
-    if (typeof pulses[key] !== "function") {
-      throw new Error(`Pulse '${key}' must be a function`);
-    }
-    boundPulses[key] = getPulseMethod(key);
-  }
+  syncState(localState);
 
   const pulsesProxy = new Proxy(boundPulses, {
     get: (pulses, prop: string) => {
+      if (prop === "state") {
+        return proxyState;
+      }
+
       if (!(prop in pulses)) {
         throw new Error(`Pulse '${prop}' does not exist`);
       }
@@ -145,36 +151,31 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
     }
   });
 
-  function usePulseStore(): [ProxyState<StateType>, StorePulses<PulsesType>] {
-    return [proxyState, pulsesProxy as StorePulses<PulsesType>];
-  }
-
-  syncState(localState);
-
-  return usePulseStore;
+  return pulsesProxy as StorePulses<PulsesType> & { state: ProxyState<StateType> };
 }
 
-// Creates a pulse store with an immutable state by default
+// Crea una tienda inmutable
 export function createPulseStore<StateType extends State, PulsesType extends Pulses<StateType>>(
   initialState: StateType,
   pulses: PulsesType
-): () => [ProxyState<StateType>, StorePulses<PulsesType>] {
+): StorePulses<PulsesType> & { state: ProxyState<StateType> } {
   return createStore(initialState, pulses, true);
 }
 
-// Creates a mutable store, useful for performance, but not recommended
+// Crea una tienda mutable
 export function createMutableStore<StateType extends State, PulsesType extends Pulses<StateType>>(
   initialState: StateType,
   pulses: PulsesType
-): () => [ProxyState<StateType>, StorePulses<PulsesType>] {
+): StorePulses<PulsesType> & { state: ProxyState<StateType> } {
   console.warn(
     "Warning: You are working with a mutable state. This can lead to unpredictable behavior. All state changes made outside of a pulse will not trigger a re-render."
   );
   return createStore(initialState, pulses, false);
 }
 
-// Creates an effect
-export function createEffect(effect: Function) {
+const effectDeps = new WeakMap<Function, any[]>();
+
+export function createEffect(effect: Function, dependencies?: any[]) {
   const runEffect = () => {
     try {
       effectStack.push(runEffect);

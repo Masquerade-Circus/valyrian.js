@@ -9,8 +9,12 @@ type ProxyState<StateType> = StateType & {
 type StorePulses<PulsesType> = {
     [K in keyof PulsesType]: PulsesType[K] extends (state: any, ...args: infer Args) => infer R ? (...args: Args) => R : never;
 };
-export declare function createPulseStore<StateType extends State, PulsesType extends Pulses<StateType>>(initialState: StateType, pulses: PulsesType): () => [ProxyState<StateType>, StorePulses<PulsesType>];
-export declare function createMutableStore<StateType extends State, PulsesType extends Pulses<StateType>>(initialState: StateType, pulses: PulsesType): () => [ProxyState<StateType>, StorePulses<PulsesType>];
-export declare function createEffect(effect: Function): void;
+export declare function createPulseStore<StateType extends State, PulsesType extends Pulses<StateType>>(initialState: StateType, pulses: PulsesType): StorePulses<PulsesType> & {
+    state: ProxyState<StateType>;
+};
+export declare function createMutableStore<StateType extends State, PulsesType extends Pulses<StateType>>(initialState: StateType, pulses: PulsesType): StorePulses<PulsesType> & {
+    state: ProxyState<StateType>;
+};
+export declare function createEffect(effect: Function, dependencies?: any[]): void;
 export {};
 //# sourceMappingURL=index.d.ts.map

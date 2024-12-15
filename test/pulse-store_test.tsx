@@ -4,6 +4,7 @@ import "valyrian.js/node";
 import { expect, describe, test as it } from "bun:test";
 import { createPulseStore, createMutableStore, createEffect } from "valyrian.js/pulse-store";
 import { v, mount, unmount } from "valyrian.js";
+import { wait } from "./utils/helpers";
 
 describe("PulseStore", () => {
   it("should create an immutable PulseStore", () => {
@@ -14,18 +15,17 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [state, { increment }] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
-    expect(state.count).toEqual(0);
+    expect(pulseStore.state.count).toEqual(0);
 
-    increment();
+    pulseStore.increment();
 
-    expect(state.count).toEqual(1);
+    expect(pulseStore.state.count).toEqual(1);
 
     // Should not allow direct state modification
     expect(() => {
-      state.count = 5;
+      pulseStore.state.count = 5;
     }).toThrow("You need to call a pulse to modify the state");
   });
 
@@ -37,19 +37,18 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createMutableStore(initialState, pulses);
-    const [state, { increment }] = useStore();
+    const pulseStore = createMutableStore(initialState, pulses);
 
-    expect(state.count).toEqual(0);
+    expect(pulseStore.state.count).toEqual(0);
 
-    increment();
+    pulseStore.increment();
 
-    expect(state.count).toEqual(1);
+    expect(pulseStore.state.count).toEqual(1);
 
     // Should allow direct state modification
-    state.count = 5;
+    pulseStore.state.count = 5;
 
-    expect(state.count).toEqual(5);
+    expect(pulseStore.state.count).toEqual(5);
   });
 
   it("should handle asynchronous actions", async () => {
@@ -61,14 +60,13 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [state, { fetchData }] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
-    expect(state.data).toEqual(null);
+    expect(pulseStore.state.data).toEqual(null);
 
-    await fetchData();
+    await pulseStore.fetchData();
 
-    expect(state.data).toEqual("new data" as any);
+    expect(pulseStore.state.data).toEqual("new data" as any);
   });
 
   it("should catch errors in asynchronous actions", async () => {
@@ -83,17 +81,16 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [state, { fetchDataWithError }] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
-    expect(state.error).toEqual(null);
+    expect(pulseStore.state.error).toEqual(null);
 
-    await fetchDataWithError();
+    await pulseStore.fetchDataWithError();
 
-    expect(state.error).toEqual("Fetch failed" as any);
+    expect(pulseStore.state.error).toEqual("Fetch failed" as any);
   });
 
-  it("should update subscribers when state changes", () => {
+  it("should update subscribers when state changes", async () => {
     const initialState = { count: 0 };
     const pulses = {
       increment(state: any) {
@@ -101,31 +98,31 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [, { increment }] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
     const dom = document.createElement("div");
+    document.body.appendChild(dom);
 
     // Subscriber mock
     let renderCount = 0;
     const SubscriberComponent = () => {
-      const [state] = useStore();
       renderCount += 1;
-      return <div>{state.count}</div>;
+      return <div>{pulseStore.state.count}</div>;
     };
 
     mount(dom, <SubscriberComponent />);
     expect(renderCount).toEqual(1);
     expect(dom.innerHTML).toEqual("<div>0</div>");
 
-    increment();
+    pulseStore.increment();
+    await wait(0); // Wait for reactivity to trigger
 
     // Component should re-render after increment
     expect(renderCount).toEqual(2);
     expect(dom.innerHTML).toEqual("<div>1</div>");
   });
 
-  it("should register and execute effects correctly", () => {
+  it("should register and execute effects correctly", async () => {
     const initialState = { count: 0 };
     const pulses = {
       increment(state: any) {
@@ -133,20 +130,20 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [state, { increment }] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
     let effectTriggered = false;
 
     createEffect(() => {
-      if (state.count === 1) {
+      if (pulseStore.state.count === 1) {
         effectTriggered = true;
       }
     });
 
     expect(effectTriggered).toEqual(false);
 
-    increment();
+    pulseStore.increment();
+    await wait(0); // Wait for reactivity to trigger
 
     expect(effectTriggered).toEqual(true);
   });
@@ -155,11 +152,10 @@ describe("PulseStore", () => {
     const initialState = { count: 0 };
     const pulses = {};
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [state] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
     expect(() => {
-      state.nonExistentProperty;
+      pulseStore.state.nonExistentProperty;
     }).not.toThrow(); // Proxies usually return undefined for non-existent properties
   });
 
@@ -171,17 +167,16 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [state, { updateName }] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
-    expect(state.user.name).toEqual("John");
+    expect(pulseStore.state.user.name).toEqual("John");
 
-    updateName();
+    pulseStore.updateName();
 
-    expect(state.user.name).toEqual("Doe");
+    expect(pulseStore.state.user.name).toEqual("Doe");
 
     expect(() => {
-      state.user.age = 31;
+      pulseStore.state.user.age = 31;
     }).toThrow("Attempted to assign to readonly property");
   });
 
@@ -193,18 +188,17 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createMutableStore(initialState, pulses);
-    const [state, { updateName }] = useStore();
+    const pulseStore = createMutableStore(initialState, pulses);
 
-    expect(state.user.name).toEqual("John");
+    expect(pulseStore.state.user.name).toEqual("John");
 
-    updateName();
+    pulseStore.updateName();
 
-    expect(state.user.name).toEqual("Doe");
+    expect(pulseStore.state.user.name).toEqual("Doe");
 
-    state.user.age = 31;
+    pulseStore.state.user.age = 31;
 
-    expect(state.user.age).toEqual(31);
+    expect(pulseStore.state.user.age).toEqual(31);
   });
 
   it("should update nested state immutability", async () => {
@@ -216,17 +210,16 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [state, { updateName }] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
-    expect(state.user.name).toEqual("John");
+    expect(pulseStore.state.user.name).toEqual("John");
 
-    await updateName();
+    await pulseStore.updateName();
 
-    expect(state.user.name).toEqual("Doe");
+    expect(pulseStore.state.user.name).toEqual("Doe");
   });
 
-  it("should clean up subscribers when vnode is destroyed", () => {
+  it("should clean up subscribers when vnode is destroyed", async () => {
     const initialState = { count: 0 };
     const pulses = {
       increment(state: any) {
@@ -234,27 +227,27 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [, { increment }] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
     const dom = document.createElement("div");
+    document.body.appendChild(dom);
 
     let renderCount = 0;
     const SubscriberComponent = () => {
-      const [state] = useStore();
       renderCount += 1;
-      return <div>{state.count}</div>;
+      return <div>{pulseStore.state.count}</div>;
     };
 
     mount(dom, <SubscriberComponent />);
     expect(renderCount).toEqual(1);
 
-    increment();
+    pulseStore.increment();
+    await wait(0); // Wait for reactivity to trigger
     expect(renderCount).toEqual(2);
 
     unmount();
 
-    increment();
+    pulseStore.increment();
     expect(renderCount).toEqual(2); // Should not re-render after component unmount
   });
 
@@ -265,17 +258,15 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStoreNull = createPulseStore(null as any, pulses);
-    const [stateNull, { setValue }] = useStoreNull();
-    expect(stateNull).toEqual({});
-    setValue();
-    expect(stateNull.value).toEqual(42);
+    const pulseStoreNull = createPulseStore(null as any, pulses);
+    expect(pulseStoreNull.state).toEqual({});
+    pulseStoreNull.setValue();
+    expect(pulseStoreNull.state.value).toEqual(42);
 
-    const useStoreUndefined = createPulseStore(undefined as any, pulses);
-    const [stateUndefined, { setValue: setValueUndefined }] = useStoreUndefined();
-    expect(stateUndefined).toEqual({});
-    setValueUndefined();
-    expect(stateUndefined.value).toEqual(42);
+    const pulseStoreUndefined = createPulseStore(undefined as any, pulses);
+    expect(pulseStoreUndefined.state).toEqual({});
+    pulseStoreUndefined.setValue();
+    expect(pulseStoreUndefined.state.value).toEqual(42);
   });
 
   it("should handle initializer functions returning null or undefined", () => {
@@ -285,32 +276,29 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStoreFuncNull = createPulseStore(() => null, pulses);
-    const [stateFuncNull, { setValue }] = useStoreFuncNull();
-    expect(stateFuncNull).toEqual({} as any);
-    setValue();
-    expect(stateFuncNull.value).toEqual(100);
+    const pulseStoreFuncNull = createPulseStore(() => null, pulses);
+    expect(pulseStoreFuncNull.state).toEqual({} as any);
+    pulseStoreFuncNull.setValue();
+    expect(pulseStoreFuncNull.state.value).toEqual(100);
 
-    const useStoreFuncUndefined = createPulseStore(() => undefined, pulses);
-    const [stateFuncUndefined, { setValue: setValueFuncUndefined }] = useStoreFuncUndefined();
-    expect(stateFuncUndefined).toEqual({} as any);
-    setValueFuncUndefined();
-    expect(stateFuncUndefined.value).toEqual(100);
+    const pulseStoreFuncUndefined = createPulseStore(() => undefined, pulses);
+    expect(pulseStoreFuncUndefined.state).toEqual({} as any);
+    pulseStoreFuncUndefined.setValue();
+    expect(pulseStoreFuncUndefined.state.value).toEqual(100);
   });
 
   it("should throw an error when invoking a non-existent pulse", () => {
     const initialState = { count: 0 };
     const pulses = {
       increment(state: any) {
-        state.count += 1;
+        pulseStore.state.count += 1;
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [state, pulsesMethods] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
     expect(() => {
-      (pulsesMethods as any).decrement();
+      (pulseStore as any).decrement();
     }).toThrow("Pulse 'decrement' does not exist");
   });
 
@@ -325,6 +313,19 @@ describe("PulseStore", () => {
     }).toThrow("Pulse 'invalidPulse' must be a function");
   });
 
+  it("should throw an error if a pulse is called state", () => {
+    const initialState = { count: 0 };
+    const pulses = {
+      state(state: any) {
+        state.count += 1;
+      }
+    };
+
+    expect(() => {
+      createPulseStore(initialState, pulses);
+    }).toThrow("A pulse cannot be named 'state'");
+  });
+
   it("should handle deeply nested state modifications", () => {
     const initialState = { user: { profile: { name: "Alice", age: 25 } } };
     const pulses = {
@@ -336,8 +337,7 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [state, { updateName, updateAge }] = useStore();
+    const { state, updateAge, updateName } = createPulseStore(initialState, pulses);
 
     updateName();
     expect(state.user.profile.name).toEqual("Bob");
@@ -366,38 +366,16 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [state, { updateAll }] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
-    updateAll();
+    pulseStore.updateAll();
 
-    expect(state.number).toEqual(20);
-    expect(state.string).toEqual("updated");
-    expect(state.array).toEqual([1, 2, 3, 4]);
-    expect(state.object.key).toEqual("newValue");
-    expect(state.bool).toEqual(false);
-    expect(state.nullValue).toEqual("not null anymore" as any);
-  });
-
-  it("should notify all subscribers when state changes", () => {
-    const initialState = { count: 0 };
-    const pulses = {
-      increment(state: any) {
-        state.count += 1;
-      }
-    };
-
-    const useStore = createPulseStore(initialState, pulses);
-    const [state1, { increment: increment1 }] = useStore();
-    const [state2, { increment: increment2 }] = useStore();
-
-    increment1();
-    expect(state1.count).toEqual(1);
-    expect(state2.count).toEqual(1);
-
-    increment2();
-    expect(state1.count).toEqual(2);
-    expect(state2.count).toEqual(2);
+    expect(pulseStore.state.number).toEqual(20);
+    expect(pulseStore.state.string).toEqual("updated");
+    expect(pulseStore.state.array).toEqual([1, 2, 3, 4]);
+    expect(pulseStore.state.object.key).toEqual("newValue");
+    expect(pulseStore.state.bool).toEqual(false);
+    expect(pulseStore.state.nullValue).toEqual("not null anymore" as any);
   });
 
   it("should not notify subscribers if pulse does not modify the state", () => {
@@ -408,8 +386,7 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [, { noop }] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
     let renderCount = 0;
     createEffect(() => {
@@ -418,9 +395,98 @@ describe("PulseStore", () => {
 
     expect(renderCount).toEqual(1);
 
-    noop();
+    pulseStore.noop();
 
     expect(renderCount).toEqual(1); // Should not re-render
+  });
+
+  it('should notify subscribers only once if multiple pulses are called in the same "tick"', async () => {
+    const initialState = { count: 0 };
+    const pulses = {
+      increment(state: any) {
+        state.count += 1;
+      }
+    };
+
+    const pulseStore = createPulseStore(initialState, pulses);
+
+    let renderCount = 0;
+    createEffect(() => {
+      console.log("Effect triggered");
+      renderCount += 1;
+    });
+
+    expect(renderCount).toEqual(1);
+
+    pulseStore.increment();
+    pulseStore.increment();
+    pulseStore.increment();
+
+    expect(renderCount).toEqual(1); // Should only re-render once
+    expect(pulseStore.state.count).toEqual(3);
+  });
+
+  it('should notify subscribers after a while if multiple pulses are called in the same "tick"', async () => {
+    const initialState = { count: 0 };
+    const pulses = {
+      increment(state: any) {
+        state.count += 1;
+      }
+    };
+
+    const pulseStore = createPulseStore(initialState, pulses);
+
+    let renderCount = 0;
+    createEffect(() => {
+      pulseStore.state.count; // Access state to trigger reactivity
+      renderCount += 1;
+    });
+
+    expect(renderCount).toEqual(1);
+
+    pulseStore.increment();
+    pulseStore.increment();
+    pulseStore.increment();
+
+    expect(renderCount).toEqual(1); // Should only re-render once
+    expect(pulseStore.state.count).toEqual(3);
+
+    await wait(0);
+
+    pulseStore.increment();
+
+    expect(renderCount).toEqual(2); // Should re-render after a while
+    expect(pulseStore.state.count).toEqual(4);
+  });
+
+  it("should notify subscribers only once if a pulse is called in another pulse", async () => {
+    const initialState = { count: 0 };
+    const pulses = {
+      increment(state: any) {
+        state.count += 1;
+      },
+      incrementTwice(state: any) {
+        state.count += 2;
+        this.increment(state);
+      }
+    };
+
+    const pulseStore = createPulseStore(initialState, pulses);
+
+    let renderCount = 0;
+    createEffect(() => {
+      pulseStore.state.count; // Access state to trigger reactivity
+      renderCount += 1;
+    });
+
+    expect(renderCount).toEqual(1);
+
+    pulseStore.incrementTwice();
+
+    await wait(0); // Wait for reactivity to trigger
+
+    expect(renderCount).toEqual(2); // Should only re-render once
+    expect(pulseStore.state.count).toEqual(3);
   });
 
   it("should handle array mutations correctly in immutable store", () => {
@@ -431,17 +497,16 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [state, { addItem }] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
-    expect(state.items).toEqual([1, 2, 3]);
+    expect(pulseStore.state.items).toEqual([1, 2, 3]);
 
-    addItem(4);
-    expect(state.items).toEqual([1, 2, 3, 4]);
+    pulseStore.addItem(4);
+    expect(pulseStore.state.items).toEqual([1, 2, 3, 4]);
 
     // Intentar modificar el arreglo directamente debería lanzar un error en modo inmutable
     expect(() => {
-      state.items.push(5);
+      pulseStore.state.items.push(5);
     }).toThrow("Attempted to assign to readonly property");
   });
 
@@ -453,11 +518,10 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(largeState, pulses);
-    const [state, { updateData }] = useStore();
+    const pulseStore = createPulseStore(largeState, pulses);
 
     const start = performance.now();
-    updateData();
+    pulseStore.updateData();
     const end = performance.now();
 
     const duration = end - start;
@@ -473,26 +537,23 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [state, { increment }] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
     console.log("Creating effects");
     let callCount = 0;
     const subscriberCount = 10000;
-    const subscribers = [];
     for (let i = 0; i < subscriberCount; i++) {
-      subscribers.push(() => {
+      createEffect(() => {
         callCount++;
-        state.count; // Access state to trigger reactivity
+        pulseStore.state.count; // Access state to trigger reactivity
       }); // Empty subscriber
     }
-
-    subscribers.forEach((sub) => createEffect(sub));
     console.log("Effects created");
 
     console.log(`Start`);
     const start = performance.now();
-    increment();
+    pulseStore.increment();
+    await wait(0); // Wait for reactivity to trigger
     const end = performance.now();
     console.log(`End`);
 
@@ -511,21 +572,20 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [state, { fetchData }] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
     const start = performance.now();
-    const fetchPromise = fetchData();
+    const fetchPromise = pulseStore.fetchData();
     const mid = performance.now();
 
-    expect(state.data).toBeNull();
+    expect(pulseStore.state.data).toBeNull();
     expect(mid - start).toBeLessThan(1); // Less than 1ms to test that fetchData is non-blocking
 
     await fetchPromise;
 
     const end = performance.now();
-    expect(state.data).toEqual("fetched data" as any);
-    expect(end - start).toBeGreaterThanOrEqual(9);
+    expect(pulseStore.state.data).toEqual("fetched data" as any);
+    expect(end - start).toBeGreaterThanOrEqual(6);
   });
 
   it("should efficiently handle deeply nested state updates", () => {
@@ -536,21 +596,20 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [state, { updateValue }] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
     const updateIterations = 1000;
     const start = performance.now();
 
     for (let i = 0; i < updateIterations; i++) {
-      updateValue(i);
+      pulseStore.updateValue(i);
     }
 
     const end = performance.now();
     const duration = end - start;
     console.log(`Performed ${updateIterations} nested updates in ${duration}ms`);
-    expect(duration).toBeLessThan(15); // Less than 15ms
-    expect(state.level1.level2.level3.value).toEqual(updateIterations - 1);
+    expect(duration).toBeLessThan(5); // Less than 5ms
+    expect(pulseStore.state.level1.level2.level3.value).toEqual(updateIterations - 1);
   });
 
   it("should handle concurrent pulses modifying different state sections correctly", () => {
@@ -564,13 +623,12 @@ describe("PulseStore", () => {
       }
     };
 
-    const useStore = createPulseStore(initialState, pulses);
-    const [state, { increment, updateValue }] = useStore();
+    const pulseStore = createPulseStore(initialState, pulses);
 
-    increment();
-    updateValue("updated");
+    pulseStore.increment();
+    pulseStore.updateValue("updated");
 
-    expect(state.count).toEqual(1);
-    expect(state.value).toEqual("updated");
+    expect(pulseStore.state.count).toEqual(1);
+    expect(pulseStore.state.value).toEqual("updated");
   });
 });

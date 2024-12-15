@@ -1,5 +1,6 @@
 import "valyrian.js/node";
 import { afterEach } from "bun:test";
+import { v } from "valyrian.js";
 
 // eslint-disable-next-line no-unused-vars
 import { mount, onCleanup, unmount, update, v } from "valyrian.js";
@@ -21,7 +22,7 @@ describe("Hooks", () => {
 
       let result = mount("div", Counter);
       expect(result).toEqual("<div>0</div>");
-      await new Promise((resolve) => setTimeout(() => resolve(void 0), 35));
+      await new Promise((resolve) => setTimeout(() => resolve(void 0), 25));
       result = update();
       expect(result).toEqual("<div>2</div>");
       unmount();
@@ -50,7 +51,7 @@ describe("Hooks", () => {
 
       let result = mount("div", Counter);
       expect(result).toEqual("<div>0 <div>ok</div></div>");
-      await new Promise((resolve) => setTimeout(() => resolve(void 0), 35));
+      await new Promise((resolve) => setTimeout(() => resolve(void 0), 25));
       result = update();
       expect(result).toEqual("<div>2 <div>not ok</div></div>");
       unmount();
@@ -88,14 +89,14 @@ describe("Hooks", () => {
 
       let result = mount("div", Component);
       expect(result).toEqual("<div>0 Hello</div>");
-      await new Promise((resolve) => setTimeout(() => resolve(void 0), 35));
+      await new Promise((resolve) => setTimeout(() => resolve(void 0), 25));
       change = true;
       result = update();
       expect(result).toEqual("<div>10 World</div>");
-      await new Promise((resolve) => setTimeout(() => resolve(void 0), 35));
+      await new Promise((resolve) => setTimeout(() => resolve(void 0), 25));
       result = update();
       expect(result).toEqual("<div>12 World</div>");
-      await new Promise((resolve) => setTimeout(() => resolve(void 0), 35));
+      await new Promise((resolve) => setTimeout(() => resolve(void 0), 25));
       result = update();
       expect(result).toEqual("<div>14 World</div>");
       change = false;

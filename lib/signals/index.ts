@@ -1,4 +1,4 @@
-import { current, updateVnode, Vnode, VnodeWithDom } from "valyrian.js";
+import { current, DomElement, updateVnode, Vnode, VnodeWithDom } from "valyrian.js";
 import { get, set, hasChanged } from "valyrian.js/utils";
 
 const effectStack: Function[] = [];
@@ -9,7 +9,7 @@ export type Signal<T> = [() => T, (newValue: T | ((current: T) => T)) => void, (
 export function createSignal<T>(initialValue: T): Signal<T> {
   let value = initialValue;
   const subscribers = new Set<Function>();
-  const vnodesToUpdate = new WeakSet<Vnode>();
+  const domWithVnodesToUpdate = new WeakSet<DomElement>();
 
   const runSubscribers = () => subscribers.forEach((subscriber) => subscriber());
 
@@ -20,18 +20,19 @@ export function createSignal<T>(initialValue: T): Signal<T> {
     }
 
     const currentVnode = current.vnode as VnodeWithDom;
-    if (currentVnode && !vnodesToUpdate.has(currentVnode)) {
+    if (currentVnode && !domWithVnodesToUpdate.has(currentVnode.dom)) {
+      const dom = currentVnode.dom;
       const subscription = () => {
-        if (!currentVnode.dom) {
+        if (!dom.parentNode) {
           subscribers.delete(subscription);
-          vnodesToUpdate.delete(currentVnode);
+          domWithVnodesToUpdate.delete(dom);
           return;
         }
-        updateVnode(currentVnode);
+        updateVnode(dom.vnode);
       };
 
       subscribers.add(subscription);
-      vnodesToUpdate.add(currentVnode);
+      domWithVnodesToUpdate.add(dom);
     }
 
     return value;
@@ -58,8 +59,16 @@ export function createSignal<T>(initialValue: T): Signal<T> {
   return [read, write, runSubscribers];
 }
 
-export function createEffect(effect: Function) {
+const effectDeps = new WeakMap<Function, any[]>();
+
+export function createEffect(effect: Function, dependencies?: any[]) {
   const runEffect = () => {
+    const oldDeps = effectDeps.get(effect);
+    const hasChangedDeps = !oldDeps || !dependencies || dependencies.some((dep, i) => !Object.is(dep, oldDeps[i]));
+
+    if (!hasChangedDeps) return;
+
+    effectDeps.set(effect, dependencies || []);
     try {
       effectStack.push(runEffect);
       effect();

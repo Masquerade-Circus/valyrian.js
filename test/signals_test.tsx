@@ -1,5 +1,6 @@
 import { expect, describe, test as it } from "bun:test";
 
+import "valyrian.js/node";
 import { v, mount } from "valyrian.js";
 import { createSignalStore, createSignal, createEffect } from "valyrian.js/signals";
 
@@ -94,6 +95,7 @@ describe("Signals", () => {
 
     it("should re-render the component when the signal changes", () => {
       const dom = document.createElement("div");
+      document.body.appendChild(dom);
       const [count, setCount] = createSignal(0);
 
       function CounterComponent() {
@@ -111,6 +113,7 @@ describe("Signals", () => {
 
     it("should update the component when any of the signals change", () => {
       const dom = document.createElement("div");
+      document.body.appendChild(dom);
       const [countA, setCountA] = createSignal(1);
       const [countB, setCountB] = createSignal(2);
 
@@ -152,6 +155,8 @@ describe("Signals", () => {
     it("should re-render both components when the shared signal changes", () => {
       const dom1 = document.createElement("div");
       const dom2 = document.createElement("div");
+      document.body.appendChild(dom1);
+      document.body.appendChild(dom2);
       const [sharedSignal, setSharedSignal] = createSignal(0);
 
       function FirstComponent() {
@@ -178,6 +183,7 @@ describe("Signals", () => {
   describe("Selective re-rendering within components", () => {
     it("should re-render only the child component affected by the signal", () => {
       const dom = document.createElement("div");
+      document.body.appendChild(dom);
 
       const [childCount, setChildCount] = createSignal(0);
       let parentRenderCount = 0;
@@ -328,7 +334,7 @@ describe("Signal Store", () => {
 
     it("should execute the effect when the store state changes", () => {
       const [state, setState] = createSignalStore({ count: 0 });
-      let effectValue = null;
+      let effectValue = null as any;
 
       createEffect(() => {
         effectValue = state().count;
@@ -380,6 +386,7 @@ describe("Signal Store", () => {
   describe("Reactivity with components", () => {
     it("should re-render a component when the store state changes", () => {
       const dom = document.createElement("div");
+      document.body.appendChild(dom);
       const [state, setState] = createSignalStore({ count: 0 });
 
       function CounterComponent() {
@@ -416,6 +423,7 @@ describe("Signal Store", () => {
 
     it("should re-render components that depend on specific properties of the store", () => {
       const dom = document.createElement("div");
+      document.body.appendChild(dom);
       const [state, setState] = createSignalStore({
         countA: 1,
         countB: 2

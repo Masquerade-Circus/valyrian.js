@@ -71,7 +71,7 @@ export declare function updateAttributes(newVnode: VnodeWithDom, oldProps: Prope
 export declare function createElement(tag: string, isSVG: boolean): DomElement;
 export declare function updateVnode(vnode: VnodeWithDom): string | void;
 export declare function update(): string;
-export declare function debouncedUpdate(): void;
+export declare function debouncedUpdate(timeout?: number): void;
 export declare function unmount(): string;
 export declare function mount(dom: string | DomElement, component: ValyrianComponent | VnodeComponentInterface | any): string;
 export {};

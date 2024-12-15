@@ -5,7 +5,7 @@ var effectStack = [];
 function createSignal(initialValue) {
   let value = initialValue;
   const subscribers = /* @__PURE__ */ new Set();
-  const vnodesToUpdate = /* @__PURE__ */ new WeakSet();
+  const domWithVnodesToUpdate = /* @__PURE__ */ new WeakSet();
   const runSubscribers = () => subscribers.forEach((subscriber) => subscriber());
   const read = () => {
     const currentEffect = effectStack[effectStack.length - 1];
@@ -13,17 +13,18 @@ function createSignal(initialValue) {
       subscribers.add(currentEffect);
     }
     const currentVnode = current.vnode;
-    if (currentVnode && !vnodesToUpdate.has(currentVnode)) {
+    if (currentVnode && !domWithVnodesToUpdate.has(currentVnode.dom)) {
+      const dom = currentVnode.dom;
       const subscription = () => {
-        if (!currentVnode.dom) {
+        if (!dom.parentNode) {
           subscribers.delete(subscription);
-          vnodesToUpdate.delete(currentVnode);
+          domWithVnodesToUpdate.delete(dom);
           return;
         }
-        updateVnode(currentVnode);
+        updateVnode(dom.vnode);
       };
       subscribers.add(subscription);
-      vnodesToUpdate.add(currentVnode);
+      domWithVnodesToUpdate.add(dom);
     }
     return value;
   };
@@ -40,8 +41,13 @@ function createSignal(initialValue) {
   };
   return [read, write, runSubscribers];
 }
-function createEffect(effect) {
+var effectDeps = /* @__PURE__ */ new WeakMap();
+function createEffect(effect, dependencies) {
   const runEffect = () => {
+    const oldDeps = effectDeps.get(effect);
+    const hasChangedDeps = !oldDeps || !dependencies || dependencies.some((dep, i) => !Object.is(dep, oldDeps[i]));
+    if (!hasChangedDeps) return;
+    effectDeps.set(effect, dependencies || []);
     try {
       effectStack.push(runEffect);
       effect();

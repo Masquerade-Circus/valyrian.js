@@ -53,6 +53,14 @@ export class Node implements Node {
     this.parent_node = node;
   }
 
+  get parentElement(): Element | null {
+    return this.parentNode instanceof Element ? this.parentNode : null;
+  }
+
+  set parentElement(node) {
+    this.parentNode = node;
+  }
+
   #dataset: Record<string | number, any> = {};
 
   get dataset() {
@@ -70,6 +78,7 @@ export class Node implements Node {
       node.parentNode && node.parentNode.removeChild(node as Node);
       this.childNodes.push(node);
       node.parentNode = this;
+      node.parentElement = this instanceof Element ? this : null;
     }
     return node;
   }
@@ -78,6 +87,7 @@ export class Node implements Node {
     if (node) {
       node.parentNode && node.parentNode.removeChild(node as Node);
       node.parentNode = this;
+      node.parentElement = this instanceof Element ? this : null;
       if (child) {
         const idx = this.childNodes.indexOf(child);
         this.childNodes.splice(idx, 0, node);
@@ -100,6 +110,7 @@ export class Node implements Node {
       const idx = (this.childNodes as unknown as Node[]).indexOf(child);
       (this.childNodes as unknown as Node[]).splice(idx, 1);
       child.parentNode = null;
+      child.parentElement = null;
     }
     return child;
   }
@@ -849,3 +860,7 @@ export function htmlToHyperscript(html: string) {
 }
 
 export const document = new Document();
+
+const html = document.createElement("html");
+html.appendChild(document.createElement("head"));
+html.appendChild(document.body);

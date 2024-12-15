@@ -88,6 +88,12 @@ var Node = class _Node {
   set parentNode(node) {
     this.parent_node = node;
   }
+  get parentElement() {
+    return this.parentNode instanceof Element ? this.parentNode : null;
+  }
+  set parentElement(node) {
+    this.parentNode = node;
+  }
   #dataset = {};
   get dataset() {
     return this.#dataset;
@@ -102,6 +108,7 @@ var Node = class _Node {
       node.parentNode && node.parentNode.removeChild(node);
       this.childNodes.push(node);
       node.parentNode = this;
+      node.parentElement = this instanceof Element ? this : null;
     }
     return node;
   }
@@ -109,6 +116,7 @@ var Node = class _Node {
     if (node) {
       node.parentNode && node.parentNode.removeChild(node);
       node.parentNode = this;
+      node.parentElement = this instanceof Element ? this : null;
       if (child) {
         const idx = this.childNodes.indexOf(child);
         this.childNodes.splice(idx, 0, node);
@@ -130,6 +138,7 @@ var Node = class _Node {
       const idx = this.childNodes.indexOf(child);
       this.childNodes.splice(idx, 1);
       child.parentNode = null;
+      child.parentElement = null;
     }
     return child;
   }
@@ -396,9 +405,9 @@ var Element = class extends Node {
     }
     return str;
   }
-  set innerHTML(html) {
+  set innerHTML(html2) {
     this.textContent = "";
-    const result = htmlToDom(html);
+    const result = htmlToDom(html2);
     if (result instanceof DocumentFragment) {
       for (let i = 0, l = result.childNodes.length; i < l; i++) {
         this.appendChild(result.childNodes[i]);
@@ -523,14 +532,14 @@ ${spaces}`;
     }
   }).join(",");
 }
-function findTexts(item, html) {
+function findTexts(item, html2) {
   const newChildren = [];
   if (item.children.length) {
     for (let i = 0; i < item.children.length; i++) {
       const child = item.children[i];
       const nextChild = item.children[i + 1];
       if (i === 0 && child.startsAt > item.contentStartsAt) {
-        const childContent = html.substring(item.contentStartsAt, child.startsAt);
+        const childContent = html2.substring(item.contentStartsAt, child.startsAt);
         const childText = {
           tagName: "#text",
           startsAt: item.contentStartsAt,
@@ -545,7 +554,7 @@ function findTexts(item, html) {
       }
       newChildren.push(child);
       if (nextChild && child.endsAt < nextChild.startsAt) {
-        const childContent = html.substring(child.endsAt, nextChild.startsAt);
+        const childContent = html2.substring(child.endsAt, nextChild.startsAt);
         const childText = {
           tagName: "#text",
           startsAt: child.endsAt,
@@ -559,7 +568,7 @@ function findTexts(item, html) {
         newChildren.push(childText);
       }
       if (!nextChild && child.endsAt < item.contentEndsAt) {
-        const childContent = html.substring(child.endsAt, item.contentEndsAt);
+        const childContent = html2.substring(child.endsAt, item.contentEndsAt);
         const childText = {
           tagName: "#text",
           startsAt: child.endsAt,
@@ -572,11 +581,11 @@ function findTexts(item, html) {
         };
         newChildren.push(childText);
       }
-      findTexts(child, html);
+      findTexts(child, html2);
     }
   }
   if (!item.children.length) {
-    const childContent = html.substring(item.contentStartsAt, item.contentEndsAt);
+    const childContent = html2.substring(item.contentStartsAt, item.contentEndsAt);
     if (childContent.length) {
       const childText = {
         tagName: "#text",
@@ -609,11 +618,11 @@ function convertToDom(item) {
   }
   return node;
 }
-function getObjectIndexTree(html) {
+function getObjectIndexTree(html2) {
   let item;
   const regex = RegExp("<([^>|^!]+)>", "g");
   const items = [];
-  while (item = regex.exec(html)) {
+  while (item = regex.exec(html2)) {
     if (item[0].startsWith("</")) {
       const lastOpenedItem = [...items].reverse().find((item2) => item2.endsAt === null);
       if (lastOpenedItem) {
@@ -680,37 +689,40 @@ function getObjectIndexTree(html) {
   const fragmentItem = {
     tagName: "#document-fragment",
     startsAt: 0,
-    endsAt: html.length,
+    endsAt: html2.length,
     contentStartsAt: 0,
-    contentEndsAt: html.length,
+    contentEndsAt: html2.length,
     attributes: {},
     children: items,
     nodeValue: null
   };
-  findTexts(fragmentItem, html);
+  findTexts(fragmentItem, html2);
   return convertToDom(fragmentItem);
 }
-function htmlToDom(html) {
-  const openingTag = html.match(/<[^>]+>/g);
+function htmlToDom(html2) {
+  const openingTag = html2.match(/<[^>]+>/g);
   const document2 = new Document();
   if (!openingTag) {
     const documentFragment = document2.createDocumentFragment();
-    documentFragment.appendChild(document2.createTextNode(html));
+    documentFragment.appendChild(document2.createTextNode(html2));
     return documentFragment;
   }
-  const fragment = getObjectIndexTree(html);
+  const fragment = getObjectIndexTree(html2);
   if (fragment.childNodes.length > 1) {
     return fragment;
   }
   return fragment.childNodes[0];
 }
-function htmlToHyperscript(html) {
-  const domTree = htmlToDom(html);
+function htmlToHyperscript(html2) {
+  const domTree = htmlToDom(html2);
   const hyperscript = domToHyperscript(domTree instanceof DocumentFragment ? domTree.childNodes : [domTree]);
   return `[${hyperscript}
 ]`;
 }
 var document = new Document();
+var html = document.createElement("html");
+html.appendChild(document.createElement("head"));
+html.appendChild(document.body);
 
 // lib/node/index.ts
 var import_valyrian = require("valyrian.js");
@@ -741,7 +753,7 @@ async function icons(source, configuration) {
       }
     }
     if (options.linksViewPath) {
-      const html = `
+      const html2 = `
   function Links(){
     return ${htmlToHyperscript(response.html.join(""))};
   }
@@ -749,7 +761,7 @@ async function icons(source, configuration) {
   Links.default = Links;
   module.exports = Links;
         `;
-      import_fs.default.writeFileSync(`${options.linksViewPath}/links.js`, html);
+      import_fs.default.writeFileSync(`${options.linksViewPath}/links.js`, html2);
     }
   } catch (err) {
     process.stdout.write(err.status + "\n");
@@ -906,8 +918,8 @@ async function inline(file, options = {}) {
   throw new Error(`Unknown file type: ${file}`);
 }
 inline.uncss = async function(renderedHtml, css, options = {}) {
-  const html = await Promise.all(renderedHtml);
-  const contents = html.map((item) => {
+  const html2 = await Promise.all(renderedHtml);
+  const contents = html2.map((item) => {
     return {
       raw: item,
       extension: "html"

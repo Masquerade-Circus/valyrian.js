@@ -1,16 +1,18 @@
 import { expect, describe, test as it, beforeEach, afterEach } from "bun:test";
-import { v, mount, unmount, Children, ValyrianComponent, Component } from "valyrian.js";
+import "valyrian.js/node";
+import { v, mount, unmount, Children, Component } from "valyrian.js";
 import { Suspense } from "valyrian.js/suspense";
+import { wait } from "./utils/helpers";
 
 describe("Suspense", () => {
   beforeEach(unmount);
   afterEach(unmount);
 
-  it("should render the fallback while the children are loading", () => {
+  it("should render the fallback while the children are loading", async () => {
     const dom = document.createElement("div");
 
     async function LazyComponent() {
-      await new Promise((resolve) => setTimeout(resolve, 5));
+      await wait(5);
       return <div>Component loaded</div>;
     }
 
@@ -26,8 +28,8 @@ describe("Suspense", () => {
   it("should render the children after they have loaded", async () => {
     const dom = document.createElement("div");
 
-    async function LazyComponent({}, ...children: Children) {
-      await new Promise((resolve) => setTimeout(resolve, 5));
+    async function LazyComponent({}, children: Children) {
+      await wait(5);
       return <div>Component loaded {children}</div>;
     }
 
@@ -40,8 +42,9 @@ describe("Suspense", () => {
     }
 
     mount(dom, App);
+    expect(dom.innerHTML).toEqual("<div>Loading...</div>");
 
-    await new Promise((resolve) => setTimeout(resolve, 15));
+    await wait(60);
     expect(dom.innerHTML).toEqual("<div>Component loaded Hello World</div>");
   });
 
@@ -49,7 +52,7 @@ describe("Suspense", () => {
     const dom = document.createElement("div");
 
     async function FailingComponent() {
-      await new Promise((resolve) => setTimeout(resolve, 5));
+      await wait(5);
       throw new Error("Load error");
     }
 
@@ -64,7 +67,7 @@ describe("Suspense", () => {
     unmount();
     mount(dom, App);
 
-    await new Promise((resolve) => setTimeout(resolve, 15));
+    await wait(60);
     expect(dom.innerHTML).toEqual("<div>Error: Load error</div>");
   });
 
@@ -77,8 +80,9 @@ describe("Suspense", () => {
     }
 
     const POJOComponent = {
-      view() {
-        return new Promise((resolve) => setTimeout(() => resolve(<div>POJOComponent</div>), 5));
+      async view() {
+        await wait(5);
+        return <div>POJOComponent</div>;
       }
     } as unknown as Component;
 
@@ -94,7 +98,7 @@ describe("Suspense", () => {
 
     mount(dom, App);
 
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await wait(60);
     expect(dom.innerHTML).toEqual("<span>Funcional</span><div>POJOComponent</div>Hello World");
   });
 
@@ -115,7 +119,7 @@ describe("Suspense", () => {
 
     mount(dom, App);
 
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await wait(60);
     expect(dom.innerHTML).toEqual("<div>Empty component</div>");
   });
 });
