@@ -1,5 +1,11 @@
 
 
+## [8.0.7](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.6...8.0.7) (2024-12-21)
+
+### Bug Fixes
+
+* **v-model:** fix v-model directive not updating model ([ff8bc16](https://github.com/Masquerade-Circus/valyrian.js/commit/ff8bc165c20c5cdda12c528d3a844dfb902e578b))
+
 ## [8.0.6](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.5...8.0.6) (2024-12-15)
 
 ### Code Refactoring
