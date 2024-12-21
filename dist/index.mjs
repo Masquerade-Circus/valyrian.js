@@ -143,15 +143,15 @@ var directives = {
             handler = () => model[property] = !model[property];
             value = model[property];
           }
-          sharedSetAttribute("checked", value, vnode);
+          setAttribute("checked", value, vnode);
           break;
         }
         case "radio": {
-          sharedSetAttribute("checked", model[property] === vnode.dom.value, vnode);
+          setAttribute("checked", model[property] === vnode.dom.value, vnode);
           break;
         }
         default: {
-          sharedSetAttribute("value", model[property], vnode);
+          setAttribute("value", model[property], vnode);
         }
       }
     } else if (vnode.tag === "select") {
@@ -189,7 +189,7 @@ var directives = {
       vnode.children = [model[property]];
     }
     const prevHandler = vnode.props[event];
-    sharedSetAttribute(
+    setAttribute(
       event,
       (e) => {
         handler(e);

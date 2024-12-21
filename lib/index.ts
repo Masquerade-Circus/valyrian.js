@@ -226,19 +226,19 @@ export const directives: Record<string, Directive> = {
           }
           // Set the "checked" attribute on the input element
           // eslint-disable-next-line no-use-before-define
-          sharedSetAttribute("checked", value, vnode);
+          setAttribute("checked", value, vnode);
           break;
         }
         case "radio": {
           // If the element is a radio button, set the "checked" attribute based on the value of the model property
           // eslint-disable-next-line no-use-before-define
-          sharedSetAttribute("checked", model[property] === vnode.dom.value, vnode);
+          setAttribute("checked", model[property] === vnode.dom.value, vnode);
           break;
         }
         default: {
           // For all other input types, set the "value" attribute based on the value of the model property
           // eslint-disable-next-line no-use-before-define
-          sharedSetAttribute("value", model[property], vnode);
+          setAttribute("value", model[property], vnode);
         }
       }
     } else if (vnode.tag === "select") {
@@ -288,7 +288,7 @@ export const directives: Record<string, Directive> = {
 
     // Set the event handler on the element
     // eslint-disable-next-line no-use-before-define
-    sharedSetAttribute(
+    setAttribute(
       event,
       (e: Event) => {
         handler(e);
