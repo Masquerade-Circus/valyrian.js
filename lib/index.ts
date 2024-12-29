@@ -35,7 +35,7 @@ export interface VnodeComponentInterface extends Vnode {
 export interface Children extends Array<Vnode | VnodeComponentInterface | ValyrianComponent | any> {}
 
 export interface Directive {
-  (value: any, vnode: VnodeWithDom, oldProps: Properties | null): false | void | any;
+  (value: any, vnode: VnodeWithDom, oldProps?: Properties): false | void | any;
 }
 
 export const isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
@@ -46,7 +46,8 @@ export class Vnode {
     public props: null | Properties,
     public children: Children,
     public dom?: DomElement,
-    public isSVG?: boolean
+    public isSVG?: boolean,
+    public hasKeys?: boolean
   ) {}
 }
 
@@ -352,7 +353,7 @@ export const directives: Record<string, Directive> = {
   },
 
   className(value, vnode) {
-    directives.class(value, vnode, null);
+    directives.class(value, vnode);
   },
 
   id: (value, vnode) => {
@@ -450,13 +451,13 @@ export function setAttribute(name: string, value: any, newVnode: VnodeWithDom): 
   }
 }
 
-export function updateAttributes(newVnode: VnodeWithDom, oldProps: Properties | null): void {
+export function updateAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void {
   const vnodeDom = newVnode.dom;
   const vnodeProps = newVnode.props;
   vnodeDom.vnode = newVnode;
 
-  if (oldProps) {
-    for (const name in oldProps) {
+  if (oldVnode) {
+    for (const name in oldVnode.props) {
       if (name in vnodeProps === false && !eventListenerNames.has(name) && !reservedProps.has(name)) {
         if (!newVnode.isSVG && name in vnodeDom) {
           vnodeDom[name] = null;
@@ -469,7 +470,7 @@ export function updateAttributes(newVnode: VnodeWithDom, oldProps: Properties | 
 
   for (const name in vnodeProps) {
     if (directives[name]) {
-      if (directives[name](vnodeProps[name], newVnode, oldProps) === false) {
+      if (directives[name](vnodeProps[name], newVnode, oldVnode?.props) === false) {
         break;
       }
       continue;
@@ -491,10 +492,11 @@ function flatTree(newVnode: VnodeWithDom) {
   current.vnode = newVnode;
 
   let i = 0;
-  const originalChildren = newVnode.children;
-  let children = originalChildren;
+  let children: Children;
 
-  if ("v-for" in newVnode.props) {
+  if ("v-for" in newVnode.props === false) {
+    children = [...newVnode.children];
+  } else {
     children = [];
     const set = newVnode.props["v-for"];
     const l = set.length;
@@ -514,17 +516,11 @@ function flatTree(newVnode: VnodeWithDom) {
     const newChild = children[i];
 
     if (newChild == null) {
-      if (children === originalChildren) {
-        children = [...originalChildren];
-      }
       children.splice(i, 1);
       continue;
     }
 
     if (Array.isArray(newChild)) {
-      if (children === originalChildren) {
-        children = [...originalChildren];
-      }
       children.splice(i, 1, ...newChild);
       continue;
     }
@@ -534,10 +530,6 @@ function flatTree(newVnode: VnodeWithDom) {
       newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
 
       if (typeof newChild.tag !== "string") {
-        if (children === originalChildren) {
-          children = [...originalChildren];
-        }
-
         const component = (current.component = newChild.tag);
 
         children[i] = (isPOJOComponent(component) ? component.view : component).bind(component)(
@@ -547,6 +539,8 @@ function flatTree(newVnode: VnodeWithDom) {
 
         continue;
       }
+
+      newVnode.hasKeys = newVnode.hasKeys || "key" in newChild.props;
     }
 
     i++;
@@ -555,15 +549,14 @@ function flatTree(newVnode: VnodeWithDom) {
   return children;
 }
 
-function createNewElement(newChild: VnodeWithDom, newVnode: VnodeWithDom, oldChild: DomElement | null) {
-  const dom = createElement(newChild.tag, newChild.isSVG as boolean);
-  if (oldChild) {
-    newVnode.dom.replaceChild(dom, oldChild);
+function processNewChild(newChild: VnodeWithDom, parentVnode: VnodeWithDom, oldDom?: DomElement) {
+  if (oldDom) {
+    newChild.dom = createElement(newChild.tag, newChild.isSVG as boolean);
+    parentVnode.dom.replaceChild(newChild.dom, oldDom);
   } else {
-    newVnode.dom.appendChild(dom);
+    newChild.dom = parentVnode.dom.appendChild(createElement(newChild.tag, newChild.isSVG as boolean));
   }
-  newChild.dom = dom;
-  updateAttributes(newChild, null);
+  updateAttributes(newChild);
   if ("v-text" in newChild.props) {
     newChild.dom.textContent = newChild.props["v-text"];
     return;
@@ -580,68 +573,13 @@ function createNewElement(newChild: VnodeWithDom, newVnode: VnodeWithDom, oldChi
       newChild.dom.appendChild(document.createTextNode(children[i]));
       continue;
     }
-    createNewElement(children[i], newChild, null);
-  }
-}
-
-function patchKeyed(newVnode: VnodeWithDom, children: Children) {
-  const oldTree = [...Array.from(newVnode.dom.childNodes)] as unknown as DomElement[];
-  const childNodes = newVnode.dom.childNodes;
-  const oldKeyedList: Record<string, number> = {};
-
-  for (let i = 0, l = oldTree.length; i < l; i++) {
-    const oldVnode = oldTree[i].vnode as VnodeWithDom;
-    if (!oldVnode || "key" in oldVnode.props === false) {
-      continue;
-    }
-    oldKeyedList[oldVnode.props.key as string] = i;
-  }
-
-  for (let i = 0, l = children.length; i < l; i++) {
-    const newChild = children[i];
-    const oldChild = oldTree[oldKeyedList[newChild.props.key as string]];
-
-    if (!oldChild) {
-      createNewElement(newChild, newVnode, childNodes[i] as DomElement | null);
-      continue;
-    }
-
-    newChild.dom = oldChild;
-    const currentChild = childNodes[i];
-    if (!currentChild) {
-      newVnode.dom.appendChild(oldChild);
-    } else if (currentChild !== oldChild) {
-      newVnode.dom.replaceChild(oldChild, currentChild);
-    }
-
-    if (
-      "v-keep" in newChild.props === false ||
-      !oldChild.vnode ||
-      oldChild.props["v-keep"] !== newChild.props["v-keep"]
-    ) {
-      updateAttributes(newChild as VnodeWithDom, oldChild.vnode.props);
-
-      if ("v-text" in newChild.props) {
-        // eslint-disable-next-line eqeqeq
-        if (oldChild.textContent != newChild.props["v-text"]) {
-          oldChild.textContent = newChild.props["v-text"];
-        }
-        continue;
-      }
-      // eslint-disable-next-line no-use-before-define
-      patch(newChild as VnodeWithDom);
-    }
-  }
-
-  for (let i = children.length, l = childNodes.length; i < l; i++) {
-    childNodes[childNodes.length - 1]?.remove();
+    processNewChild(children[i] as VnodeWithDom, newChild);
   }
 }
 
 // eslint-disable-next-line complexity
 function patch(newVnode: VnodeWithDom): void {
   const children = flatTree(newVnode);
-
   const dom = newVnode.dom;
 
   if (children.length === 0) {
@@ -651,91 +589,96 @@ function patch(newVnode: VnodeWithDom): void {
     return;
   }
 
-  const oldDomChildren = dom.childNodes as unknown as DomElement[];
-  const oldChildrenLength = oldDomChildren.length;
+  const childNodes = dom.childNodes as unknown as DomElement[];
+  const oldChildrenLength = childNodes.length;
   const childrenLength = children.length;
   if (oldChildrenLength === 0) {
     for (let i = 0; i < childrenLength; i++) {
-      if (children[i] instanceof Vnode === false) {
-        dom.appendChild(document.createTextNode(children[i]));
+      const newChild = children[i] as VnodeWithDom;
+      if (newChild instanceof Vnode === false) {
+        dom.appendChild(document.createTextNode(newChild));
         continue;
       }
-      createNewElement(children[i], newVnode, null);
+      processNewChild(newChild, newVnode);
     }
     return;
   }
 
-  let shouldPatchKeyed = true;
-  for (let i = 0; i < childrenLength; i++) {
-    if (children[i] instanceof Vnode === false || !("key" in children[i].props)) {
-      shouldPatchKeyed = false;
-      break;
+  const oldTree = [...Array.from(childNodes)] as unknown as DomElement[];
+  const oldKeyedList: Record<string, number> = {};
+
+  if (newVnode.hasKeys) {
+    for (let i = 0, l = oldTree.length; i < l; i++) {
+      const oldVnode = oldTree[i].vnode as VnodeWithDom;
+      oldKeyedList[!oldVnode || "key" in oldVnode.props === false ? i : (oldVnode.props.key as string)] = i;
     }
   }
-  if (shouldPatchKeyed) {
-    patchKeyed(newVnode, children);
-    return;
-  }
 
-  for (let i = 0; i < childrenLength; i++) {
+  for (let i = 0, l = children.length; i < l; i++) {
     const newChild = children[i] as VnodeWithDom;
-    const isText = newChild instanceof Vnode === false;
-    const oldChild = oldDomChildren[i];
 
-    if (!oldChild) {
-      if (isText) {
-        newVnode.dom.appendChild(document.createTextNode(newChild as unknown as string));
+    if (newChild instanceof Vnode === false) {
+      const oldChild = oldTree[i];
+      if (!oldChild) {
+        dom.appendChild(document.createTextNode(newChild));
         continue;
       }
 
-      createNewElement(newChild as VnodeWithDom, newVnode, null);
-      continue;
-    }
-
-    if (isText) {
       if (oldChild.nodeType !== 3) {
-        newVnode.dom.replaceChild(document.createTextNode(newChild as unknown as string), oldChild);
+        dom.replaceChild(document.createTextNode(newChild), oldChild);
         continue;
       }
 
       // eslint-disable-next-line eqeqeq
-      if (oldChild.nodeValue != (newChild as unknown as string)) {
-        oldChild.nodeValue = newChild as unknown as string;
+      if (oldChild.nodeValue != newChild) {
+        oldChild.nodeValue = newChild;
       }
       continue;
     }
 
-    if ("v-keep" in newChild.props) {
-      if (oldChild.vnode && oldChild.vnode.props["v-keep"] === newChild.props["v-keep"]) {
-        continue;
-      }
+    const oldChild = oldTree[newVnode.hasKeys ? oldKeyedList[(newChild.props.key as any) || i] : i] as DomElement;
 
-      const nextOldChild = oldDomChildren[i + 1];
-      if (nextOldChild && nextOldChild.vnode && nextOldChild.vnode.props["v-keep"] === newChild.props["v-keep"]) {
-        oldChild.remove();
-        continue;
-      }
-    }
-
-    if (newChild.tag !== oldChild.nodeName.toLowerCase()) {
-      createNewElement(newChild, newVnode, oldChild);
+    if (!oldChild || newChild.tag !== oldChild.nodeName.toLowerCase()) {
+      processNewChild(newChild, newVnode, childNodes[i] as DomElement);
       continue;
     }
 
     newChild.dom = oldChild;
-    updateAttributes(newChild, oldChild.vnode ? oldChild.vnode.props : null);
+    const currentChild = childNodes[i];
+    if (!currentChild) {
+      dom.appendChild(oldChild);
+    } else if (currentChild !== oldChild) {
+      dom.replaceChild(oldChild, currentChild);
+    }
+
+    if ("v-keep" in newChild.props && oldChild.vnode) {
+      if (oldChild.vnode.props["v-keep"] === newChild.props["v-keep"]) {
+        continue;
+      }
+
+      const oldProps = childNodes[i + 1]?.vnode?.props;
+      if (oldProps && "key" in oldProps === false && oldProps["v-keep"] === newChild.props["v-keep"]) {
+        oldChild.remove();
+        oldTree.splice(i, 1);
+        continue;
+      }
+    }
+
+    updateAttributes(newChild as VnodeWithDom, oldChild.vnode);
+
     if ("v-text" in newChild.props) {
       // eslint-disable-next-line eqeqeq
-      if (newChild.dom.textContent != newChild.props["v-text"]) {
-        newChild.dom.textContent = newChild.props["v-text"];
+      if (oldChild.textContent != newChild.props["v-text"]) {
+        oldChild.textContent = newChild.props["v-text"];
       }
       continue;
     }
-    patch(newChild);
+    // eslint-disable-next-line no-use-before-define
+    patch(newChild as VnodeWithDom);
   }
 
-  for (let i = childrenLength, l = oldDomChildren.length; i < l; i++) {
-    oldDomChildren[i]?.remove();
+  for (let i = childNodes.length, l = children.length; i > l; i--) {
+    childNodes[i - 1].remove();
   }
 }
 

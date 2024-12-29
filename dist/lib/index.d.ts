@@ -27,7 +27,7 @@ export interface VnodeComponentInterface extends Vnode {
 export interface Children extends Array<Vnode | VnodeComponentInterface | ValyrianComponent | any> {
 }
 export interface Directive {
-    (value: any, vnode: VnodeWithDom, oldProps: Properties | null): false | void | any;
+    (value: any, vnode: VnodeWithDom, oldProps?: Properties): false | void | any;
 }
 export declare const isNodeJs: boolean;
 export declare class Vnode {
@@ -36,7 +36,8 @@ export declare class Vnode {
     children: Children;
     dom?: DomElement | undefined;
     isSVG?: boolean | undefined;
-    constructor(tag: string | Component | POJOComponent, props: null | Properties, children: Children, dom?: DomElement | undefined, isSVG?: boolean | undefined);
+    hasKeys?: boolean | undefined;
+    constructor(tag: string | Component | POJOComponent, props: null | Properties, children: Children, dom?: DomElement | undefined, isSVG?: boolean | undefined, hasKeys?: boolean | undefined);
 }
 export interface VnodeWithDom extends Vnode {
     tag: string;
@@ -67,7 +68,7 @@ export declare const directives: Record<string, Directive>;
 export declare function directive(name: string, directive: Directive): void;
 export declare function setPropNameReserved(name: string): void;
 export declare function setAttribute(name: string, value: any, newVnode: VnodeWithDom): void;
-export declare function updateAttributes(newVnode: VnodeWithDom, oldProps: Properties | null): void;
+export declare function updateAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
 export declare function createElement(tag: string, isSVG: boolean): DomElement;
 export declare function updateVnode(vnode: VnodeWithDom): string | void;
 export declare function update(): string;

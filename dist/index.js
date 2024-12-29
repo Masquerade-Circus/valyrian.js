@@ -50,12 +50,13 @@ __export(lib_exports, {
 module.exports = __toCommonJS(lib_exports);
 var isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
 var Vnode = class {
-  constructor(tag, props, children, dom, isSVG) {
+  constructor(tag, props, children, dom, isSVG, hasKeys) {
     this.tag = tag;
     this.props = props;
     this.children = children;
     this.dom = dom;
     this.isSVG = isSVG;
+    this.hasKeys = hasKeys;
   }
 };
 var isPOJOComponent = (component) => Boolean(component && typeof component === "object" && "view" in component);
@@ -292,7 +293,7 @@ var directives = {
     }
   },
   className(value, vnode) {
-    directives.class(value, vnode, null);
+    directives.class(value, vnode);
   },
   id: (value, vnode) => {
     if (vnode.dom.id !== value) {
@@ -374,12 +375,12 @@ function setAttribute(name, value, newVnode) {
     sharedSetAttribute(name, value, newVnode);
   }
 }
-function updateAttributes(newVnode, oldProps) {
+function updateAttributes(newVnode, oldVnode) {
   const vnodeDom = newVnode.dom;
   const vnodeProps = newVnode.props;
   vnodeDom.vnode = newVnode;
-  if (oldProps) {
-    for (const name in oldProps) {
+  if (oldVnode) {
+    for (const name in oldVnode.props) {
       if (name in vnodeProps === false && !eventListenerNames.has(name) && !reservedProps.has(name)) {
         if (!newVnode.isSVG && name in vnodeDom) {
           vnodeDom[name] = null;
@@ -391,7 +392,7 @@ function updateAttributes(newVnode, oldProps) {
   }
   for (const name in vnodeProps) {
     if (directives[name]) {
-      if (directives[name](vnodeProps[name], newVnode, oldProps) === false) {
+      if (directives[name](vnodeProps[name], newVnode, oldVnode?.props) === false) {
         break;
       }
       continue;
@@ -407,9 +408,10 @@ function createElement(tag, isSVG) {
 function flatTree(newVnode) {
   current.vnode = newVnode;
   let i = 0;
-  const originalChildren = newVnode.children;
-  let children = originalChildren;
-  if ("v-for" in newVnode.props) {
+  let children;
+  if ("v-for" in newVnode.props === false) {
+    children = [...newVnode.children];
+  } else {
     children = [];
     const set = newVnode.props["v-for"];
     const l = set.length;
@@ -425,16 +427,10 @@ function flatTree(newVnode) {
   while (i < children.length) {
     const newChild = children[i];
     if (newChild == null) {
-      if (children === originalChildren) {
-        children = [...originalChildren];
-      }
       children.splice(i, 1);
       continue;
     }
     if (Array.isArray(newChild)) {
-      if (children === originalChildren) {
-        children = [...originalChildren];
-      }
       children.splice(i, 1, ...newChild);
       continue;
     }
@@ -442,9 +438,6 @@ function flatTree(newVnode) {
       newChild.props = newChild.props || {};
       newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
       if (typeof newChild.tag !== "string") {
-        if (children === originalChildren) {
-          children = [...originalChildren];
-        }
         const component = current.component = newChild.tag;
         children[i] = (isPOJOComponent(component) ? component.view : component).bind(component)(
           newChild.props,
@@ -452,20 +445,20 @@ function flatTree(newVnode) {
         );
         continue;
       }
+      newVnode.hasKeys = newVnode.hasKeys || "key" in newChild.props;
     }
     i++;
   }
   return children;
 }
-function createNewElement(newChild, newVnode, oldChild) {
-  const dom = createElement(newChild.tag, newChild.isSVG);
-  if (oldChild) {
-    newVnode.dom.replaceChild(dom, oldChild);
+function processNewChild(newChild, parentVnode, oldDom) {
+  if (oldDom) {
+    newChild.dom = createElement(newChild.tag, newChild.isSVG);
+    parentVnode.dom.replaceChild(newChild.dom, oldDom);
   } else {
-    newVnode.dom.appendChild(dom);
+    newChild.dom = parentVnode.dom.appendChild(createElement(newChild.tag, newChild.isSVG));
   }
-  newChild.dom = dom;
-  updateAttributes(newChild, null);
+  updateAttributes(newChild);
   if ("v-text" in newChild.props) {
     newChild.dom.textContent = newChild.props["v-text"];
     return;
@@ -480,47 +473,7 @@ function createNewElement(newChild, newVnode, oldChild) {
       newChild.dom.appendChild(document.createTextNode(children[i]));
       continue;
     }
-    createNewElement(children[i], newChild, null);
-  }
-}
-function patchKeyed(newVnode, children) {
-  const oldTree = [...Array.from(newVnode.dom.childNodes)];
-  const childNodes = newVnode.dom.childNodes;
-  const oldKeyedList = {};
-  for (let i = 0, l = oldTree.length; i < l; i++) {
-    const oldVnode = oldTree[i].vnode;
-    if (!oldVnode || "key" in oldVnode.props === false) {
-      continue;
-    }
-    oldKeyedList[oldVnode.props.key] = i;
-  }
-  for (let i = 0, l = children.length; i < l; i++) {
-    const newChild = children[i];
-    const oldChild = oldTree[oldKeyedList[newChild.props.key]];
-    if (!oldChild) {
-      createNewElement(newChild, newVnode, childNodes[i]);
-      continue;
-    }
-    newChild.dom = oldChild;
-    const currentChild = childNodes[i];
-    if (!currentChild) {
-      newVnode.dom.appendChild(oldChild);
-    } else if (currentChild !== oldChild) {
-      newVnode.dom.replaceChild(oldChild, currentChild);
-    }
-    if ("v-keep" in newChild.props === false || !oldChild.vnode || oldChild.props["v-keep"] !== newChild.props["v-keep"]) {
-      updateAttributes(newChild, oldChild.vnode.props);
-      if ("v-text" in newChild.props) {
-        if (oldChild.textContent != newChild.props["v-text"]) {
-          oldChild.textContent = newChild.props["v-text"];
-        }
-        continue;
-      }
-      patch(newChild);
-    }
-  }
-  for (let i = children.length, l = childNodes.length; i < l; i++) {
-    childNodes[childNodes.length - 1]?.remove();
+    processNewChild(children[i], newChild);
   }
 }
 function patch(newVnode) {
@@ -532,78 +485,79 @@ function patch(newVnode) {
     }
     return;
   }
-  const oldDomChildren = dom.childNodes;
-  const oldChildrenLength = oldDomChildren.length;
+  const childNodes = dom.childNodes;
+  const oldChildrenLength = childNodes.length;
   const childrenLength = children.length;
   if (oldChildrenLength === 0) {
     for (let i = 0; i < childrenLength; i++) {
-      if (children[i] instanceof Vnode === false) {
-        dom.appendChild(document.createTextNode(children[i]));
+      const newChild = children[i];
+      if (newChild instanceof Vnode === false) {
+        dom.appendChild(document.createTextNode(newChild));
         continue;
       }
-      createNewElement(children[i], newVnode, null);
+      processNewChild(newChild, newVnode);
     }
     return;
   }
-  let shouldPatchKeyed = true;
-  for (let i = 0; i < childrenLength; i++) {
-    if (children[i] instanceof Vnode === false || !("key" in children[i].props)) {
-      shouldPatchKeyed = false;
-      break;
+  const oldTree = [...Array.from(childNodes)];
+  const oldKeyedList = {};
+  if (newVnode.hasKeys) {
+    for (let i = 0, l = oldTree.length; i < l; i++) {
+      const oldVnode = oldTree[i].vnode;
+      oldKeyedList[!oldVnode || "key" in oldVnode.props === false ? i : oldVnode.props.key] = i;
     }
   }
-  if (shouldPatchKeyed) {
-    patchKeyed(newVnode, children);
-    return;
-  }
-  for (let i = 0; i < childrenLength; i++) {
+  for (let i = 0, l = children.length; i < l; i++) {
     const newChild = children[i];
-    const isText = newChild instanceof Vnode === false;
-    const oldChild = oldDomChildren[i];
-    if (!oldChild) {
-      if (isText) {
-        newVnode.dom.appendChild(document.createTextNode(newChild));
+    if (newChild instanceof Vnode === false) {
+      const oldChild2 = oldTree[i];
+      if (!oldChild2) {
+        dom.appendChild(document.createTextNode(newChild));
         continue;
       }
-      createNewElement(newChild, newVnode, null);
-      continue;
-    }
-    if (isText) {
-      if (oldChild.nodeType !== 3) {
-        newVnode.dom.replaceChild(document.createTextNode(newChild), oldChild);
+      if (oldChild2.nodeType !== 3) {
+        dom.replaceChild(document.createTextNode(newChild), oldChild2);
         continue;
       }
-      if (oldChild.nodeValue != newChild) {
-        oldChild.nodeValue = newChild;
+      if (oldChild2.nodeValue != newChild) {
+        oldChild2.nodeValue = newChild;
       }
       continue;
     }
-    if ("v-keep" in newChild.props) {
-      if (oldChild.vnode && oldChild.vnode.props["v-keep"] === newChild.props["v-keep"]) {
-        continue;
-      }
-      const nextOldChild = oldDomChildren[i + 1];
-      if (nextOldChild && nextOldChild.vnode && nextOldChild.vnode.props["v-keep"] === newChild.props["v-keep"]) {
-        oldChild.remove();
-        continue;
-      }
-    }
-    if (newChild.tag !== oldChild.nodeName.toLowerCase()) {
-      createNewElement(newChild, newVnode, oldChild);
+    const oldChild = oldTree[newVnode.hasKeys ? oldKeyedList[newChild.props.key || i] : i];
+    if (!oldChild || newChild.tag !== oldChild.nodeName.toLowerCase()) {
+      processNewChild(newChild, newVnode, childNodes[i]);
       continue;
     }
     newChild.dom = oldChild;
-    updateAttributes(newChild, oldChild.vnode ? oldChild.vnode.props : null);
+    const currentChild = childNodes[i];
+    if (!currentChild) {
+      dom.appendChild(oldChild);
+    } else if (currentChild !== oldChild) {
+      dom.replaceChild(oldChild, currentChild);
+    }
+    if ("v-keep" in newChild.props && oldChild.vnode) {
+      if (oldChild.vnode.props["v-keep"] === newChild.props["v-keep"]) {
+        continue;
+      }
+      const oldProps = childNodes[i + 1]?.vnode?.props;
+      if (oldProps && "key" in oldProps === false && oldProps["v-keep"] === newChild.props["v-keep"]) {
+        oldChild.remove();
+        oldTree.splice(i, 1);
+        continue;
+      }
+    }
+    updateAttributes(newChild, oldChild.vnode);
     if ("v-text" in newChild.props) {
-      if (newChild.dom.textContent != newChild.props["v-text"]) {
-        newChild.dom.textContent = newChild.props["v-text"];
+      if (oldChild.textContent != newChild.props["v-text"]) {
+        oldChild.textContent = newChild.props["v-text"];
       }
       continue;
     }
     patch(newChild);
   }
-  for (let i = childrenLength, l = oldDomChildren.length; i < l; i++) {
-    oldDomChildren[i]?.remove();
+  for (let i = childNodes.length, l = children.length; i > l; i--) {
+    childNodes[i - 1].remove();
   }
 }
 function updateVnode(vnode) {
