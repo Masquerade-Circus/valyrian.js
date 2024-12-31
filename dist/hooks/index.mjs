@@ -1,12 +1,12 @@
 // lib/hooks/index.ts
-import { current, directive, onCleanup, onUnmount, debouncedUpdate } from "valyrian.js";
+import { current, directive, onCleanup, onRemove, debouncedUpdate } from "valyrian.js";
 import { hasChanged } from "valyrian.js/utils";
 var componentToHooksWeakMap = /* @__PURE__ */ new WeakMap();
 var createHook = function createHook2({
-  onCreate,
+  onCreate: onCreateHook,
   onUpdate: onUpdateHook,
   onCleanup: onCleanupHook,
-  onRemove,
+  onRemove: onRemoveHook,
   returnValue
 }) {
   return (...args) => {
@@ -15,18 +15,16 @@ var createHook = function createHook2({
     if (!HookCalls) {
       HookCalls = { hooks: [], hook_calls: -1 };
       componentToHooksWeakMap.set(component, HookCalls);
-      onUnmount(() => {
-        componentToHooksWeakMap.delete(component);
-      });
+      onRemove(() => componentToHooksWeakMap.delete(component));
     }
     onCleanup(() => HookCalls.hook_calls = -1);
     let hook = HookCalls.hooks[++HookCalls.hook_calls];
     if (hook) {
       onUpdateHook?.(hook, ...args);
     } else {
-      hook = onCreate(...args);
+      hook = onCreateHook(...args);
       HookCalls.hooks.push(hook);
-      onRemove && onUnmount(() => onRemove(hook));
+      onRemoveHook && onRemove(() => onRemoveHook(hook));
     }
     onCleanupHook && onCleanup(() => onCleanupHook(hook));
     return returnValue ? returnValue(hook) : hook;

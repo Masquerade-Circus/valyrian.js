@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-import { updateVnode, Vnode, VnodeWithDom, current, DomElement } from "valyrian.js";
+import { updateVnode, VnodeWithDom, current, DomElement } from "valyrian.js";
 import { deepCloneUnfreeze, deepFreeze, hasChanged } from "valyrian.js/utils";
 
 type State = Record<string, any>;

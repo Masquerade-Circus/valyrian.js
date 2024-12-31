@@ -30,6 +30,6 @@
       "node_modules/*": ["./node_modules/*"]
     }
   },
-  "include": ["./", "./lib", "./test"],
+  "include": ["./", "./lib"],
   "exclude": ["./lib/node/utils/node.sw.js"]
 }

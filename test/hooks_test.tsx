@@ -1,6 +1,5 @@
 import "valyrian.js/node";
 import { afterEach } from "bun:test";
-import { v } from "valyrian.js";
 
 // eslint-disable-next-line no-unused-vars
 import { mount, onCleanup, unmount, update, v } from "valyrian.js";
@@ -101,7 +100,7 @@ describe("Hooks", () => {
       expect(result).toEqual("<div>14 World</div>");
       change = false;
       result = update();
-      expect(result).toEqual("<div>2 Hello</div>");
+      expect(result).toEqual("<div>0 Hello</div>");
       unmount();
     });
   });

@@ -32,10 +32,10 @@ var import_valyrian = require("valyrian.js");
 var import_utils = require("valyrian.js/utils");
 var componentToHooksWeakMap = /* @__PURE__ */ new WeakMap();
 var createHook = function createHook2({
-  onCreate,
+  onCreate: onCreateHook,
   onUpdate: onUpdateHook,
   onCleanup: onCleanupHook,
-  onRemove,
+  onRemove: onRemoveHook,
   returnValue
 }) {
   return (...args) => {
@@ -44,18 +44,16 @@ var createHook = function createHook2({
     if (!HookCalls) {
       HookCalls = { hooks: [], hook_calls: -1 };
       componentToHooksWeakMap.set(component, HookCalls);
-      (0, import_valyrian.onUnmount)(() => {
-        componentToHooksWeakMap.delete(component);
-      });
+      (0, import_valyrian.onRemove)(() => componentToHooksWeakMap.delete(component));
     }
     (0, import_valyrian.onCleanup)(() => HookCalls.hook_calls = -1);
     let hook = HookCalls.hooks[++HookCalls.hook_calls];
     if (hook) {
       onUpdateHook?.(hook, ...args);
     } else {
-      hook = onCreate(...args);
+      hook = onCreateHook(...args);
       HookCalls.hooks.push(hook);
-      onRemove && (0, import_valyrian.onUnmount)(() => onRemove(hook));
+      onRemoveHook && (0, import_valyrian.onRemove)(() => onRemoveHook(hook));
     }
     onCleanupHook && (0, import_valyrian.onCleanup)(() => onCleanupHook(hook));
     return returnValue ? returnValue(hook) : hook;

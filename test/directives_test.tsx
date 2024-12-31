@@ -1,25 +1,12 @@
+/* eslint-disable sonarjs/no-nested-functions */
 import "valyrian.js/node";
 
-// eslint-disable-next-line no-unused-vars
-import {
-  directive,
-  mount,
-  Properties,
-  setAttribute,
-  trust,
-  unmount,
-  update,
-  v,
-  Vnode,
-  VnodeWithDom
-} from "valyrian.js";
+import { directive, mount, Properties, setAttribute, trust, unmount, update, v, VnodeWithDom } from "valyrian.js";
 
 import dayjs from "dayjs";
 import { expect, describe, test as it } from "bun:test";
 
-// eslint-disable-next-line max-lines-per-function
 describe("Directives", () => {
-  // eslint-disable-next-line sonarjs/cognitive-complexity
   describe("Directive creation", () => {
     it("should be able create a directive", () => {
       let result;
@@ -259,6 +246,7 @@ describe("Directives", () => {
       });
 
       it("should not render vnode with falsy values", () => {
+        // eslint-disable-next-line no-sparse-arrays
         const values = [false, 0, "", null, , NaN];
 
         const expected = "<div></div>";

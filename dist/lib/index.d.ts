@@ -36,8 +36,13 @@ export declare class Vnode {
     children: Children;
     dom?: DomElement | undefined;
     isSVG?: boolean | undefined;
+    directComponents?: Set<ValyrianComponent> | undefined;
     hasKeys?: boolean | undefined;
-    constructor(tag: string | Component | POJOComponent, props: null | Properties, children: Children, dom?: DomElement | undefined, isSVG?: boolean | undefined, hasKeys?: boolean | undefined);
+    oncreate?: Set<Function> | undefined;
+    oncleanup?: Set<Function> | undefined;
+    onupdate?: Set<Function> | undefined;
+    onremove?: Set<Function> | undefined;
+    constructor(tag: string | Component | POJOComponent, props: null | Properties, children: Children, dom?: DomElement | undefined, isSVG?: boolean | undefined, directComponents?: Set<ValyrianComponent> | undefined, hasKeys?: boolean | undefined, oncreate?: Set<Function> | undefined, oncleanup?: Set<Function> | undefined, onupdate?: Set<Function> | undefined, onremove?: Set<Function> | undefined);
 }
 export interface VnodeWithDom extends Vnode {
     tag: string;
@@ -55,22 +60,23 @@ export declare namespace v {
 export declare function hidrateDomToVnode(dom: any): VnodeWithDom | void;
 export declare function trust(htmlString: string): (void | VnodeWithDom)[];
 export declare const current: {
+    oldVnode: Vnode | null;
     vnode: Vnode | null;
     component: ValyrianComponent | null;
     event: Event | null;
 };
 export declare const reservedProps: Set<string>;
-export declare const onMount: (callback: Function) => false | Set<Function>;
-export declare const onUpdate: (callback: Function) => Set<Function>;
-export declare const onCleanup: (callback: Function) => Set<Function>;
-export declare const onUnmount: (callback: Function) => false | Set<Function>;
+export declare const onCreate: (callback: Function) => void;
+export declare const onUpdate: (callback: Function) => void;
+export declare const onCleanup: (callback: Function) => void;
+export declare const onRemove: (callback: Function) => void;
 export declare const directives: Record<string, Directive>;
 export declare function directive(name: string, directive: Directive): void;
 export declare function setPropNameReserved(name: string): void;
 export declare function setAttribute(name: string, value: any, newVnode: VnodeWithDom): void;
 export declare function updateAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
 export declare function createElement(tag: string, isSVG: boolean): DomElement;
-export declare function updateVnode(vnode: VnodeWithDom): string | void;
+export declare function updateVnode(vnode: VnodeWithDom, shouldCleanup?: boolean): string | void;
 export declare function update(): string;
 export declare function debouncedUpdate(timeout?: number): void;
 export declare function unmount(): string;

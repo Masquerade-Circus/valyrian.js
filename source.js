@@ -64,7 +64,7 @@ async function build({
       const tsc = require("tsc-prog");
       const tscProgOptions2 = {
         basePath: __dirname, // always required, used for relative paths
-        configFilePath: "tsconfig.json", // config to inherit from (optional)
+        configFilePath: "tsconfig.prod.json", // config to inherit from (optional)
         files: [entryPoint],
         pretty: true,
         copyOtherToOutDir: false,

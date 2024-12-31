@@ -1,4 +1,4 @@
-import { current, DomElement, updateVnode, Vnode, VnodeWithDom } from "valyrian.js";
+import { current, DomElement, updateVnode, VnodeWithDom } from "valyrian.js";
 import { get, set, hasChanged } from "valyrian.js/utils";
 
 const effectStack: Function[] = [];

@@ -47,7 +47,12 @@ export class Vnode {
     public children: Children,
     public dom?: DomElement,
     public isSVG?: boolean,
-    public hasKeys?: boolean
+    public directComponents?: Set<ValyrianComponent>,
+    public hasKeys?: boolean,
+    public oncreate?: Set<Function>,
+    public oncleanup?: Set<Function>,
+    public onupdate?: Set<Function>,
+    public onremove?: Set<Function>
   ) {}
 }
 
@@ -119,6 +124,7 @@ let mainVnode: VnodeWithDom | null = null;
 let isMounted = false;
 
 export const current = {
+  oldVnode: null as Vnode | null,
   vnode: null as Vnode | null,
   component: null as ValyrianComponent | null,
   event: null as Event | null
@@ -140,15 +146,70 @@ export const reservedProps = new Set<string>([
   "v-cleanup"
 ]);
 
-const onCleanupSet = new Set<Function>();
-const onMountSet = new Set<Function>();
-const onUpdateSet = new Set<Function>();
-const onUnmountSet = new Set<Function>();
-export const onMount = (callback: Function) => !isMounted && onMountSet.add(callback);
-export const onUpdate = (callback: Function) => onUpdateSet.add(callback);
-export const onCleanup = (callback: Function) => onCleanupSet.add(callback);
-export const onUnmount = (callback: Function) => !isMounted && onUnmountSet.add(callback);
-const callSet = (set: Set<Function>) => {
+enum SetType {
+  onCreate = "oncreate",
+  onUpdate = "onupdate",
+  onCleanup = "oncleanup",
+  onRemove = "onremove"
+}
+
+function addCallbackToSet(callback: Function, setType: SetType, vnode: VnodeWithDom) {
+  vnode[setType] = vnode[setType] || new Set();
+  vnode[setType].add(() => {
+    const cleanup = callback();
+    if (typeof cleanup === "function") {
+      vnode[SetType.onCleanup] = vnode[SetType.onCleanup] || new Set();
+      vnode[SetType.onCleanup].add(cleanup);
+    }
+  });
+}
+
+function validateIsCalledInsideComponent() {
+  if (!current.vnode) {
+    throw new Error("This function must be called inside a component");
+  }
+}
+
+export const onCreate = (callback: Function) => {
+  validateIsCalledInsideComponent();
+  if (!current.oldVnode) {
+    addCallbackToSet(callback, SetType.onCreate, current.vnode as VnodeWithDom);
+  }
+};
+export const onUpdate = (callback: Function) => {
+  validateIsCalledInsideComponent();
+  if (current.oldVnode) {
+    addCallbackToSet(callback, SetType.onUpdate, current.vnode as VnodeWithDom);
+  }
+};
+export const onCleanup = (callback: Function) => {
+  validateIsCalledInsideComponent();
+  addCallbackToSet(callback, SetType.onCleanup, current.vnode as VnodeWithDom);
+};
+export const onRemove = (callback: Function) => {
+  validateIsCalledInsideComponent();
+
+  const parentVnode = current.vnode as VnodeWithDom;
+  const component = current.component as ValyrianComponent;
+  let removed = false;
+
+  function removeCallback() {
+    const hasComponentAsChild = parentVnode.directComponents && parentVnode.directComponents.has(component);
+
+    if (hasComponentAsChild || removed) {
+      return;
+    }
+
+    removed = true;
+    callback();
+  }
+
+  addCallbackToSet(removeCallback, SetType.onRemove, current.vnode as VnodeWithDom);
+};
+const callSet = (set?: Set<Function> | null) => {
+  if (!set) {
+    return;
+  }
   for (const callback of set) {
     callback();
   }
@@ -156,6 +217,47 @@ const callSet = (set: Set<Function>) => {
 };
 
 export const directives: Record<string, Directive> = {
+  "v-create": (callback, childVnode, oldProps) => {
+    if (!oldProps) {
+      addCallbackToSet(() => callback(childVnode), SetType.onCreate, current.vnode as VnodeWithDom);
+    }
+  },
+
+  "v-update": (callback, childVnode, oldProps) => {
+    if (oldProps) {
+      addCallbackToSet(() => callback(childVnode, oldProps), SetType.onUpdate, current.vnode as VnodeWithDom);
+    }
+  },
+
+  "v-remove": (callback, childVnode) => {
+    let parentVnode = current.vnode as VnodeWithDom;
+    let currentChildVnode = childVnode as VnodeWithDom;
+    while (parentVnode) {
+      parentVnode.onremove = parentVnode.onremove || new Set();
+      addCallbackToSet(
+        () => {
+          if (!childVnode.dom.vnode || currentChildVnode.dom.parentNode) {
+            return;
+          }
+          callback(childVnode);
+          childVnode.dom.vnode = null;
+        },
+        SetType.onRemove,
+        parentVnode
+      );
+
+      if (!parentVnode.dom.parentElement) {
+        break;
+      }
+      currentChildVnode = parentVnode;
+      parentVnode = (parentVnode.dom.parentElement as DomElement).vnode as VnodeWithDom;
+    }
+  },
+
+  "v-cleanup": (callback, vnode) => {
+    addCallbackToSet(() => callback(vnode), SetType.onCleanup, current.vnode as VnodeWithDom);
+  },
+
   "v-if": (value, vnode) => {
     if (!Boolean(value)) {
       const parentNode = vnode.dom?.parentNode;
@@ -301,30 +403,6 @@ export const directives: Record<string, Directive> = {
       },
       vnode
     );
-  },
-
-  "v-create": (callback, vnode, oldProps) => {
-    if (!oldProps) {
-      const cleanup = callback(vnode);
-
-      if (typeof cleanup === "function") {
-        onCleanup(cleanup);
-      }
-    }
-  },
-
-  "v-update": (callback, vnode, oldProps) => {
-    if (oldProps) {
-      const cleanup = callback(vnode, oldProps);
-
-      if (typeof cleanup === "function") {
-        onCleanup(cleanup);
-      }
-    }
-  },
-
-  "v-cleanup": (callback, vnode) => {
-    onCleanup(() => callback(vnode));
   },
 
   "v-class": (value, vnode) => {
@@ -489,8 +567,6 @@ export function createElement(tag: string, isSVG: boolean): DomElement {
 }
 
 function flatTree(newVnode: VnodeWithDom) {
-  current.vnode = newVnode;
-
   let i = 0;
   let children: Children;
 
@@ -512,6 +588,10 @@ function flatTree(newVnode: VnodeWithDom) {
     }
   }
 
+  if (newVnode.directComponents) {
+    newVnode.directComponents.clear();
+  }
+
   while (i < children.length) {
     const newChild = children[i];
 
@@ -531,6 +611,8 @@ function flatTree(newVnode: VnodeWithDom) {
 
       if (typeof newChild.tag !== "string") {
         const component = (current.component = newChild.tag);
+        newVnode.directComponents = newVnode.directComponents || new Set();
+        newVnode.directComponents.add(component);
 
         children[i] = (isPOJOComponent(component) ? component.view : component).bind(component)(
           newChild.props,
@@ -562,6 +644,9 @@ function processNewChild(newChild: VnodeWithDom, parentVnode: VnodeWithDom, oldD
     return;
   }
 
+  current.oldVnode = null;
+  current.vnode = newChild;
+
   const children = flatTree(newChild);
   if (children.length === 0) {
     newChild.dom.textContent = "";
@@ -578,7 +663,9 @@ function processNewChild(newChild: VnodeWithDom, parentVnode: VnodeWithDom, oldD
 }
 
 // eslint-disable-next-line complexity
-function patch(newVnode: VnodeWithDom): void {
+function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
+  current.oldVnode = oldVnode;
+  current.vnode = newVnode;
   const children = flatTree(newVnode);
   const dom = newVnode.dom;
 
@@ -586,6 +673,7 @@ function patch(newVnode: VnodeWithDom): void {
     if (dom.childNodes.length) {
       dom.textContent = "";
     }
+    // There are no children so we don't need to call the oncreate and onupdate callbacks
     return;
   }
 
@@ -601,17 +689,22 @@ function patch(newVnode: VnodeWithDom): void {
       }
       processNewChild(newChild, newVnode);
     }
+    // The oncreate callback must be called after the children are created
+    newVnode.oncreate && callSet(newVnode.oncreate);
     return;
   }
 
-  const oldTree = [...Array.from(childNodes)] as unknown as DomElement[];
+  let oldTree = childNodes as unknown as DomElement[];
   const oldKeyedList: Record<string, number> = {};
 
   if (newVnode.hasKeys) {
+    const newOldTree = [];
     for (let i = 0, l = oldTree.length; i < l; i++) {
+      newOldTree[i] = oldTree[i];
       const oldVnode = oldTree[i].vnode as VnodeWithDom;
       oldKeyedList[!oldVnode || "key" in oldVnode.props === false ? i : (oldVnode.props.key as string)] = i;
     }
+    oldTree = newOldTree;
   }
 
   for (let i = 0, l = children.length; i < l; i++) {
@@ -645,14 +738,15 @@ function patch(newVnode: VnodeWithDom): void {
 
     newChild.dom = oldChild;
     const currentChild = childNodes[i];
+    const oldChildVnode = oldChild.vnode as VnodeWithDom;
     if (!currentChild) {
       dom.appendChild(oldChild);
     } else if (currentChild !== oldChild) {
       dom.replaceChild(oldChild, currentChild);
     }
 
-    if ("v-keep" in newChild.props && oldChild.vnode) {
-      if (oldChild.vnode.props["v-keep"] === newChild.props["v-keep"]) {
+    if ("v-keep" in newChild.props && oldChildVnode) {
+      if (oldChildVnode.props["v-keep"] === newChild.props["v-keep"]) {
         continue;
       }
 
@@ -664,7 +758,7 @@ function patch(newVnode: VnodeWithDom): void {
       }
     }
 
-    updateAttributes(newChild as VnodeWithDom, oldChild.vnode);
+    updateAttributes(newChild as VnodeWithDom, oldChildVnode);
 
     if ("v-text" in newChild.props) {
       // eslint-disable-next-line eqeqeq
@@ -673,21 +767,42 @@ function patch(newVnode: VnodeWithDom): void {
       }
       continue;
     }
+
+    // Call the cleanup for the old child vnode before the patch
+    callSet(oldChildVnode?.oncleanup);
     // eslint-disable-next-line no-use-before-define
-    patch(newChild as VnodeWithDom);
+    patch(newChild as VnodeWithDom, oldChildVnode || null);
+    // Call the remove for the old child vnode after the patch
+    callSet(oldChildVnode?.onremove);
   }
 
   for (let i = childNodes.length, l = children.length; i > l; i--) {
     childNodes[i - 1].remove();
   }
+
+  // In here we could have new children or/and patched children
+  // So we need to call the oncreate and onupdate callbacks
+  callSet(newVnode.oncreate);
+  callSet(newVnode.onupdate);
 }
 
-export function updateVnode(vnode: VnodeWithDom): string | void {
-  callSet(onCleanupSet);
+export function updateVnode(vnode: VnodeWithDom, shouldCleanup = true): string | void {
   vnode.props = vnode.props || {};
-  patch(vnode);
-  callSet(isMounted ? onUpdateSet : onMountSet);
+  if (shouldCleanup) {
+    // The clean up must be from the old vnode
+    // and in here the vnode is the old one
+    // so, we need to call the cleanup before the patch
+    // inside  the patch the clean up will be called only for the old children
+    callSet(vnode.oncleanup);
+  }
+  // Clone the old on remove set to call it after the patch
+  const oldOnRemoveSet = vnode.onremove ? new Set(vnode.onremove) : null;
+  current.vnode = vnode;
+  patch(vnode, shouldCleanup ? vnode : null);
+  // Call the old on remove set
+  callSet(oldOnRemoveSet);
   isMounted = true;
+  current.oldVnode = null;
   current.vnode = null;
   current.component = null;
 }
@@ -695,7 +810,10 @@ export function updateVnode(vnode: VnodeWithDom): string | void {
 export function update(): string {
   if (mainVnode) {
     mainVnode.children = [mainComponent];
-    updateVnode(mainVnode as VnodeWithDom);
+    // If the updateVnode method is called from outside the main lib (e.g. from a directive)
+    // it always be considered as mounted, so the cleanup will be called before the patch
+    // But in here, we need to pass the shouldCleanup as false if the app is not mounted
+    updateVnode(mainVnode as VnodeWithDom, isMounted);
     if (isNodeJs) {
       return mainVnode.dom.innerHTML;
     }
@@ -718,11 +836,12 @@ export function unmount() {
   if (mainVnode) {
     mainComponent = v(() => null, {}) as VnodeComponentInterface;
     const result = update();
-    callSet(onUnmountSet);
     for (const name in eventListenerNames) {
       mainVnode.dom.removeEventListener(name.slice(2).toLowerCase(), eventListener);
       Reflect.deleteProperty(eventListenerNames, name);
     }
+
+    callSet(mainVnode.onremove);
 
     mainComponent = null;
     mainVnode = null;

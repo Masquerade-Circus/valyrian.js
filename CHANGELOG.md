@@ -1,5 +1,3 @@
-
-
 ## [8.0.7](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.6...8.0.7) (2024-12-21)
 
 ### Bug Fixes

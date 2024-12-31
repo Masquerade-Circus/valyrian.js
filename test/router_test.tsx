@@ -7,7 +7,7 @@ import { Children, Properties, update, v } from "valyrian.js";
 import { expect, describe, test as it } from "bun:test";
 
 // eslint-disable-next-line max-lines-per-function
-describe.only("Router", () => {
+describe("Router", () => {
   it("Hard test", async () => {
     const Component = () => <div>Hello world</div>;
     const router = new Router();

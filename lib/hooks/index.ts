@@ -1,4 +1,4 @@
-import { Component, POJOComponent, current, directive, onCleanup, onUnmount, debouncedUpdate } from "valyrian.js";
+import { Component, POJOComponent, current, directive, onCleanup, onRemove, debouncedUpdate } from "valyrian.js";
 import { hasChanged } from "valyrian.js/utils";
 
 export type Hook = any;
@@ -29,10 +29,10 @@ type HookCalls = {
 const componentToHooksWeakMap = new WeakMap<Component | POJOComponent, HookCalls>();
 
 export const createHook = function createHook({
-  onCreate,
+  onCreate: onCreateHook,
   onUpdate: onUpdateHook,
   onCleanup: onCleanupHook,
-  onRemove,
+  onRemove: onRemoveHook,
   returnValue
 }: HookDefinition): Hook {
   return (...args: any[]) => {
@@ -42,9 +42,7 @@ export const createHook = function createHook({
     if (!HookCalls) {
       HookCalls = { hooks: [], hook_calls: -1 } as HookCalls;
       componentToHooksWeakMap.set(component, HookCalls);
-      onUnmount(() => {
-        componentToHooksWeakMap.delete(component);
-      });
+      onRemove(() => componentToHooksWeakMap.delete(component));
     }
 
     onCleanup(() => ((HookCalls as HookCalls).hook_calls = -1));
@@ -53,9 +51,9 @@ export const createHook = function createHook({
     if (hook) {
       onUpdateHook?.(hook, ...args);
     } else {
-      hook = onCreate(...args);
+      hook = onCreateHook(...args);
       HookCalls.hooks.push(hook);
-      onRemove && onUnmount(() => onRemove(hook));
+      onRemoveHook && onRemove(() => onRemoveHook(hook));
     }
 
     onCleanupHook && onCleanup(() => onCleanupHook(hook));
