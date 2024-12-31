@@ -1,3 +1,12 @@
+
+
+## [8.0.8](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.7...8.0.8) (2024-12-31)
+
+### Code Refactoring
+
+* handle keyed and non-keyed in the same patch ([37d0de5](https://github.com/Masquerade-Circus/valyrian.js/commit/37d0de5267c5074f65b5d0be347fd53888efa56c))
+* refactor lifecycle methods ([e4fc757](https://github.com/Masquerade-Circus/valyrian.js/commit/e4fc7571453146a5271340b4a85405558d24f482))
+
 ## [8.0.7](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.6...8.0.7) (2024-12-21)
 
 ### Bug Fixes
