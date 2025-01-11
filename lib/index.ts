@@ -47,7 +47,8 @@ export class Vnode {
     public children: Children,
     public dom?: DomElement,
     public isSVG?: boolean,
-    public directComponents?: Set<ValyrianComponent>,
+    public oldChildComponents?: Set<ValyrianComponent>,
+    public childComponents?: Set<ValyrianComponent>,
     public hasKeys?: boolean,
     public oncreate?: Set<Function>,
     public oncleanup?: Set<Function>,
@@ -172,13 +173,20 @@ function validateIsCalledInsideComponent() {
 
 export const onCreate = (callback: Function) => {
   validateIsCalledInsideComponent();
-  if (!current.oldVnode) {
-    addCallbackToSet(callback, SetType.onCreate, current.vnode as VnodeWithDom);
+  const parentVnode = current.vnode as VnodeWithDom;
+  const component = current.component as ValyrianComponent;
+  const hasComponentAsOldChild = parentVnode.oldChildComponents && parentVnode.oldChildComponents.has(component);
+
+  if (!hasComponentAsOldChild) {
+    addCallbackToSet(callback, SetType.onCreate, parentVnode);
   }
 };
 export const onUpdate = (callback: Function) => {
   validateIsCalledInsideComponent();
-  if (current.oldVnode) {
+  const parentVnode = current.vnode as VnodeWithDom;
+  const component = current.component as ValyrianComponent;
+  const hasComponentAsChild = parentVnode.childComponents && parentVnode.childComponents.has(component);
+  if (hasComponentAsChild) {
     addCallbackToSet(callback, SetType.onUpdate, current.vnode as VnodeWithDom);
   }
 };
@@ -194,7 +202,7 @@ export const onRemove = (callback: Function) => {
   let removed = false;
 
   function removeCallback() {
-    const hasComponentAsChild = parentVnode.directComponents && parentVnode.directComponents.has(component);
+    const hasComponentAsChild = parentVnode.childComponents && parentVnode.childComponents.has(component);
 
     if (hasComponentAsChild || removed) {
       return;
@@ -588,8 +596,9 @@ function flatTree(newVnode: VnodeWithDom) {
     }
   }
 
-  if (newVnode.directComponents) {
-    newVnode.directComponents.clear();
+  newVnode.oldChildComponents = newVnode.childComponents;
+  if (newVnode.childComponents) {
+    newVnode.childComponents = new Set();
   }
 
   while (i < children.length) {
@@ -611,8 +620,8 @@ function flatTree(newVnode: VnodeWithDom) {
 
       if (typeof newChild.tag !== "string") {
         const component = (current.component = newChild.tag);
-        newVnode.directComponents = newVnode.directComponents || new Set();
-        newVnode.directComponents.add(component);
+        newVnode.childComponents = newVnode.childComponents || new Set();
+        newVnode.childComponents.add(component);
 
         children[i] = (isPOJOComponent(component) ? component.view : component).bind(component)(
           newChild.props,

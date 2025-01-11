@@ -21,14 +21,27 @@ export function createSignal<T>(initialValue: T): Signal<T> {
 
     const currentVnode = current.vnode as VnodeWithDom;
     if (currentVnode && !domWithVnodesToUpdate.has(currentVnode.dom)) {
+      let hasParent = false;
+      let parent = currentVnode.dom.parentElement as DomElement;
+      while (parent) {
+        if (domWithVnodesToUpdate.has(parent)) {
+          hasParent = true;
+          break;
+        }
+        parent = parent.parentElement as DomElement;
+      }
+
+      if (hasParent) {
+        return value;
+      }
+
       const dom = currentVnode.dom;
       const subscription = () => {
+        updateVnode(dom.vnode);
         if (!dom.parentNode) {
           subscribers.delete(subscription);
           domWithVnodesToUpdate.delete(dom);
-          return;
         }
-        updateVnode(dom.vnode);
       };
 
       subscribers.add(subscription);
@@ -59,16 +72,8 @@ export function createSignal<T>(initialValue: T): Signal<T> {
   return [read, write, runSubscribers];
 }
 
-const effectDeps = new WeakMap<Function, any[]>();
-
-export function createEffect(effect: Function, dependencies?: any[]) {
+export function createEffect(effect: Function) {
   const runEffect = () => {
-    const oldDeps = effectDeps.get(effect);
-    const hasChangedDeps = !oldDeps || !dependencies || dependencies.some((dep, i) => !Object.is(dep, oldDeps[i]));
-
-    if (!hasChangedDeps) return;
-
-    effectDeps.set(effect, dependencies || []);
     try {
       effectStack.push(runEffect);
       effect();

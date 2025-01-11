@@ -4,23 +4,17 @@ import { deepCloneUnfreeze, deepFreeze, hasChanged } from "valyrian.js/utils";
 
 type State = Record<string, any>;
 
-// Tipo de acción o pulso
-export type Pulse<StateType> = (state: StateType, ...args: any[]) => void | Promise<void>;
+export type Pulse<StateType, TReturn = unknown> = (state: StateType, ...args: any[]) => TReturn | Promise<TReturn>;
 
-// Colección de pulsos
-export type Pulses<StateType> = {
-  [key: string]: Pulse<StateType>;
-};
+export type Pulses<StateType> = Record<string, Pulse<StateType, any>>;
 
-// Estado proxy que observará el acceso y las mutaciones del estado
 type ProxyState<StateType> = StateType & {
   [key: string]: any;
 };
 
-// Pila de efectos
 const effectStack: Function[] = [];
 
-type StorePulses<PulsesType> = {
+type StorePulses<PulsesType extends Pulses<any>> = {
   [K in keyof PulsesType]: PulsesType[K] extends (state: any, ...args: infer Args) => infer R
     ? (...args: Args) => R
     : never;
@@ -35,7 +29,7 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
   const subscribers = new Set<Function>();
   const domWithVnodesToUpdate = new WeakSet<DomElement>();
 
-  const boundPulses: Record<string, Pulse<StateType>> = {};
+  const boundPulses: Record<string, Pulse<StateType, any>> = {};
   for (const key in pulses) {
     if (typeof pulses[key] !== "function") {
       throw new Error(`Pulse '${key}' must be a function`);
@@ -55,8 +49,17 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
     }
   }
 
+  let currentState: StateType | null = null;
+  let pulseCallCount = 0;
+
   const proxyState = new Proxy(localState, {
     get: (state, prop: string) => {
+      // If there is a current state, return the value from it
+      // because we are inside a pulse
+      if (currentState) {
+        return currentState[prop];
+      }
+
       const currentEffect = effectStack[effectStack.length - 1];
       if (currentEffect && !subscribers.has(currentEffect)) {
         subscribers.add(currentEffect);
@@ -64,14 +67,27 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
 
       const currentVnode = current.vnode as VnodeWithDom;
       if (currentVnode && !domWithVnodesToUpdate.has(currentVnode.dom)) {
+        let hasParent = false;
+        let parent = currentVnode.dom.parentElement as DomElement;
+        while (parent) {
+          if (domWithVnodesToUpdate.has(parent)) {
+            hasParent = true;
+            break;
+          }
+          parent = parent.parentElement as DomElement;
+        }
+
+        if (hasParent) {
+          return state[prop];
+        }
+
         const dom = currentVnode.dom;
         const subscription = () => {
-          if (!dom.parentNode) {
+          updateVnode(dom.vnode);
+          if (!dom.parentElement) {
             subscribers.delete(subscription);
             domWithVnodesToUpdate.delete(dom);
-            return;
           }
-          updateVnode(dom.vnode);
         };
 
         subscribers.add(subscription);
@@ -104,35 +120,60 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
     }
   }
 
-  let debounceTimeout: any = null;
+  let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
   function debouncedUpdate() {
-    clearTimeout(debounceTimeout);
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
+    }
+
     debounceTimeout = setTimeout(() => subscribers.forEach((subscriber) => subscriber()), 0);
   }
 
   function setState(newState: StateType) {
+    pulseCallCount--;
+
     if (!hasChanged(localState, newState)) {
       return;
     }
 
+    if (pulseCallCount > 0) {
+      return;
+    }
+
     syncState(newState);
+    currentState = null;
     debouncedUpdate();
   }
 
   function getPulseMethod(key: string) {
     return (...args: any[]) => {
-      const currentState = deepCloneUnfreeze(localState);
-      const pulse = pulses[key](currentState, ...args);
+      pulseCallCount++;
 
-      if (pulse instanceof Promise) {
-        return pulse
-          .then(() => setState(currentState))
-          .catch((error) => {
-            console.error("Error in pulse:", error);
-          });
+      if (currentState === null) {
+        currentState = deepCloneUnfreeze(localState);
       }
 
-      setState(currentState);
+      try {
+        const pulseResult = pulses[key](currentState, ...args);
+
+        if (pulseResult instanceof Promise) {
+          return pulseResult
+            .then((resolvedValue) => {
+              setState(currentState as StateType);
+              return resolvedValue;
+            })
+            .catch((error) => {
+              console.error(`Error in pulse '${key}':`, error);
+              throw error;
+            });
+        } else {
+          setState(currentState);
+          return pulseResult;
+        }
+      } catch (error) {
+        console.error(`Error in pulse '${key}':`, error);
+        throw error;
+      }
     };
   }
 
@@ -154,7 +195,7 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
   return pulsesProxy as StorePulses<PulsesType> & { state: ProxyState<StateType> };
 }
 
-// Crea una tienda inmutable
+// Create a immutable store with an unfrozen state, balance between security and flexibility
 export function createPulseStore<StateType extends State, PulsesType extends Pulses<StateType>>(
   initialState: StateType,
   pulses: PulsesType
@@ -162,7 +203,7 @@ export function createPulseStore<StateType extends State, PulsesType extends Pul
   return createStore(initialState, pulses, true);
 }
 
-// Crea una tienda mutable
+// Create a mutable store with a unfrozen state to allow more flexibility
 export function createMutableStore<StateType extends State, PulsesType extends Pulses<StateType>>(
   initialState: StateType,
   pulses: PulsesType
@@ -173,9 +214,7 @@ export function createMutableStore<StateType extends State, PulsesType extends P
   return createStore(initialState, pulses, false);
 }
 
-const effectDeps = new WeakMap<Function, any[]>();
-
-export function createEffect(effect: Function, dependencies?: any[]) {
+export function createEffect(effect: Function) {
   const runEffect = () => {
     try {
       effectStack.push(runEffect);

@@ -1,4 +1,4 @@
-export function deepFreeze(obj: any): any {
+export function deepFreeze(obj: any, freezeClassInstances: boolean = false): any {
   if (typeof obj === "object" && obj !== null && !Object.isFrozen(obj)) {
     if (Array.isArray(obj)) {
       for (let i = 0, l = obj.length; i < l; i++) {
@@ -11,9 +11,11 @@ export function deepFreeze(obj: any): any {
       }
 
       // If the object is an instance of a class (not a plain object or array) we need to freeze the prototype
-      const proto = Object.getPrototypeOf(obj);
-      if (proto && proto !== Object.prototype) {
-        deepFreeze(proto);
+      if (freezeClassInstances) {
+        const proto = Object.getPrototypeOf(obj);
+        if (proto && proto !== Object.prototype) {
+          deepFreeze(proto);
+        }
       }
     }
     Object.freeze(obj);
@@ -22,32 +24,122 @@ export function deepFreeze(obj: any): any {
   return obj;
 }
 
-export function deepCloneUnfreeze<T>(obj: T): T {
+export function deepCloneUnfreeze<T>(obj: T, cloneClassInstances = false, seen = new WeakMap()): T {
   if (typeof obj === "undefined" || obj === null || typeof obj !== "object") {
     return obj;
   }
 
-  // If the object is an instance of a class (not a plain object or array) we need to clone it
-  // This could not work with classes that have required parameters in the constructor
-  if (obj.constructor && obj.constructor !== Object && obj.constructor !== Array) {
-    const clone = Reflect.construct(obj.constructor, []);
+  if (seen.has(obj)) {
+    return seen.get(obj);
+  }
 
-    for (const key of Reflect.ownKeys(obj)) {
-      const value = (obj as Record<string | symbol, any>)[key];
-      (clone as Record<string | symbol, any>)[key] = deepCloneUnfreeze(value);
+  let clone: any;
+  let cloned = false;
+
+  switch (true) {
+    case Array.isArray(obj): {
+      clone = [];
+      for (let i = 0, l = obj.length; i < l; i++) {
+        clone[i] = deepCloneUnfreeze(obj[i], cloneClassInstances, seen);
+      }
+      cloned = true;
+      break;
+    }
+    case obj instanceof Date: {
+      clone = new Date(obj.getTime());
+      cloned = true;
+      break;
+    }
+    case obj instanceof RegExp: {
+      clone = new RegExp(obj.source, obj.flags);
+      cloned = true;
+      break;
+    }
+    case obj instanceof Map: {
+      clone = new Map();
+      for (const [key, value] of obj.entries()) {
+        clone.set(
+          deepCloneUnfreeze(key, cloneClassInstances, seen),
+          deepCloneUnfreeze(value, cloneClassInstances, seen)
+        );
+      }
+      cloned = true;
+      break;
+    }
+    case obj instanceof Set: {
+      clone = new Set();
+      for (const value of obj.values()) {
+        clone.add(deepCloneUnfreeze(value, cloneClassInstances, seen));
+      }
+      cloned = true;
+      break;
+    }
+    case obj instanceof ArrayBuffer: {
+      clone = obj.slice(0);
+      cloned = true;
+      break;
+    }
+    // TypedArrays and DataView
+    case ArrayBuffer.isView(obj): {
+      clone = new (obj as any).constructor(obj.buffer.slice(0));
+      cloned = true;
+      break;
+    }
+    // Node.js Buffer
+    case typeof Buffer !== "undefined" && obj instanceof Buffer: {
+      clone = Buffer.from(obj);
+      cloned = true;
+      break;
+    }
+    case obj instanceof Error: {
+      clone = new (obj as any).constructor(obj.message);
+      break;
+    }
+    // Non clonable objects
+    case obj instanceof Promise ||
+      obj instanceof WeakMap ||
+      obj instanceof WeakSet ||
+      typeof obj === "function" ||
+      typeof obj === "symbol": {
+      clone = obj;
+      cloned = true;
+      break;
+    }
+    // Instance of a class
+    case obj.constructor && obj.constructor !== Object: {
+      if (!cloneClassInstances) {
+        clone = obj;
+        cloned = true;
+        break;
+      }
+      clone = Object.create(Object.getPrototypeOf(obj));
+      break;
     }
 
-    return clone;
+    // Plain objects
+    default: {
+      clone = {};
+
+      for (const key in obj) {
+        clone[key] = deepCloneUnfreeze(obj[key], cloneClassInstances, seen);
+      }
+
+      cloned = true;
+      break;
+    }
   }
 
-  if (Array.isArray(obj)) {
-    return obj.map((item) => deepCloneUnfreeze(item)) as unknown as T;
-  }
+  seen.set(obj, clone);
 
-  const clone = {} as T;
-  for (const key of Reflect.ownKeys(obj)) {
-    const value = (obj as Record<string | symbol, any>)[key];
-    (clone as Record<string | symbol, any>)[key] = deepCloneUnfreeze(value);
+  if (!cloned) {
+    const descriptors = Object.getOwnPropertyDescriptors(obj);
+    for (const key of Reflect.ownKeys(descriptors)) {
+      const descriptor = descriptors[key as string];
+      if ("value" in descriptor) {
+        descriptor.value = deepCloneUnfreeze(descriptor.value, cloneClassInstances, seen);
+      }
+      Object.defineProperty(clone, key, descriptor);
+    }
   }
 
   return clone;

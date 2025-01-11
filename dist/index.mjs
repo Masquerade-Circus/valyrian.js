@@ -1,13 +1,14 @@
 // lib/index.ts
 var isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
 var Vnode = class {
-  constructor(tag, props, children, dom, isSVG, directComponents, hasKeys, oncreate, oncleanup, onupdate, onremove) {
+  constructor(tag, props, children, dom, isSVG, oldChildComponents, childComponents, hasKeys, oncreate, oncleanup, onupdate, onremove) {
     this.tag = tag;
     this.props = props;
     this.children = children;
     this.dom = dom;
     this.isSVG = isSVG;
-    this.directComponents = directComponents;
+    this.oldChildComponents = oldChildComponents;
+    this.childComponents = childComponents;
     this.hasKeys = hasKeys;
     this.oncreate = oncreate;
     this.oncleanup = oncleanup;
@@ -100,13 +101,19 @@ function validateIsCalledInsideComponent() {
 }
 var onCreate = (callback) => {
   validateIsCalledInsideComponent();
-  if (!current.oldVnode) {
-    addCallbackToSet(callback, "oncreate" /* onCreate */, current.vnode);
+  const parentVnode = current.vnode;
+  const component = current.component;
+  const hasComponentAsOldChild = parentVnode.oldChildComponents && parentVnode.oldChildComponents.has(component);
+  if (!hasComponentAsOldChild) {
+    addCallbackToSet(callback, "oncreate" /* onCreate */, parentVnode);
   }
 };
 var onUpdate = (callback) => {
   validateIsCalledInsideComponent();
-  if (current.oldVnode) {
+  const parentVnode = current.vnode;
+  const component = current.component;
+  const hasComponentAsChild = parentVnode.childComponents && parentVnode.childComponents.has(component);
+  if (hasComponentAsChild) {
     addCallbackToSet(callback, "onupdate" /* onUpdate */, current.vnode);
   }
 };
@@ -120,7 +127,7 @@ var onRemove = (callback) => {
   const component = current.component;
   let removed = false;
   function removeCallback() {
-    const hasComponentAsChild = parentVnode.directComponents && parentVnode.directComponents.has(component);
+    const hasComponentAsChild = parentVnode.childComponents && parentVnode.childComponents.has(component);
     if (hasComponentAsChild || removed) {
       return;
     }
@@ -438,8 +445,9 @@ function flatTree(newVnode) {
       children[i2] = callback(set[i2], i2);
     }
   }
-  if (newVnode.directComponents) {
-    newVnode.directComponents.clear();
+  newVnode.oldChildComponents = newVnode.childComponents;
+  if (newVnode.childComponents) {
+    newVnode.childComponents = /* @__PURE__ */ new Set();
   }
   while (i < children.length) {
     const newChild = children[i];
@@ -456,8 +464,8 @@ function flatTree(newVnode) {
       newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
       if (typeof newChild.tag !== "string") {
         const component = current.component = newChild.tag;
-        newVnode.directComponents = newVnode.directComponents || /* @__PURE__ */ new Set();
-        newVnode.directComponents.add(component);
+        newVnode.childComponents = newVnode.childComponents || /* @__PURE__ */ new Set();
+        newVnode.childComponents.add(component);
         children[i] = (isPOJOComponent(component) ? component.view : component).bind(component)(
           newChild.props,
           newChild.children

@@ -14,7 +14,7 @@ export function sw(file: string, options = {}) {
   let contents = swTpl
     .replace("v1::", "v" + opt.version + "::")
     .replace("Valyrian.js", opt.name)
-    .replace("['/']", '["' + opt.urls.join('","') + '"]');
+    .replace('["/"]', '["' + opt.urls.join('","') + '"]');
 
   if (!opt.debug) {
     contents = contents.replace("console.log", "() => {}");

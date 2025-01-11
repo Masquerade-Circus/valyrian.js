@@ -21,22 +21,38 @@ function createStore(initialState, pulses, immutable = false) {
       throw new Error("You need to call a pulse to modify the state");
     }
   }
+  let currentState = null;
+  let pulseCallCount = 0;
   const proxyState = new Proxy(localState, {
     get: (state, prop) => {
+      if (currentState) {
+        return currentState[prop];
+      }
       const currentEffect = effectStack[effectStack.length - 1];
       if (currentEffect && !subscribers.has(currentEffect)) {
         subscribers.add(currentEffect);
       }
       const currentVnode = current.vnode;
       if (currentVnode && !domWithVnodesToUpdate.has(currentVnode.dom)) {
+        let hasParent = false;
+        let parent = currentVnode.dom.parentElement;
+        while (parent) {
+          if (domWithVnodesToUpdate.has(parent)) {
+            hasParent = true;
+            break;
+          }
+          parent = parent.parentElement;
+        }
+        if (hasParent) {
+          return state[prop];
+        }
         const dom = currentVnode.dom;
         const subscription = () => {
-          if (!dom.parentNode) {
+          updateVnode(dom.vnode);
+          if (!dom.parentElement) {
             subscribers.delete(subscription);
             domWithVnodesToUpdate.delete(dom);
-            return;
           }
-          updateVnode(dom.vnode);
         };
         subscribers.add(subscription);
         domWithVnodesToUpdate.add(dom);
@@ -66,26 +82,47 @@ function createStore(initialState, pulses, immutable = false) {
   }
   let debounceTimeout = null;
   function debouncedUpdate() {
-    clearTimeout(debounceTimeout);
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
+    }
     debounceTimeout = setTimeout(() => subscribers.forEach((subscriber) => subscriber()), 0);
   }
   function setState(newState) {
+    pulseCallCount--;
     if (!hasChanged(localState, newState)) {
       return;
     }
+    if (pulseCallCount > 0) {
+      return;
+    }
     syncState(newState);
+    currentState = null;
     debouncedUpdate();
   }
   function getPulseMethod(key) {
     return (...args) => {
-      const currentState = deepCloneUnfreeze(localState);
-      const pulse = pulses[key](currentState, ...args);
-      if (pulse instanceof Promise) {
-        return pulse.then(() => setState(currentState)).catch((error) => {
-          console.error("Error in pulse:", error);
-        });
+      pulseCallCount++;
+      if (currentState === null) {
+        currentState = deepCloneUnfreeze(localState);
       }
-      setState(currentState);
+      try {
+        const pulseResult = pulses[key](currentState, ...args);
+        if (pulseResult instanceof Promise) {
+          return pulseResult.then((resolvedValue) => {
+            setState(currentState);
+            return resolvedValue;
+          }).catch((error) => {
+            console.error(`Error in pulse '${key}':`, error);
+            throw error;
+          });
+        } else {
+          setState(currentState);
+          return pulseResult;
+        }
+      } catch (error) {
+        console.error(`Error in pulse '${key}':`, error);
+        throw error;
+      }
     };
   }
   syncState(localState);
@@ -111,7 +148,7 @@ function createMutableStore(initialState, pulses) {
   );
   return createStore(initialState, pulses, false);
 }
-function createEffect(effect, dependencies) {
+function createEffect(effect) {
   const runEffect = () => {
     try {
       effectStack.push(runEffect);

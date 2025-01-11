@@ -40,14 +40,25 @@ function createSignal(initialValue) {
     }
     const currentVnode = import_valyrian.current.vnode;
     if (currentVnode && !domWithVnodesToUpdate.has(currentVnode.dom)) {
+      let hasParent = false;
+      let parent = currentVnode.dom.parentElement;
+      while (parent) {
+        if (domWithVnodesToUpdate.has(parent)) {
+          hasParent = true;
+          break;
+        }
+        parent = parent.parentElement;
+      }
+      if (hasParent) {
+        return value;
+      }
       const dom = currentVnode.dom;
       const subscription = () => {
+        (0, import_valyrian.updateVnode)(dom.vnode);
         if (!dom.parentNode) {
           subscribers.delete(subscription);
           domWithVnodesToUpdate.delete(dom);
-          return;
         }
-        (0, import_valyrian.updateVnode)(dom.vnode);
       };
       subscribers.add(subscription);
       domWithVnodesToUpdate.add(dom);
@@ -67,13 +78,8 @@ function createSignal(initialValue) {
   };
   return [read, write, runSubscribers];
 }
-var effectDeps = /* @__PURE__ */ new WeakMap();
-function createEffect(effect, dependencies) {
+function createEffect(effect) {
   const runEffect = () => {
-    const oldDeps = effectDeps.get(effect);
-    const hasChangedDeps = !oldDeps || !dependencies || dependencies.some((dep, i) => !Object.is(dep, oldDeps[i]));
-    if (!hasChangedDeps) return;
-    effectDeps.set(effect, dependencies || []);
     try {
       effectStack.push(runEffect);
       effect();
