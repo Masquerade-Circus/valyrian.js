@@ -36,13 +36,14 @@ export declare class Vnode {
     children: Children;
     dom?: DomElement | undefined;
     isSVG?: boolean | undefined;
-    directComponents?: Set<ValyrianComponent> | undefined;
+    oldChildComponents?: Set<ValyrianComponent> | undefined;
+    childComponents?: Set<ValyrianComponent> | undefined;
     hasKeys?: boolean | undefined;
     oncreate?: Set<Function> | undefined;
     oncleanup?: Set<Function> | undefined;
     onupdate?: Set<Function> | undefined;
     onremove?: Set<Function> | undefined;
-    constructor(tag: string | Component | POJOComponent, props: null | Properties, children: Children, dom?: DomElement | undefined, isSVG?: boolean | undefined, directComponents?: Set<ValyrianComponent> | undefined, hasKeys?: boolean | undefined, oncreate?: Set<Function> | undefined, oncleanup?: Set<Function> | undefined, onupdate?: Set<Function> | undefined, onremove?: Set<Function> | undefined);
+    constructor(tag: string | Component | POJOComponent, props: null | Properties, children: Children, dom?: DomElement | undefined, isSVG?: boolean | undefined, oldChildComponents?: Set<ValyrianComponent> | undefined, childComponents?: Set<ValyrianComponent> | undefined, hasKeys?: boolean | undefined, oncreate?: Set<Function> | undefined, oncleanup?: Set<Function> | undefined, onupdate?: Set<Function> | undefined, onremove?: Set<Function> | undefined);
 }
 export interface VnodeWithDom extends Vnode {
     tag: string;

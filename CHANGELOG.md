@@ -1,3 +1,11 @@
+
+
+## [8.0.9](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.8...8.0.9) (2025-01-11)
+
+### Code Refactoring
+
+* update pulse store and signals ([e86981e](https://github.com/Masquerade-Circus/valyrian.js/commit/e86981e261ad0db3cc341cf3062c12ce5fea900d))
+
 ## [8.0.8](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.7...8.0.8) (2024-12-31)
 
 ### Code Refactoring
