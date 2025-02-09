@@ -8,9 +8,7 @@ export type Pulse<StateType, TReturn = unknown> = (state: StateType, ...args: an
 
 export type Pulses<StateType> = Record<string, Pulse<StateType, any>>;
 
-type ProxyState<StateType> = StateType & {
-  [key: string]: any;
-};
+type ProxyState<StateType> = StateType & { [key: string]: any };
 
 const effectStack: Function[] = [];
 
@@ -20,7 +18,40 @@ type StorePulses<PulsesType extends Pulses<any>> = {
     : never;
 };
 
-// Crea la tienda
+/** Función auxiliar para registrar la suscripción al nodo DOM.
+ *  Retorna true si se agregó la suscripción, o false si se encontró un nodo padre ya suscrito.
+ */
+function registerDomSubscription(subscribers: Set<Function>, domWithVnodesToUpdate: WeakSet<DomElement>): void {
+  const currentVnode = current.vnode as VnodeWithDom;
+  if (!currentVnode || domWithVnodesToUpdate.has(currentVnode.dom)) {
+    return;
+  }
+
+  let hasParent = false;
+  let parent = currentVnode.dom.parentElement as DomElement;
+  while (parent) {
+    if (domWithVnodesToUpdate.has(parent)) {
+      hasParent = true;
+      break;
+    }
+    parent = parent.parentElement as DomElement;
+  }
+
+  // Si no hay nodo padre registrado, se crea la suscripción.
+  if (!hasParent) {
+    const dom = currentVnode.dom;
+    const subscription = () => {
+      updateVnode(dom.vnode);
+      if (!dom.parentElement) {
+        subscribers.delete(subscription);
+        domWithVnodesToUpdate.delete(dom);
+      }
+    };
+    subscribers.add(subscription);
+    domWithVnodesToUpdate.add(dom);
+  }
+}
+
 function createStore<StateType extends State, PulsesType extends Pulses<StateType>>(
   initialState: StateType | (() => StateType) | null,
   pulses: PulsesType,
@@ -54,8 +85,7 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
 
   const proxyState = new Proxy(localState, {
     get: (state, prop: string) => {
-      // If there is a current state, return the value from it
-      // because we are inside a pulse
+      // If we are in a pulse, we return the value of the cloned state.
       if (currentState) {
         return currentState[prop];
       }
@@ -65,34 +95,7 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
         subscribers.add(currentEffect);
       }
 
-      const currentVnode = current.vnode as VnodeWithDom;
-      if (currentVnode && !domWithVnodesToUpdate.has(currentVnode.dom)) {
-        let hasParent = false;
-        let parent = currentVnode.dom.parentElement as DomElement;
-        while (parent) {
-          if (domWithVnodesToUpdate.has(parent)) {
-            hasParent = true;
-            break;
-          }
-          parent = parent.parentElement as DomElement;
-        }
-
-        if (hasParent) {
-          return state[prop];
-        }
-
-        const dom = currentVnode.dom;
-        const subscription = () => {
-          updateVnode(dom.vnode);
-          if (!dom.parentElement) {
-            subscribers.delete(subscription);
-            domWithVnodesToUpdate.delete(dom);
-          }
-        };
-
-        subscribers.add(subscription);
-        domWithVnodesToUpdate.add(dom);
-      }
+      registerDomSubscription(subscribers, domWithVnodesToUpdate);
 
       return state[prop];
     },
@@ -112,7 +115,6 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
     for (const key in newState) {
       localState[key] = immutable ? deepFreeze(newState[key]) : newState[key];
     }
-
     for (const key in localState) {
       if (!(key in newState)) {
         Reflect.deleteProperty(localState, key);
@@ -125,21 +127,17 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
     if (debounceTimeout) {
       clearTimeout(debounceTimeout);
     }
-
     debounceTimeout = setTimeout(() => subscribers.forEach((subscriber) => subscriber()), 0);
   }
 
   function setState(newState: StateType) {
     pulseCallCount--;
-
     if (!hasChanged(localState, newState)) {
       return;
     }
-
     if (pulseCallCount > 0) {
       return;
     }
-
     syncState(newState);
     currentState = null;
     debouncedUpdate();
@@ -148,14 +146,11 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
   function getPulseMethod(key: string) {
     return (...args: any[]) => {
       pulseCallCount++;
-
       if (currentState === null) {
         currentState = deepCloneUnfreeze(localState);
       }
-
       try {
         const pulseResult = pulses[key](currentState, ...args);
-
         if (pulseResult instanceof Promise) {
           return pulseResult
             .then((resolvedValue) => {
@@ -184,7 +179,6 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
       if (prop === "state") {
         return proxyState;
       }
-
       if (!(prop in pulses)) {
         throw new Error(`Pulse '${prop}' does not exist`);
       }
@@ -195,7 +189,6 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
   return pulsesProxy as StorePulses<PulsesType> & { state: ProxyState<StateType> };
 }
 
-// Create a immutable store with an unfrozen state, balance between security and flexibility
 export function createPulseStore<StateType extends State, PulsesType extends Pulses<StateType>>(
   initialState: StateType,
   pulses: PulsesType
@@ -203,7 +196,6 @@ export function createPulseStore<StateType extends State, PulsesType extends Pul
   return createStore(initialState, pulses, true);
 }
 
-// Create a mutable store with a unfrozen state to allow more flexibility
 export function createMutableStore<StateType extends State, PulsesType extends Pulses<StateType>>(
   initialState: StateType,
   pulses: PulsesType
@@ -223,6 +215,35 @@ export function createEffect(effect: Function) {
       effectStack.pop();
     }
   };
-
   runEffect();
+}
+
+export function createPulse<T>(initialValue: T): [() => T, (newValue: T | ((current: T) => T)) => void, () => void] {
+  let value = initialValue;
+  const subscribers = new Set<Function>();
+  const domWithVnodesToUpdate = new WeakSet<DomElement>();
+
+  const runSubscribers = () => {
+    subscribers.forEach((subscriber) => subscriber());
+  };
+
+  const read = (): T => {
+    const currentEffect = effectStack[effectStack.length - 1];
+    if (currentEffect && !subscribers.has(currentEffect)) {
+      subscribers.add(currentEffect);
+    }
+    registerDomSubscription(subscribers, domWithVnodesToUpdate);
+    return value;
+  };
+
+  const write = (newValue: T | ((current: T) => T)): void => {
+    const resolvedValue = typeof newValue === "function" ? (newValue as (current: T) => T)(value) : newValue;
+    if (!hasChanged(value, resolvedValue)) {
+      return;
+    }
+    value = resolvedValue;
+    runSubscribers();
+  };
+
+  return [read, write, runSubscribers];
 }

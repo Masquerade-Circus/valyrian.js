@@ -14,12 +14,12 @@ export class SessionStorage {
     this.persist = persist;
     this.filePath = path.resolve(this.directory, filePath);
 
-    if (!fs.existsSync(this.directory)) {
-      fs.mkdirSync(this.directory, { recursive: true });
-    }
-
-    // Load data from file if persistence is enabled
     if (this.persist) {
+      if (!fs.existsSync(this.directory)) {
+        fs.mkdirSync(this.directory, { recursive: true });
+      }
+
+      // Load data from file if persistence is enabled
       this.loadFromFile();
     }
   }
@@ -49,11 +49,10 @@ export class SessionStorage {
       value = "undefined"; // Convert undefined to "undefined"
     }
 
+    this.loadFromFile();
     this.storage[key] = String(value); // Store as string
     this.checkSizeLimit(); // Check storage limit
-    if (this.persist) {
-      this.saveToFile(); // Save to file if persistence is enabled
-    }
+    this.saveToFile(); // Save to file if persistence is enabled
   }
 
   // Retrieve value stored under the specified key
@@ -61,6 +60,8 @@ export class SessionStorage {
     if (key === null || key === undefined) {
       throw new TypeError("Failed to execute 'getItem' on 'Storage': 1 argument required, but only 0 present.");
     }
+
+    this.loadFromFile();
     return this.storage[key] || null; // Return null if key doesn't exist
   }
 
@@ -69,18 +70,15 @@ export class SessionStorage {
     if (key === null || key === undefined) {
       throw new TypeError("Failed to execute 'removeItem' on 'Storage': 1 argument required, but only 0 present.");
     }
-    delete this.storage[key];
-    if (this.persist) {
-      this.saveToFile(); // Save to file if persistence is enabled
-    }
+    this.loadFromFile();
+    Reflect.deleteProperty(this.storage, key); // Remove key from storage
+    this.saveToFile(); // Save to file if persistence is enabled
   }
 
   // Clear all stored values
   clear(): void {
     this.storage = {};
-    if (this.persist) {
-      this.saveToFile(); // Save to file if persistence is enabled
-    }
+    this.saveToFile(); // Save to file if persistence is enabled
   }
 
   // Return the number of stored items
@@ -90,28 +88,33 @@ export class SessionStorage {
 
   // Return the key at the specified index
   key(index: number): string | null {
+    this.loadFromFile();
     const keys = Object.keys(this.storage);
     return keys[index] || null;
   }
 
   // Save data to a file (only if persistence is enabled)
   private saveToFile(): void {
-    try {
-      fs.writeFileSync(this.filePath, JSON.stringify(this.storage), "utf-8");
-    } catch (error) {
-      throw new Error(`Error saving data to file: ${(error as any).message}`);
+    if (this.persist) {
+      try {
+        fs.writeFileSync(this.filePath, JSON.stringify(this.storage), "utf-8");
+      } catch (error) {
+        throw new Error(`Error saving data to file: ${(error as any).message}`);
+      }
     }
   }
 
   // Load data from a file (only if persistence is enabled)
   private loadFromFile(): void {
-    try {
-      if (fs.existsSync(this.filePath)) {
-        const data = fs.readFileSync(this.filePath, "utf-8");
-        this.storage = JSON.parse(data || "{}");
+    if (this.persist) {
+      try {
+        if (fs.existsSync(this.filePath)) {
+          const data = fs.readFileSync(this.filePath, "utf-8");
+          this.storage = JSON.parse(data || "{}");
+        }
+      } catch (error) {
+        throw new Error(`Error loading data from file: ${(error as any).message}`);
       }
-    } catch (error) {
-      throw new Error(`Error loading data from file: ${(error as any).message}`);
     }
   }
 }

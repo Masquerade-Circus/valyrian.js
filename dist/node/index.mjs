@@ -942,10 +942,10 @@ var SessionStorage = class {
     this.limit = 5 * 1024 * 1024;
     this.persist = persist;
     this.filePath = path2.resolve(this.directory, filePath);
-    if (!fs4.existsSync(this.directory)) {
-      fs4.mkdirSync(this.directory, { recursive: true });
-    }
     if (this.persist) {
+      if (!fs4.existsSync(this.directory)) {
+        fs4.mkdirSync(this.directory, { recursive: true });
+      }
       this.loadFromFile();
     }
   }
@@ -970,17 +970,17 @@ var SessionStorage = class {
     } else if (value === void 0) {
       value = "undefined";
     }
+    this.loadFromFile();
     this.storage[key] = String(value);
     this.checkSizeLimit();
-    if (this.persist) {
-      this.saveToFile();
-    }
+    this.saveToFile();
   }
   // Retrieve value stored under the specified key
   getItem(key) {
     if (key === null || key === void 0) {
       throw new TypeError("Failed to execute 'getItem' on 'Storage': 1 argument required, but only 0 present.");
     }
+    this.loadFromFile();
     return this.storage[key] || null;
   }
   // Remove the value under the specified key
@@ -988,17 +988,14 @@ var SessionStorage = class {
     if (key === null || key === void 0) {
       throw new TypeError("Failed to execute 'removeItem' on 'Storage': 1 argument required, but only 0 present.");
     }
-    delete this.storage[key];
-    if (this.persist) {
-      this.saveToFile();
-    }
+    this.loadFromFile();
+    Reflect.deleteProperty(this.storage, key);
+    this.saveToFile();
   }
   // Clear all stored values
   clear() {
     this.storage = {};
-    if (this.persist) {
-      this.saveToFile();
-    }
+    this.saveToFile();
   }
   // Return the number of stored items
   get length() {
@@ -1006,26 +1003,31 @@ var SessionStorage = class {
   }
   // Return the key at the specified index
   key(index) {
+    this.loadFromFile();
     const keys = Object.keys(this.storage);
     return keys[index] || null;
   }
   // Save data to a file (only if persistence is enabled)
   saveToFile() {
-    try {
-      fs4.writeFileSync(this.filePath, JSON.stringify(this.storage), "utf-8");
-    } catch (error) {
-      throw new Error(`Error saving data to file: ${error.message}`);
+    if (this.persist) {
+      try {
+        fs4.writeFileSync(this.filePath, JSON.stringify(this.storage), "utf-8");
+      } catch (error) {
+        throw new Error(`Error saving data to file: ${error.message}`);
+      }
     }
   }
   // Load data from a file (only if persistence is enabled)
   loadFromFile() {
-    try {
-      if (fs4.existsSync(this.filePath)) {
-        const data = fs4.readFileSync(this.filePath, "utf-8");
-        this.storage = JSON.parse(data || "{}");
+    if (this.persist) {
+      try {
+        if (fs4.existsSync(this.filePath)) {
+          const data = fs4.readFileSync(this.filePath, "utf-8");
+          this.storage = JSON.parse(data || "{}");
+        }
+      } catch (error) {
+        throw new Error(`Error loading data from file: ${error.message}`);
       }
-    } catch (error) {
-      throw new Error(`Error loading data from file: ${error.message}`);
     }
   }
 };
@@ -1042,6 +1044,7 @@ function render(...args) {
   return result;
 }
 export {
+  SessionStorage,
   domToHtml,
   domToHyperscript,
   htmlToDom,

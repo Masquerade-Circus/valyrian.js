@@ -19,4 +19,4 @@ function render(...args: any[]) {
   return result;
 }
 
-export { domToHtml, domToHyperscript, htmlToDom, htmlToHyperscript, inline, sw, icons, render };
+export { domToHtml, domToHyperscript, htmlToDom, htmlToHyperscript, inline, sw, icons, render, SessionStorage };

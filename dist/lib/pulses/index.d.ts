@@ -14,5 +14,6 @@ export declare function createMutableStore<StateType extends State, PulsesType e
     state: ProxyState<StateType>;
 };
 export declare function createEffect(effect: Function): void;
+export declare function createPulse<T>(initialValue: T): [() => T, (newValue: T | ((current: T) => T)) => void, () => void];
 export {};
 //# sourceMappingURL=index.d.ts.map

@@ -1,33 +1,34 @@
-"use strict";
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __export = (target, all) => {
-  for (var name in all)
-    __defProp(target, name, { get: all[name], enumerable: true });
-};
-var __copyProps = (to, from, except, desc) => {
-  if (from && typeof from === "object" || typeof from === "function") {
-    for (let key of __getOwnPropNames(from))
-      if (!__hasOwnProp.call(to, key) && key !== except)
-        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
-  }
-  return to;
-};
-var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// lib/pulse-store/index.ts
-var pulse_store_exports = {};
-__export(pulse_store_exports, {
-  createEffect: () => createEffect,
-  createMutableStore: () => createMutableStore,
-  createPulseStore: () => createPulseStore
-});
-module.exports = __toCommonJS(pulse_store_exports);
-var import_valyrian = require("valyrian.js");
-var import_utils = require("valyrian.js/utils");
+// lib/pulses/index.ts
+import { updateVnode, current } from "valyrian.js";
+import { deepCloneUnfreeze, deepFreeze, hasChanged } from "valyrian.js/utils";
 var effectStack = [];
+function registerDomSubscription(subscribers, domWithVnodesToUpdate) {
+  const currentVnode = current.vnode;
+  if (!currentVnode || domWithVnodesToUpdate.has(currentVnode.dom)) {
+    return;
+  }
+  let hasParent = false;
+  let parent = currentVnode.dom.parentElement;
+  while (parent) {
+    if (domWithVnodesToUpdate.has(parent)) {
+      hasParent = true;
+      break;
+    }
+    parent = parent.parentElement;
+  }
+  if (!hasParent) {
+    const dom = currentVnode.dom;
+    const subscription = () => {
+      updateVnode(dom.vnode);
+      if (!dom.parentElement) {
+        subscribers.delete(subscription);
+        domWithVnodesToUpdate.delete(dom);
+      }
+    };
+    subscribers.add(subscription);
+    domWithVnodesToUpdate.add(dom);
+  }
+}
 function createStore(initialState, pulses, immutable = false) {
   const subscribers = /* @__PURE__ */ new Set();
   const domWithVnodesToUpdate = /* @__PURE__ */ new WeakSet();
@@ -58,31 +59,7 @@ function createStore(initialState, pulses, immutable = false) {
       if (currentEffect && !subscribers.has(currentEffect)) {
         subscribers.add(currentEffect);
       }
-      const currentVnode = import_valyrian.current.vnode;
-      if (currentVnode && !domWithVnodesToUpdate.has(currentVnode.dom)) {
-        let hasParent = false;
-        let parent = currentVnode.dom.parentElement;
-        while (parent) {
-          if (domWithVnodesToUpdate.has(parent)) {
-            hasParent = true;
-            break;
-          }
-          parent = parent.parentElement;
-        }
-        if (hasParent) {
-          return state[prop];
-        }
-        const dom = currentVnode.dom;
-        const subscription = () => {
-          (0, import_valyrian.updateVnode)(dom.vnode);
-          if (!dom.parentElement) {
-            subscribers.delete(subscription);
-            domWithVnodesToUpdate.delete(dom);
-          }
-        };
-        subscribers.add(subscription);
-        domWithVnodesToUpdate.add(dom);
-      }
+      registerDomSubscription(subscribers, domWithVnodesToUpdate);
       return state[prop];
     },
     set: (state, prop, value) => {
@@ -98,7 +75,7 @@ function createStore(initialState, pulses, immutable = false) {
   });
   function syncState(newState) {
     for (const key in newState) {
-      localState[key] = immutable ? (0, import_utils.deepFreeze)(newState[key]) : newState[key];
+      localState[key] = immutable ? deepFreeze(newState[key]) : newState[key];
     }
     for (const key in localState) {
       if (!(key in newState)) {
@@ -115,7 +92,7 @@ function createStore(initialState, pulses, immutable = false) {
   }
   function setState(newState) {
     pulseCallCount--;
-    if (!(0, import_utils.hasChanged)(localState, newState)) {
+    if (!hasChanged(localState, newState)) {
       return;
     }
     if (pulseCallCount > 0) {
@@ -129,7 +106,7 @@ function createStore(initialState, pulses, immutable = false) {
     return (...args) => {
       pulseCallCount++;
       if (currentState === null) {
-        currentState = (0, import_utils.deepCloneUnfreeze)(localState);
+        currentState = deepCloneUnfreeze(localState);
       }
       try {
         const pulseResult = pulses[key](currentState, ...args);
@@ -185,3 +162,34 @@ function createEffect(effect) {
   };
   runEffect();
 }
+function createPulse(initialValue) {
+  let value = initialValue;
+  const subscribers = /* @__PURE__ */ new Set();
+  const domWithVnodesToUpdate = /* @__PURE__ */ new WeakSet();
+  const runSubscribers = () => {
+    subscribers.forEach((subscriber) => subscriber());
+  };
+  const read = () => {
+    const currentEffect = effectStack[effectStack.length - 1];
+    if (currentEffect && !subscribers.has(currentEffect)) {
+      subscribers.add(currentEffect);
+    }
+    registerDomSubscription(subscribers, domWithVnodesToUpdate);
+    return value;
+  };
+  const write = (newValue) => {
+    const resolvedValue = typeof newValue === "function" ? newValue(value) : newValue;
+    if (!hasChanged(value, resolvedValue)) {
+      return;
+    }
+    value = resolvedValue;
+    runSubscribers();
+  };
+  return [read, write, runSubscribers];
+}
+export {
+  createEffect,
+  createMutableStore,
+  createPulse,
+  createPulseStore
+};

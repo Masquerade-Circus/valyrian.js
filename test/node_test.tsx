@@ -2,6 +2,7 @@ import { htmlToHyperscript, icons, inline, render, sw, htmlToDom, domToHtml } fr
 
 import { expect, describe, test as it } from "bun:test";
 import fs from "fs";
+import path from "path";
 import packageJson from "../package.json";
 // eslint-disable-next-line no-unused-vars
 import { v } from "valyrian.js";
@@ -202,5 +203,49 @@ span.hello{display: inline-block}
   }`);
 
     expect(component2).toMatch(/function\(\)\{return \w\("button",null,"Hello"\)\}/);
+  });
+});
+
+describe("All lib files", () => {
+  it.skip("should get all lib files", async () => {
+    function readFilesRecursivelySync(directory: string) {
+      let filesList: { path: string; content: string }[] = [];
+      const files = fs.readdirSync(directory, { withFileTypes: true });
+
+      for (const file of files) {
+        const fullPath = path.join(directory, file.name);
+
+        if (file.isDirectory()) {
+          // Si es un directorio, llamamos recursivamente a la función
+          filesList = filesList.concat(readFilesRecursivelySync(fullPath));
+        } else {
+          // Si es un archivo, leemos su contenido
+          try {
+            const content = fs.readFileSync(fullPath, "utf-8"); // Leer archivo en UTF-8
+            filesList.push({ path: fullPath, content });
+          } catch (error) {
+            console.error(`Error leyendo el archivo: ${fullPath}`, error);
+          }
+        }
+      }
+      return filesList;
+    }
+
+    const allFiles = readFilesRecursivelySync("./lib");
+    // Sort by depth and then by name
+    allFiles.sort((a, b) => {
+      const depthA = a.path.split("/").length;
+      const depthB = b.path.split("/").length;
+      if (depthA === depthB) {
+        return a.path.localeCompare(b.path);
+      }
+      return depthA - depthB;
+    });
+
+    const text = allFiles.reduce(
+      (acc, file) => `${acc}\n\n/****************** Path: ${file.path} ******************/\n${file.content}`,
+      ""
+    );
+    fs.writeFileSync(".tmp/all-lib-files.ts", text);
   });
 });
