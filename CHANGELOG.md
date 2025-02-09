@@ -1,5 +1,11 @@
 
 
+## [8.0.10](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.9...8.0.10) (2025-02-09)
+
+### Code Refactoring
+
+* update pulses module and remove signals module ([1f5b8d1](https://github.com/Masquerade-Circus/valyrian.js/commit/1f5b8d1530521a98b598adf4442f831e5ae90d94))
+
 ## [8.0.9](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.8...8.0.9) (2025-01-11)
 
 ### Code Refactoring
