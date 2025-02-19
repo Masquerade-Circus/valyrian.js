@@ -5,14 +5,14 @@ export function sw(file: string, options = {}) {
   const swfiletemplate = path.resolve(__dirname, "./node.sw.js");
   const swTpl = fs.readFileSync(swfiletemplate, "utf8");
   const opt = {
-    version: "v1::",
+    version: "1",
     name: "Valyrian.js",
     urls: ["/"],
     debug: false,
     ...options
   };
   let contents = swTpl
-    .replace("v1::", "v" + opt.version + "::")
+    .replace("v1", `v${opt.version}`)
     .replace("Valyrian.js", opt.name)
     .replace('["/"]', '["' + opt.urls.join('","') + '"]');
 

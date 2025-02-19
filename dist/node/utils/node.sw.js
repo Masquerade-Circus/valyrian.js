@@ -2,13 +2,13 @@
 const Log = console.log;
 
 const config = {
-  version: "v1.2::",
+  version: "v1",
   name: "Valyrian.js",
   // Critical resources and offline page
   urls: ["/"]
 };
 
-const cacheName = config.version + config.name;
+const cacheName = `${config.version}::${config.name}`;
 const MAX_CACHE_SIZE = 50; // Max cache size
 
 // Send messages to clients (controlled pages)
