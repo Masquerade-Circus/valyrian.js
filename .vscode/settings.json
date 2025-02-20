@@ -1,5 +1,14 @@
 {
-  "cSpell.words": ["eqeqeq", "favicons", "onbeforeupdate", "oncleanup", "oncreate", "onremove", "vmodel"],
+  "cSpell.words": [
+    "eqeqeq",
+    "favicons",
+    "onbeforeupdate",
+    "oncleanup",
+    "oncreate",
+    "onremove",
+    "swfiletemplate",
+    "vmodel"
+  ],
   "prettier.trailingComma": "none",
   "prettier.printWidth": 120
 }

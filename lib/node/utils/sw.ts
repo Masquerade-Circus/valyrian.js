@@ -9,12 +9,16 @@ export function sw(file: string, options = {}) {
     name: "Valyrian.js",
     urls: ["/"],
     debug: false,
+    logFetch: false,
+    offlinePage: "/offline.html",
     ...options
   };
   let contents = swTpl
     .replace("v1", `v${opt.version}`)
     .replace("Valyrian.js", opt.name)
-    .replace('["/"]', '["' + opt.urls.join('","') + '"]');
+    .replace('["/"]', '["' + opt.urls.join('","') + '"]')
+    .replace("/offline.html", opt.offlinePage)
+    .replace("logFetch: false", opt.logFetch ? "logFetch: true" : "logFetch: false");
 
   if (!opt.debug) {
     contents = contents.replace("console.log", "() => {}");
