@@ -1,5 +1,12 @@
 
 
+## [8.0.12](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.11...8.0.12) (2025-02-20)
+
+### Code Refactoring
+
+* update service worker ([3522f12](https://github.com/Masquerade-Circus/valyrian.js/commit/3522f12a58a7ccc8cdc27b4289680f5ae6995791))
+* update service worker example ([909c99a](https://github.com/Masquerade-Circus/valyrian.js/commit/909c99afce4fc4574fb571ae3142c7c996cbcd3c))
+
 ## [8.0.11](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.10...8.0.11) (2025-02-19)
 
 ### Code Refactoring

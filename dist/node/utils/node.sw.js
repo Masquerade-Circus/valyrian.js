@@ -4,21 +4,14 @@ const Log = console.log;
 const config = {
   version: "v1",
   name: "Valyrian.js",
+  logFetch: false,
+  offlinePage: "/offline.html",
   // Critical resources and offline page
   urls: ["/"]
 };
 
 const cacheName = `${config.version}::${config.name}`;
 const MAX_CACHE_SIZE = 50; // Max cache size
-
-// Send messages to clients (controlled pages)
-function sendMessageToClients(message) {
-  self.clients.matchAll().then((clients) => {
-    clients.forEach((client) => {
-      client.postMessage(message);
-    });
-  });
-}
 
 // Limit the cache size by deleting the oldest entries
 function limitCacheSize(name, size) {
@@ -34,7 +27,9 @@ function limitCacheSize(name, size) {
 }
 
 async function fetchRequest(event) {
-  Log("WORKER: fetch event for " + event.request.url);
+  if (config.logFetch) {
+    Log("WORKER: fetch event for " + event.request.url);
+  }
   try {
     // Clone the request to store it in the cache
     const fetchRequest = event.request.clone();
@@ -50,7 +45,9 @@ async function fetchRequest(event) {
       // Limit the cache size
       limitCacheSize(cacheName, MAX_CACHE_SIZE);
 
-      Log("WORKER: fetch response stored in cache.", event.request.url);
+      if (config.logFetch) {
+        Log("WORKER: fetch response stored in cache.", event.request.url);
+      }
     }
     return response;
   } catch (error) {
@@ -65,7 +62,7 @@ async function fetchRequest(event) {
 
     // Send the offline page if no cache is available
     const cache = await caches.open(cacheName);
-    const offlineResponse = await cache.match("/offline.html");
+    const offlineResponse = await cache.match(config.offlinePage);
     if (offlineResponse) {
       return offlineResponse;
     }
@@ -87,7 +84,9 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  Log("WORKER: fetch event in progress.", event.request.url);
+  if (config.logFetch) {
+    Log("WORKER: fetch event in progress.", event.request.url);
+  }
 
   // Ignore requests that are not GET
   if (event.request.method !== "GET") {
@@ -102,7 +101,9 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       caches.match(event.request).then((response) => {
         if (response) {
-          Log("WORKER: returning from cache.", event.request.url);
+          if (config.logFetch) {
+            Log("WORKER: returning from cache.", event.request.url);
+          }
           return response;
         }
         return fetchRequest(event);
@@ -121,6 +122,11 @@ self.addEventListener("install", (event) => {
       })
       .then(() => {
         Log("WORKER: install completed.");
+        self.clients.matchAll().then((clients) => {
+          clients.forEach((client) => {
+            client.postMessage({ type: "VERSION", version: config.version });
+          });
+        });
       })
   );
 });
@@ -130,15 +136,9 @@ self.addEventListener("activate", (event) => {
 
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          // Filter the caches that belong to this app version
-          .filter((key) => key !== cacheName)
-          .map((key) => caches.delete(key))
-      ).then(() => {
+      Promise.all(keys.filter((key) => key !== cacheName).map((key) => caches.delete(key))).then(() => {
         Log("WORKER: old caches cleared.");
-        // Notify clients about the new version
-        sendMessageToClients({ type: "NEW_VERSION" });
+        return self.clients.claim();
       })
     )
   );
@@ -146,7 +146,10 @@ self.addEventListener("activate", (event) => {
 
 // Listen for messages from clients
 self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
+  Log("WORKER: message received.", event.data);
+  if (event.data) {
+    if (event.data.type === "SKIP_WAITING") {
+      self.skipWaiting();
+    }
   }
 });
