@@ -1,3 +1,11 @@
+# Changelog
+
+## [8.0.13](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.12...8.0.13) (2025-10-17)
+
+### Code Refactoring
+
+* **pulse-store:** implement a this.$flush method to trigger immediate update inside pulses ([2db9762](https://github.com/Masquerade-Circus/valyrian.js/commit/2db97624a35bd050c5fa46dae62c0f65a71b1c8b))
+
 ## [8.0.12](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.11...8.0.12) (2025-02-20)
 
 ### Code Refactoring
