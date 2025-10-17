@@ -18,8 +18,8 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // lib/index.ts
-var lib_exports = {};
-__export(lib_exports, {
+var index_exports = {};
+__export(index_exports, {
   Vnode: () => Vnode,
   createElement: () => createElement,
   current: () => current,
@@ -47,7 +47,7 @@ __export(lib_exports, {
   updateVnode: () => updateVnode,
   v: () => v
 });
-module.exports = __toCommonJS(lib_exports);
+module.exports = __toCommonJS(index_exports);
 var isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
 var Vnode = class {
   constructor(tag, props, children, dom, isSVG, oldChildComponents, childComponents, hasKeys, oncreate, oncleanup, onupdate, onremove) {

@@ -1,5 +1,3 @@
-
-
 ## [8.0.12](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.11...8.0.12) (2025-02-20)
 
 ### Code Refactoring

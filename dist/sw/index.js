@@ -18,11 +18,11 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // lib/sw/index.ts
-var sw_exports = {};
-__export(sw_exports, {
+var index_exports = {};
+__export(index_exports, {
   registerSw: () => registerSw
 });
-module.exports = __toCommonJS(sw_exports);
+module.exports = __toCommonJS(index_exports);
 var import_valyrian = require("valyrian.js");
 async function registerSw(file = "./sw.js", options = { scope: "/" }) {
   if (import_valyrian.isNodeJs) {

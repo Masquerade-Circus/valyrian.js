@@ -18,14 +18,14 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // lib/pulses/index.ts
-var pulses_exports = {};
-__export(pulses_exports, {
+var index_exports = {};
+__export(index_exports, {
   createEffect: () => createEffect,
   createMutableStore: () => createMutableStore,
   createPulse: () => createPulse,
   createPulseStore: () => createPulseStore
 });
-module.exports = __toCommonJS(pulses_exports);
+module.exports = __toCommonJS(index_exports);
 var import_valyrian = require("valyrian.js");
 var import_utils = require("valyrian.js/utils");
 var effectStack = [];
@@ -117,12 +117,12 @@ function createStore(initialState, pulses, immutable = false) {
     }
     debounceTimeout = setTimeout(() => subscribers.forEach((subscriber) => subscriber()), 0);
   }
-  function setState(newState) {
+  function setState(newState, flush = false) {
     pulseCallCount--;
     if (!(0, import_utils.hasChanged)(localState, newState)) {
       return;
     }
-    if (pulseCallCount > 0) {
+    if (pulseCallCount > 0 && !flush) {
       return;
     }
     syncState(newState);
@@ -130,30 +130,43 @@ function createStore(initialState, pulses, immutable = false) {
     debouncedUpdate();
   }
   function getPulseMethod(key) {
-    return (...args) => {
+    function pulseMethod(...args) {
       pulseCallCount++;
       if (currentState === null) {
         currentState = (0, import_utils.deepCloneUnfreeze)(localState);
       }
+      const $flush = async () => {
+        setState(currentState, true);
+        currentState = (0, import_utils.deepCloneUnfreeze)(localState);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      };
+      Reflect.set(this, "$flush", $flush);
+      const emptyFlush = async () => {
+      };
       try {
-        const pulseResult = pulses[key](currentState, ...args);
+        const pulseResult = pulses[key].apply(this, [currentState, ...args]);
         if (pulseResult instanceof Promise) {
           return pulseResult.then((resolvedValue) => {
             setState(currentState);
+            Reflect.set(this, "$flush", emptyFlush);
             return resolvedValue;
           }).catch((error) => {
             console.error(`Error in pulse '${key}':`, error);
+            Reflect.set(this, "$flush", emptyFlush);
             throw error;
           });
         } else {
           setState(currentState);
+          Reflect.set(this, "$flush", emptyFlush);
           return pulseResult;
         }
       } catch (error) {
         console.error(`Error in pulse '${key}':`, error);
+        Reflect.set(this, "$flush", emptyFlush);
         throw error;
       }
-    };
+    }
+    return pulseMethod;
   }
   syncState(localState);
   const pulsesProxy = new Proxy(boundPulses, {
@@ -164,7 +177,11 @@ function createStore(initialState, pulses, immutable = false) {
       if (!(prop in pulses2)) {
         throw new Error(`Pulse '${prop}' does not exist`);
       }
-      return pulses2[prop];
+      const pulseMethod = pulses2[prop];
+      if (typeof pulseMethod === "function") {
+        return pulseMethod.bind(pulsesProxy);
+      }
+      return pulseMethod;
     }
   });
   return pulsesProxy;

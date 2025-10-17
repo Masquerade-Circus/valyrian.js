@@ -18,11 +18,11 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // lib/request/index.ts
-var request_exports = {};
-__export(request_exports, {
+var index_exports = {};
+__export(index_exports, {
   request: () => request
 });
-module.exports = __toCommonJS(request_exports);
+module.exports = __toCommonJS(index_exports);
 var import_valyrian = require("valyrian.js");
 var import_utils = require("valyrian.js/utils");
 function serialize(obj, prefix = "") {

@@ -28,8 +28,8 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // lib/node/index.ts
-var node_exports = {};
-__export(node_exports, {
+var index_exports = {};
+__export(index_exports, {
   SessionStorage: () => SessionStorage,
   domToHtml: () => domToHtml,
   domToHyperscript: () => domToHyperscript,
@@ -40,7 +40,7 @@ __export(node_exports, {
   render: () => render,
   sw: () => sw
 });
-module.exports = __toCommonJS(node_exports);
+module.exports = __toCommonJS(index_exports);
 
 // lib/node/utils/tree-adapter.ts
 var Node = class _Node {

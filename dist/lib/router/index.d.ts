@@ -25,9 +25,18 @@ export declare const RouterError: {
         stack?: string;
         cause?: unknown;
     };
+    new (message?: string, options?: ErrorOptions): {
+        status: number | undefined;
+        name: string;
+        message: string;
+        stack?: string;
+        cause?: unknown;
+    };
+    isError(error: unknown): error is Error;
+    isError(value: unknown): value is Error;
     captureStackTrace(targetObject: object, constructorOpt?: Function): void;
     captureStackTrace(targetObject: object, constructorOpt?: Function): void;
-    prepareStackTrace?: ((err: Error, stackTraces: NodeJS.CallSite[]) => any) | undefined;
+    prepareStackTrace(err: Error, stackTraces: NodeJS.CallSite[]): any;
     stackTraceLimit: number;
 };
 type RouteParams = string | Middleware | Router | (string | Middleware | Router | RouteParams)[];

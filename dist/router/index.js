@@ -18,14 +18,14 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // lib/router/index.ts
-var router_exports = {};
-__export(router_exports, {
+var index_exports = {};
+__export(index_exports, {
   Router: () => Router,
   RouterError: () => RouterError,
   mountRouter: () => mountRouter,
   redirect: () => redirect
 });
-module.exports = __toCommonJS(router_exports);
+module.exports = __toCommonJS(index_exports);
 var import_valyrian = require("valyrian.js");
 function flat(array) {
   return Array.isArray(array) ? array.flat(Infinity) : [array];

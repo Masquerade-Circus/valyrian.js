@@ -18,12 +18,12 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // lib/native-store/index.ts
-var native_store_exports = {};
-__export(native_store_exports, {
+var index_exports = {};
+__export(index_exports, {
   StorageType: () => StorageType,
   createNativeStore: () => createNativeStore
 });
-module.exports = __toCommonJS(native_store_exports);
+module.exports = __toCommonJS(index_exports);
 var import_valyrian = require("valyrian.js");
 var StorageType = /* @__PURE__ */ ((StorageType2) => {
   StorageType2["Session"] = "session";

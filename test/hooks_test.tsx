@@ -50,7 +50,7 @@ describe("Hooks", () => {
 
       let result = mount("div", Counter);
       expect(result).toEqual("<div>0 <div>ok</div></div>");
-      await new Promise((resolve) => setTimeout(() => resolve(void 0), 25));
+      await new Promise((resolve) => setTimeout(() => resolve(void 0), 29));
       result = update();
       expect(result).toEqual("<div>2 <div>not ok</div></div>");
       unmount();
@@ -88,14 +88,14 @@ describe("Hooks", () => {
 
       let result = mount("div", Component);
       expect(result).toEqual("<div>0 Hello</div>");
-      await new Promise((resolve) => setTimeout(() => resolve(void 0), 25));
+      await new Promise((resolve) => setTimeout(() => resolve(void 0), 29));
       change = true;
       result = update();
       expect(result).toEqual("<div>10 World</div>");
-      await new Promise((resolve) => setTimeout(() => resolve(void 0), 25));
+      await new Promise((resolve) => setTimeout(() => resolve(void 0), 29));
       result = update();
       expect(result).toEqual("<div>12 World</div>");
-      await new Promise((resolve) => setTimeout(() => resolve(void 0), 25));
+      await new Promise((resolve) => setTimeout(() => resolve(void 0), 29));
       result = update();
       expect(result).toEqual("<div>14 World</div>");
       change = false;

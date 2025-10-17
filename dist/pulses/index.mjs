@@ -90,12 +90,12 @@ function createStore(initialState, pulses, immutable = false) {
     }
     debounceTimeout = setTimeout(() => subscribers.forEach((subscriber) => subscriber()), 0);
   }
-  function setState(newState) {
+  function setState(newState, flush = false) {
     pulseCallCount--;
     if (!hasChanged(localState, newState)) {
       return;
     }
-    if (pulseCallCount > 0) {
+    if (pulseCallCount > 0 && !flush) {
       return;
     }
     syncState(newState);
@@ -103,30 +103,43 @@ function createStore(initialState, pulses, immutable = false) {
     debouncedUpdate();
   }
   function getPulseMethod(key) {
-    return (...args) => {
+    function pulseMethod(...args) {
       pulseCallCount++;
       if (currentState === null) {
         currentState = deepCloneUnfreeze(localState);
       }
+      const $flush = async () => {
+        setState(currentState, true);
+        currentState = deepCloneUnfreeze(localState);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      };
+      Reflect.set(this, "$flush", $flush);
+      const emptyFlush = async () => {
+      };
       try {
-        const pulseResult = pulses[key](currentState, ...args);
+        const pulseResult = pulses[key].apply(this, [currentState, ...args]);
         if (pulseResult instanceof Promise) {
           return pulseResult.then((resolvedValue) => {
             setState(currentState);
+            Reflect.set(this, "$flush", emptyFlush);
             return resolvedValue;
           }).catch((error) => {
             console.error(`Error in pulse '${key}':`, error);
+            Reflect.set(this, "$flush", emptyFlush);
             throw error;
           });
         } else {
           setState(currentState);
+          Reflect.set(this, "$flush", emptyFlush);
           return pulseResult;
         }
       } catch (error) {
         console.error(`Error in pulse '${key}':`, error);
+        Reflect.set(this, "$flush", emptyFlush);
         throw error;
       }
-    };
+    }
+    return pulseMethod;
   }
   syncState(localState);
   const pulsesProxy = new Proxy(boundPulses, {
@@ -137,7 +150,11 @@ function createStore(initialState, pulses, immutable = false) {
       if (!(prop in pulses2)) {
         throw new Error(`Pulse '${prop}' does not exist`);
       }
-      return pulses2[prop];
+      const pulseMethod = pulses2[prop];
+      if (typeof pulseMethod === "function") {
+        return pulseMethod.bind(pulsesProxy);
+      }
+      return pulseMethod;
     }
   });
   return pulsesProxy;

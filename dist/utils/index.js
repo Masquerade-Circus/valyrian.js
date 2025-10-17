@@ -18,15 +18,15 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // lib/utils/index.ts
-var utils_exports = {};
-__export(utils_exports, {
+var index_exports = {};
+__export(index_exports, {
   deepCloneUnfreeze: () => deepCloneUnfreeze,
   deepFreeze: () => deepFreeze,
   get: () => get,
   hasChanged: () => hasChanged,
   set: () => set
 });
-module.exports = __toCommonJS(utils_exports);
+module.exports = __toCommonJS(index_exports);
 
 // lib/utils/getter-setter.ts
 function get(obj, path, defaultValue) {

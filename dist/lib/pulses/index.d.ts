@@ -1,6 +1,8 @@
 type State = Record<string, any>;
 export type Pulse<StateType, TReturn = unknown> = (state: StateType, ...args: any[]) => TReturn | Promise<TReturn>;
-export type Pulses<StateType> = Record<string, Pulse<StateType, any>>;
+export type Pulses<StateType> = Record<string, Pulse<StateType, any> & {
+    $flush?: () => Promise<void>;
+}>;
 type ProxyState<StateType> = StateType & {
     [key: string]: any;
 };

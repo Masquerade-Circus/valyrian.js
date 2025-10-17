@@ -18,8 +18,8 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // lib/hooks/index.ts
-var hooks_exports = {};
-__export(hooks_exports, {
+var index_exports = {};
+__export(index_exports, {
   createHook: () => createHook,
   useCallback: () => useCallback,
   useEffect: () => useEffect,
@@ -27,7 +27,7 @@ __export(hooks_exports, {
   useRef: () => useRef,
   useState: () => useState
 });
-module.exports = __toCommonJS(hooks_exports);
+module.exports = __toCommonJS(index_exports);
 var import_valyrian = require("valyrian.js");
 var import_utils = require("valyrian.js/utils");
 var componentToHooksWeakMap = /* @__PURE__ */ new WeakMap();

@@ -18,11 +18,11 @@ var __copyProps = (to, from, except, desc) => {
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // lib/suspense/index.ts
-var suspense_exports = {};
-__export(suspense_exports, {
+var index_exports = {};
+__export(index_exports, {
   Suspense: () => Suspense
 });
-module.exports = __toCommonJS(suspense_exports);
+module.exports = __toCommonJS(index_exports);
 var import_valyrian = require("valyrian.js");
 var import_hooks = require("valyrian.js/hooks");
 function Suspense({
