@@ -2,7 +2,7 @@ import { domToHtml, domToHyperscript, htmlToDom, htmlToHyperscript } from "./uti
 import { icons } from "./utils/icons";
 import { inline } from "./utils/inline";
 import { sw } from "./utils/sw";
-import { SessionStorage } from "./utils/session-storage";
+import { ServerStorage } from "./utils/server-storage";
 declare function render(...args: any[]): string;
-export { domToHtml, domToHyperscript, htmlToDom, htmlToHyperscript, inline, sw, icons, render, SessionStorage };
+export { domToHtml, domToHyperscript, htmlToDom, htmlToHyperscript, inline, sw, icons, render, ServerStorage };
 //# sourceMappingURL=index.d.ts.map

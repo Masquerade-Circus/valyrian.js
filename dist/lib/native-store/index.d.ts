@@ -10,5 +10,5 @@ export interface NativeStorageInterface {
     load(): void;
     clear(): void;
 }
-export declare function createNativeStore<T>(key: string, definition?: Record<string, any>, storageType?: StorageType, reuseIfExist?: boolean): NativeStorageInterface & T;
+export declare function createNativeStore<T>(id: string, definition?: Record<string, any>, storageType?: StorageType, reuseIfExist?: boolean): NativeStorageInterface & T;
 //# sourceMappingURL=index.d.ts.map

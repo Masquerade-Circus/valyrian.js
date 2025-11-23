@@ -1,5 +1,7 @@
 # Changelog
 
+## [8.0.14](///compare/8.0.13...8.0.14) (2025-11-23)
+
 ## [8.0.13](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.12...8.0.13) (2025-10-17)
 
 ### Code Refactoring
