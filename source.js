@@ -44,6 +44,8 @@ async function build({
   external = []
 }) {
   try {
+    external.push("node:async_hooks");
+
     const header = `\n/*** ${entryPoint} ***/`;
     console.log(header);
 

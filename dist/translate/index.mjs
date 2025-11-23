@@ -2,9 +2,35 @@
 import { directive, setPropNameReserved, update } from "valyrian.js";
 import { get } from "valyrian.js/utils";
 var translations = {};
-var lang = "en";
+var currentLang = "en";
+var storeStrategy = {
+  get: () => currentLang,
+  set: (lang) => {
+    currentLang = lang;
+  }
+};
+function setStoreStrategy(strategy) {
+  storeStrategy = strategy;
+}
+function getLang() {
+  return storeStrategy.get();
+}
+function setLang(newLang) {
+  if (typeof newLang !== "string") {
+    throw new Error(`Language ${newLang} not found`);
+  }
+  const parsedLang = newLang.toLowerCase().split("-").shift()?.split("_").shift();
+  if (typeof parsedLang !== "string") {
+    throw new Error(`Language ${newLang} not found`);
+  }
+  if (!translations[parsedLang]) {
+    throw new Error(`Language ${newLang} not found`);
+  }
+  storeStrategy.set(parsedLang);
+  update();
+}
 function t(path, params) {
-  const langDef = translations[lang];
+  const langDef = translations[getLang()];
   const translation = get(langDef, path);
   if (typeof translation !== "string") {
     console.warn(`Translation not found for ${path}`);
@@ -21,37 +47,20 @@ function t(path, params) {
   });
 }
 function setTranslations(defaultTranslation, newTranslations = {}) {
-  for (const lang2 in translations) {
-    Reflect.deleteProperty(translations, lang2);
+  for (const lang in translations) {
+    Reflect.deleteProperty(translations, lang);
   }
   translations.en = { ...defaultTranslation };
-  for (const lang2 in newTranslations) {
-    translations[lang2] = {
+  for (const lang in newTranslations) {
+    translations[lang] = {
       ...defaultTranslation,
-      ...newTranslations[lang2]
+      ...newTranslations[lang]
     };
   }
   update();
 }
 function getTranslations() {
   return translations;
-}
-function setLang(newLang) {
-  if (typeof newLang !== "string") {
-    throw new Error(`Language ${newLang} not found`);
-  }
-  const parsedLang = newLang.toLowerCase().split("-").shift()?.split("_").shift();
-  if (typeof parsedLang !== "string") {
-    throw new Error(`Language ${newLang} not found`);
-  }
-  if (!translations[parsedLang]) {
-    throw new Error(`Language ${newLang} not found`);
-  }
-  lang = parsedLang;
-  update();
-}
-function getLang() {
-  return lang;
 }
 var NumberFormatter = class _NumberFormatter {
   #value = 0;
@@ -73,8 +82,8 @@ var NumberFormatter = class _NumberFormatter {
     return isNaN(number) ? 0 : number;
   }
   format(digits = 2, options = {}, customLocale) {
-    const lang2 = customLocale || getLang();
-    const formatter = new Intl.NumberFormat(lang2, {
+    const lang = customLocale || getLang();
+    const formatter = new Intl.NumberFormat(lang, {
       style: "currency",
       currency: "USD",
       minimumFractionDigits: digits,
@@ -124,6 +133,7 @@ export {
   getLang,
   getTranslations,
   setLang,
+  setStoreStrategy,
   setTranslations,
   t
 };

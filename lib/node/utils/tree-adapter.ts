@@ -483,6 +483,28 @@ export class Document extends Element {
   }
 }
 
+const ESCAPE_LOOKUP: { [key: string]: string } = {
+  "&": "&amp;",
+  ">": "&gt;",
+  "<": "&lt;",
+  '"': "&quot;",
+  "'": "&#39;"
+};
+
+const ESCAPE_REGEX = /[&><"']/g;
+
+function escapeHtml(str: string | any): string {
+  if (typeof str !== "string") {
+    return String(str);
+  }
+
+  if (ESCAPE_REGEX.test(str) === false) {
+    return str;
+  }
+
+  return str.replace(ESCAPE_REGEX, (match) => ESCAPE_LOOKUP[match]).replace(/&amp;amp;/g, "&amp;");
+}
+
 const selfClosingTags = [
   "area",
   "base",
@@ -509,8 +531,10 @@ export function domToHtml(dom: Element | Text | DocumentFragment): string {
   if (dom.nodeType === 1) {
     const name = dom.nodeName.toLowerCase();
     let str = "<" + name;
+
     for (let i = 0, l = dom.attributes.length; i < l; i++) {
-      str += " " + dom.attributes[i].nodeName + '="' + dom.attributes[i].nodeValue + '"';
+      const attr = dom.attributes[i];
+      str += " " + attr.nodeName + '="' + escapeHtml(attr.nodeValue) + '"';
     }
 
     if (selfClosingTags.indexOf(name) === -1) {

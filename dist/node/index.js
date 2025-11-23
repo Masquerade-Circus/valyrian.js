@@ -30,7 +30,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // lib/node/index.ts
 var index_exports = {};
 __export(index_exports, {
-  SessionStorage: () => SessionStorage,
+  ServerStorage: () => ServerStorage,
   domToHtml: () => domToHtml,
   domToHyperscript: () => domToHyperscript,
   htmlToDom: () => htmlToDom,
@@ -453,6 +453,23 @@ var Document = class extends Element {
     return new Text(text);
   }
 };
+var ESCAPE_LOOKUP = {
+  "&": "&amp;",
+  ">": "&gt;",
+  "<": "&lt;",
+  '"': "&quot;",
+  "'": "&#39;"
+};
+var ESCAPE_REGEX = /[&><"']/g;
+function escapeHtml(str) {
+  if (typeof str !== "string") {
+    return String(str);
+  }
+  if (ESCAPE_REGEX.test(str) === false) {
+    return str;
+  }
+  return str.replace(ESCAPE_REGEX, (match) => ESCAPE_LOOKUP[match]).replace(/&amp;amp;/g, "&amp;");
+}
 var selfClosingTags = [
   "area",
   "base",
@@ -478,7 +495,8 @@ function domToHtml(dom) {
     const name = dom.nodeName.toLowerCase();
     let str = "<" + name;
     for (let i = 0, l = dom.attributes.length; i < l; i++) {
-      str += " " + dom.attributes[i].nodeName + '="' + dom.attributes[i].nodeValue + '"';
+      const attr = dom.attributes[i];
+      str += " " + attr.nodeName + '="' + escapeHtml(attr.nodeValue) + '"';
     }
     if (selfClosingTags.indexOf(name) === -1) {
       str += ">";
@@ -974,115 +992,60 @@ function sw(file, options = {}) {
   import_fs3.default.writeFileSync(file, contents, "utf8");
 }
 
-// lib/node/utils/session-storage.ts
-var import_fs4 = __toESM(require("fs"));
-var import_path2 = __toESM(require("path"));
-var SessionStorage = class {
-  storage;
-  limit;
-  persist;
-  filePath;
-  directory = ".session-storage";
-  constructor({ persist = false, filePath = "./sessionData.json" } = {}) {
-    this.storage = {};
-    this.limit = 5 * 1024 * 1024;
-    this.persist = persist;
-    this.filePath = import_path2.default.resolve(this.directory, filePath);
-    if (this.persist) {
-      if (!import_fs4.default.existsSync(this.directory)) {
-        import_fs4.default.mkdirSync(this.directory, { recursive: true });
-      }
-      this.loadFromFile();
-    }
+// lib/node/utils/server-storage.ts
+var import_node_async_hooks = require("node:async_hooks");
+var storageContext = new import_node_async_hooks.AsyncLocalStorage();
+var globalStore = {};
+var ServerStorage = class {
+  get store() {
+    return storageContext.getStore() || globalStore;
   }
-  // Calculate total size in bytes of stored data
-  getStorageSize() {
-    return new TextEncoder().encode(JSON.stringify(this.storage)).length;
-  }
-  // Check if storage limit is exceeded
-  checkSizeLimit() {
-    const size = this.getStorageSize();
-    if (size > this.limit) {
-      throw new DOMException("Storage limit exceeded", "QuotaExceededError");
-    }
-  }
-  // Store value under the specified key
-  setItem(key, value) {
-    if (key === null || key === void 0) {
-      throw new TypeError("Failed to execute 'setItem' on 'Storage': 1 argument required, but only 0 present.");
-    }
-    if (value === null) {
-      value = "null";
-    } else if (value === void 0) {
-      value = "undefined";
-    }
-    this.loadFromFile();
-    this.storage[key] = String(value);
-    this.checkSizeLimit();
-    this.saveToFile();
-  }
-  // Retrieve value stored under the specified key
-  getItem(key) {
-    if (key === null || key === void 0) {
-      throw new TypeError("Failed to execute 'getItem' on 'Storage': 1 argument required, but only 0 present.");
-    }
-    this.loadFromFile();
-    return this.storage[key] || null;
-  }
-  // Remove the value under the specified key
-  removeItem(key) {
-    if (key === null || key === void 0) {
-      throw new TypeError("Failed to execute 'removeItem' on 'Storage': 1 argument required, but only 0 present.");
-    }
-    this.loadFromFile();
-    Reflect.deleteProperty(this.storage, key);
-    this.saveToFile();
-  }
-  // Clear all stored values
-  clear() {
-    this.storage = {};
-    this.saveToFile();
-  }
-  // Return the number of stored items
   get length() {
-    return Object.keys(this.storage).length;
+    const store = this.store;
+    return store ? Object.keys(store).length : 0;
   }
-  // Return the key at the specified index
+  clear() {
+    const store = this.store;
+    if (store) {
+      for (const key in store) {
+        Reflect.deleteProperty(store, key);
+      }
+    }
+  }
+  getItem(key) {
+    const store = this.store;
+    return store ? store[key] || null : null;
+  }
   key(index) {
-    this.loadFromFile();
-    const keys = Object.keys(this.storage);
-    return keys[index] || null;
+    const store = this.store;
+    return store ? Object.keys(store)[index] || null : null;
   }
-  // Save data to a file (only if persistence is enabled)
-  saveToFile() {
-    if (this.persist) {
-      try {
-        import_fs4.default.writeFileSync(this.filePath, JSON.stringify(this.storage), "utf-8");
-      } catch (error) {
-        throw new Error(`Error saving data to file: ${error.message}`);
-      }
+  removeItem(key) {
+    const store = this.store;
+    if (store) {
+      Reflect.deleteProperty(store, key);
     }
   }
-  // Load data from a file (only if persistence is enabled)
-  loadFromFile() {
-    if (this.persist) {
-      try {
-        if (import_fs4.default.existsSync(this.filePath)) {
-          const data = import_fs4.default.readFileSync(this.filePath, "utf-8");
-          this.storage = JSON.parse(data || "{}");
-        }
-      } catch (error) {
-        throw new Error(`Error loading data from file: ${error.message}`);
-      }
+  setItem(key, value) {
+    const store = this.store;
+    if (store) {
+      store[key] = String(value);
     }
+  }
+  static run(callback) {
+    storageContext.run({}, callback);
+  }
+  toJSON() {
+    const store = this.store;
+    return store ? { ...store } : {};
   }
 };
 
 // lib/node/index.ts
 global.FormData = import_form_data.default;
 global.document = document;
-global.sessionStorage = new SessionStorage();
-global.localStorage = new SessionStorage();
+global.sessionStorage = new ServerStorage();
+global.localStorage = new ServerStorage();
 function render(...args) {
   const Component = () => args;
   const result = (0, import_valyrian.mount)("div", Component);

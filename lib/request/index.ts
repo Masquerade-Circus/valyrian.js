@@ -68,10 +68,17 @@ function serialize(obj: Record<string, any>, prefix: string = ""): URLSearchPara
 }
 
 function serializeFormData(data: Record<string, any>): FormData {
-  return Object.entries(data).reduce((fd, [key, value]) => {
-    fd.append(key, value);
-    return fd;
-  }, new FormData());
+  const fd = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value === null || value === undefined) return; // Ignorar nulos
+
+    if (Array.isArray(value)) {
+      value.forEach((v) => fd.append(key, v));
+    } else {
+      fd.append(key, value);
+    }
+  });
+  return fd;
 }
 
 function parseUrl(url: string, options: RequestOptionsWithUrls) {
@@ -96,6 +103,14 @@ function parseUrl(url: string, options: RequestOptionsWithUrls) {
 }
 
 const defaultOptions: RequestOptions = { allowedMethods: ["get", "post", "put", "patch", "delete", "head", "options"] };
+
+const isNativeBody = (data: any) =>
+  data instanceof FormData ||
+  data instanceof URLSearchParams ||
+  data instanceof Blob ||
+  data instanceof ArrayBuffer ||
+  (typeof DataView !== "undefined" && data instanceof DataView) ||
+  (typeof ReadableStream !== "undefined" && data instanceof ReadableStream);
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
@@ -157,12 +172,17 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
     }
 
     if (data) {
-      const isJson = /json/gi.test(contentType);
-
       if (innerOptions.method === "GET" && typeof data === "object") {
         finalUrl.search = serialize(data).toString();
-      } else if (innerOptions.method !== "GET") {
-        innerOptions.body = isJson ? JSON.stringify(data) : serializeFormData(data);
+      } else if (isNativeBody(data) || typeof data === "string") {
+        innerOptions.body = data as BodyInit;
+      } else {
+        const isJson = /json/gi.test(contentType);
+        if (isJson) {
+          innerOptions.body = JSON.stringify(data);
+        } else {
+          innerOptions.body = serializeFormData(data);
+        }
       }
     }
 

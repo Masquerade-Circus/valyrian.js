@@ -30,7 +30,7 @@ var StorageType = /* @__PURE__ */ ((StorageType2) => {
   StorageType2["Local"] = "local";
   return StorageType2;
 })(StorageType || {});
-var ids = /* @__PURE__ */ new Set();
+var stores = /* @__PURE__ */ new Map();
 function getStorage(storageType) {
   if (import_valyrian.isNodeJs && typeof localStorage === "undefined") {
     throw new Error(
@@ -39,36 +39,35 @@ function getStorage(storageType) {
   }
   return storageType === "session" /* Session */ ? sessionStorage : localStorage;
 }
-function createNativeStore(key, definition = {}, storageType = "local" /* Local */, reuseIfExist = false) {
+function createNativeStore(id, definition = {}, storageType = "local" /* Local */, reuseIfExist = false) {
   const nativeStore = getStorage(storageType);
-  if (ids.has(key)) {
+  if (stores.has(id)) {
     if (reuseIfExist) {
-      console.warn(`Store with key ${key} already exists and will be reused`);
+      console.warn(`Store with key ${id} already exists and will be reused`);
+      return stores.get(id);
     } else {
-      throw new Error(`Store with key ${key} already exists`);
+      throw new Error(`Store with key ${id} already exists`);
     }
   }
-  ids.add(key);
-  const id = key;
   const Store = {
     state: {},
-    set(key2, value) {
+    set(key, value) {
       try {
-        this.state[key2] = value;
+        this.state[key] = value;
         nativeStore.setItem(id, JSON.stringify(this.state));
       } catch (e) {
         console.error("Error setting item in storage:", e);
       }
     },
-    get(key2) {
+    get(key) {
       if (Object.keys(this.state).length === 0) {
         this.load();
       }
-      return this.state[key2];
+      return this.state[key];
     },
-    delete(key2) {
+    delete(key) {
       try {
-        Reflect.deleteProperty(this.state, key2);
+        Reflect.deleteProperty(this.state, key);
         nativeStore.setItem(id, JSON.stringify(this.state));
       } catch (e) {
         console.error("Error deleting item in storage:", e);
@@ -98,6 +97,20 @@ function createNativeStore(key, definition = {}, storageType = "local" /* Local 
     },
     ...definition
   };
+  if (!import_valyrian.isNodeJs && storageType === "local" /* Local */) {
+    let storageListener2 = function(e) {
+      if (e.key === id) {
+        try {
+          Store.state = e.newValue === null ? {} : JSON.parse(e.newValue);
+        } catch (err) {
+          console.error(`Error syncing store ${id} from storage event`, err);
+        }
+      }
+    };
+    var storageListener = storageListener2;
+    window.addEventListener("storage", storageListener2);
+  }
   Store.load();
+  stores.set(id, Store);
   return Store;
 }

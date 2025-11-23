@@ -14,10 +14,16 @@ function serialize(obj, prefix = "") {
   return params;
 }
 function serializeFormData(data) {
-  return Object.entries(data).reduce((fd, [key, value]) => {
-    fd.append(key, value);
-    return fd;
-  }, new FormData());
+  const fd = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value === null || value === void 0) return;
+    if (Array.isArray(value)) {
+      value.forEach((v) => fd.append(key, v));
+    } else {
+      fd.append(key, value);
+    }
+  });
+  return fd;
 }
 function parseUrl(url, options) {
   const urlWithoutSlash = url.replace(/\/+$/, "").trim();
@@ -36,6 +42,7 @@ function parseUrl(url, options) {
   return new URL(u, options.urls.base);
 }
 var defaultOptions = { allowedMethods: ["get", "post", "put", "patch", "delete", "head", "options"] };
+var isNativeBody = (data) => data instanceof FormData || data instanceof URLSearchParams || data instanceof Blob || data instanceof ArrayBuffer || typeof DataView !== "undefined" && data instanceof DataView || typeof ReadableStream !== "undefined" && data instanceof ReadableStream;
 function Requester(baseUrl = "", options = defaultOptions) {
   const url = baseUrl.replace(/\/$/gi, "").trim();
   if (!options.urls) {
@@ -80,11 +87,17 @@ function Requester(baseUrl = "", options = defaultOptions) {
       throw new Error(`Failed to parse URL: ${url2}`);
     }
     if (data) {
-      const isJson = /json/gi.test(contentType);
       if (innerOptions.method === "GET" && typeof data === "object") {
         finalUrl.search = serialize(data).toString();
-      } else if (innerOptions.method !== "GET") {
-        innerOptions.body = isJson ? JSON.stringify(data) : serializeFormData(data);
+      } else if (isNativeBody(data) || typeof data === "string") {
+        innerOptions.body = data;
+      } else {
+        const isJson = /json/gi.test(contentType);
+        if (isJson) {
+          innerOptions.body = JSON.stringify(data);
+        } else {
+          innerOptions.body = serializeFormData(data);
+        }
       }
     }
     const response = await fetch(finalUrl.toString(), innerOptions);

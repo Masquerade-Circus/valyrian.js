@@ -5,12 +5,12 @@ import FormData from "form-data";
 import { icons } from "./utils/icons";
 import { inline } from "./utils/inline";
 import { sw } from "./utils/sw";
-import { SessionStorage } from "./utils/session-storage";
+import { ServerStorage } from "./utils/server-storage";
 
 global.FormData = FormData as any;
 global.document = document as any;
-global.sessionStorage = new SessionStorage();
-global.localStorage = new SessionStorage();
+global.sessionStorage = new ServerStorage();
+global.localStorage = new ServerStorage();
 
 function render(...args: any[]) {
   const Component = () => args;
@@ -19,4 +19,4 @@ function render(...args: any[]) {
   return result;
 }
 
-export { domToHtml, domToHyperscript, htmlToDom, htmlToHyperscript, inline, sw, icons, render, SessionStorage };
+export { domToHtml, domToHyperscript, htmlToDom, htmlToHyperscript, inline, sw, icons, render, ServerStorage };

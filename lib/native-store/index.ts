@@ -20,7 +20,7 @@ export interface NativeStorageInterface {
   clear(): void;
 }
 
-const ids = new Set<string>();
+const stores = new Map<string, NativeStorageInterface>();
 
 function getStorage(storageType: StorageType) {
   if (isNodeJs && typeof localStorage === "undefined") {
@@ -32,24 +32,22 @@ function getStorage(storageType: StorageType) {
 }
 
 export function createNativeStore<T>(
-  key: string,
+  id: string,
   definition: Record<string, any> = {},
   storageType: StorageType = StorageType.Local,
   reuseIfExist = false
 ): NativeStorageInterface & T {
   const nativeStore = getStorage(storageType);
 
-  if (ids.has(key)) {
+  if (stores.has(id)) {
     if (reuseIfExist) {
       // eslint-disable-next-line no-console
-      console.warn(`Store with key ${key} already exists and will be reused`);
+      console.warn(`Store with key ${id} already exists and will be reused`);
+      return stores.get(id) as NativeStorageInterface & T;
     } else {
-      throw new Error(`Store with key ${key} already exists`);
+      throw new Error(`Store with key ${id} already exists`);
     }
   }
-  ids.add(key);
-
-  const id = key;
 
   const Store: NativeStorageInterface = {
     state: {},
@@ -100,7 +98,23 @@ export function createNativeStore<T>(
     ...definition
   };
 
+  if (!isNodeJs && storageType === StorageType.Local) {
+    function storageListener(e: StorageEvent) {
+      if (e.key === id) {
+        try {
+          Store.state = e.newValue === null ? {} : JSON.parse(e.newValue);
+        } catch (err) {
+          console.error(`Error syncing store ${id} from storage event`, err);
+        }
+      }
+    }
+
+    window.addEventListener("storage", storageListener);
+  }
+
   Store.load();
+
+  stores.set(id, Store);
 
   return Store as NativeStorageInterface & T;
 }

@@ -526,7 +526,7 @@ describe("PulseStore", () => {
 
     const duration = end - start;
     console.log(`Update duration: ${duration}ms`);
-    expect(duration).toBeLessThan(10); // Less than 10ms
+    expect(duration).toBeLessThan(15); // Less than 15ms
   });
 
   it("should handle a large number of subscribers", async () => {

@@ -1,11 +1,45 @@
-import { directive, setPropNameReserved, update, VnodeWithDom } from "valyrian.js";
+import { current, directive, setPropNameReserved, update, VnodeWithDom } from "valyrian.js";
 import { get } from "valyrian.js/utils";
 
 const translations: Record<string, Record<string, any>> = {};
-let lang = "en";
+let currentLang = "en";
+
+let storeStrategy = {
+  get: () => currentLang,
+  set: (lang: string) => {
+    currentLang = lang;
+  }
+};
+
+export function setStoreStrategy(strategy: { get: () => string; set: (lang: string) => void }) {
+  storeStrategy = strategy;
+}
+
+export function getLang(): string {
+  return storeStrategy.get();
+}
+
+export function setLang(newLang: string): void {
+  if (typeof newLang !== "string") {
+    throw new Error(`Language ${newLang} not found`);
+  }
+
+  const parsedLang = newLang.toLowerCase().split("-").shift()?.split("_").shift();
+
+  if (typeof parsedLang !== "string") {
+    throw new Error(`Language ${newLang} not found`);
+  }
+
+  if (!translations[parsedLang]) {
+    throw new Error(`Language ${newLang} not found`);
+  }
+
+  storeStrategy.set(parsedLang);
+  update();
+}
 
 export function t(path: string, params?: Record<string, string>): string {
-  const langDef = translations[lang];
+  const langDef = translations[getLang()];
   const translation = get(langDef, path);
 
   if (typeof translation !== "string") {
@@ -47,29 +81,6 @@ export function setTranslations(
 
 export function getTranslations(): Record<string, Record<string, any>> {
   return translations;
-}
-
-export function setLang(newLang: string): void {
-  if (typeof newLang !== "string") {
-    throw new Error(`Language ${newLang} not found`);
-  }
-
-  const parsedLang = newLang.toLowerCase().split("-").shift()?.split("_").shift();
-
-  if (typeof parsedLang !== "string") {
-    throw new Error(`Language ${newLang} not found`);
-  }
-
-  if (!translations[parsedLang]) {
-    throw new Error(`Language ${newLang} not found`);
-  }
-
-  lang = parsedLang;
-  update();
-}
-
-export function getLang(): string {
-  return lang;
 }
 
 export class NumberFormatter {

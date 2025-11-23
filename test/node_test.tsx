@@ -228,24 +228,30 @@ describe("All lib files", () => {
           }
         }
       }
-      return filesList;
+      // Sort by depth and then by name
+      return filesList.sort((a, b) => {
+        const depthA = a.path.split("/").length;
+        const depthB = b.path.split("/").length;
+        if (depthA === depthB) {
+          return a.path.localeCompare(b.path);
+        }
+        return depthA - depthB;
+      });
     }
 
     const allFiles = readFilesRecursivelySync("./lib");
-    // Sort by depth and then by name
-    allFiles.sort((a, b) => {
-      const depthA = a.path.split("/").length;
-      const depthB = b.path.split("/").length;
-      if (depthA === depthB) {
-        return a.path.localeCompare(b.path);
-      }
-      return depthA - depthB;
-    });
+    const allTestFiles = readFilesRecursivelySync("./test");
 
-    const text = allFiles.reduce(
-      (acc, file) => `${acc}\n\n/****************** Path: ${file.path} ******************/\n${file.content}`,
-      ""
-    );
+    const text =
+      allFiles.reduce(
+        (acc, file) => `${acc}\n\n/****************** Path: ${file.path} ******************/\n${file.content}`,
+        ""
+      ) +
+      allTestFiles.reduce(
+        (acc, file) => `${acc}\n\n/****************** Path: ${file.path} ******************/\n${file.content}`,
+        ""
+      );
+
     fs.writeFileSync(".tmp/all-lib-files.ts", text);
   });
 });
