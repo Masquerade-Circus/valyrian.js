@@ -11,7 +11,6 @@
             import { createPulseStore, createPulse } from "valyrian.js/pulses";
             import { connectFluxStore, connectPulseStore, connectPulse } from "valyrian.js/redux-devtools";
 
-            // Mock Redux DevTools
             const logs = [];
             const log = (msg) => {
                 console.log(msg);
@@ -23,8 +22,6 @@
             log.connect = (options) => log({ type: "connect", options });
             log.init = (state) => log({ type: "init", state });
             log.send = (action, state) => log({ type: "send", action, state });
-
-
 
             async function runTest() {
                 try {

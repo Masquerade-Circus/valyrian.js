@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.1.0](///compare/8.0.14...8.1.0) (2025-11-24)
+
+### Features
+
+* implement redux devtools with flux-store and pulses 436f94d
+
 ## [8.0.14](///compare/8.0.13...8.0.14) (2025-11-23)
 
 ## [8.0.13](https://github.com/Masquerade-Circus/valyrian.js/compare/8.0.12...8.0.13) (2025-10-17)
