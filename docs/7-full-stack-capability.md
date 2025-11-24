@@ -251,10 +251,6 @@ const UserProfile = () => {
 
 > **Technical Detail:** The `ServerStorage` is ephemeral. Data saved during the request is lost once the response is sent and the context is destroyed. It is intended for **Session State** (Cookies, Tokens, User Info), not as a permanent database.
 
-Aquí tienes la documentación técnica altamente detallada para el punto **7.4. Progressive Web Apps (PWA)**.
-
-Esta sección destaca una de las capacidades más singulares de Valyrian.js: no solo es un framework de ejecución, sino que incluye **herramientas de compilación (Build Tools)** nativas para generar automáticamente todos los activos necesarios para una PWA (Iconos, Manifiestos y Service Workers) sin necesidad de configurar Webpack o plugins externos.
-
 ## 7.4. Progressive Web Apps (PWA)
 
 Valyrian.js treats PWA capabilities as a build-time infrastructure requirement. The `lib/node` module includes utilities to automate the generation of assets and logic required to make your application installable and offline-capable.
@@ -422,10 +418,6 @@ function notifyUpdate(worker) {
   }
 }
 ```
-
-Aquí tienes la documentación técnica detallada para los puntos **7.5, 7.6 y 7.7**, basada en el análisis del módulo `lib/node/utils/inline.ts`.
-
-Estas secciones destacan la capacidad de **Valyrian.js** de actuar como su propio *Bundler* y optimizador de assets, eliminando la necesidad de instalar herramientas externas como Webpack, Vite o PostCSS para proyectos estándar.
 
 ## 7.5. Bundling JavaScript & TypeScript (`inline`)
 

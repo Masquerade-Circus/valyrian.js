@@ -6,7 +6,6 @@
 
 2. Getting Started (The "No-Build" Approach)
 
-* Objetivo: Copiar, Pegar, Ejecutar. Sin NPM install inicial.
 * 2.1. The Browser Method (CDN):
   * Using ES Modules directly in HTML.
   * Example: import 'https://unpkg.com/valyrian.js'.
@@ -17,7 +16,6 @@
 
 3. The Essentials (View & Interaction)
 
-* Objetivo: Aprender la sintaxis central usando el setup simple del punto 2.
 * 3.1. Hello World: Mounting your first VNode.
 * 3.2. Components:
   * Functional Components (JSX/TSX).

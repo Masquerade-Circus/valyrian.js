@@ -413,10 +413,6 @@ const LifecycleBox = () => (
 );
 ```
 
-Aquí tienes la actualización de la sub-sección **Creating Custom Hooks** dentro del punto **4.3**, detallando la interfaz `HookDefinition` como solicitaste.
-
-He desglosado cada método explicando su momento de ejecución y su propósito arquitectónico (inicialización, persistencia, limpieza y transformación).
-
 ### Creating Custom Hooks (`createHook`)
 
 Valyrian exposes its internal hook factory, `createHook`. This is the same primitive used to build `useState` and `useEffect`. It allows you to create complex, stateful logic that survives re-renders and cleans up after itself automatically.
