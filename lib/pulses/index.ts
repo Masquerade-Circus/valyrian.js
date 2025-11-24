@@ -56,7 +56,11 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
   initialState: StateType | (() => StateType) | null,
   pulses: PulsesType,
   immutable = false
-): StorePulses<PulsesType> & { state: ProxyState<StateType> } {
+): StorePulses<PulsesType> & {
+  state: ProxyState<StateType>;
+  on: (event: string, callback: Function) => void;
+  off: (event: string, callback: Function) => void;
+} {
   const subscribers = new Set<Function>();
   const domWithVnodesToUpdate = new WeakSet<DomElement>();
 
@@ -160,7 +164,7 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
       const emptyFlush = async () => {};
 
       try {
-        const pulseResult = pulses[key].apply(this, [currentState, ...args]);
+        const pulseResult = pulses[key].apply(this, [currentState, ...args] as any);
         if (pulseResult instanceof Promise) {
           return pulseResult
             .then((resolvedValue) => {
@@ -190,10 +194,32 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
 
   syncState(localState);
 
+  const listeners: Record<string, Function[]> = {};
+  const trigger = (event: string, ...args: any[]) => {
+    if (listeners[event]) {
+      listeners[event].forEach((callback) => callback(...args));
+    }
+  };
+
   const pulsesProxy = new Proxy(boundPulses, {
     get: (pulses, prop: string) => {
       if (prop === "state") {
         return proxyState;
+      }
+      if (prop === "on") {
+        return (event: string, callback: Function) => {
+          if (!listeners[event]) {
+            listeners[event] = [];
+          }
+          listeners[event].push(callback);
+        };
+      }
+      if (prop === "off") {
+        return (event: string, callback: Function) => {
+          if (listeners[event]) {
+            listeners[event] = listeners[event].filter((cb) => cb !== callback);
+          }
+        };
       }
       if (!(prop in pulses)) {
         throw new Error(`Pulse '${prop}' does not exist`);
@@ -201,27 +227,49 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
       const pulseMethod = pulses[prop];
 
       if (typeof pulseMethod === "function") {
-        return pulseMethod.bind(pulsesProxy);
+        return (...args: any[]) => {
+          const result = pulseMethod.apply(pulsesProxy, args as any);
+          if (result instanceof Promise) {
+            return result.then((r) => {
+              trigger("pulse", prop, args);
+              return r;
+            });
+          }
+          trigger("pulse", prop, args);
+          return result;
+        };
       }
 
       return pulseMethod;
     }
   });
 
-  return pulsesProxy as StorePulses<PulsesType> & { state: ProxyState<StateType> };
+  return pulsesProxy as StorePulses<PulsesType> & {
+    state: ProxyState<StateType>;
+    on: (event: string, callback: Function) => void;
+    off: (event: string, callback: Function) => void;
+  };
 }
 
 export function createPulseStore<StateType extends State, PulsesType extends Pulses<StateType>>(
   initialState: StateType,
   pulses: PulsesType
-): StorePulses<PulsesType> & { state: ProxyState<StateType> } {
+): StorePulses<PulsesType> & {
+  state: ProxyState<StateType>;
+  on: (event: string, callback: Function) => void;
+  off: (event: string, callback: Function) => void;
+} {
   return createStore(initialState, pulses, true);
 }
 
 export function createMutableStore<StateType extends State, PulsesType extends Pulses<StateType>>(
   initialState: StateType,
   pulses: PulsesType
-): StorePulses<PulsesType> & { state: ProxyState<StateType> } {
+): StorePulses<PulsesType> & {
+  state: ProxyState<StateType>;
+  on: (event: string, callback: Function) => void;
+  off: (event: string, callback: Function) => void;
+} {
   console.warn(
     "Warning: You are working with a mutable state. This can lead to unpredictable behavior. All state changes made outside of a pulse will not trigger a re-render."
   );

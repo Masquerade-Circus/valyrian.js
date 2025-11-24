@@ -169,17 +169,48 @@ function createStore(initialState, pulses, immutable = false) {
     return pulseMethod;
   }
   syncState(localState);
+  const listeners = {};
+  const trigger = (event, ...args) => {
+    if (listeners[event]) {
+      listeners[event].forEach((callback) => callback(...args));
+    }
+  };
   const pulsesProxy = new Proxy(boundPulses, {
     get: (pulses2, prop) => {
       if (prop === "state") {
         return proxyState;
+      }
+      if (prop === "on") {
+        return (event, callback) => {
+          if (!listeners[event]) {
+            listeners[event] = [];
+          }
+          listeners[event].push(callback);
+        };
+      }
+      if (prop === "off") {
+        return (event, callback) => {
+          if (listeners[event]) {
+            listeners[event] = listeners[event].filter((cb) => cb !== callback);
+          }
+        };
       }
       if (!(prop in pulses2)) {
         throw new Error(`Pulse '${prop}' does not exist`);
       }
       const pulseMethod = pulses2[prop];
       if (typeof pulseMethod === "function") {
-        return pulseMethod.bind(pulsesProxy);
+        return (...args) => {
+          const result = pulseMethod.apply(pulsesProxy, args);
+          if (result instanceof Promise) {
+            return result.then((r) => {
+              trigger("pulse", prop, args);
+              return r;
+            });
+          }
+          trigger("pulse", prop, args);
+          return result;
+        };
       }
       return pulseMethod;
     }

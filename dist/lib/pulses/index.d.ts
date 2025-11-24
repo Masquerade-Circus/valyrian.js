@@ -11,9 +11,13 @@ type StorePulses<PulsesType extends Pulses<any>> = {
 };
 export declare function createPulseStore<StateType extends State, PulsesType extends Pulses<StateType>>(initialState: StateType, pulses: PulsesType): StorePulses<PulsesType> & {
     state: ProxyState<StateType>;
+    on: (event: string, callback: Function) => void;
+    off: (event: string, callback: Function) => void;
 };
 export declare function createMutableStore<StateType extends State, PulsesType extends Pulses<StateType>>(initialState: StateType, pulses: PulsesType): StorePulses<PulsesType> & {
     state: ProxyState<StateType>;
+    on: (event: string, callback: Function) => void;
+    off: (event: string, callback: Function) => void;
 };
 export declare function createEffect(effect: Function): void;
 export declare function createPulse<T>(initialValue: T): [() => T, (newValue: T | ((current: T) => T)) => void, () => void];

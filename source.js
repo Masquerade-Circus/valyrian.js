@@ -222,7 +222,8 @@ async function copy({ entryPoint, outfileName }) {
     "utils",
     "suspense",
     "native-store",
-    "translate"
+    "translate",
+    "redux-devtools"
   ];
 
   await build({
