@@ -1,5 +1,3 @@
-Aquí tienes la documentación actualizada para los puntos **6 (Introducción)** y **6.1**, incorporando las correcciones sobre el alcance de `v-keep` (solo VNodes) y su sinergia con los Stores, eliminando los detalles internos de implementación.
-
 # 6. Optimization & Performance
 
 Valyrian.js is engineered for raw speed. Unlike frameworks that rely on heavy runtime scheduling or complex compilation steps, Valyrian achieves its performance through **algorithmic efficiency** and **explicit control**.

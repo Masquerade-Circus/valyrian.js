@@ -1,5 +1,3 @@
-Aquí tienes el contenido completo y detallado para la **Sección 2: Getting Started**, redactado en inglés para la documentación oficial, incorporando tus correcciones de código (montaje en el body) y la estructura del TOC aprobada.
-
 # 2. Getting Started (The "No-Build" Approach)
 
 Valyrian.js is designed to be consumed directly by the JavaScript runtime. While it integrates seamlessly with modern bundlers like Vite or Webpack, it does not strictly require them to function.

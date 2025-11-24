@@ -1,7 +1,3 @@
-Aquí tienes el contenido completo para la **Sección 3**, redactado en inglés.
-
-Esta sección es crucial porque establece el **Modelo Mental** del framework. A diferencia de React, donde la reactividad es "mágica" (hooks), aquí enseñamos que la reactividad es **mecánica** (Event Loop -> Update), lo cual empodera al desarrollador.
-
 # 3. The Essentials (View & Interaction)
 
 Valyrian.js simplifies the UI development model by removing complex abstractions. The core concept is straightforward: You define your view using Components, and the framework updates the view automatically when user events occur.
@@ -128,19 +124,6 @@ const TodoList = ({ items }) => (
   </ul>
 );
 ```
-
-### Content
-
-* [3.5. Reactivity & Async Control](#35-reactivity--async-control)
-  * [The POJO Pattern (Event-Driven)](#the-pojo-pattern-event-driven)
-  * [Async Flows (Manual Updates)](#async-flows-manual-updates)
-* [3.6. Creating Custom Directives](#36-creating-custom-directives)
-  * [Registering a Directive](#registering-a-directive)
-  * [The Directive Interface](#the-directive-interface)
-  * [Example 1: Auto-Focus (`v-focus`)](#example-1-auto-focus-v-focus)
-  * [Example 2: Efficient Updates (`v-highlight`)](#example-2-efficient-updates-v-highlight)
-  * [Advanced: Directive Return Values](#advanced-directive-return-values)
-  * [Best Practices](#best-practices)
 
 ## 3.5. Reactivity & Async Control
 
