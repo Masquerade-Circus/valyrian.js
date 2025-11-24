@@ -1,5 +1,3 @@
-
-
 # 5. Advanced State Management
 
 Valyrian.js rejects the idea of a "one-size-fits-all" state management solution. Instead, it provides a stratified architecture that allows you to trade **velocity** for **structure** (and vice versa) depending on the specific needs of each part of your application.
@@ -21,10 +19,10 @@ The decision flow is hierarchical. You should choose the tool that fits the comp
 
 ### Decision Guide
 
-1.  **Use POJO:** For 90% of UI interactions, forms, and simple CRUD apps where the Virtual DOM speed is sufficient.
-2.  **Use Pulse:** For isolated values that change frequently (counters, timers, mouse tracking) or when you need to bypass the VDOM reconciliation for maximum performance or you need full time-travel debuggin support even for simple values.
-3.  **Use PulseStore:** When you need a robust shared state with actions separated from data. It offers the simplicity of direct assignment syntax combined with the safety of immutability, listeners, and full time-travel debugging support.
-4.  **Use FluxStore:** When your architecture requires strict separation of concerns into different modules/files (Actions vs Mutations vs Getters) or when you need to integrate complex plugins, also with full time-travel debugging support.
+1. **Use POJO:** For 90% of UI interactions, forms, and simple CRUD apps where the Virtual DOM speed is sufficient.
+2. **Use Pulse:** For isolated values that change frequently (counters, timers, mouse tracking) or when you need to bypass the VDOM reconciliation for maximum performance or you need full time-travel debuggin support even for simple values.
+3. **Use PulseStore:** When you need a robust shared state with actions separated from data. It offers the simplicity of direct assignment syntax combined with the safety of immutability, listeners, and full time-travel debugging support.
+4. **Use FluxStore:** When your architecture requires strict separation of concerns into different modules/files (Actions vs Mutations vs Getters) or when you need to integrate complex plugins, also with full time-travel debugging support.
 
 ## 5.2. High-Performance Shared State (Pulses)
 
@@ -59,9 +57,9 @@ The key difference between Pulses and other state mechanisms is the update strat
 
 When a component renders and consumes a Pulse:
 
-1.  The Pulse detects the active `current.vnode`.
-2.  It registers the specific VNode into a `WeakSet`.
-3.  When the value updates, the Pulse updates directly that VNode.
+1. The Pulse detects the active `current.vnode`.
+2. It registers the specific VNode into a `WeakSet`.
+3. When the value updates, the Pulse updates directly that VNode.
 
 This effectively reduces the algorithmic complexity of an update from $O(Tree)$ to $O(1)$ for the subscribed nodes.
 
@@ -126,17 +124,17 @@ store.addTodo("Buy milk");
 
 **Features:**
 
-  * **Reactivity:** Components that read `store.state.todos` will automatically subscribe to changes.
-  * **Listeners:** You can attach side effects using `store.on('pulse', callback)`.
-  * **Debugging:** Fully compatible with Redux DevTools, allowing you to inspect every state change and "time travel" to previous states.
+* **Reactivity:** Components that read `store.state.todos` will automatically subscribe to changes.
+* **Listeners:** You can attach side effects using `store.on('pulse', callback)`.
+* **Debugging:** Fully compatible with Redux DevTools, allowing you to inspect every state change and "time travel" to previous states.
 
 ### 5.2.4. Strict Immutability
 
 By default, Valyrian.js prioritizes safety. When using `createPulseStore`, the state is **Deep Frozen** after every update. This ensures that:
 
-1.  State cannot be mutated outside of defined actions.
-2.  The history of state changes is preserved for debugging.
-3.  Unintended side effects are eliminated.
+1. State cannot be mutated outside of defined actions.
+2. The history of state changes is preserved for debugging.
+3. Unintended side effects are eliminated.
 
 **Optimization Escape Hatch:**
 For scenarios requiring extreme performance (e.g., game loops running at 60fps or massive data visualization) where the CPU cost of cloning and freezing objects is prohibitive, Valyrian provides `createMutableStore`.
@@ -167,10 +165,10 @@ It is designed for large-scale applications where separating a monolithic store 
 
 The store is composed of four core concepts that enforce a separation of concerns:
 
-1.  **State:** The single source of truth. It is strictly immutable outside of mutations.
-2.  **Mutations:** Synchronous transactions. The **only** mechanism allowed to modify the state.
-3.  **Actions:** Asynchronous operations. They handle business logic and commit mutations.
-4.  **Getters:** Computed properties derived from the state.
+1. **State:** The single source of truth. It is strictly immutable outside of mutations.
+2. **Mutations:** Synchronous transactions. The **only** mechanism allowed to modify the state.
+3. **Actions:** Asynchronous operations. They handle business logic and commit mutations.
+4. **Getters:** Computed properties derived from the state.
 
 ```typescript
 import { FluxStore } from "valyrian.js/flux-store";
@@ -187,9 +185,8 @@ const store = new FluxStore({
 
 Mutations are the only functions with "write access" to the state. They must be synchronous.
 
-  * **Execution:** Triggered via `store.commit(type, payload)`.
-  * **Behavior:** When a mutation starts, the store temporarily unfreezes the state. Once the mutation finishes, the state is deeply frozen again, and a debounced update is triggered to refresh the UI.
-
+* **Execution:** Triggered via `store.commit(type, payload)`.
+* **Behavior:** When a mutation starts, the store temporarily unfreezes the state. Once the mutation finishes, the state is deeply frozen again, and a debounced update is triggered to refresh the UI.
 
 ```typescript
 const store = new FluxStore({
@@ -213,9 +210,9 @@ store.commit("INCREMENT", 10);
 
 Actions are where your application logic lives. They can be asynchronous (fetching data, timers) and can dispatch other actions or commit mutations.
 
-  * **Execution:** Triggered via `store.dispatch(type, payload)`.
-  * **Context:** Actions receive the `store` instance as the first argument, giving access to `.commit`, `.dispatch`, `.state`, and `.rootStore`.
-  * **Return Value:** `dispatch` always returns a `Promise`, allowing you to await the completion of an action.
+* **Execution:** Triggered via `store.dispatch(type, payload)`.
+* **Context:** Actions receive the `store` instance as the first argument, giving access to `.commit`, `.dispatch`, `.state`, and `.rootStore`.
+* **Return Value:** `dispatch` always returns a `Promise`, allowing you to await the completion of an action.
 
 ```typescript
 const store = new FluxStore({
@@ -247,7 +244,7 @@ await store.dispatch("fetchUsers");
 
 Getters are used to derive state. They are useful for filtering lists or calculating values based on the state without modifying it.
 
-  * **Arguments:** `(state, getters, rootState, rootGetters)`. This signature allows getters to access local state, other getters in the same module, or reach up to the root store in a modular architecture.
+* **Arguments:** `(state, getters, rootState, rootGetters)`. This signature allows getters to access local state, other getters in the same module, or reach up to the root store in a modular architecture.
 
 ```typescript
 const store = new FluxStore({
@@ -315,11 +312,11 @@ Inside a module's action or getter, you can access the `rootStore` to interact w
 
 `FluxStore` enforces immutability by default using `deepFreeze`.
 
-  * **Mechanism:** Every time you access `store.state` outside of a mutation, you receive a read-only (frozen) object.
-  * **Cloning:** When a mutation begins, Valyrian performs a `deepCloneUnfreeze` of the state tree needed.
-  * **Safety:** This prevents "accidental mutations" (e.g., modifying the state directly in a component or an asynchronous callback), which are a common source of bugs in large applications.
+* **Mechanism:** Every time you access `store.state` outside of a mutation, you receive a read-only (frozen) object.
+* **Cloning:** When a mutation begins, Valyrian performs a `deepCloneUnfreeze` of the state tree needed.
+* **Safety:** This prevents "accidental mutations" (e.g., modifying the state directly in a component or an asynchronous callback), which are a common source of bugs in large applications.
 
-> **Performance Note:** Due to the cost of deep cloning and freezing, `FluxStore` trades raw update speed for transactional safety. For high-frequency updates (e.g., \>60fps animations), consider using `PulseStore` or disabling freezing (via `shouldFreeze: false`), though the latter is discouraged for enterprise apps.
+> **Performance Note:** Due to the cost of deep cloning and freezing, `FluxStore` trades raw update speed for transactional safety. For high-frequency updates (e.g., >60fps animations), consider using `PulseStore` or disabling freezing (via `shouldFreeze: false`), though the latter is discouraged for enterprise apps.
 
 ```typescript
 const store = new FluxStore({
@@ -352,10 +349,10 @@ store.use(myPlugin);
 
 Valyrian.js includes a dedicated module (`valyrian.js/redux-devtools`) to integrate with the **Redux DevTools Extension**. This provides a unified debugging interface for all state management strategies (Flux, PulseStore, and individual Pulses), enabling features like:
 
-  * **Action Log:** View every mutation or pulse triggered in real-time.
-  * **State Inspection:** Deep dive into the current state object.
-  * **Time Travel:** Replay or revert actions to debug complex state transitions.
-  * **Diffing:** Visualize exactly what changed between updates.
+* **Action Log:** View every mutation or pulse triggered in real-time.
+* **State Inspection:** Deep dive into the current state object.
+* **Time Travel:** Replay or revert actions to debug complex state transitions.
+* **Diffing:** Visualize exactly what changed between updates.
 
 > **Zero-Overhead Note:** The debugging logic is decoupled from the core stores. The connection functions act as bridges that listen to internal events. If you don't call these functions (e.g., in production), the debugging logic is dead code and can be tree-shaken by your bundler.
 
@@ -444,5 +441,4 @@ if (process.env.NODE_ENV === "development") {
 
 This pattern ensures that the `redux-devtools` module code is only loaded when needed and excluded from your main production bundle.
 
-Althoug this is a normal approach when compiling, we encourage that this calls should be removed in code for production instead of rely in the environment. 
-
+Althoug this is a normal approach when compiling, we encourage that this calls should be removed in code for production instead of rely in the environment.

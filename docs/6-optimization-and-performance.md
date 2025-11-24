@@ -16,8 +16,8 @@ The `v-keep` directive is the most powerful optimization tool in the framework. 
 
 When the rendering engine encounters an element with `v-keep`, it compares the current value with the previous value using strict equality (`===`).
 
-  * **If the value matches:** The framework completely skips checking the properties and children of that node. The DOM remains untouched, saving CPU cycles.
-  * **If the value changes:** The node and its children are updated normally.
+* **If the value matches:** The framework completely skips checking the properties and children of that node. The DOM remains untouched, saving CPU cycles.
+* **If the value changes:** The node and its children are updated normally.
 
 ### Synergy with State Management
 
@@ -88,9 +88,8 @@ const state = { username: "" };
 
 For standard text-based inputs (`text`, `password`, `email`, `search`, etc.) and `<textarea>`, `v-model` syncs the value on the `input` event.
 
-  * **Updates:** Triggers on every keystroke.
-  * **Binding:** Maps the element's `value` to the state property.
-
+* **Updates:** Triggers on every keystroke.
+* **Binding:** Maps the element's `value` to the state property.
 
 ```tsx
 const form = { bio: "", email: "" };
@@ -141,9 +140,8 @@ const state = { roles: ["admin"] };
 
 If the input has a specific `value` attribute but the state is *not* an array, it behaves as a nullable toggle.
 
-  * **Checked:** State becomes the input's `value`.
-  * **Unchecked:** State becomes `null`.
-
+* **Checked:** State becomes the input's `value`.
+* **Unchecked:** State becomes `null`.
 
 ```tsx
 const consent = { acceptedVersion: null };
@@ -224,9 +222,9 @@ If you define an `oninput` (or `onclick` for selects) alongside `v-model`, the f
 
 When using `v-model` with **POJO** state, every input event triggers a global update. This is efficient for standard forms. For extremely high-frequency inputs (like a real-time filter in a dataset of 10,000 rows), consider:
 
-1.  Using **PulseStore** (which updates the view surgically).
-2.  Using `v-keep` on the heavy list to prevent re-rendering while typing.
-3.  Using `debounce` logic manually instead of direct `v-model` if the update is costly.
+1. Using **PulseStore** (which updates the view surgically).
+2. Using `v-keep` on the heavy list to prevent re-rendering while typing.
+3. Using `debounce` logic manually instead of direct `v-model` if the update is costly.
 
 ## 6.3. Keyed Lists & Node Reuse
 
@@ -289,9 +287,9 @@ One of the most overlooked benefits of Keyed Lists is the preservation of **visu
 
 When Valyrian updates a list *without* keys, it often reuses DOM nodes by overwriting their text content and attributes. While efficient for CPU, this is destructive for CSS state:
 
-  * **CSS Animations:** Keyframe animations (like spinners or loaders) might reset to `0%` or jump if the element identity isn't tracked.
-  * **CSS Transitions:** Moving an item might look like a "teleport" (instant change) rather than a smooth transition.
-  * **Media Elements:** `<video>` or `<audio>` tags will lose their playback progress.
+* **CSS Animations:** Keyframe animations (like spinners or loaders) might reset to `0%` or jump if the element identity isn't tracked.
+* **CSS Transitions:** Moving an item might look like a "teleport" (instant change) rather than a smooth transition.
+* **Media Elements:** `<video>` or `<audio>` tags will lose their playback progress.
 
 **With Keys**, Valyrian moves the specific DOM Node to its new position in the document flow. The browser preserves the internal state of that node.
 
@@ -329,7 +327,6 @@ Keyed lists are also essential when working with the modern **View Transitions A
 </ul>
 ```
 
-
 ### 6.3.4. The Ultimate Optimization: Keys + `v-keep`
 
 For massive lists (e.g., a data grid with 10,000 rows), moving nodes is fast, but Valyrian still needs to check if the *content* of those nodes changed.
@@ -354,9 +351,9 @@ const DataGrid = ({ rows }) => (
 
 In this scenario:
 
-1.  **Reorder:** Hash Map lookup O(1).
-2.  **Update:** `v-keep` check O(1).
-3.  **Result:** The framework performs the absolute minimum work required by the browser.
+1. **Reorder:** Hash Map lookup O(1).
+2. **Update:** `v-keep` check O(1).
+3. **Result:** The framework performs the absolute minimum work required by the browser.
 
 ### 6.3.5. Important Rules
 
@@ -383,4 +380,3 @@ All siblings in a list should either have keys or not. Mixing them causes unpred
 #### 2. Keys Must Be Stable
 
 Do not use `Math.random()` or array indices (unless the list is static) as keys. Unstable keys force the framework to destroy and recreate nodes constantly, which is worse than having no keys at all.
-

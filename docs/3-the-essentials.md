@@ -1,8 +1,8 @@
 Aquí tienes el contenido completo para la **Sección 3**, redactado en inglés.
 
-Esta sección es crucial porque establece el **Modelo Mental** del framework. A diferencia de React, donde la reactividad es "mágica" (hooks), aquí enseñamos que la reactividad es **mecánica** (Event Loop -\> Update), lo cual empodera al desarrollador.
+Esta sección es crucial porque establece el **Modelo Mental** del framework. A diferencia de React, donde la reactividad es "mágica" (hooks), aquí enseñamos que la reactividad es **mecánica** (Event Loop -> Update), lo cual empodera al desarrollador.
 
-# 3\. The Essentials (View & Interaction)
+# 3. The Essentials (View & Interaction)
 
 Valyrian.js simplifies the UI development model by removing complex abstractions. The core concept is straightforward: You define your view using Components, and the framework updates the view automatically when user events occur.
 
@@ -98,8 +98,8 @@ Directives in Valyrian are special attributes starting with `v-` that control ho
 
 ### Structural Directives
 
-  * **`v-if`**: Conditionally renders the element. If false, the element is removed from the DOM.
-  * **`v-show`**: Toggles the `display: none` style. The element remains in the DOM.
+* **`v-if`**: Conditionally renders the element. If false, the element is removed from the DOM.
+* **`v-show`**: Toggles the `display: none` style. The element remains in the DOM.
 
 ```tsx
 const Toggle = ({ visible }) => (
@@ -131,8 +131,16 @@ const TodoList = ({ items }) => (
 
 ### Content
 
-  * **`v-text`**: Sets the `textContent` of the node.
-  * **`v-html`**: Sets the `innerHTML`. **Warning:** Only use with trusted content to avoid XSS.
+* [3.5. Reactivity & Async Control](#35-reactivity--async-control)
+  * [The POJO Pattern (Event-Driven)](#the-pojo-pattern-event-driven)
+  * [Async Flows (Manual Updates)](#async-flows-manual-updates)
+* [3.6. Creating Custom Directives](#36-creating-custom-directives)
+  * [Registering a Directive](#registering-a-directive)
+  * [The Directive Interface](#the-directive-interface)
+  * [Example 1: Auto-Focus (`v-focus`)](#example-1-auto-focus-v-focus)
+  * [Example 2: Efficient Updates (`v-highlight`)](#example-2-efficient-updates-v-highlight)
+  * [Advanced: Directive Return Values](#advanced-directive-return-values)
+  * [Best Practices](#best-practices)
 
 ## 3.5. Reactivity & Async Control
 
@@ -186,7 +194,7 @@ const UserProfile = {
 };
 ```
 
-This **"Loading -\> Wait -\> Result"** pattern is fundamental to Valyrian's philosophy: **You control the render loop.**
+This **"Loading -> Wait -> Result"** pattern is fundamental to Valyrian's philosophy: **You control the render loop.**
 
 ## 3.6. Creating Custom Directives
 
@@ -211,11 +219,11 @@ directive("my-directive", (value, vnode, oldProps) => {
 
 The callback function receives three arguments:
 
-1.  **`value`**: The value passed to the directive in the JSX/Template (e.g., `true`, a string, an object, or a function).
-2.  **`vnode`**: The current Virtual Node being rendered. You can access the real DOM element via `vnode.dom`.
-3.  **`oldProps`**: The properties of this node from the *previous* render cycle.
-      * If `oldProps` is `undefined`, this is the **First Render (Mount)**.
-      * If `oldProps` exists, this is an **Update**.
+1. **`value`**: The value passed to the directive in the JSX/Template (e.g., `true`, a string, an object, or a function).
+2. **`vnode`**: The current Virtual Node being rendered. You can access the real DOM element via `vnode.dom`.
+3. **`oldProps`**: The properties of this node from the *previous* render cycle.
+   * If `oldProps` is `undefined`, this is the **First Render (Mount)**.
+   * If `oldProps` exists, this is an **Update**.
 
 ### Example 1: Auto-Focus (`v-focus`)
 
@@ -266,11 +274,11 @@ const App = () => <div v-highlight="yellow">Highlighted Text</div>;
 
 The return value of a directive can control the rendering flow of the component:
 
-  * **`false`**: If a directive returns `false`, Valyrian stops processing the remaining attributes and directives for that node. This is useful for conditional rendering logic similar to `v-if`.
-  * **`void` / `any`**: Standard behavior; the framework continues processing the node.
+* **`false`**: If a directive returns `false`, Valyrian stops processing the remaining attributes and directives for that node. This is useful for conditional rendering logic similar to `v-if`.
+* **`void` / `any`**: Standard behavior; the framework continues processing the node.
 
 ### Best Practices
 
-1.  **Direct DOM Access:** Directives are the safe place to touch `vnode.dom`.
-2.  **Clean Up:** If your directive adds event listeners (e.g., `v-click-outside`), remember to manage their removal. Since directives run on every update, ensure you don't attach duplicate listeners, or use `v-cleanup` alongside your custom directive to handle teardown.
-3.  **Naming:** Keep directive names short, lowercase, and descriptive (e.g., `v-tooltip`, `v-scroll`, `v-lazy`).
+1. **Direct DOM Access:** Directives are the safe place to touch `vnode.dom`.
+2. **Clean Up:** If your directive adds event listeners (e.g., `v-click-outside`), remember to manage their removal. Since directives run on every update, ensure you don't attach duplicate listeners, or use `v-cleanup` alongside your custom directive to handle teardown.
+3. **Naming:** Keep directive names short, lowercase, and descriptive (e.g., `v-tooltip`, `v-scroll`, `v-lazy`).

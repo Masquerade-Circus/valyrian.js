@@ -192,18 +192,18 @@ The store maintains a local `state` object. Calling `get()` reads from memory (f
 
 When using `StorageType.Local`, Valyrian automatically listens to the browser's `storage` event.
 
-  * **Scenario:** User has your app open in Tab A and Tab B.
-  * **Action:** User changes theme in Tab A.
-  * **Result:** Tab B automatically updates its internal `store.state` to match Tab A without a page reload.
+* **Scenario:** User has your app open in Tab A and Tab B.
+* **Action:** User changes theme in Tab A.
+* **Result:** Tab B automatically updates its internal `store.state` to match Tab A without a page reload.
 
 ### 8.2.3. Isomorphic Usage (Server-Side)
 
 This module is designed to work seamlessly with **Server-Side Rendering**.
 
-  * **In Browser:** It uses `window.localStorage` or `window.sessionStorage`.
-  * **In Node.js:** It throws an error *unless* you have imported `valyrian.js/node`.
-      * When used with the Node adapter, `createNativeStore` hooks into `ServerStorage` (AsyncLocalStorage).
-      * This allows you to write code like `session.get('token')` that works in the component on the client AND keeps user sessions isolated on the server during SSR.
+* **In Browser:** It uses `window.localStorage` or `window.sessionStorage`.
+* **In Node.js:** It throws an error *unless* you have imported `valyrian.js/node`.
+  * When used with the Node adapter, `createNativeStore` hooks into `ServerStorage` (AsyncLocalStorage).
+  * This allows you to write code like `session.get('token')` that works in the component on the client AND keeps user sessions isolated on the server during SSR.
 
 ### 8.2.4. Managing Store Instances
 
@@ -221,11 +221,11 @@ const storeA = createNativeStore("my-data", {}, StorageType.Local, true);
 
 The store object exposes the following methods:
 
-  * **`get(key)`**: Retrieves a value.
-  * **`set(key, value)`**: Saves a value and persists it.
-  * **`delete(key)`**: Removes a specific key.
-  * **`clear()`**: Wipes the entire namespace from storage.
-  * **`load()`**: Force re-load from the underlying storage mechanism (useful if modified externally).
+* **`get(key)`**: Retrieves a value.
+* **`set(key, value)`**: Saves a value and persists it.
+* **`delete(key)`**: Removes a specific key.
+* **`clear()`**: Wipes the entire namespace from storage.
+* **`load()`**: Force re-load from the underlying storage mechanism (useful if modified externally).
 
 ## 8.3. Helpers (`valyrian.js/utils`)
 
@@ -261,13 +261,13 @@ hasChanged(objA, objB); // false (Content matches, even if references differ)
 
 These utilities are the foundation of the **FluxStore** and **PulseStore** safety mechanisms.
 
-  * **`deepFreeze(obj)`**: Recursively calls `Object.freeze` on an object and all its nested properties. Once frozen, the object cannot be modified.
-  * **`deepCloneUnfreeze(obj)`**: Creates a deep copy of an object, breaking all references to the original. The resulting copy is mutable (unfrozen).
+* **`deepFreeze(obj)`**: Recursively calls `Object.freeze` on an object and all its nested properties. Once frozen, the object cannot be modified.
+* **`deepCloneUnfreeze(obj)`**: Creates a deep copy of an object, breaking all references to the original. The resulting copy is mutable (unfrozen).
 
 **Features:**
 
-  * **Circular References:** Unlike `JSON.parse(JSON.stringify())`, this utility handles circular references correctly using a `WeakMap`.
-  * **Rich Types:** Supports cloning of `Date`, `RegExp`, `Map`, `Set`, `ArrayBuffer`, and `TypedArray`.
+* **Circular References:** Unlike `JSON.parse(JSON.stringify())`, this utility handles circular references correctly using a `WeakMap`.
+* **Rich Types:** Supports cloning of `Date`, `RegExp`, `Map`, `Set`, `ArrayBuffer`, and `TypedArray`.
 
 ```typescript
 import { deepFreeze, deepCloneUnfreeze } from "valyrian.js/utils";

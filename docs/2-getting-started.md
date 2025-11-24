@@ -1,6 +1,6 @@
 Aquí tienes el contenido completo y detallado para la **Sección 2: Getting Started**, redactado en inglés para la documentación oficial, incorporando tus correcciones de código (montaje en el body) y la estructura del TOC aprobada.
 
-# 2\. Getting Started (The "No-Build" Approach)
+# 2. Getting Started (The "No-Build" Approach)
 
 Valyrian.js is designed to be consumed directly by the JavaScript runtime. While it integrates seamlessly with modern bundlers like Vite or Webpack, it does not strictly require them to function.
 
@@ -49,9 +49,9 @@ Create an `index.html` file with the following content:
 
 ### What just happened?
 
-1.  **Zero Config:** The browser loaded the framework via CDN as a standard module.
-2.  **Virtual DOM in Memory:** The `v` function created a Virtual Node structure (VNode) representing your UI.
-3.  **Direct Mount:** The `mount` function took control of the `<body>` tag. Unlike other frameworks that require a specific root `<div>` (like `#app`), Valyrian allows you to use the `body` directly as the application container.
+1. **Zero Config:** The browser loaded the framework via CDN as a standard module.
+2. **Virtual DOM in Memory:** The `v` function created a Virtual Node structure (VNode) representing your UI.
+3. **Direct Mount:** The `mount` function took control of the `<body>` tag. Unlike other frameworks that require a specific root `<div>` (like `#app`), Valyrian allows you to use the `body` directly as the application container.
 
 ## 2.2. The Node.js Method (Built-in Tooling)
 
@@ -59,7 +59,7 @@ For local development where you want to use **JSX/TSX** syntax without the fatig
 
 This utility transpiles and bundles your code using Valyrian's internal tools, eliminating the need for external dependencies like Webpack, Babel, or TypeScript compiler setup for simple projects.
 
-### 1\. Installation
+### 1. Installation
 
 Initialize a new project and install the package:
 
@@ -70,7 +70,7 @@ npm init -y
 npm install valyrian.js
 ```
 
-### 2\. Create the Application
+### 2. Create the Application
 
 Create a file named `index.tsx`. You can now use modern **JSX** syntax, which Valyrian understands natively via its transpiler:
 
@@ -90,7 +90,7 @@ const App = () => (
 mount("body", App);
 ```
 
-### 3\. Create the Build Script
+### 3. Create the Build Script
 
 Instead of a config file, Valyrian uses a simple JavaScript script to handle the build. Create a `build.js` file:
 
@@ -117,7 +117,7 @@ async function build() {
 build();
 ```
 
-### 4\. Run and Serve
+### 4. Run and Serve
 
 Execute the build script with Node.js:
 

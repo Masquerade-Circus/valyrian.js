@@ -29,9 +29,9 @@ mountRouter("body", router);
 
 Instead of using a specialized `<Link>` component, Valyrian provides the `v-route` directive. This directive:
 
-1.  Sets the `href` attribute for accessibility and SEO.
-2.  Attaches an optimized `onclick` handler that prevents a full page reload.
-3.  Uses the framework's global event delegation.
+1. Sets the `href` attribute for accessibility and SEO.
+2. Attaches an optimized `onclick` handler that prevents a full page reload.
+3. Uses the framework's global event delegation.
 
 ```tsx
 const Menu = () => (
@@ -134,9 +134,9 @@ router.catch((req, error) => {
 
 ### Best Practices
 
-  * **Order Matters:** Middlewares run sequentially. Place your auth checks before your sensitive routes.
-  * **Error Granularity:** Define specific error handlers (like 404 or Auth errors) before the generic catch-all handler to provide better UX.
-  * **Isomorphism:** Since the router is pure JS, you can export this same router instance to your Node.js server entry point to handle server-side routing seamlessly.
+* **Order Matters:** Middlewares run sequentially. Place your auth checks before your sensitive routes.
+* **Error Granularity:** Define specific error handlers (like 404 or Auth errors) before the generic catch-all handler to provide better UX.
+* **Isomorphism:** Since the router is pure JS, you can export this same router instance to your Node.js server entry point to handle server-side routing seamlessly.
 
 ## 4.2. Data Fetching (`lib/request`)
 
@@ -300,8 +300,8 @@ Valyrian.js provides a robust system for managing component-local state and side
 
 The framework uses a **Hybrid Architecture** for lifecycle management:
 
-1.  **Hooks:** For logic, state, and side effects (inspired by React).
-2.  **Directives:** For direct DOM manipulation and element-level lifecycle (inspired by Vue/Solid).
+1. **Hooks:** For logic, state, and side effects (inspired by React).
+2. **Directives:** For direct DOM manipulation and element-level lifecycle (inspired by Vue/Solid).
 
 > **Architecture Note:** Valyrian hooks are linked to the component instance using a `WeakMap`. This ensures that when a component is removed from the DOM, all associated state and effects are automatically garbage collected, preventing memory leaks without manual cleanup.
 
@@ -313,9 +313,8 @@ Valyrian implements the standard hooks API but with a key architectural differen
 
 Returns a getter **function** and a setter function.
 
-  * **Getter (`count()`):** Returns the current value. By returning a function instead of a value, Valyrian avoids "stale closure" problems. You always get the fresh value when invoking the getter.
-  * **Setter (`setCount(newVal)`):** Updates the value and triggers a `debouncedUpdate()`.
-
+* **Getter (`count()`):** Returns the current value. By returning a function instead of a value, Valyrian avoids "stale closure" problems. You always get the fresh value when invoking the getter.
+* **Setter (`setCount(newVal)`):** Updates the value and triggers a `debouncedUpdate()`.
 
 ```tsx
 import { useState } from "valyrian.js/hooks";
@@ -338,9 +337,9 @@ const Counter = () => {
 
 Runs side effects after the component renders. It returns a cleanup function.
 
-  * **Mount:** Runs when the component matches the DOM.
-  * **Update:** Runs if any value in the `dependencies` array has changed (`hasChanged` check).
-  * **Cleanup:** The function returned by the callback runs before the next effect or when the component unmounts.
+* **Mount:** Runs when the component matches the DOM.
+* **Update:** Runs if any value in the `dependencies` array has changed (`hasChanged` check).
+* **Cleanup:** The function returned by the callback runs before the next effect or when the component unmounts.
 
 ```tsx
 import { useEffect } from "valyrian.js/hooks";
@@ -359,8 +358,8 @@ const Timer = () => {
 
 Performance optimizations to cache values or functions between renders.
 
-  * **`useMemo(() => value, [deps])`**: Caches a computed value.
-  * **`useCallback(fn, [deps])`**: Caches a function reference to maintain identity (useful for passing props to children).
+* **`useMemo(() => value, [deps])`**: Caches a computed value.
+* **`useCallback(fn, [deps])`**: Caches a function reference to maintain identity (useful for passing props to children).
 
 #### `useRef(initialValue)`
 
@@ -388,11 +387,10 @@ const InputFocus = () => {
 
 While Hooks are great for logic, Valyrian encourages using **Directives** for DOM-related lifecycle events. These directives are processed directly during the VDOM `patch` cycle, offering lower overhead than `useEffect`.
 
-  * **`v-create`**: Triggered immediately after the element is created and added to the DOM. Ideal for 3rd-party library initialization (D3, Maps).
-  * **`v-update`**: Triggered every time the element's VNode is updated (props/children change).
-  * **`v-cleanup`**: Triggered **before** an update occurs or before the element is removed. Used to detach listeners or stop animations.
-  * **`v-remove`**: Triggered just before the element is removed from the DOM.
-
+* **`v-create`**: Triggered immediately after the element is created and added to the DOM. Ideal for 3rd-party library initialization (D3, Maps).
+* **`v-update`**: Triggered every time the element's VNode is updated (props/children change).
+* **`v-cleanup`**: Triggered **before** an update occurs or before the element is removed. Used to detach listeners or stop animations.
+* **`v-remove`**: Triggered just before the element is removed from the DOM.
 
 ```tsx
 const LifecycleBox = () => (
@@ -439,11 +437,11 @@ interface HookDefinition {
 }
 ```
 
- * **`onCreate`**: **Required.** Runs only once when the component is first rendered. It receives the arguments passed to the hook and must return the initial **state object** of the hook. This state is persisted across re-renders.
- * **`onUpdate`**: **Optional.** Runs on every subsequent render (re-execution of the component function). It receives the persisted `hookState` (returned by `onCreate`) and the current arguments. Use this to update the state based on new props or inputs. 
- * **`onCleanup`**: **Optional.** Runs **before** every update (next render) and before the component is removed. It is used to clean up side effects created in the previous cycle (similar to the cleanup function in `useEffect`).
- * **`onRemove`**: **Optional.** Runs **only once** when the component is permanently removed from the DOM. This is the place to tear down global listeners, timers, or subscriptions to prevent memory leaks.
- * **`returnValue`**: **Optional.** Transforms the internal `hookState` into what the component actually receives. If omitted, the hook returns the raw `hookState`. Use this to expose a clean API (e.g., getters/setters) while keeping internal state private.
+* **`onCreate`**: **Required.** Runs only once when the component is first rendered. It receives the arguments passed to the hook and must return the initial **state object** of the hook. This state is persisted across re-renders.
+* **`onUpdate`**: **Optional.** Runs on every subsequent render (re-execution of the component function). It receives the persisted `hookState` (returned by `onCreate`) and the current arguments. Use this to update the state based on new props or inputs.
+* **`onCleanup`**: **Optional.** Runs **before** every update (next render) and before the component is removed. It is used to clean up side effects created in the previous cycle (similar to the cleanup function in `useEffect`).
+* **`onRemove`**: **Optional.** Runs **only once** when the component is permanently removed from the DOM. This is the place to tear down global listeners, timers, or subscriptions to prevent memory leaks.
+* **`returnValue`**: **Optional.** Transforms the internal `hookState` into what the component actually receives. If omitted, the hook returns the raw `hookState`. Use this to expose a clean API (e.g., getters/setters) while keeping internal state private.
 
 #### Example: `useWindowWidth`
 

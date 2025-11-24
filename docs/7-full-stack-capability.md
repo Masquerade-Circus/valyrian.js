@@ -1,4 +1,3 @@
-
 # 7. The Full-Stack Capability (Isomorphism)
 
 Valyrian.js removes the historical barrier between Frontend and Backend. It is built as an **Isomorphic (Universal)** framework, meaning the exact same code can execute in the Browser and in Node.js/Deno/Bun environments without modification.
@@ -7,9 +6,9 @@ While most frameworks require complex build steps to transpile code differently 
 
 This allows you to:
 
-1.  **Share Logic:** Reuse Routes, Stores, and Validation logic 100%.
-2.  **Share Views:** Render the same Components on the server for SEO and on the client for interactivity.
-3.  **Unify Data:** Use `sessionStorage` on the server (isolated per request) just like you would in the browser.
+1. **Share Logic:** Reuse Routes, Stores, and Validation logic 100%.
+2. **Share Views:** Render the same Components on the server for SEO and on the client for interactivity.
+3. **Unify Data:** Use `sessionStorage` on the server (isolated per request) just like you would in the browser.
 
 ## 7.1. Server-Side Rendering (SSR)
 
@@ -36,18 +35,17 @@ Unlike other SSR solutions that rely on heavy headless browsers (like Puppeteer)
 
 This adapter is a minimal implementation of the DOM standard (`Node`, `Element`, `Text`) written in pure JavaScript and optimized specifically for **String Concatenation**.
 
-  * **No Layout Engine:** It does not calculate styles, positions, or paint pixels. It only structures data.
-  * **Zero Overhead:** Because it doesn't load a full browser context, the "cold start" time is negligible, making it perfect for **Serverless** and **Edge Computing** (e.g., Cloudflare Workers, AWS Lambda).
-  * **Security:** Html attributes are automatically sanitized during the serialization process to prevent XSS attacks.
+* **No Layout Engine:** It does not calculate styles, positions, or paint pixels. It only structures data.
+* **Zero Overhead:** Because it doesn't load a full browser context, the "cold start" time is negligible, making it perfect for **Serverless** and **Edge Computing** (e.g., Cloudflare Workers, AWS Lambda).
+* **Security:** Html attributes are automatically sanitized during the serialization process to prevent XSS attacks.
 
 ### Usage Constraints
 
 Because the server is not a browser, there are natural limitations to what code can run during SSR:
 
-1.  **Missing APIs:** Browser-specific APIs like `window.scrollTo`, `canvas`, `localStorage` (though Valyrian polyfills storage, see 7.3), or `geolocation` do not exist.
-2.  **Lifecycle:** On the server, `render()` runs the component logic once to generate the HTML. Lifecycle events like `onCleanup` or `onUpdate` are not triggered because there is no user interaction loop.
-3.  **Guarding Code:** If you need to use a browser API, check the environment first.
-
+1. **Missing APIs:** Browser-specific APIs like `window.scrollTo`, `canvas`, `localStorage` (though Valyrian polyfills storage, see 7.3), or `geolocation` do not exist.
+2. **Lifecycle:** On the server, `render()` runs the component logic once to generate the HTML. Lifecycle events like `onCleanup` or `onUpdate` are not triggered because there is no user interaction loop.
+3. **Guarding Code:** If you need to use a browser API, check the environment first.
 
 ```typescript
 import { isNodeJs } from "valyrian.js";
@@ -96,8 +94,8 @@ request.setOption("urls", {
 
 You have a frontend serving the app and an API on the same server.
 
-  * **Browser:** Calls `/api/list` -\> Browser resolves to `https://my-site.com/api/list`.
-  * **Server (SSR):** Calls `/api/list` -\> Node.js doesn't know the domain.
+* **Browser:** Calls `/api/list` -> Browser resolves to `https://my-site.com/api/list`.
+* **Server (SSR):** Calls `/api/list` -> Node.js doesn't know the domain.
 
 **Configuration:**
 
@@ -110,15 +108,15 @@ request.setOption("urls", {
 **Result:**
 Code: `request.get('/api/list')`
 
-  * **Client executes:** `/api/list`
-  * **Server executes:** `http://localhost:3000/api/list`
+* **Client executes:** `/api/list`
+* **Server executes:** `http://localhost:3000/api/list`
 
 #### Scenario B: API Gateway / Microservices (Replacement)
 
 You have a public API domain, but internally the SSR server should talk directly to the microservice to avoid latency or public internet traffic.
 
-  * **Browser:** Calls `https://api.public.com/v1/users`.
-  * **Server (SSR):** Should call `http://internal-user-service/v1/users`.
+* **Browser:** Calls `https://api.public.com/v1/users`.
+* **Server (SSR):** Should call `http://internal-user-service/v1/users`.
 
 **Configuration:**
 
@@ -132,8 +130,8 @@ request.setOption("urls", {
 **Result:**
 Code: `request.get('https://api.public.com/v1/users')`
 
-  * **Client executes:** `https://api.public.com/v1/users`
-  * **Server executes:** `http://internal-user-service/v1/users`
+* **Client executes:** `https://api.public.com/v1/users`
+* **Server executes:** `http://internal-user-service/v1/users`
 
 ### Sharing Context between Client and Server
 
@@ -180,8 +178,8 @@ Valyrian.js solves this natively by implementing **Request Context Isolation** u
 
 The `lib/node` module polyfills the global `sessionStorage` and `localStorage` objects with a smart proxy called `ServerStorage`.
 
-1.  **Global Scope (Default):** If accessed outside a request (e.g., server startup), it behaves like a standard in-memory store shared by the process.
-2.  **Request Scope (Isolated):** When wrapped in `ServerStorage.run()`, it creates a unique, ephemeral storage bucket that exists **only for the duration of that specific asynchronous execution context**.
+1. **Global Scope (Default):** If accessed outside a request (e.g., server startup), it behaves like a standard in-memory store shared by the process.
+2. **Request Scope (Isolated):** When wrapped in `ServerStorage.run()`, it creates a unique, ephemeral storage bucket that exists **only for the duration of that specific asynchronous execution context**.
 
 ### Usage on the Backend
 
@@ -247,9 +245,9 @@ const UserProfile = () => {
 
 ### Benefits
 
-1.  **No Prop Drilling:** You don't need to pass the `req` object down through 20 layers of components just to access the user ID.
-2.  **Security:** It is architecturally impossible for User A's data to leak into User B's render, because they run in separate async contexts.
-3.  **Standard API:** You use the standard `getItem` / `setItem` methods or Valyrian's wrappers, maintaining 100% compatibility with client-side logic.
+1. **No Prop Drilling:** You don't need to pass the `req` object down through 20 layers of components just to access the user ID.
+2. **Security:** It is architecturally impossible for User A's data to leak into User B's render, because they run in separate async contexts.
+3. **Standard API:** You use the standard `getItem` / `setItem` methods or Valyrian's wrappers, maintaining 100% compatibility with client-side logic.
 
 > **Technical Detail:** The `ServerStorage` is ephemeral. Data saved during the request is lost once the response is sent and the context is destroyed. It is intended for **Session State** (Cookies, Tokens, User Info), not as a permanent database.
 
@@ -326,12 +324,12 @@ Writing a robust Service Worker by hand is error-prone. Valyrian provides a gene
 
 **Capabilities:**
 
-  * **Cache Versioning:** Automatically busts cache when the `version` string changes.
-  * **Pre-caching:** Downloads critical assets (App Shell) immediately upon install.
-  * **Smart Strategies:**
-      * **API Calls:** Uses *Network First*. Checks the network; if it fails, falls back to cache (if available).
-      * **Static Assets:** Uses *Cache First*. Extremely fast loading for images/JS.
-  * **Offline Fallback:** Automatically serves an `offline.html` (or your App Shell) when there is no connectivity.
+* **Cache Versioning:** Automatically busts cache when the `version` string changes.
+* **Pre-caching:** Downloads critical assets (App Shell) immediately upon install.
+* **Smart Strategies:**
+  * **API Calls:** Uses *Network First*. Checks the network; if it fails, falls back to cache (if available).
+  * **Static Assets:** Uses *Cache First*. Extremely fast loading for images/JS.
+* **Offline Fallback:** Automatically serves an `offline.html` (or your App Shell) when there is no connectivity.
 
 **Configuration:**
 
@@ -389,9 +387,9 @@ The generated Service Worker listens for a specific message to force an update. 
 
 **The Flow:**
 
-1.  Browser detects a byte difference in `sw.js` (generated with a new version number).
-2.  The new SW installs but waits (enters `waiting` state).
-3.  Your UI can detect this state and send a message to activate the new version immediately.
+1. Browser detects a byte difference in `sw.js` (generated with a new version number).
+2. The new SW installs but waits (enters `waiting` state).
+3. Your UI can detect this state and send a message to activate the new version immediately.
 
 ```javascript
 // Example: Update Notification Logic
@@ -437,7 +435,7 @@ This means you can deploy complex TypeScript applications without ever creating 
 
 ### Usage
 
-The `inline` function takes an entry file path and an options object. It resolves imports, transpiles JSX/TSX to standard JavaScript, and optionally minifies the output. 
+The `inline` function takes an entry file path and an options object. It resolves imports, transpiles JSX/TSX to standard JavaScript, and optionally minifies the output.
 
 This allows you to inline your javascript directly into your HTML (for critical js performance) or save them as an optimized `.js` file.
 
@@ -467,10 +465,10 @@ async function buildJS() {
 
 ### Features
 
-  * **Zero-Config TypeScript:** It automatically handles `.ts` and `.tsx` files.
-  * **JSX Transformation:** Automatically sets the JSX factory to `v` and fragment to `v.fragment`.
-  * **Tree Shaking:** Removes unused code to keep the bundle size minimal.
-  * **Validation:** By default, it runs a type-check pass using `tsc` to ensure code quality before bundling (can be disabled via `noValidate: true` for speed).
+* **Zero-Config TypeScript:** It automatically handles `.ts` and `.tsx` files.
+* **JSX Transformation:** Automatically sets the JSX factory to `v` and fragment to `v.fragment`.
+* **Tree Shaking:** Removes unused code to keep the bundle size minimal.
+* **Validation:** By default, it runs a type-check pass using `tsc` to ensure code quality before bundling (can be disabled via `noValidate: true` for speed).
 
 ## 7.6. CSS Bundling and Minification
 
@@ -512,11 +510,11 @@ Valyrian allows you to **Purge** unused CSS at build time by analyzing your gene
 
 ### Mechanism
 
-1.  **Render:** You generate your application's HTML string using `render()`.
-2.  **Analyze:** `uncss` takes that HTML and your full CSS file.
-3.  **Purge:** It uses `purgecss` to match selectors found in the HTML against the CSS.
-4.  **Minify:** It pipes the result through `clean-css`.
-5.  **Output:** You get a tiny CSS string containing *only* the styles actually used by your App Shell.
+1. **Render:** You generate your application's HTML string using `render()`.
+2. **Analyze:** `uncss` takes that HTML and your full CSS file.
+3. **Purge:** It uses `purgecss` to match selectors found in the HTML against the CSS.
+4. **Minify:** It pipes the result through `clean-css`.
+5. **Output:** You get a tiny CSS string containing *only* the styles actually used by your App Shell.
 
 ### Example Workflow (SAG/SSG)
 
