@@ -241,6 +241,7 @@ describe("All lib files", () => {
 
     const allFiles = readFilesRecursivelySync("./lib");
     const allTestFiles = readFilesRecursivelySync("./test");
+    const allDocsFiles = readFilesRecursivelySync("./docs");
 
     const text =
       allFiles.reduce(
@@ -250,8 +251,12 @@ describe("All lib files", () => {
       allTestFiles.reduce(
         (acc, file) => `${acc}\n\n/****************** Path: ${file.path} ******************/\n${file.content}`,
         ""
+      ) +
+      allDocsFiles.reduce(
+        (acc, file) => `${acc}\n\n/****************** Path: ${file.path} ******************/\n${file.content}`,
+        ""
       );
 
-    fs.writeFileSync(".tmp/all-lib-files.ts", text);
+    fs.writeFileSync(".tmp/all-files.ts", text);
   });
 });
