@@ -467,7 +467,7 @@ describe("PulseStore", () => {
       },
       incrementTwice(state: any) {
         state.count += 2;
-        pulseStore.increment();
+        this.increment(state);
       }
     };
 

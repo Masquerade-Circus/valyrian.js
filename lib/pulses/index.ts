@@ -8,20 +8,14 @@ export type PulseContext = {
   $flush: () => Promise<void>;
 };
 
-export type Pulse<StateType, TReturn = unknown> = (
-  this: PulseContext,
-  state: StateType,
-  ...args: any[]
-) => TReturn | Promise<TReturn>;
-
-export type Pulses<StateType> = Record<string, Pulse<StateType, any>>;
+export type Pulse<StateType, TReturn = unknown> = (state: StateType, ...args: any[]) => TReturn | Promise<TReturn>;
 
 type ProxyState<StateType> = StateType & { [key: string]: any };
 
 const effectStack: Function[] = [];
 
-type StorePulses<PulsesType extends Pulses<any>> = {
-  [K in keyof PulsesType]: PulsesType[K] extends (this: any, state: any, ...args: infer Args) => infer R
+type StorePulses<PulsesType> = {
+  [K in keyof PulsesType]: PulsesType[K] extends (state: any, ...args: infer Args) => infer R
     ? (...args: Args) => R
     : never;
 };
@@ -56,9 +50,9 @@ function registerDomSubscription(subscribers: Set<Function>, domWithVnodesToUpda
   }
 }
 
-function createStore<StateType extends State, PulsesType extends Pulses<StateType>>(
+function createStore<StateType extends State, PulsesType extends Record<string, Pulse<StateType, any>>>(
   initialState: StateType | (() => StateType) | null,
-  pulses: PulsesType,
+  pulses: PulsesType & ThisType<PulsesType & PulseContext>,
   immutable = false
 ): StorePulses<PulsesType> & {
   state: ProxyState<StateType>;
@@ -151,13 +145,16 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
   }
 
   function getPulseMethod(key: string) {
-    function pulseMethod(this: PulseContext, ...args: any[]) {
+    return function (this: any, ...args: any[]) {
       pulseCallCount++;
       if (currentState === null) {
         currentState = deepCloneUnfreeze(localState);
       }
 
-      this.$flush = async () => {
+      // Runtime: Creamos un objeto que hereda de 'pulses' para que 'this' tenga acceso a los hermanos
+      const context = Object.create(pulses);
+
+      context.$flush = async () => {
         if (currentState) {
           setState(currentState, true);
           currentState = deepCloneUnfreeze(localState);
@@ -168,32 +165,30 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
       const emptyFlush = async () => {};
 
       try {
-        const pulseResult = pulses[key].apply(this, [currentState, ...args]);
+        const pulseResult = pulses[key].apply(context, [currentState, ...args]);
         if (pulseResult instanceof Promise) {
           return pulseResult
             .then((resolvedValue) => {
               setState(currentState as StateType);
-              this.$flush = emptyFlush;
+              context.$flush = emptyFlush;
               return resolvedValue;
             })
             .catch((error) => {
               console.error(`Error in pulse '${key}':`, error);
-              this.$flush = emptyFlush;
+              context.$flush = emptyFlush;
               throw error;
             });
         } else {
           setState(currentState);
-          this.$flush = emptyFlush;
+          context.$flush = emptyFlush;
           return pulseResult;
         }
       } catch (error) {
         console.error(`Error in pulse '${key}':`, error);
-        Reflect.set(this, "$flush", emptyFlush);
+        context.$flush = emptyFlush;
         throw error;
       }
-    }
-
-    return pulseMethod;
+    };
   }
 
   syncState(localState);
@@ -251,16 +246,16 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
   };
 }
 
-export function createPulseStore<StateType extends State, PulsesType extends Pulses<StateType>>(
+export function createPulseStore<StateType extends State, PulsesType extends Record<string, Pulse<StateType, any>>>(
   initialState: StateType,
-  pulses: PulsesType
+  pulses: PulsesType & ThisType<PulsesType & PulseContext>
 ) {
   return createStore(initialState, pulses, true);
 }
 
-export function createMutableStore<StateType extends State, PulsesType extends Pulses<StateType>>(
+export function createMutableStore<StateType extends State, PulsesType extends Record<string, Pulse<StateType, any>>>(
   initialState: StateType,
-  pulses: PulsesType
+  pulses: PulsesType & ThisType<PulsesType & PulseContext>
 ) {
   console.warn(
     "Warning: You are working with a mutable state. All state changes made outside of a pulse will not trigger a re-render."

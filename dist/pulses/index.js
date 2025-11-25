@@ -130,12 +130,13 @@ function createStore(initialState, pulses, immutable = false) {
     debouncedUpdate();
   }
   function getPulseMethod(key) {
-    function pulseMethod(...args) {
+    return function(...args) {
       pulseCallCount++;
       if (currentState === null) {
         currentState = (0, import_utils.deepCloneUnfreeze)(localState);
       }
-      this.$flush = async () => {
+      const context = Object.create(pulses);
+      context.$flush = async () => {
         if (currentState) {
           setState(currentState, true);
           currentState = (0, import_utils.deepCloneUnfreeze)(localState);
@@ -145,29 +146,28 @@ function createStore(initialState, pulses, immutable = false) {
       const emptyFlush = async () => {
       };
       try {
-        const pulseResult = pulses[key].apply(this, [currentState, ...args]);
+        const pulseResult = pulses[key].apply(context, [currentState, ...args]);
         if (pulseResult instanceof Promise) {
           return pulseResult.then((resolvedValue) => {
             setState(currentState);
-            this.$flush = emptyFlush;
+            context.$flush = emptyFlush;
             return resolvedValue;
           }).catch((error) => {
             console.error(`Error in pulse '${key}':`, error);
-            this.$flush = emptyFlush;
+            context.$flush = emptyFlush;
             throw error;
           });
         } else {
           setState(currentState);
-          this.$flush = emptyFlush;
+          context.$flush = emptyFlush;
           return pulseResult;
         }
       } catch (error) {
         console.error(`Error in pulse '${key}':`, error);
-        Reflect.set(this, "$flush", emptyFlush);
+        context.$flush = emptyFlush;
         throw error;
       }
-    }
-    return pulseMethod;
+    };
   }
   syncState(localState);
   const listeners = {};

@@ -2,20 +2,19 @@ type State = Record<string, any>;
 export type PulseContext = {
     $flush: () => Promise<void>;
 };
-export type Pulse<StateType, TReturn = unknown> = (this: PulseContext, state: StateType, ...args: any[]) => TReturn | Promise<TReturn>;
-export type Pulses<StateType> = Record<string, Pulse<StateType, any>>;
+export type Pulse<StateType, TReturn = unknown> = (state: StateType, ...args: any[]) => TReturn | Promise<TReturn>;
 type ProxyState<StateType> = StateType & {
     [key: string]: any;
 };
-type StorePulses<PulsesType extends Pulses<any>> = {
-    [K in keyof PulsesType]: PulsesType[K] extends (this: any, state: any, ...args: infer Args) => infer R ? (...args: Args) => R : never;
+type StorePulses<PulsesType> = {
+    [K in keyof PulsesType]: PulsesType[K] extends (state: any, ...args: infer Args) => infer R ? (...args: Args) => R : never;
 };
-export declare function createPulseStore<StateType extends State, PulsesType extends Pulses<StateType>>(initialState: StateType, pulses: PulsesType): StorePulses<PulsesType> & {
+export declare function createPulseStore<StateType extends State, PulsesType extends Record<string, Pulse<StateType, any>>>(initialState: StateType, pulses: PulsesType & ThisType<PulsesType & PulseContext>): StorePulses<PulsesType> & {
     state: ProxyState<StateType>;
     on: (event: string, callback: Function) => void;
     off: (event: string, callback: Function) => void;
 };
-export declare function createMutableStore<StateType extends State, PulsesType extends Pulses<StateType>>(initialState: StateType, pulses: PulsesType): StorePulses<PulsesType> & {
+export declare function createMutableStore<StateType extends State, PulsesType extends Record<string, Pulse<StateType, any>>>(initialState: StateType, pulses: PulsesType & ThisType<PulsesType & PulseContext>): StorePulses<PulsesType> & {
     state: ProxyState<StateType>;
     on: (event: string, callback: Function) => void;
     off: (event: string, callback: Function) => void;
