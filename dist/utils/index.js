@@ -126,102 +126,102 @@ function deepCloneUnfreeze(obj, cloneClassInstances = false, seen = /* @__PURE__
     return seen.get(obj);
   }
   let clone;
-  let cloned = false;
   switch (true) {
     case Array.isArray(obj): {
       clone = [];
+      seen.set(obj, clone);
       for (let i = 0, l = obj.length; i < l; i++) {
         clone[i] = deepCloneUnfreeze(obj[i], cloneClassInstances, seen);
       }
-      cloned = true;
-      break;
+      return clone;
     }
     case obj instanceof Date: {
       clone = new Date(obj.getTime());
-      cloned = true;
-      break;
+      seen.set(obj, clone);
+      return clone;
     }
     case obj instanceof RegExp: {
       clone = new RegExp(obj.source, obj.flags);
-      cloned = true;
-      break;
+      seen.set(obj, clone);
+      return clone;
     }
     case obj instanceof Map: {
       clone = /* @__PURE__ */ new Map();
+      seen.set(obj, clone);
       for (const [key, value] of obj.entries()) {
         clone.set(
           deepCloneUnfreeze(key, cloneClassInstances, seen),
           deepCloneUnfreeze(value, cloneClassInstances, seen)
         );
       }
-      cloned = true;
-      break;
+      return clone;
     }
     case obj instanceof Set: {
       clone = /* @__PURE__ */ new Set();
+      seen.set(obj, clone);
       for (const value of obj.values()) {
         clone.add(deepCloneUnfreeze(value, cloneClassInstances, seen));
       }
-      cloned = true;
-      break;
+      return clone;
     }
     case obj instanceof ArrayBuffer: {
       clone = obj.slice(0);
-      cloned = true;
-      break;
+      seen.set(obj, clone);
+      return clone;
     }
     // TypedArrays and DataView
     case ArrayBuffer.isView(obj): {
       clone = new obj.constructor(obj.buffer.slice(0));
-      cloned = true;
-      break;
+      seen.set(obj, clone);
+      return clone;
     }
     // Node.js Buffer
     case (typeof Buffer !== "undefined" && obj instanceof Buffer): {
       clone = Buffer.from(obj);
-      cloned = true;
-      break;
+      seen.set(obj, clone);
+      return clone;
     }
     case obj instanceof Error: {
       clone = new obj.constructor(obj.message);
+      seen.set(obj, clone);
       break;
     }
     // Non clonable objects
-    case (obj instanceof Promise || obj instanceof WeakMap || obj instanceof WeakSet || typeof obj === "function" || typeof obj === "symbol"): {
+    case (obj instanceof Promise || obj instanceof WeakMap || obj instanceof WeakSet): {
       clone = obj;
-      cloned = true;
-      break;
+      seen.set(obj, clone);
+      return clone;
     }
     // Instance of a class
     case (obj.constructor && obj.constructor !== Object): {
       if (!cloneClassInstances) {
         clone = obj;
-        cloned = true;
-        break;
+        seen.set(obj, clone);
+        return clone;
       }
       clone = Object.create(Object.getPrototypeOf(obj));
+      seen.set(obj, clone);
       break;
     }
     // Plain objects
     default: {
       clone = {};
-      for (const key in obj) {
+      seen.set(obj, clone);
+      const keys = Reflect.ownKeys(obj);
+      for (let i = 0, l = keys.length; i < l; i++) {
+        const key = keys[i];
         clone[key] = deepCloneUnfreeze(obj[key], cloneClassInstances, seen);
       }
-      cloned = true;
-      break;
+      return clone;
     }
   }
-  seen.set(obj, clone);
-  if (!cloned) {
-    const descriptors = Object.getOwnPropertyDescriptors(obj);
-    for (const key of Reflect.ownKeys(descriptors)) {
-      const descriptor = descriptors[key];
-      if ("value" in descriptor) {
-        descriptor.value = deepCloneUnfreeze(descriptor.value, cloneClassInstances, seen);
-      }
-      Object.defineProperty(clone, key, descriptor);
+  const descriptors = Object.getOwnPropertyDescriptors(obj);
+  for (const key of Reflect.ownKeys(descriptors)) {
+    const descriptor = descriptors[key];
+    if ("value" in descriptor) {
+      descriptor.value = deepCloneUnfreeze(descriptor.value, cloneClassInstances, seen);
     }
+    Object.defineProperty(clone, key, descriptor);
   }
   return clone;
 }
