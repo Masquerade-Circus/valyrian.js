@@ -4,23 +4,28 @@ import { deepCloneUnfreeze, deepFreeze, hasChanged } from "valyrian.js/utils";
 
 type State = Record<string, any>;
 
-export type Pulse<StateType, TReturn = unknown> = (state: StateType, ...args: any[]) => TReturn | Promise<TReturn>;
+export type PulseContext = {
+  $flush: () => Promise<void>;
+};
 
-export type Pulses<StateType> = Record<string, Pulse<StateType, any> & { $flush?: () => Promise<void> }>;
+export type Pulse<StateType, TReturn = unknown> = (
+  this: PulseContext,
+  state: StateType,
+  ...args: any[]
+) => TReturn | Promise<TReturn>;
+
+export type Pulses<StateType> = Record<string, Pulse<StateType, any>>;
 
 type ProxyState<StateType> = StateType & { [key: string]: any };
 
 const effectStack: Function[] = [];
 
 type StorePulses<PulsesType extends Pulses<any>> = {
-  [K in keyof PulsesType]: PulsesType[K] extends (state: any, ...args: infer Args) => infer R
+  [K in keyof PulsesType]: PulsesType[K] extends (this: any, state: any, ...args: infer Args) => infer R
     ? (...args: Args) => R
     : never;
 };
 
-/** Función auxiliar para registrar la suscripción al nodo DOM.
- *  Retorna true si se agregó la suscripción, o false si se encontró un nodo padre ya suscrito.
- */
 function registerDomSubscription(subscribers: Set<Function>, domWithVnodesToUpdate: WeakSet<DomElement>): void {
   const currentVnode = current.vnode as VnodeWithDom;
   if (!currentVnode || domWithVnodesToUpdate.has(currentVnode.dom)) {
@@ -37,7 +42,6 @@ function registerDomSubscription(subscribers: Set<Function>, domWithVnodesToUpda
     parent = parent.parentElement as DomElement;
   }
 
-  // Si no hay nodo padre registrado, se crea la suscripción.
   if (!hasParent) {
     const dom = currentVnode.dom;
     const subscription = () => {
@@ -64,7 +68,7 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
   const subscribers = new Set<Function>();
   const domWithVnodesToUpdate = new WeakSet<DomElement>();
 
-  const boundPulses: Pulses<StateType> = {};
+  const boundPulses: Record<string, Function> = {};
   for (const key in pulses) {
     if (typeof pulses[key] !== "function") {
       throw new Error(`Pulse '${key}' must be a function`);
@@ -89,7 +93,6 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
 
   const proxyState = new Proxy(localState, {
     get: (state, prop: string) => {
-      // If we are in a pulse, we return the value of the cloned state.
       if (currentState) {
         return currentState[prop];
       }
@@ -148,38 +151,39 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
   }
 
   function getPulseMethod(key: string) {
-    function pulseMethod(this: Pulse<StateType, any> & { $flush: () => Promise<void> }, ...args: any[]) {
+    function pulseMethod(this: PulseContext, ...args: any[]) {
       pulseCallCount++;
       if (currentState === null) {
         currentState = deepCloneUnfreeze(localState);
       }
 
-      const $flush = async () => {
-        setState(currentState as StateType, true);
-        currentState = deepCloneUnfreeze(localState);
+      this.$flush = async () => {
+        if (currentState) {
+          setState(currentState, true);
+          currentState = deepCloneUnfreeze(localState);
+        }
         await new Promise((resolve) => setTimeout(resolve, 0));
       };
 
-      Reflect.set(this, "$flush", $flush);
       const emptyFlush = async () => {};
 
       try {
-        const pulseResult = pulses[key].apply(this, [currentState, ...args] as any);
+        const pulseResult = pulses[key].apply(this, [currentState, ...args]);
         if (pulseResult instanceof Promise) {
           return pulseResult
             .then((resolvedValue) => {
               setState(currentState as StateType);
-              Reflect.set(this, "$flush", emptyFlush);
+              this.$flush = emptyFlush;
               return resolvedValue;
             })
             .catch((error) => {
               console.error(`Error in pulse '${key}':`, error);
-              Reflect.set(this, "$flush", emptyFlush);
+              this.$flush = emptyFlush;
               throw error;
             });
         } else {
           setState(currentState);
-          Reflect.set(this, "$flush", emptyFlush);
+          this.$flush = emptyFlush;
           return pulseResult;
         }
       } catch (error) {
@@ -226,21 +230,17 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
       }
       const pulseMethod = pulses[prop];
 
-      if (typeof pulseMethod === "function") {
-        return (...args: any[]) => {
-          const result = pulseMethod.apply(pulsesProxy, args as any);
-          if (result instanceof Promise) {
-            return result.then((r) => {
-              trigger("pulse", prop, args);
-              return r;
-            });
-          }
-          trigger("pulse", prop, args);
-          return result;
-        };
-      }
-
-      return pulseMethod;
+      return (...args: any[]) => {
+        const result = pulseMethod.apply(pulseMethod, args);
+        if (result instanceof Promise) {
+          return result.then((r) => {
+            trigger("pulse", prop, args);
+            return r;
+          });
+        }
+        trigger("pulse", prop, args);
+        return result;
+      };
     }
   });
 
@@ -254,24 +254,16 @@ function createStore<StateType extends State, PulsesType extends Pulses<StateTyp
 export function createPulseStore<StateType extends State, PulsesType extends Pulses<StateType>>(
   initialState: StateType,
   pulses: PulsesType
-): StorePulses<PulsesType> & {
-  state: ProxyState<StateType>;
-  on: (event: string, callback: Function) => void;
-  off: (event: string, callback: Function) => void;
-} {
+) {
   return createStore(initialState, pulses, true);
 }
 
 export function createMutableStore<StateType extends State, PulsesType extends Pulses<StateType>>(
   initialState: StateType,
   pulses: PulsesType
-): StorePulses<PulsesType> & {
-  state: ProxyState<StateType>;
-  on: (event: string, callback: Function) => void;
-  off: (event: string, callback: Function) => void;
-} {
+) {
   console.warn(
-    "Warning: You are working with a mutable state. This can lead to unpredictable behavior. All state changes made outside of a pulse will not trigger a re-render."
+    "Warning: You are working with a mutable state. All state changes made outside of a pulse will not trigger a re-render."
   );
   return createStore(initialState, pulses, false);
 }

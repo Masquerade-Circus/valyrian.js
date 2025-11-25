@@ -135,12 +135,13 @@ function createStore(initialState, pulses, immutable = false) {
       if (currentState === null) {
         currentState = (0, import_utils.deepCloneUnfreeze)(localState);
       }
-      const $flush = async () => {
-        setState(currentState, true);
-        currentState = (0, import_utils.deepCloneUnfreeze)(localState);
+      this.$flush = async () => {
+        if (currentState) {
+          setState(currentState, true);
+          currentState = (0, import_utils.deepCloneUnfreeze)(localState);
+        }
         await new Promise((resolve) => setTimeout(resolve, 0));
       };
-      Reflect.set(this, "$flush", $flush);
       const emptyFlush = async () => {
       };
       try {
@@ -148,16 +149,16 @@ function createStore(initialState, pulses, immutable = false) {
         if (pulseResult instanceof Promise) {
           return pulseResult.then((resolvedValue) => {
             setState(currentState);
-            Reflect.set(this, "$flush", emptyFlush);
+            this.$flush = emptyFlush;
             return resolvedValue;
           }).catch((error) => {
             console.error(`Error in pulse '${key}':`, error);
-            Reflect.set(this, "$flush", emptyFlush);
+            this.$flush = emptyFlush;
             throw error;
           });
         } else {
           setState(currentState);
-          Reflect.set(this, "$flush", emptyFlush);
+          this.$flush = emptyFlush;
           return pulseResult;
         }
       } catch (error) {
@@ -199,20 +200,17 @@ function createStore(initialState, pulses, immutable = false) {
         throw new Error(`Pulse '${prop}' does not exist`);
       }
       const pulseMethod = pulses2[prop];
-      if (typeof pulseMethod === "function") {
-        return (...args) => {
-          const result = pulseMethod.apply(pulsesProxy, args);
-          if (result instanceof Promise) {
-            return result.then((r) => {
-              trigger("pulse", prop, args);
-              return r;
-            });
-          }
-          trigger("pulse", prop, args);
-          return result;
-        };
-      }
-      return pulseMethod;
+      return (...args) => {
+        const result = pulseMethod.apply(pulseMethod, args);
+        if (result instanceof Promise) {
+          return result.then((r) => {
+            trigger("pulse", prop, args);
+            return r;
+          });
+        }
+        trigger("pulse", prop, args);
+        return result;
+      };
     }
   });
   return pulsesProxy;
@@ -222,7 +220,7 @@ function createPulseStore(initialState, pulses) {
 }
 function createMutableStore(initialState, pulses) {
   console.warn(
-    "Warning: You are working with a mutable state. This can lead to unpredictable behavior. All state changes made outside of a pulse will not trigger a re-render."
+    "Warning: You are working with a mutable state. All state changes made outside of a pulse will not trigger a re-render."
   );
   return createStore(initialState, pulses, false);
 }
