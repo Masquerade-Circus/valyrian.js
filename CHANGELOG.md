@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.1.4](///compare/8.1.3...8.1.4) (2025-11-25)
+
+### Bug Fixes
+
+* **router:** fix not parsing partial paths in the browser 4d02cb5
+
 ## [8.1.3](///compare/8.1.2...8.1.3) (2025-11-25)
 
 ## [8.1.2](///compare/8.1.1...8.1.2) (2025-11-24)
