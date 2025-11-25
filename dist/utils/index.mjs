@@ -64,26 +64,28 @@ function hasChanged(prev, current) {
 }
 
 // lib/utils/deep-freeze.ts
-function deepFreeze(obj, freezeClassInstances = false) {
-  if (typeof obj === "object" && obj !== null && !Object.isFrozen(obj)) {
-    if (Array.isArray(obj)) {
-      for (let i = 0, l = obj.length; i < l; i++) {
-        deepFreeze(obj[i]);
-      }
-    } else {
-      const props = Reflect.ownKeys(obj);
-      for (let i = 0, l = props.length; i < l; i++) {
-        deepFreeze(obj[props[i]]);
-      }
-      if (freezeClassInstances) {
-        const proto = Object.getPrototypeOf(obj);
-        if (proto && proto !== Object.prototype) {
-          deepFreeze(proto);
-        }
+function deepFreeze(obj, freezeClassInstances = false, seen = /* @__PURE__ */ new WeakSet()) {
+  if (obj === null || typeof obj !== "object" || seen.has(obj) || Object.isFrozen(obj)) {
+    return obj;
+  }
+  seen.add(obj);
+  if (Array.isArray(obj)) {
+    for (let i = 0, l = obj.length; i < l; i++) {
+      deepFreeze(obj[i], freezeClassInstances, seen);
+    }
+  } else {
+    const props = Reflect.ownKeys(obj);
+    for (let i = 0, l = props.length; i < l; i++) {
+      deepFreeze(obj[props[i]], freezeClassInstances, seen);
+    }
+    if (freezeClassInstances) {
+      const proto = Object.getPrototypeOf(obj);
+      if (proto && proto !== Object.prototype) {
+        deepFreeze(proto, freezeClassInstances, seen);
       }
     }
-    Object.freeze(obj);
   }
+  Object.freeze(obj);
   return obj;
 }
 function deepCloneUnfreeze(obj, cloneClassInstances = false, seen = /* @__PURE__ */ new WeakMap()) {
