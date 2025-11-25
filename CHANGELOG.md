@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.1.5](///compare/8.1.4...8.1.5) (2025-11-25)
+
+### Performance Improvements
+
+* **utils/deep-freeze:** improve deep-freeze c411d6e
+
 ## [8.1.4](///compare/8.1.3...8.1.4) (2025-11-25)
 
 ### Bug Fixes
