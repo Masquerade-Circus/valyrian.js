@@ -25,12 +25,18 @@ __export(index_exports, {
 module.exports = __toCommonJS(index_exports);
 var import_valyrian = require("valyrian.js");
 var import_utils = require("valyrian.js/utils");
-function serialize(obj, prefix = "") {
+function serialize(obj, prefix) {
+  if (obj === null || obj === void 0) {
+    return new URLSearchParams();
+  }
   const params = new URLSearchParams();
   Object.keys(obj).forEach((prop) => {
     const key = prefix ? `${prefix}[${prop}]` : prop;
-    if (typeof obj[prop] === "object") {
-      params.append(key, serialize(obj[prop], key).toString());
+    if (typeof obj[prop] === "object" && obj[prop] !== null) {
+      const nestedParams = serialize(obj[prop], key);
+      nestedParams.forEach((value, nestedKey) => {
+        params.append(nestedKey, value);
+      });
     } else {
       params.append(key, obj[prop]);
     }
@@ -40,7 +46,9 @@ function serialize(obj, prefix = "") {
 function serializeFormData(data) {
   const fd = new FormData();
   Object.entries(data).forEach(([key, value]) => {
-    if (value === null || value === void 0) return;
+    if (value === null || value === void 0) {
+      return;
+    }
     if (Array.isArray(value)) {
       value.forEach((v) => fd.append(key, v));
     } else {
@@ -51,7 +59,7 @@ function serializeFormData(data) {
 }
 function parseUrl(url, options) {
   const urlWithoutSlash = url.replace(/\/+$/, "").trim();
-  const u = /^https?/gi.test(urlWithoutSlash) ? urlWithoutSlash : `${options.urls.base}${urlWithoutSlash}`;
+  const u = /^https?/gi.test(urlWithoutSlash) ? urlWithoutSlash : `${options.urls.base || ""}${urlWithoutSlash}`;
   if (import_valyrian.isNodeJs && typeof options.urls.node === "string") {
     if (typeof options.urls.api === "string") {
       return new URL(u.replace(options.urls.api, options.urls.node));
@@ -63,7 +71,10 @@ function parseUrl(url, options) {
   if (/^https?/gi.test(u)) {
     return new URL(u);
   }
-  return new URL(u, options.urls.base);
+  if (!import_valyrian.isNodeJs) {
+    return new URL(u, window.location.origin);
+  }
+  return new URL(u);
 }
 var defaultOptions = { allowedMethods: ["get", "post", "put", "patch", "delete", "head", "options"] };
 var isNativeBody = (data) => data instanceof FormData || data instanceof URLSearchParams || data instanceof Blob || data instanceof ArrayBuffer || typeof DataView !== "undefined" && data instanceof DataView || typeof ReadableStream !== "undefined" && data instanceof ReadableStream;
@@ -108,7 +119,9 @@ function Requester(baseUrl = "", options = defaultOptions) {
     try {
       finalUrl = parseUrl(url2, opts);
     } catch (error) {
-      throw new Error(`Failed to parse URL: ${url2}`);
+      const err = new Error(`Failed to parse URL: ${url2}`, { cause: error });
+      err.cause = error;
+      throw err;
     }
     if (data) {
       if (innerOptions.method === "GET" && typeof data === "object") {
