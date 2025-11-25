@@ -1,5 +1,7 @@
 # Changelog
 
+## [8.1.6](///compare/8.1.5...8.1.6) (2025-11-25)
+
 ## [8.1.5](///compare/8.1.4...8.1.5) (2025-11-25)
 
 ### Performance Improvements
