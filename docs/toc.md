@@ -35,7 +35,7 @@
 
 4. Building Single Page Applications (SPA)
 
-* 4.1. Routing (lib/router):
+* 4.1. Routing (valyrian.js/router):
   * Defining Routes & Navigation.
   * Parameters, Wildcards & Middlewares.
   * Using subrouters.
@@ -43,13 +43,13 @@
   * Handling errors.
   * v-route directive.
   * Best practices.
-* 4.2. Data Fetching (lib/request):
+* 4.2. Data Fetching (valyrian.js/request):
   * Basic usage: get, post, put, delete.
   * Handling Headers & Auth Tokens.
   * Composing requests.
   * Allowed methods.
   * Using Suspense.
-* 4.3. Local State & Lifecycle (lib/hooks):
+* 4.3. Local State & Lifecycle (valyrian.js/hooks):
   * useState, useEffect, useMemo, useRef, useCallback.
   * Custom hooks.
   * Lifecycle directives: v-create, v-update, v-cleanup, v-remove.
@@ -91,15 +91,15 @@
   * Using sessionStorage on the backend securely.
 * 7.4. Progressive Web Apps (PWA):
   * Using the built-in icons generator.
-  * Registering Service Workers (lib/sw).
-* 7.5. Bundling JavaScript & TypeScript (lib/node/inline)
+  * Registering Service Workers (valyrian.js/sw).
+* 7.5. Bundling JavaScript & TypeScript
 * 7.6. CSS Bundling and Minification
 * 7.7. Removing Unused Styles
 
 8. Utilities & Ecosystem
 
 * 8.1. Internationalization (i18n) & Formatting.
-* 8.2. Native Persistence (lib/native-store).
+* 8.2. Native Persistence (valyrian.js/native-store).
 * 8.3. Helpers (deepFreeze, hasChanged).
 
 9. Recipes & Integrations *TODO*

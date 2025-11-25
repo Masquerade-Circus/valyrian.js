@@ -8,7 +8,7 @@ These utilities are built with the same Zero-Overhead philosophy: they use nativ
 
 ## 8.1. Internationalization (i18n) & Formatting
 
-The `lib/translate` module provides a lightweight but complete solution for managing multi-language applications and formatting data. It is integrated directly with the Valyrian rendering cycle, meaning language changes trigger automatic UI updates.
+The `valyrian.js/translate` module provides a lightweight but complete solution for managing multi-language applications and formatting data. It is integrated directly with the Valyrian rendering cycle, meaning language changes trigger automatic UI updates.
 
 ### 8.1.1. Setup and Configuration
 
@@ -132,9 +132,9 @@ console.log(cleaner.shiftDecimalPlaces().format()); // "1,234.56"
 
 This utility allows you to safely perform math on the `value` property (which holds the raw number) and only format it for display at the last moment.
 
-## 8.2. Native Persistence (`lib/native-store`)
+## 8.2. Native Persistence (`valyrian.js/native-store`)
 
-The `lib/native-store` module provides a robust wrapper around the browser's `localStorage` and `sessionStorage` APIs. It solves the common pain points of the native API: manual JSON parsing, lack of in-memory caching, and lack of structure.
+The `valyrian.js/native-store` module provides a robust wrapper around the browser's `localStorage` and `sessionStorage` APIs. It solves the common pain points of the native API: manual JSON parsing, lack of in-memory caching, and lack of structure.
 
 ### 8.2.1. Creating a Store
 

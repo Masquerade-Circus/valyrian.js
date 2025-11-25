@@ -2,7 +2,7 @@
 
 While the previous section covered how to render views, a real application needs navigation, data communication, and local state management. Valyrian.js provides these capabilities natively through its specialized modules, ensuring that these critical parts of your stack are as performant as the core rendering engine.
 
-## 4.1. Routing (`lib/router`)
+## 4.1. Routing (`valyrian.js/router`)
 
 Valyrian.js includes a robust, isomorphic router based on a **Radix Tree (Trie)** structure. This algorithmic choice means routing performance ($O(k)$) does not degrade as your application grows to thousands of routes.
 
@@ -138,7 +138,7 @@ router.catch((req, error) => {
 * **Error Granularity:** Define specific error handlers (like 404 or Auth errors) before the generic catch-all handler to provide better UX.
 * **Isomorphism:** Since the router is pure JS, you can export this same router instance to your Node.js server entry point to handle server-side routing seamlessly.
 
-## 4.2. Data Fetching (`lib/request`)
+## 4.2. Data Fetching (`valyrian.js/request`)
 
 Valyrian.js includes a lightweight, isomorphic HTTP client wrapper around the native `fetch` API. It removes the boilerplate of standard fetch calls (like manual JSON parsing or stringifying bodies) while ensuring requests work identically in both the Browser and Node.js environments.
 
@@ -294,7 +294,7 @@ await request.post("/api/soap", xmlData, {
 
 > **Note:** When passing a native `FormData` object, do **not** manually set the `Content-Type` header to `multipart/form-data`. Let the browser set it for you to ensure the boundary parameter is included correctly.
 
-## 4.3. Local State & Lifecycle (`lib/hooks`)
+## 4.3. Local State & Lifecycle (`valyrian.js/hooks`)
 
 Valyrian.js provides a robust system for managing component-local state and side effects. Unlike global stores (Flux/Pulse), these tools are scoped strictly to the component instance.
 

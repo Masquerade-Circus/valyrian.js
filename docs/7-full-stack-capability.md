@@ -65,7 +65,7 @@ One of the biggest challenges in Full-Stack applications is networking consisten
 
 Furthermore, inside a server environment (like Docker or Kubernetes), the API might not be reachable via the public domain, but rather through an internal network address (e.g., `http://localhost:3000` or `http://api-service`).
 
-Valyrian's `lib/request` module solves this natively with an **Environment-Aware URL Resolver**.
+Valyrian's `valyrian.js/request` module solves this natively with an **Environment-Aware URL Resolver**.
 
 ### Configuring Request: `base`, `node`, and `api`
 
@@ -176,7 +176,7 @@ Valyrian.js solves this natively by implementing **Request Context Isolation** u
 
 ### How it Works
 
-The `lib/node` module polyfills the global `sessionStorage` and `localStorage` objects with a smart proxy called `ServerStorage`.
+The `valyrian.js/node` module polyfills the global `sessionStorage` and `localStorage` objects with a smart proxy called `ServerStorage`.
 
 1. **Global Scope (Default):** If accessed outside a request (e.g., server startup), it behaves like a standard in-memory store shared by the process.
 2. **Request Scope (Isolated):** When wrapped in `ServerStorage.run()`, it creates a unique, ephemeral storage bucket that exists **only for the duration of that specific asynchronous execution context**.
@@ -253,7 +253,7 @@ const UserProfile = () => {
 
 ## 7.4. Progressive Web Apps (PWA)
 
-Valyrian.js treats PWA capabilities as a build-time infrastructure requirement. The `lib/node` module includes utilities to automate the generation of assets and logic required to make your application installable and offline-capable.
+Valyrian.js treats PWA capabilities as a build-time infrastructure requirement. The `valyrian.js/node` module includes utilities to automate the generation of assets and logic required to make your application installable and offline-capable.
 
 This allows you to transform a standard SPA into a PWA with just a few lines of code in your build script.
 
@@ -358,7 +358,7 @@ sw("./public/sw.js", {
 
 ### 7.4.3. Client-Side Registration
 
-Once the assets and Service Worker are generated, you need to register them in the browser. Valyrian exposes a helper for this in `lib/sw`.
+Once the assets and Service Worker are generated, you need to register them in the browser. Valyrian exposes a helper for this in `valyrian.js/sw`.
 
 ```tsx
 // src/main.tsx
@@ -494,7 +494,7 @@ Instead of adding a complex CSS pipeline with PostCSS/Nano, Valyrian provides im
 
 ## 7.7. Removing Unused Styles (`uncss`)
 
-One of the most powerful features included in `lib/node` is the **`inline.uncss`** utility.
+One of the most powerful features included in `valyrian.js/node` is the **`inline.uncss`** utility.
 
 In modern development, we often use CSS frameworks (like Tailwind, Bootstrap, or Bulma) that contain thousands of classes we never use. Shipping the full CSS file hurts performance (Blocking Render Time).
 

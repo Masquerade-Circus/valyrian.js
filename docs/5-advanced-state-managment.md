@@ -26,7 +26,7 @@ The decision flow is hierarchical. You should choose the tool that fits the comp
 
 ## 5.2. High-Performance Shared State (Pulses)
 
-The `lib/pulses` module implements **Fine-Grained Reactivity** (often referred to as Signals). Its architectural superpower is the ability to update specific VDOM directly, **bypassing the Global Virtual DOM reconciliation process**.
+The `valyrian.js/pulses` module implements **Fine-Grained Reactivity** (often referred to as Signals). Its architectural superpower is the ability to update specific VDOM directly, **bypassing the Global Virtual DOM reconciliation process**.
 
 ### 5.2.1. Fine-grained signals (`createPulse`)
 
