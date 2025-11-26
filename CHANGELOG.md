@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.1.9](///compare/8.1.8...8.1.9) (2025-11-26)
+
+### Bug Fixes
+
+* **pulses:** fix race conditions with this.$flush() 5566969
+
 ## [8.1.8](///compare/8.1.7...8.1.8) (2025-11-25)
 
 ## [8.1.7](///compare/8.1.6...8.1.7) (2025-11-25)
