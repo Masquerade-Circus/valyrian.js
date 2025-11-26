@@ -1,4 +1,5 @@
-/* eslint-disable no-console */
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
+
 import { updateVnode, VnodeWithDom, current, DomElement } from "valyrian.js";
 import { deepCloneUnfreeze, deepFreeze, hasChanged } from "valyrian.js/utils";
 
@@ -140,53 +141,66 @@ function createStore<StateType extends State, PulsesType extends Record<string, 
       return;
     }
     syncState(newState);
-    currentState = null;
+    if (!flush) {
+      currentState = null;
+    }
+    pulseCallCount = 0;
     debouncedUpdate();
+  }
+
+  function unfreezeState() {
+    if (currentState === null) {
+      currentState = deepCloneUnfreeze(localState);
+    }
+    return currentState;
   }
 
   function getPulseMethod(key: string) {
     return function (this: any, ...args: any[]) {
       pulseCallCount++;
-      if (currentState === null) {
-        currentState = deepCloneUnfreeze(localState);
-      }
 
-      // Runtime: Creamos un objeto que hereda de 'pulses' para que 'this' tenga acceso a los hermanos
+      const state = unfreezeState();
+
       const context = Object.create(pulses);
 
       context.$flush = async () => {
         if (currentState) {
           setState(currentState, true);
-          currentState = deepCloneUnfreeze(localState);
         }
-        await new Promise((resolve) => setTimeout(resolve, 0));
       };
 
       const emptyFlush = async () => {};
 
+      const handleError = (error: any) => {
+        console.error(`Error in pulse '${key}':`, error);
+        context.$flush = emptyFlush;
+
+        pulseCallCount--;
+        if (pulseCallCount <= 0) {
+          currentState = null;
+          pulseCallCount = 0;
+        }
+
+        throw error;
+      };
+
       try {
-        const pulseResult = pulses[key].apply(context, [currentState, ...args]);
+        const pulseResult = pulses[key].apply(context, [state, ...args]);
         if (pulseResult instanceof Promise) {
           return pulseResult
             .then((resolvedValue) => {
-              setState(currentState as StateType);
+              setState(state as StateType);
               context.$flush = emptyFlush;
               return resolvedValue;
             })
-            .catch((error) => {
-              console.error(`Error in pulse '${key}':`, error);
-              context.$flush = emptyFlush;
-              throw error;
-            });
+            .catch(handleError);
         } else {
-          setState(currentState);
+          setState(state);
           context.$flush = emptyFlush;
           return pulseResult;
         }
       } catch (error) {
-        console.error(`Error in pulse '${key}':`, error);
-        context.$flush = emptyFlush;
-        throw error;
+        handleError(error);
       }
     };
   }

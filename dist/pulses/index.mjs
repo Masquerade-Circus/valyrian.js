@@ -99,46 +99,55 @@ function createStore(initialState, pulses, immutable = false) {
       return;
     }
     syncState(newState);
-    currentState = null;
+    if (!flush) {
+      currentState = null;
+    }
+    pulseCallCount = 0;
     debouncedUpdate();
+  }
+  function unfreezeState() {
+    if (currentState === null) {
+      currentState = deepCloneUnfreeze(localState);
+    }
+    return currentState;
   }
   function getPulseMethod(key) {
     return function(...args) {
       pulseCallCount++;
-      if (currentState === null) {
-        currentState = deepCloneUnfreeze(localState);
-      }
+      const state = unfreezeState();
       const context = Object.create(pulses);
       context.$flush = async () => {
         if (currentState) {
           setState(currentState, true);
-          currentState = deepCloneUnfreeze(localState);
         }
-        await new Promise((resolve) => setTimeout(resolve, 0));
       };
       const emptyFlush = async () => {
       };
+      const handleError = (error) => {
+        console.error(`Error in pulse '${key}':`, error);
+        context.$flush = emptyFlush;
+        pulseCallCount--;
+        if (pulseCallCount <= 0) {
+          currentState = null;
+          pulseCallCount = 0;
+        }
+        throw error;
+      };
       try {
-        const pulseResult = pulses[key].apply(context, [currentState, ...args]);
+        const pulseResult = pulses[key].apply(context, [state, ...args]);
         if (pulseResult instanceof Promise) {
           return pulseResult.then((resolvedValue) => {
-            setState(currentState);
+            setState(state);
             context.$flush = emptyFlush;
             return resolvedValue;
-          }).catch((error) => {
-            console.error(`Error in pulse '${key}':`, error);
-            context.$flush = emptyFlush;
-            throw error;
-          });
+          }).catch(handleError);
         } else {
-          setState(currentState);
+          setState(state);
           context.$flush = emptyFlush;
           return pulseResult;
         }
       } catch (error) {
-        console.error(`Error in pulse '${key}':`, error);
-        context.$flush = emptyFlush;
-        throw error;
+        handleError(error);
       }
     };
   }
