@@ -82,7 +82,8 @@ var reservedProps = /* @__PURE__ */ new Set([
   "v-model",
   "v-create",
   "v-update",
-  "v-cleanup"
+  "v-cleanup",
+  "v-remove"
 ]);
 function addCallbackToSet(callback, setType, vnode) {
   vnode[setType] = vnode[setType] || /* @__PURE__ */ new Set();
@@ -181,15 +182,6 @@ var directives = {
   },
   "v-cleanup": (callback, vnode) => {
     addCallbackToSet(() => callback(vnode), "oncleanup" /* onCleanup */, current.vnode);
-  },
-  "v-if": (value, vnode) => {
-    if (!Boolean(value)) {
-      const parentNode = vnode.dom?.parentNode;
-      if (parentNode) {
-        parentNode.replaceChild(document.createTextNode(""), vnode.dom);
-      }
-      return false;
-    }
   },
   "v-show": (value, vnode) => {
     const bool = Boolean(value);
@@ -362,7 +354,11 @@ function eventListener(e) {
   while (dom) {
     const oldVnode = dom.vnode;
     if (oldVnode && oldVnode.props[name]) {
-      oldVnode.props[name](e, oldVnode);
+      try {
+        oldVnode.props[name](e, oldVnode);
+      } finally {
+        current.event = null;
+      }
       if (!e.defaultPrevented) {
         update();
       }
@@ -428,55 +424,67 @@ function createElement(tag, isSVG) {
   return isSVG ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag);
 }
 function flatTree(newVnode) {
-  let i = 0;
-  let children;
+  let children = [];
+  const newChildren = newVnode.children;
+  newVnode.hasKeys = false;
   if ("v-for" in newVnode.props === false) {
-    children = [...newVnode.children];
+    for (let l = newChildren.length - 1; l >= 0; l--) {
+      children.push(newChildren[l]);
+    }
   } else {
     children = [];
     const set = newVnode.props["v-for"];
-    const l = set.length;
     const callback = newVnode.children[0];
     if (typeof callback !== "function") {
       console.warn("v-for directive must have a callback function as children");
       return children;
     }
-    for (let i2 = 0; i2 < l; i2++) {
-      children[i2] = callback(set[i2], i2);
+    const tmp = [];
+    for (let i = 0; i < set.length; i++) {
+      tmp.push(callback(set[i], i));
+    }
+    for (let i = tmp.length - 1; i >= 0; i--) {
+      children.push(tmp[i]);
     }
   }
   newVnode.oldChildComponents = newVnode.childComponents;
   if (newVnode.childComponents) {
     newVnode.childComponents = /* @__PURE__ */ new Set();
   }
-  while (i < children.length) {
-    const newChild = children[i];
+  const out = [];
+  while (children.length) {
+    const newChild = children.pop();
     if (newChild == null) {
-      children.splice(i, 1);
       continue;
     }
     if (Array.isArray(newChild)) {
-      children.splice(i, 1, ...newChild);
+      for (let l = newChild.length - 1; l >= 0; l--) {
+        children.push(newChild[l]);
+      }
       continue;
     }
     if (newChild instanceof Vnode) {
       newChild.props = newChild.props || {};
+      if ("v-if" in newChild.props && !Boolean(newChild.props["v-if"])) {
+        continue;
+      }
       newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
       if (typeof newChild.tag !== "string") {
         const component = current.component = newChild.tag;
         newVnode.childComponents = newVnode.childComponents || /* @__PURE__ */ new Set();
         newVnode.childComponents.add(component);
-        children[i] = (isPOJOComponent(component) ? component.view : component).bind(component)(
-          newChild.props,
-          newChild.children
+        children.push(
+          (isPOJOComponent(component) ? component.view : component).bind(component)(newChild.props, newChild.children)
         );
         continue;
       }
       newVnode.hasKeys = newVnode.hasKeys || "key" in newChild.props;
+      out.push(newChild);
+      continue;
     }
-    i++;
+    out.push(newChild);
   }
-  return children;
+  return out;
 }
 function processNewChild(newChild, parentVnode, oldDom) {
   if (oldDom) {
@@ -637,10 +645,10 @@ function unmount() {
   if (mainVnode) {
     mainComponent = v(() => null, {});
     const result = update();
-    for (const name in eventListenerNames) {
-      mainVnode.dom.removeEventListener(name.slice(2).toLowerCase(), eventListener);
-      Reflect.deleteProperty(eventListenerNames, name);
+    for (const name of eventListenerNames) {
+      mainVnode.dom.removeEventListener(name.slice(2), eventListener);
     }
+    eventListenerNames.clear();
     callSet(mainVnode.onremove);
     mainComponent = null;
     mainVnode = null;

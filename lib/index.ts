@@ -80,7 +80,7 @@ export function v(tagOrComponent: string | ValyrianComponent, props: Properties 
 
 v.fragment = (_: Properties, ...children: Children) => children;
 
-export function hidrateDomToVnode(dom: any): VnodeWithDom | void {
+export function hidrateDomToVnode(dom: any): VnodeWithDom | string | null | void {
   if (dom.nodeType === 3) {
     return dom.nodeValue;
   }
@@ -144,7 +144,8 @@ export const reservedProps = new Set<string>([
   "v-model",
   "v-create",
   "v-update",
-  "v-cleanup"
+  "v-cleanup",
+  "v-remove"
 ]);
 
 enum SetType {
@@ -264,17 +265,6 @@ export const directives: Record<string, Directive> = {
 
   "v-cleanup": (callback, vnode) => {
     addCallbackToSet(() => callback(vnode), SetType.onCleanup, current.vnode as VnodeWithDom);
-  },
-
-  "v-if": (value, vnode) => {
-    if (!Boolean(value)) {
-      const parentNode = vnode.dom?.parentNode;
-      if (parentNode) {
-        parentNode.replaceChild(document.createTextNode(""), vnode.dom);
-      }
-
-      return false;
-    }
   },
 
   "v-show": (value, vnode) => {
@@ -493,7 +483,11 @@ function eventListener(e: Event) {
   while (dom) {
     const oldVnode = dom.vnode as VnodeWithDom;
     if (oldVnode && oldVnode.props[name]) {
-      oldVnode.props[name](e, oldVnode);
+      try {
+        oldVnode.props[name](e, oldVnode);
+      } finally {
+        current.event = null;
+      }
 
       if (!e.defaultPrevented) {
         // eslint-disable-next-line no-use-before-define
@@ -575,15 +569,17 @@ export function createElement(tag: string, isSVG: boolean): DomElement {
 }
 
 function flatTree(newVnode: VnodeWithDom) {
-  let i = 0;
-  let children: Children;
+  let children: Children = [];
+  const newChildren = newVnode.children;
+  newVnode.hasKeys = false;
 
   if ("v-for" in newVnode.props === false) {
-    children = [...newVnode.children];
+    for (let l = newChildren.length - 1; l >= 0; l--) {
+      children.push(newChildren[l]);
+    }
   } else {
     children = [];
     const set = newVnode.props["v-for"];
-    const l = set.length;
     const callback = newVnode.children[0];
 
     if (typeof callback !== "function") {
@@ -591,8 +587,13 @@ function flatTree(newVnode: VnodeWithDom) {
       return children;
     }
 
-    for (let i = 0; i < l; i++) {
-      children[i] = callback(set[i], i);
+    // This is done to preserve the correct call order of the children
+    const tmp: any[] = [];
+    for (let i = 0; i < set.length; i++) {
+      tmp.push(callback(set[i], i));
+    }
+    for (let i = tmp.length - 1; i >= 0; i--) {
+      children.push(tmp[i]);
     }
   }
 
@@ -601,21 +602,29 @@ function flatTree(newVnode: VnodeWithDom) {
     newVnode.childComponents = new Set();
   }
 
-  while (i < children.length) {
-    const newChild = children[i];
+  const out: Children = [];
+
+  while (children.length) {
+    const newChild = children.pop();
 
     if (newChild == null) {
-      children.splice(i, 1);
       continue;
     }
 
     if (Array.isArray(newChild)) {
-      children.splice(i, 1, ...newChild);
+      for (let l = newChild.length - 1; l >= 0; l--) {
+        children.push(newChild[l]);
+      }
       continue;
     }
 
     if (newChild instanceof Vnode) {
       newChild.props = newChild.props || {};
+
+      if ("v-if" in newChild.props && !Boolean(newChild.props["v-if"])) {
+        continue;
+      }
+
       newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
 
       if (typeof newChild.tag !== "string") {
@@ -623,21 +632,22 @@ function flatTree(newVnode: VnodeWithDom) {
         newVnode.childComponents = newVnode.childComponents || new Set();
         newVnode.childComponents.add(component);
 
-        children[i] = (isPOJOComponent(component) ? component.view : component).bind(component)(
-          newChild.props,
-          newChild.children
+        children.push(
+          (isPOJOComponent(component) ? component.view : component).bind(component)(newChild.props, newChild.children)
         );
 
         continue;
       }
 
       newVnode.hasKeys = newVnode.hasKeys || "key" in newChild.props;
+      out.push(newChild);
+      continue;
     }
 
-    i++;
+    out.push(newChild);
   }
 
-  return children;
+  return out;
 }
 
 function processNewChild(newChild: VnodeWithDom, parentVnode: VnodeWithDom, oldDom?: DomElement) {
@@ -845,10 +855,10 @@ export function unmount() {
   if (mainVnode) {
     mainComponent = v(() => null, {}) as VnodeComponentInterface;
     const result = update();
-    for (const name in eventListenerNames) {
-      mainVnode.dom.removeEventListener(name.slice(2).toLowerCase(), eventListener);
-      Reflect.deleteProperty(eventListenerNames, name);
+    for (const name of eventListenerNames) {
+      mainVnode.dom.removeEventListener(name.slice(2), eventListener);
     }
+    eventListenerNames.clear();
 
     callSet(mainVnode.onremove);
 

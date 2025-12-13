@@ -161,6 +161,10 @@ function createStore(initialState, pulses, immutable = false) {
         throw error;
       };
       try {
+        if (import_valyrian.current.event) {
+          import_valyrian.current.event.preventDefault();
+          import_valyrian.current.event.stopImmediatePropagation();
+        }
         const pulseResult = pulses[key].apply(context, [state, ...args]);
         if (pulseResult instanceof Promise) {
           return pulseResult.then((resolvedValue) => {
