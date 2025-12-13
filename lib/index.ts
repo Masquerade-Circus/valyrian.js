@@ -168,7 +168,7 @@ function markSubtreeLifecycle(dom: DomElement) {
 function addCallbackToSet(callback: Function, setType: SetType, vnode: VnodeWithDom) {
   vnode[setType] = vnode[setType] || new Set();
 
-  if (vnode.dom) {
+  if (vnode.dom && (setType === SetType.onCleanup || setType === SetType.onRemove)) {
     markSubtreeLifecycle(vnode.dom);
   }
 
@@ -329,6 +329,16 @@ export const directives: Record<string, Directive> = {
     vnode.onremove = vnode.onremove || new Set();
     vnode.onremove.add(() => callback(vnode));
     markSubtreeLifecycle(vnode.dom);
+  },
+
+  "v-if": (value, vnode) => {
+    if (!Boolean(value)) {
+      const parentNode = vnode.dom?.parentNode;
+      if (parentNode) {
+        strictReplaceChild(parentNode as DomElement, document.createTextNode(""), vnode.dom);
+      }
+      return false;
+    }
   },
 
   "v-show": (value, vnode) => {
@@ -684,11 +694,6 @@ function flatTree(newVnode: VnodeWithDom) {
 
     if (newChild instanceof Vnode) {
       newChild.props = newChild.props || {};
-
-      if ("v-if" in newChild.props && !Boolean(newChild.props["v-if"])) {
-        continue;
-      }
-
       newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
 
       if (typeof newChild.tag !== "string") {

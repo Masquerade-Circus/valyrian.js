@@ -144,7 +144,7 @@ function markSubtreeLifecycle(dom) {
 }
 function addCallbackToSet(callback, setType, vnode) {
   vnode[setType] = vnode[setType] || /* @__PURE__ */ new Set();
-  if (vnode.dom) {
+  if (vnode.dom && (setType === "oncleanup" /* onCleanup */ || setType === "onremove" /* onRemove */)) {
     markSubtreeLifecycle(vnode.dom);
   }
   vnode[setType].add(() => {
@@ -280,6 +280,15 @@ var directives = {
     vnode.onremove = vnode.onremove || /* @__PURE__ */ new Set();
     vnode.onremove.add(() => callback(vnode));
     markSubtreeLifecycle(vnode.dom);
+  },
+  "v-if": (value, vnode) => {
+    if (!Boolean(value)) {
+      const parentNode = vnode.dom?.parentNode;
+      if (parentNode) {
+        strictReplaceChild(parentNode, document.createTextNode(""), vnode.dom);
+      }
+      return false;
+    }
   },
   "v-show": (value, vnode) => {
     const bool = Boolean(value);
@@ -563,9 +572,6 @@ function flatTree(newVnode) {
     }
     if (newChild instanceof Vnode) {
       newChild.props = newChild.props || {};
-      if ("v-if" in newChild.props && !Boolean(newChild.props["v-if"])) {
-        continue;
-      }
       newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
       if (typeof newChild.tag !== "string") {
         const component = current.component = newChild.tag;
