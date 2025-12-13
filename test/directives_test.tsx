@@ -41,6 +41,7 @@ describe("Directives", () => {
         },
         dom: expect.any(Object),
         children: [],
+        hasKeys: false,
         isSVG: false
       } as any);
 

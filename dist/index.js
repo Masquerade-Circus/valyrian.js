@@ -134,13 +134,27 @@ var reservedProps = /* @__PURE__ */ new Set([
   "v-cleanup",
   "v-remove"
 ]);
+var SUBTREE_LC = Symbol.for("valyrian.subtreeLifecycle");
+function markSubtreeLifecycle(dom) {
+  let node = dom;
+  while (node && node.nodeType === 1 && !node[SUBTREE_LC]) {
+    node[SUBTREE_LC] = true;
+    node = node.parentElement;
+  }
+}
 function addCallbackToSet(callback, setType, vnode) {
   vnode[setType] = vnode[setType] || /* @__PURE__ */ new Set();
+  if (vnode.dom) {
+    markSubtreeLifecycle(vnode.dom);
+  }
   vnode[setType].add(() => {
     const cleanup = callback();
     if (typeof cleanup === "function") {
       vnode["oncleanup" /* onCleanup */] = vnode["oncleanup" /* onCleanup */] || /* @__PURE__ */ new Set();
       vnode["oncleanup" /* onCleanup */].add(cleanup);
+      if (vnode.dom) {
+        markSubtreeLifecycle(vnode.dom);
+      }
     }
   });
 }
@@ -195,42 +209,77 @@ var callSet = (set) => {
   }
   set.clear();
 };
+function collectVnodesPostOrder(dom, out) {
+  const childNodes = dom.childNodes;
+  for (let i = 0; i < childNodes.length; i++) {
+    const child = childNodes[i];
+    if (!child || child.nodeType !== 1) {
+      continue;
+    }
+    collectVnodesPostOrder(child, out);
+  }
+  const vnode = dom.vnode;
+  if (vnode) {
+    out.push(vnode);
+  }
+}
+function strictCleanupBeforeRemove(dom) {
+  const vnodes = [];
+  collectVnodesPostOrder(dom, vnodes);
+  for (let i = 0; i < vnodes.length; i++) {
+    callSet(vnodes[i].oncleanup);
+  }
+}
+function strictOnRemoveAfterDetach(dom) {
+  const vnodes = [];
+  collectVnodesPostOrder(dom, vnodes);
+  for (let i = 0; i < vnodes.length; i++) {
+    callSet(vnodes[i].onremove);
+  }
+}
+function strictRemoveNode(dom) {
+  if (!dom || dom.nodeType !== 1) {
+    return;
+  }
+  if (!dom[SUBTREE_LC]) {
+    dom.remove();
+    return;
+  }
+  strictCleanupBeforeRemove(dom);
+  dom.remove();
+  strictOnRemoveAfterDetach(dom);
+}
+function strictReplaceChild(parent, newNode, oldNode) {
+  if (oldNode && oldNode.nodeType === 1 && oldNode[SUBTREE_LC]) {
+    strictCleanupBeforeRemove(oldNode);
+  }
+  parent.replaceChild(newNode, oldNode);
+  if (oldNode && oldNode.nodeType === 1 && oldNode[SUBTREE_LC]) {
+    strictOnRemoveAfterDetach(oldNode);
+  }
+}
 var directives = {
-  "v-create": (callback, childVnode, oldProps) => {
-    if (!oldProps) {
-      addCallbackToSet(() => callback(childVnode), "oncreate" /* onCreate */, current.vnode);
-    }
-  },
-  "v-update": (callback, childVnode, oldProps) => {
+  "v-create": (callback, vnode, oldProps) => {
     if (oldProps) {
-      addCallbackToSet(() => callback(childVnode, oldProps), "onupdate" /* onUpdate */, current.vnode);
+      return;
     }
+    addCallbackToSet(() => callback(vnode), "oncreate" /* onCreate */, vnode);
   },
-  "v-remove": (callback, childVnode) => {
-    let parentVnode = current.vnode;
-    let currentChildVnode = childVnode;
-    while (parentVnode) {
-      parentVnode.onremove = parentVnode.onremove || /* @__PURE__ */ new Set();
-      addCallbackToSet(
-        () => {
-          if (!childVnode.dom.vnode || currentChildVnode.dom.parentNode) {
-            return;
-          }
-          callback(childVnode);
-          childVnode.dom.vnode = null;
-        },
-        "onremove" /* onRemove */,
-        parentVnode
-      );
-      if (!parentVnode.dom.parentElement) {
-        break;
-      }
-      currentChildVnode = parentVnode;
-      parentVnode = parentVnode.dom.parentElement.vnode;
+  "v-update": (callback, vnode, oldProps) => {
+    if (!oldProps) {
+      return;
     }
+    addCallbackToSet(() => callback(vnode, oldProps), "onupdate" /* onUpdate */, vnode);
   },
   "v-cleanup": (callback, vnode) => {
-    addCallbackToSet(() => callback(vnode), "oncleanup" /* onCleanup */, current.vnode);
+    vnode.oncleanup = vnode.oncleanup || /* @__PURE__ */ new Set();
+    vnode.oncleanup.add(() => callback(vnode));
+    markSubtreeLifecycle(vnode.dom);
+  },
+  "v-remove": (callback, vnode) => {
+    vnode.onremove = vnode.onremove || /* @__PURE__ */ new Set();
+    vnode.onremove.add(() => callback(vnode));
+    markSubtreeLifecycle(vnode.dom);
   },
   "v-show": (value, vnode) => {
     const bool = Boolean(value);
@@ -538,13 +587,14 @@ function flatTree(newVnode) {
 function processNewChild(newChild, parentVnode, oldDom) {
   if (oldDom) {
     newChild.dom = createElement(newChild.tag, newChild.isSVG);
-    parentVnode.dom.replaceChild(newChild.dom, oldDom);
+    strictReplaceChild(parentVnode.dom, newChild.dom, oldDom);
   } else {
     newChild.dom = parentVnode.dom.appendChild(createElement(newChild.tag, newChild.isSVG));
   }
   updateAttributes(newChild);
   if ("v-text" in newChild.props) {
     newChild.dom.textContent = newChild.props["v-text"];
+    callSet(newChild.oncreate);
     return;
   }
   current.oldVnode = null;
@@ -552,6 +602,7 @@ function processNewChild(newChild, parentVnode, oldDom) {
   const children = flatTree(newChild);
   if (children.length === 0) {
     newChild.dom.textContent = "";
+    callSet(newChild.oncreate);
     return;
   }
   for (let i = 0, l = children.length; i < l; i++) {
@@ -561,6 +612,7 @@ function processNewChild(newChild, parentVnode, oldDom) {
     }
     processNewChild(children[i], newChild);
   }
+  callSet(newChild.oncreate);
 }
 function patch(newVnode, oldVnode) {
   current.oldVnode = oldVnode;
@@ -569,8 +621,18 @@ function patch(newVnode, oldVnode) {
   const dom = newVnode.dom;
   if (children.length === 0) {
     if (dom.childNodes.length) {
-      dom.textContent = "";
+      const childNodes2 = Array.from(dom.childNodes);
+      for (let i = childNodes2.length - 1; i >= 0; i--) {
+        const n = childNodes2[i];
+        if (n && n.nodeType === 1) {
+          strictRemoveNode(n);
+        } else {
+          n?.remove?.();
+        }
+      }
     }
+    callSet(newVnode.oncreate);
+    callSet(newVnode.onupdate);
     return;
   }
   const childNodes = dom.childNodes;
@@ -585,7 +647,7 @@ function patch(newVnode, oldVnode) {
       }
       processNewChild(newChild, newVnode);
     }
-    newVnode.oncreate && callSet(newVnode.oncreate);
+    callSet(newVnode.oncreate);
     return;
   }
   let oldTree = childNodes;
@@ -608,7 +670,7 @@ function patch(newVnode, oldVnode) {
         continue;
       }
       if (oldChild2.nodeType !== 3) {
-        dom.replaceChild(document.createTextNode(newChild), oldChild2);
+        strictReplaceChild(dom, document.createTextNode(newChild), oldChild2);
         continue;
       }
       if (oldChild2.nodeValue != newChild) {
@@ -635,7 +697,7 @@ function patch(newVnode, oldVnode) {
       }
       const oldProps = childNodes[i + 1]?.vnode?.props;
       if (oldProps && "key" in oldProps === false && oldProps["v-keep"] === newChild.props["v-keep"]) {
-        oldChild.remove();
+        strictRemoveNode(oldChild);
         oldTree.splice(i, 1);
         continue;
       }
@@ -649,10 +711,14 @@ function patch(newVnode, oldVnode) {
     }
     callSet(oldChildVnode?.oncleanup);
     patch(newChild, oldChildVnode || null);
-    callSet(oldChildVnode?.onremove);
   }
   for (let i = childNodes.length, l = children.length; i > l; i--) {
-    childNodes[i - 1].remove();
+    const toRemove = childNodes[i - 1];
+    if (toRemove && toRemove.nodeType === 1) {
+      strictRemoveNode(toRemove);
+    } else {
+      toRemove?.remove();
+    }
   }
   callSet(newVnode.oncreate);
   callSet(newVnode.onupdate);
@@ -698,7 +764,6 @@ function unmount() {
       mainVnode.dom.removeEventListener(name.slice(2), eventListener);
     }
     eventListenerNames.clear();
-    callSet(mainVnode.onremove);
     mainComponent = null;
     mainVnode = null;
     isMounted = false;

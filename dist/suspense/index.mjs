@@ -1,43 +1,101 @@
 // lib/suspense/index.ts
-import { isVnodeComponent, isPOJOComponent, isComponent, v } from "valyrian.js";
-import { useState } from "valyrian.js/hooks";
+import {
+  isVnodeComponent,
+  isPOJOComponent,
+  isComponent,
+  v,
+  current,
+  updateVnode
+} from "valyrian.js";
+var domToSuspenseStores = /* @__PURE__ */ new WeakMap();
+function getSuspenseStore(dom, key) {
+  let stores = domToSuspenseStores.get(dom);
+  if (!stores) {
+    stores = /* @__PURE__ */ new Map();
+    domToSuspenseStores.set(dom, stores);
+  }
+  let store = stores.get(key);
+  if (!store) {
+    store = {
+      status: 0,
+      value: null,
+      error: null,
+      version: 0,
+      promise: null
+    };
+    stores.set(key, store);
+  }
+  return store;
+}
 function Suspense({
+  key,
   fallback,
   error
 }, children) {
-  const [loadedChildren, setLoadedChildren] = useState(null);
-  const [err, setErr] = useState(null);
+  if (key === void 0 || key === null) {
+    throw new Error("Suspense requires a 'key' prop");
+  }
   return v(() => {
-    if (err()) {
+    const hostVnode = current.vnode;
+    if (!hostVnode || !hostVnode.dom) {
+      throw new Error("Suspense must be rendered inside a component");
+    }
+    const hostDom = hostVnode.dom;
+    const store = getSuspenseStore(hostDom, key);
+    if (store.status === 2 && store.error) {
       if (error) {
-        return error(err());
+        return error(store.error);
       }
-      return err().message;
+      return store.error.message;
     }
-    if (loadedChildren()) {
-      return loadedChildren();
+    if (store.status === 1) {
+      return store.value;
     }
-    Promise.all(
-      children.map((child) => {
-        if (isVnodeComponent(child)) {
-          if (isPOJOComponent(child.tag)) {
-            return child.tag.view.bind(child.tag)(child.props || {}, child.children);
+    if (!store.promise) {
+      const version = ++store.version;
+      const promise = Promise.all(
+        children.map((child) => {
+          if (isVnodeComponent(child)) {
+            if (isPOJOComponent(child.tag)) {
+              return child.tag.view.bind(child.tag)(child.props || {}, child.children);
+            }
+            return child.tag(child.props || {}, child.children);
           }
-          return child.tag(child.props || {}, child.children);
+          if (isPOJOComponent(child)) {
+            return child.view.bind(child)({}, []);
+          }
+          if (isComponent(child)) {
+            return child({}, []);
+          }
+          return child;
+        })
+      );
+      store.promise = promise;
+      promise.then((newChildren) => {
+        if (store.version !== version) {
+          return;
         }
-        if (isPOJOComponent(child)) {
-          return child.view.bind(child)({}, []);
+        store.status = 1;
+        store.value = newChildren;
+        store.error = null;
+        store.promise = null;
+        const vnodeToUpdate = hostDom.vnode;
+        if (vnodeToUpdate) {
+          updateVnode(vnodeToUpdate);
         }
-        if (isComponent(child)) {
-          return child({}, []);
+      }).catch((e) => {
+        if (store.version !== version) {
+          return;
         }
-        return child;
-      })
-    ).then((newChildren) => {
-      setLoadedChildren(newChildren);
-    }).catch((e) => {
-      setErr(e);
-    });
+        store.status = 2;
+        store.error = e instanceof Error ? e : new Error(String(e));
+        store.promise = null;
+        const vnodeToUpdate = hostDom.vnode;
+        if (vnodeToUpdate) {
+          updateVnode(vnodeToUpdate);
+        }
+      });
+    }
     return fallback;
   }, {});
 }

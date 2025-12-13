@@ -17,7 +17,11 @@ describe("Suspense", () => {
     }
 
     function App() {
-      return <Suspense fallback={<div>Loading...</div>}>{<LazyComponent />}</Suspense>;
+      return (
+        <Suspense key="lazy" fallback={<div>Loading...</div>}>
+          {<LazyComponent />}
+        </Suspense>
+      );
     }
 
     mount(dom, App);
@@ -35,7 +39,7 @@ describe("Suspense", () => {
 
     function App() {
       return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense key="lazy" fallback={<div>Loading...</div>}>
           <LazyComponent>Hello World</LazyComponent>
         </Suspense>
       );
@@ -58,7 +62,7 @@ describe("Suspense", () => {
 
     function App() {
       return (
-        <Suspense fallback={<div>Loading...</div>} error={(e) => <div>Error: {e.message}</div>}>
+        <Suspense key="lazy" fallback={<div>Loading...</div>} error={(e) => <div>Error: {e.message}</div>}>
           <FailingComponent />
         </Suspense>
       );
@@ -88,7 +92,7 @@ describe("Suspense", () => {
 
     function App() {
       return (
-        <Suspense fallback={<div>Cargando...</div>}>
+        <Suspense key="lazy" fallback={<div>Cargando...</div>}>
           <FunctionalComponent />
           <POJOComponent />
           Hello World
@@ -111,7 +115,7 @@ describe("Suspense", () => {
 
     function App() {
       return (
-        <Suspense fallback={<div>Loading...</div>}>
+        <Suspense key="lazy" fallback={<div>Loading...</div>}>
           <EmptyComponent />
         </Suspense>
       );

@@ -155,13 +155,32 @@ enum SetType {
   onRemove = "onremove"
 }
 
+const SUBTREE_LC = Symbol.for("valyrian.subtreeLifecycle");
+
+function markSubtreeLifecycle(dom: DomElement) {
+  let node: any = dom;
+  while (node && node.nodeType === 1 && !node[SUBTREE_LC]) {
+    node[SUBTREE_LC] = true;
+    node = node.parentElement;
+  }
+}
+
 function addCallbackToSet(callback: Function, setType: SetType, vnode: VnodeWithDom) {
   vnode[setType] = vnode[setType] || new Set();
+
+  if (vnode.dom) {
+    markSubtreeLifecycle(vnode.dom);
+  }
+
   vnode[setType].add(() => {
     const cleanup = callback();
     if (typeof cleanup === "function") {
       vnode[SetType.onCleanup] = vnode[SetType.onCleanup] || new Set();
       vnode[SetType.onCleanup].add(cleanup);
+
+      if (vnode.dom) {
+        markSubtreeLifecycle(vnode.dom);
+      }
     }
   });
 }
@@ -225,46 +244,91 @@ const callSet = (set?: Set<Function> | null) => {
   set.clear();
 };
 
+function collectVnodesPostOrder(dom: DomElement, out: VnodeWithDom[]) {
+  const childNodes = dom.childNodes as unknown as DomElement[];
+  for (let i = 0; i < childNodes.length; i++) {
+    const child = childNodes[i];
+    if (!child || child.nodeType !== 1) {
+      continue;
+    }
+    collectVnodesPostOrder(child, out);
+  }
+  const vnode = dom.vnode as VnodeWithDom;
+  if (vnode) {
+    out.push(vnode);
+  }
+}
+
+function strictCleanupBeforeRemove(dom: DomElement) {
+  const vnodes: VnodeWithDom[] = [];
+  collectVnodesPostOrder(dom, vnodes);
+  for (let i = 0; i < vnodes.length; i++) {
+    callSet(vnodes[i].oncleanup);
+  }
+}
+
+function strictOnRemoveAfterDetach(dom: DomElement) {
+  const vnodes: VnodeWithDom[] = [];
+  collectVnodesPostOrder(dom, vnodes);
+  for (let i = 0; i < vnodes.length; i++) {
+    callSet(vnodes[i].onremove);
+  }
+}
+
+function strictRemoveNode(dom: DomElement) {
+  if (!dom || dom.nodeType !== 1) {
+    return;
+  }
+
+  if (!(dom as any)[SUBTREE_LC]) {
+    dom.remove();
+    return;
+  }
+
+  // before detach
+  strictCleanupBeforeRemove(dom);
+  // detach
+  dom.remove();
+  // after detach
+  strictOnRemoveAfterDetach(dom);
+}
+
+function strictReplaceChild(parent: DomElement, newNode: Node, oldNode: DomElement) {
+  if (oldNode && oldNode.nodeType === 1 && (oldNode as any)[SUBTREE_LC]) {
+    strictCleanupBeforeRemove(oldNode);
+  }
+  parent.replaceChild(newNode, oldNode);
+  if (oldNode && oldNode.nodeType === 1 && (oldNode as any)[SUBTREE_LC]) {
+    strictOnRemoveAfterDetach(oldNode);
+  }
+}
+
 export const directives: Record<string, Directive> = {
-  "v-create": (callback, childVnode, oldProps) => {
-    if (!oldProps) {
-      addCallbackToSet(() => callback(childVnode), SetType.onCreate, current.vnode as VnodeWithDom);
-    }
-  },
-
-  "v-update": (callback, childVnode, oldProps) => {
+  "v-create": (callback, vnode, oldProps) => {
     if (oldProps) {
-      addCallbackToSet(() => callback(childVnode, oldProps), SetType.onUpdate, current.vnode as VnodeWithDom);
+      return;
     }
+
+    addCallbackToSet(() => callback(vnode), SetType.onCreate, vnode);
   },
 
-  "v-remove": (callback, childVnode) => {
-    let parentVnode = current.vnode as VnodeWithDom;
-    let currentChildVnode = childVnode as VnodeWithDom;
-    while (parentVnode) {
-      parentVnode.onremove = parentVnode.onremove || new Set();
-      addCallbackToSet(
-        () => {
-          if (!childVnode.dom.vnode || currentChildVnode.dom.parentNode) {
-            return;
-          }
-          callback(childVnode);
-          childVnode.dom.vnode = null;
-        },
-        SetType.onRemove,
-        parentVnode
-      );
-
-      if (!parentVnode.dom.parentElement) {
-        break;
-      }
-      currentChildVnode = parentVnode;
-      parentVnode = (parentVnode.dom.parentElement as DomElement).vnode as VnodeWithDom;
+  "v-update": (callback, vnode, oldProps) => {
+    if (!oldProps) {
+      return;
     }
+    addCallbackToSet(() => callback(vnode, oldProps), SetType.onUpdate, vnode);
   },
 
   "v-cleanup": (callback, vnode) => {
-    addCallbackToSet(() => callback(vnode), SetType.onCleanup, current.vnode as VnodeWithDom);
+    vnode.oncleanup = vnode.oncleanup || new Set();
+    vnode.oncleanup.add(() => callback(vnode));
+    markSubtreeLifecycle(vnode.dom);
+  },
+
+  "v-remove": (callback, vnode) => {
+    vnode.onremove = vnode.onremove || new Set();
+    vnode.onremove.add(() => callback(vnode));
+    markSubtreeLifecycle(vnode.dom);
   },
 
   "v-show": (value, vnode) => {
@@ -653,13 +717,14 @@ function flatTree(newVnode: VnodeWithDom) {
 function processNewChild(newChild: VnodeWithDom, parentVnode: VnodeWithDom, oldDom?: DomElement) {
   if (oldDom) {
     newChild.dom = createElement(newChild.tag, newChild.isSVG as boolean);
-    parentVnode.dom.replaceChild(newChild.dom, oldDom);
+    strictReplaceChild(parentVnode.dom, newChild.dom, oldDom);
   } else {
     newChild.dom = parentVnode.dom.appendChild(createElement(newChild.tag, newChild.isSVG as boolean));
   }
   updateAttributes(newChild);
   if ("v-text" in newChild.props) {
     newChild.dom.textContent = newChild.props["v-text"];
+    callSet(newChild.oncreate);
     return;
   }
 
@@ -669,6 +734,7 @@ function processNewChild(newChild: VnodeWithDom, parentVnode: VnodeWithDom, oldD
   const children = flatTree(newChild);
   if (children.length === 0) {
     newChild.dom.textContent = "";
+    callSet(newChild.oncreate);
     return;
   }
 
@@ -679,6 +745,7 @@ function processNewChild(newChild: VnodeWithDom, parentVnode: VnodeWithDom, oldD
     }
     processNewChild(children[i] as VnodeWithDom, newChild);
   }
+  callSet(newChild.oncreate);
 }
 
 // eslint-disable-next-line complexity
@@ -690,9 +757,18 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
 
   if (children.length === 0) {
     if (dom.childNodes.length) {
-      dom.textContent = "";
+      const childNodes = Array.from(dom.childNodes) as any[];
+      for (let i = childNodes.length - 1; i >= 0; i--) {
+        const n = childNodes[i];
+        if (n && n.nodeType === 1) {
+          strictRemoveNode(n);
+        } else {
+          n?.remove?.();
+        }
+      }
     }
-    // There are no children so we don't need to call the oncreate and onupdate callbacks
+    callSet(newVnode.oncreate);
+    callSet(newVnode.onupdate);
     return;
   }
 
@@ -708,8 +784,7 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
       }
       processNewChild(newChild, newVnode);
     }
-    // The oncreate callback must be called after the children are created
-    newVnode.oncreate && callSet(newVnode.oncreate);
+    callSet(newVnode.oncreate);
     return;
   }
 
@@ -737,7 +812,7 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
       }
 
       if (oldChild.nodeType !== 3) {
-        dom.replaceChild(document.createTextNode(newChild), oldChild);
+        strictReplaceChild(dom, document.createTextNode(newChild), oldChild);
         continue;
       }
 
@@ -771,7 +846,7 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
 
       const oldProps = childNodes[i + 1]?.vnode?.props;
       if (oldProps && "key" in oldProps === false && oldProps["v-keep"] === newChild.props["v-keep"]) {
-        oldChild.remove();
+        strictRemoveNode(oldChild);
         oldTree.splice(i, 1);
         continue;
       }
@@ -787,16 +862,18 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
       continue;
     }
 
-    // Call the cleanup for the old child vnode before the patch
     callSet(oldChildVnode?.oncleanup);
     // eslint-disable-next-line no-use-before-define
     patch(newChild as VnodeWithDom, oldChildVnode || null);
-    // Call the remove for the old child vnode after the patch
-    callSet(oldChildVnode?.onremove);
   }
 
   for (let i = childNodes.length, l = children.length; i > l; i--) {
-    childNodes[i - 1].remove();
+    const toRemove = childNodes[i - 1];
+    if (toRemove && toRemove.nodeType === 1) {
+      strictRemoveNode(toRemove);
+    } else {
+      toRemove?.remove();
+    }
   }
 
   // In here we could have new children or/and patched children
@@ -818,7 +895,6 @@ export function updateVnode(vnode: VnodeWithDom, shouldCleanup = true): string |
   const oldOnRemoveSet = vnode.onremove ? new Set(vnode.onremove) : null;
   current.vnode = vnode;
   patch(vnode, shouldCleanup ? vnode : null);
-  // Call the old on remove set
   callSet(oldOnRemoveSet);
   isMounted = true;
   current.oldVnode = null;
@@ -859,8 +935,6 @@ export function unmount() {
       mainVnode.dom.removeEventListener(name.slice(2), eventListener);
     }
     eventListenerNames.clear();
-
-    callSet(mainVnode.onremove);
 
     mainComponent = null;
     mainVnode = null;

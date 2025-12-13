@@ -60,12 +60,9 @@ const authMiddleware = (req) => {
   if (!isLoggedIn()) return req.redirect("/login");
 };
 
-// The router executes functions in order. 
+// The router executes functions in order.
 // If a function returns a Component, the chain stops and renders it.
-router.add("/dashboard", 
-  authMiddleware, 
-  () => <Dashboard />
-);
+router.add("/dashboard", authMiddleware, () => <Dashboard />);
 ```
 
 ### Using Subrouters
@@ -114,15 +111,11 @@ router.catch(403, () => <h1>403 - Forbidden</h1>);
 
 // 2. Catch by Error Class (instanceof)
 // Useful for handling specific logic errors
-router.catch(TypeError, (req, error) => (
-  <div class="alert">A type error occurred: {error.message}</div>
-));
+router.catch(TypeError, (req, error) => <div class="alert">A type error occurred: {error.message}</div>);
 
 // 3. Catch by String (Name or Message)
 // Matches if error.name === "NetworkError" OR if error.message includes "NetworkError"
-router.catch("NetworkError", (req, error) => (
-  <div class="offline">You seem to be offline.</div>
-));
+router.catch("NetworkError", (req, error) => <div class="offline">You seem to be offline.</div>);
 
 // 4. Generic Catch-All
 // Catches anything not handled by previous handlers
@@ -134,9 +127,9 @@ router.catch((req, error) => {
 
 ### Best Practices
 
-* **Order Matters:** Middlewares run sequentially. Place your auth checks before your sensitive routes.
-* **Error Granularity:** Define specific error handlers (like 404 or Auth errors) before the generic catch-all handler to provide better UX.
-* **Isomorphism:** Since the router is pure JS, you can export this same router instance to your Node.js server entry point to handle server-side routing seamlessly.
+- **Order Matters:** Middlewares run sequentially. Place your auth checks before your sensitive routes.
+- **Error Granularity:** Define specific error handlers (like 404 or Auth errors) before the generic catch-all handler to provide better UX.
+- **Isomorphism:** Since the router is pure JS, you can export this same router instance to your Node.js server entry point to handle server-side routing seamlessly.
 
 ## 4.2. Data Fetching (`valyrian.js/request`)
 
@@ -175,7 +168,7 @@ You can set headers per request or globally for subsequent calls using `setOptio
 
 ```typescript
 await request.get("/api/private", null, {
-  headers: { "Authorization": "Bearer my-token" }
+  headers: { Authorization: "Bearer my-token" }
 });
 ```
 
@@ -185,7 +178,7 @@ Use `request.setOption` to inject headers into all future requests made by this 
 ```typescript
 // Set a global Authorization header
 request.setOption("headers", {
-  "Authorization": `Bearer ${token}`,
+  Authorization: `Bearer ${token}`,
   "X-Custom-Header": "Valyrian"
 });
 ```
@@ -239,10 +232,12 @@ import { request } from "valyrian.js/request";
 // This component initiates the fetch and pauses rendering until data arrives
 async function UserList() {
   const users = await request.get("/api/users");
-  
+
   return (
     <ul>
-      {users.map(user => <li>{user.name}</li>)}
+      {users.map((user) => (
+        <li>{user.name}</li>
+      ))}
     </ul>
   );
 }
@@ -251,7 +246,8 @@ async function UserList() {
 const App = () => (
   <div class="container">
     <h1>User Directory</h1>
-    <Suspense 
+    <Suspense
+      key="user-list"
       fallback={<div class="spinner">Loading users...</div>}
       error={(err) => <div class="error">Failed to load: {err.message}</div>}
     >
@@ -260,6 +256,8 @@ const App = () => (
   </div>
 );
 ```
+
+> **Note:** Always provide a unique `key` prop to `<Suspense>` components to ensure proper caching and reusability.
 
 ### Sending Native Body Types (Files, Form Data, Blobs)
 
@@ -274,7 +272,7 @@ formData.append("username", "valyrian_user");
 // Assuming 'fileInput' is an <input type="file">
 formData.append("avatar", fileInput.files[0]);
 
-// Valyrian detects FormData and lets the browser set the Content-Type 
+// Valyrian detects FormData and lets the browser set the Content-Type
 // (multipart/form-data) with the correct boundary automatically.
 await request.post("/api/upload", formData);
 
@@ -313,8 +311,8 @@ Valyrian implements the standard hooks API but with a key architectural differen
 
 Returns a getter **function** and a setter function.
 
-* **Getter (`count()`):** Returns the current value. By returning a function instead of a value, Valyrian avoids "stale closure" problems. You always get the fresh value when invoking the getter.
-* **Setter (`setCount(newVal)`):** Updates the value and triggers a `debouncedUpdate()`.
+- **Getter (`count()`):** Returns the current value. By returning a function instead of a value, Valyrian avoids "stale closure" problems. You always get the fresh value when invoking the getter.
+- **Setter (`setCount(newVal)`):** Updates the value and triggers a `debouncedUpdate()`.
 
 ```tsx
 import { useState } from "valyrian.js/hooks";
@@ -325,11 +323,7 @@ const Counter = () => {
 
   // 2. Usage
   // Note: call count() to get the value
-  return (
-    <button onclick={() => setCount(count() + 1)}>
-      Clicks: {count()}
-    </button>
-  );
+  return <button onclick={() => setCount(count() + 1)}>Clicks: {count()}</button>;
 };
 ```
 
@@ -337,9 +331,9 @@ const Counter = () => {
 
 Runs side effects after the component renders. It returns a cleanup function.
 
-* **Mount:** Runs when the component matches the DOM.
-* **Update:** Runs if any value in the `dependencies` array has changed (`hasChanged` check).
-* **Cleanup:** The function returned by the callback runs before the next effect or when the component unmounts.
+- **Mount:** Runs when the component matches the DOM.
+- **Update:** Runs if any value in the `dependencies` array has changed (`hasChanged` check).
+- **Cleanup:** The function returned by the callback runs before the next effect or when the component unmounts.
 
 ```tsx
 import { useEffect } from "valyrian.js/hooks";
@@ -347,7 +341,7 @@ import { useEffect } from "valyrian.js/hooks";
 const Timer = () => {
   useEffect(() => {
     const id = setInterval(() => console.log("Tick"), 1000);
-    
+
     // Cleanup function (runs on unmount)
     return () => clearInterval(id);
   }, []); // Empty array = Run only on mount
@@ -358,8 +352,8 @@ const Timer = () => {
 
 Performance optimizations to cache values or functions between renders.
 
-* **`useMemo(() => value, [deps])`**: Caches a computed value.
-* **`useCallback(fn, [deps])`**: Caches a function reference to maintain identity (useful for passing props to children).
+- **`useMemo(() => value, [deps])`**: Caches a computed value.
+- **`useCallback(fn, [deps])`**: Caches a function reference to maintain identity (useful for passing props to children).
 
 #### `useRef(initialValue)`
 
@@ -387,10 +381,10 @@ const InputFocus = () => {
 
 While Hooks are great for logic, Valyrian encourages using **Directives** for DOM-related lifecycle events. These directives are processed directly during the VDOM `patch` cycle, offering lower overhead than `useEffect`.
 
-* **`v-create`**: Triggered immediately after the element is created and added to the DOM. Ideal for 3rd-party library initialization (D3, Maps).
-* **`v-update`**: Triggered every time the element's VNode is updated (props/children change).
-* **`v-cleanup`**: Triggered **before** an update occurs or before the element is removed. Used to detach listeners or stop animations.
-* **`v-remove`**: Triggered just before the element is removed from the DOM.
+- **`v-create`**: Triggered immediately after the element is created and added to the DOM. Ideal for 3rd-party library initialization (D3, Maps).
+- **`v-update`**: Triggered every time the element's VNode is updated (props/children change).
+- **`v-cleanup`**: Triggered **before** an update occurs or before the element is removed. Used to detach listeners or stop animations.
+- **`v-remove`**: Triggered just before the element is removed from the DOM.
 
 ```tsx
 const LifecycleBox = () => (
@@ -433,11 +427,11 @@ interface HookDefinition {
 }
 ```
 
-* **`onCreate`**: **Required.** Runs only once when the component is first rendered. It receives the arguments passed to the hook and must return the initial **state object** of the hook. This state is persisted across re-renders.
-* **`onUpdate`**: **Optional.** Runs on every subsequent render (re-execution of the component function). It receives the persisted `hookState` (returned by `onCreate`) and the current arguments. Use this to update the state based on new props or inputs.
-* **`onCleanup`**: **Optional.** Runs **before** every update (next render) and before the component is removed. It is used to clean up side effects created in the previous cycle (similar to the cleanup function in `useEffect`).
-* **`onRemove`**: **Optional.** Runs **only once** when the component is permanently removed from the DOM. This is the place to tear down global listeners, timers, or subscriptions to prevent memory leaks.
-* **`returnValue`**: **Optional.** Transforms the internal `hookState` into what the component actually receives. If omitted, the hook returns the raw `hookState`. Use this to expose a clean API (e.g., getters/setters) while keeping internal state private.
+- **`onCreate`**: **Required.** Runs only once when the component is first rendered. It receives the arguments passed to the hook and must return the initial **state object** of the hook. This state is persisted across re-renders.
+- **`onUpdate`**: **Optional.** Runs on every subsequent render (re-execution of the component function). It receives the persisted `hookState` (returned by `onCreate`) and the current arguments. Use this to update the state based on new props or inputs.
+- **`onCleanup`**: **Optional.** Runs **before** every update (next render) and before the component is removed. It is used to clean up side effects created in the previous cycle (similar to the cleanup function in `useEffect`).
+- **`onRemove`**: **Optional.** Runs **only once** when the component is permanently removed from the DOM. This is the place to tear down global listeners, timers, or subscriptions to prevent memory leaks.
+- **`returnValue`**: **Optional.** Transforms the internal `hookState` into what the component actually receives. If omitted, the hook returns the raw `hookState`. Use this to expose a clean API (e.g., getters/setters) while keeping internal state private.
 
 #### Example: `useWindowWidth`
 
@@ -450,7 +444,7 @@ import { update } from "valyrian.js";
 const useWindowWidth = createHook({
   // 1. Initialize state
   onCreate: () => {
-    const state = { 
+    const state = {
       width: window.innerWidth,
       handler: null
     };
@@ -468,7 +462,7 @@ const useWindowWidth = createHook({
   },
 
   // 2. Cleanup on Unmount
-  // We use onRemove because we only want to detach the listener 
+  // We use onRemove because we only want to detach the listener
   // when the component is destroyed, not on every render.
   onRemove: (state) => {
     window.removeEventListener("resize", state.handler);
