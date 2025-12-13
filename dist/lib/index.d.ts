@@ -58,8 +58,8 @@ export declare function v(tagOrComponent: string | ValyrianComponent, props: Pro
 export declare namespace v {
     var fragment: (_: Properties, ...children: Children) => Children;
 }
-export declare function hidrateDomToVnode(dom: any): VnodeWithDom | void;
-export declare function trust(htmlString: string): (void | VnodeWithDom)[];
+export declare function hidrateDomToVnode(dom: any): VnodeWithDom | string | null | void;
+export declare function trust(htmlString: string): (string | void | VnodeWithDom | null)[];
 export declare const current: {
     oldVnode: Vnode | null;
     vnode: Vnode | null;
