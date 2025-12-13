@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.1.11](///compare/8.1.10...8.1.11) (2025-12-13)
+
+### Bug Fixes
+
+* **main:** restore v-if directive as real directive, because in flatTree was introducing dom reorder 98a76fc
+
 ## [8.1.10](///compare/8.1.9...8.1.10) (2025-12-13)
 
 ## [8.1.9](///compare/8.1.8...8.1.9) (2025-11-26)
