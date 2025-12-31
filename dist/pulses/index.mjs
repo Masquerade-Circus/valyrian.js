@@ -92,17 +92,14 @@ function createStore(initialState, pulses, immutable = false) {
   }
   function setState(newState, flush = false) {
     pulseCallCount--;
-    if (!hasChanged(localState, newState)) {
-      return;
+    if (pulseCallCount <= 0 && !flush) {
+      currentState = null;
+      pulseCallCount = 0;
     }
-    if (pulseCallCount > 0 && !flush) {
+    if (pulseCallCount > 0 && !flush || !hasChanged(localState, newState)) {
       return;
     }
     syncState(newState);
-    if (!flush) {
-      currentState = null;
-    }
-    pulseCallCount = 0;
     debouncedUpdate();
   }
   function unfreezeState() {

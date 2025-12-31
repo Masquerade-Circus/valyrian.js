@@ -1,4 +1,4 @@
-import { current, directive, setPropNameReserved, update, VnodeWithDom } from "valyrian.js";
+import { directive, setPropNameReserved, update, VnodeWithDom } from "valyrian.js";
 import { get } from "valyrian.js/utils";
 
 const translations: Record<string, Record<string, any>> = {};
@@ -10,6 +10,12 @@ let storeStrategy = {
     currentLang = lang;
   }
 };
+
+let log = false;
+
+export function setLog(value: boolean) {
+  log = value;
+}
 
 export function setStoreStrategy(strategy: { get: () => string; set: (lang: string) => void }) {
   storeStrategy = strategy;
@@ -43,8 +49,10 @@ export function t(path: string, params?: Record<string, string>): string {
   const translation = get(langDef, path);
 
   if (typeof translation !== "string") {
-    // eslint-disable-next-line no-console
-    console.warn(`Translation not found for ${path}`);
+    if (log) {
+      // eslint-disable-next-line no-console
+      console.warn(`Translation not found for ${path}`);
+    }
     return path;
   }
 

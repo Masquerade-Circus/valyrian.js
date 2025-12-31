@@ -179,6 +179,20 @@ var Node = class _Node {
     }
     return elementFound || null;
   }
+  contains(other) {
+    if (other === null) {
+      return false;
+    }
+    if (other === this) {
+      return true;
+    }
+    for (let i = 0, l = this.childNodes.length; i < l; i++) {
+      if (this.childNodes[i] === other || this.childNodes[i].contains(other)) {
+        return true;
+      }
+    }
+    return false;
+  }
   // Not implemented
   // firstChild!: ChildNode | null;
   // isConnected!: boolean;
@@ -190,9 +204,7 @@ var Node = class _Node {
   // compareDocumentPosition(other: Node): number {
   //   throw new Error("Method not implemented.");
   // }
-  // contains(other: Node | null): boolean {
-  //   throw new Error("Method not implemented.");
-  // }
+  // contains(other: Node | null): boolean {\n  //   throw new Error("Method not implemented.");\n  // }
   // getRootNode(options?: GetRootNodeOptions | undefined): Node {
   //   throw new Error("Method not implemented.");
   // }
@@ -932,16 +944,18 @@ import path from "path";
 function sw(file, options = {}) {
   const swfiletemplate = path.resolve(__dirname, "./node.sw.js");
   const swTpl = fs3.readFileSync(swfiletemplate, "utf8");
+  const criticalUrls = options.criticalUrls ?? options.urls ?? ["/"];
+  const optionalUrls = options.optionalUrls ?? [];
   const opt = {
-    version: "1",
-    name: "Valyrian.js",
-    urls: ["/"],
-    debug: false,
-    logFetch: false,
-    offlinePage: "/offline.html",
-    ...options
+    version: options.version ?? "1",
+    name: options.name ?? "Valyrian.js",
+    criticalUrls,
+    optionalUrls,
+    debug: options.debug ?? false,
+    logFetch: options.logFetch ?? false,
+    offlinePage: options.offlinePage ?? "/offline.html"
   };
-  let contents = swTpl.replace("v1", `v${opt.version}`).replace("Valyrian.js", opt.name).replace('["/"]', '["' + opt.urls.join('","') + '"]').replace("/offline.html", opt.offlinePage).replace("logFetch: false", opt.logFetch ? "logFetch: true" : "logFetch: false");
+  let contents = swTpl.replace("v1", `v${opt.version}`).replace("Valyrian.js", opt.name).replace('criticalUrls: ["/"]', `criticalUrls: ${JSON.stringify(opt.criticalUrls)}`).replace("optionalUrls: []", `optionalUrls: ${JSON.stringify(opt.optionalUrls)}`).replace("/offline.html", opt.offlinePage).replace("logFetch: false", opt.logFetch ? "logFetch: true" : "logFetch: false");
   if (!opt.debug) {
     contents = contents.replace("console.log", "() => {}");
   }

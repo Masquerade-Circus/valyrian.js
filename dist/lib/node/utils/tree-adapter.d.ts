@@ -36,6 +36,7 @@ export declare class Node implements Node {
     getAttribute(name: string): string | null | undefined;
     removeAttribute(name: string): void;
     getElementById(id: string): Node | null;
+    contains(other: Node | null): boolean;
     addEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: boolean | AddEventListenerOptions | undefined): void;
     removeEventListener(type: string, callback: EventListenerOrEventListenerObject | null, options?: boolean | EventListenerOptions | undefined): void;
 }

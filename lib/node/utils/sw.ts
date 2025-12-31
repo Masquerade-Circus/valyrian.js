@@ -1,22 +1,43 @@
 import fs from "fs";
 import path from "path";
 
-export function sw(file: string, options = {}) {
+interface SwOptions {
+  version?: string;
+  name?: string;
+  /** @deprecated Use criticalUrls instead */
+  urls?: string[];
+  /** Critical URLs that block installation (required for app to work) */
+  criticalUrls?: string[];
+  /** Optional URLs cached in background (non-blocking, won't fail install) */
+  optionalUrls?: string[];
+  debug?: boolean;
+  logFetch?: boolean;
+  offlinePage?: string;
+}
+
+export function sw(file: string, options: SwOptions = {}) {
   const swfiletemplate = path.resolve(__dirname, "./node.sw.js");
   const swTpl = fs.readFileSync(swfiletemplate, "utf8");
+
+  // Support backwards compatibility: if urls is provided but criticalUrls is not, use urls as criticalUrls
+  const criticalUrls = options.criticalUrls ?? options.urls ?? ["/"];
+  const optionalUrls = options.optionalUrls ?? [];
+
   const opt = {
-    version: "1",
-    name: "Valyrian.js",
-    urls: ["/"],
-    debug: false,
-    logFetch: false,
-    offlinePage: "/offline.html",
-    ...options
+    version: options.version ?? "1",
+    name: options.name ?? "Valyrian.js",
+    criticalUrls,
+    optionalUrls,
+    debug: options.debug ?? false,
+    logFetch: options.logFetch ?? false,
+    offlinePage: options.offlinePage ?? "/offline.html"
   };
+
   let contents = swTpl
     .replace("v1", `v${opt.version}`)
     .replace("Valyrian.js", opt.name)
-    .replace('["/"]', '["' + opt.urls.join('","') + '"]')
+    .replace('criticalUrls: ["/"]', `criticalUrls: ${JSON.stringify(opt.criticalUrls)}`)
+    .replace("optionalUrls: []", `optionalUrls: ${JSON.stringify(opt.optionalUrls)}`)
     .replace("/offline.html", opt.offlinePage)
     .replace("logFetch: false", opt.logFetch ? "logFetch: true" : "logFetch: false");
 

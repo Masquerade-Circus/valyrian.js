@@ -134,17 +134,19 @@ function createStore<StateType extends State, PulsesType extends Record<string, 
 
   function setState(newState: StateType, flush = false) {
     pulseCallCount--;
-    if (!hasChanged(localState, newState)) {
-      return;
-    }
-    if (pulseCallCount > 0 && !flush) {
-      return;
-    }
-    syncState(newState);
-    if (!flush) {
+
+    // Always reset currentState after pulse method completes
+    if (pulseCallCount <= 0 && !flush) {
       currentState = null;
+      pulseCallCount = 0;
     }
-    pulseCallCount = 0;
+
+    // Only trigger update if state actually changed
+    if ((pulseCallCount > 0 && !flush) || !hasChanged(localState, newState)) {
+      return;
+    }
+
+    syncState(newState);
     debouncedUpdate();
   }
 
