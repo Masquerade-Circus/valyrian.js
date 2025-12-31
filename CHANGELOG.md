@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.1.12](///compare/8.1.11...8.1.12) (2025-12-31)
+
+### Bug Fixes
+
+* fix pulse not clearing currentState when there are no changes d1150d3
+
 ## [8.1.11](///compare/8.1.10...8.1.11) (2025-12-13)
 
 ### Bug Fixes

@@ -223,20 +223,6 @@ var Node = class _Node {
     }
     return elementFound || null;
   }
-  contains(other) {
-    if (other === null) {
-      return false;
-    }
-    if (other === this) {
-      return true;
-    }
-    for (let i = 0, l = this.childNodes.length; i < l; i++) {
-      if (this.childNodes[i] === other || this.childNodes[i].contains(other)) {
-        return true;
-      }
-    }
-    return false;
-  }
   // Not implemented
   // firstChild!: ChildNode | null;
   // isConnected!: boolean;
@@ -248,7 +234,9 @@ var Node = class _Node {
   // compareDocumentPosition(other: Node): number {
   //   throw new Error("Method not implemented.");
   // }
-  // contains(other: Node | null): boolean {\n  //   throw new Error("Method not implemented.");\n  // }
+  // contains(other: Node | null): boolean {
+  //   throw new Error("Method not implemented.");
+  // }
   // getRootNode(options?: GetRootNodeOptions | undefined): Node {
   //   throw new Error("Method not implemented.");
   // }

@@ -9,6 +9,10 @@ var storeStrategy = {
     currentLang = lang;
   }
 };
+var log = false;
+function setLog(value) {
+  log = value;
+}
 function setStoreStrategy(strategy) {
   storeStrategy = strategy;
 }
@@ -33,7 +37,9 @@ function t(path, params) {
   const langDef = translations[getLang()];
   const translation = get(langDef, path);
   if (typeof translation !== "string") {
-    console.warn(`Translation not found for ${path}`);
+    if (log) {
+      console.warn(`Translation not found for ${path}`);
+    }
     return path;
   }
   if (!params) {
@@ -133,6 +139,7 @@ export {
   getLang,
   getTranslations,
   setLang,
+  setLog,
   setStoreStrategy,
   setTranslations,
   t
