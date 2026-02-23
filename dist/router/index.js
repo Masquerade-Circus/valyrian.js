@@ -512,4 +512,3 @@ function mountRouter(elementContainer, router) {
     (0, import_valyrian.setAttribute)("onclick", router.getOnClickHandler(url), vnode);
   });
 }
-//# sourceMappingURL=index.js.map

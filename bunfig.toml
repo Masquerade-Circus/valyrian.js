@@ -2,3 +2,6 @@
 jsx = "react"
 jsxFactory = "v"
 jsxFragment = "v.fragment"
+
+[test]
+timeout = 10000

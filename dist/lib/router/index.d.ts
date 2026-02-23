@@ -57,10 +57,15 @@ export declare class Router {
     matches: string[];
     pathPrefix: string;
     private errorHandlers;
-    private beforeRouteCallbacks;
-    private afterRouteCallbacks;
+    private activeRouteCallbacks;
+    private pendingRouteCallbacks;
+    private callbackRegistrationTarget;
     private currentRoute;
     constructor(pathPrefix?: string);
+    private getRegistrationCallbacks;
+    private beginPendingRouteCallbacksCollection;
+    private commitPendingRouteCallbacksCollection;
+    private rollbackPendingRouteCallbacksCollection;
     beforeRoute(callback: RouteCallback): () => void;
     afterRoute(callback: RouteCallback): () => void;
     add(...args: RouteParams[]): Router;

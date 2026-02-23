@@ -500,4 +500,3 @@ export {
   mountRouter,
   redirect
 };
-//# sourceMappingURL=index.mjs.map

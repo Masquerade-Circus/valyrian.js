@@ -1,5 +1,16 @@
 # Changelog
 
+## [9.0.0](///compare/8.1.12...9.0.0) (2026-02-23)
+
+### ⚠ BREAKING CHANGES
+
+* Hooks always add more complexity and increase the risk of bugs or errors. So we
+decide to remove then from the core. There are better ways to do the same work.
+
+### Features
+
+* implement new features. Remove hooks. Add better documentation 20c6678
+
 ## [8.1.12](///compare/8.1.11...8.1.12) (2025-12-31)
 
 ### Bug Fixes
