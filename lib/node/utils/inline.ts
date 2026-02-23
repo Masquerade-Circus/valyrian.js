@@ -5,13 +5,14 @@ import { PurgeCSS } from "purgecss";
 import esbuild from "esbuild";
 /* eslint-disable sonarjs/cognitive-complexity */
 import fs from "fs";
+import { isString } from "../../utils";
 
 // eslint-disable-next-line complexity
 export async function inline(
   file: string | { raw: string; map?: string | null; file: string },
   options: Record<string, any> = {}
 ) {
-  if (typeof file === "string") {
+  if (isString(file)) {
     const ext = file.split(".").pop();
     if (ext && /(js|cjs|jsx|mjs|ts|tsx)/.test(ext)) {
       if (/(ts|tsx)/.test(ext) && !options.noValidate) {

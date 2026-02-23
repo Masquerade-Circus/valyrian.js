@@ -22,8 +22,25 @@ var index_exports = {};
 __export(index_exports, {
   deepCloneUnfreeze: () => deepCloneUnfreeze,
   deepFreeze: () => deepFreeze,
+  ensureIn: () => ensureIn,
   get: () => get,
   hasChanged: () => hasChanged,
+  hasLength: () => hasLength,
+  hasLengthBetween: () => hasLengthBetween,
+  hasMaxLength: () => hasMaxLength,
+  hasMinLength: () => hasMinLength,
+  is: () => is,
+  isBetween: () => isBetween,
+  isBoolean: () => isBoolean,
+  isEmpty: () => isEmpty,
+  isFiniteNumber: () => isFiniteNumber,
+  isFunction: () => isFunction,
+  isGreaterThan: () => isGreaterThan,
+  isLessThan: () => isLessThan,
+  isNumber: () => isNumber,
+  isObject: () => isObject,
+  isString: () => isString,
+  pick: () => pick,
   set: () => set
 });
 module.exports = __toCommonJS(index_exports);
@@ -224,4 +241,90 @@ function deepCloneUnfreeze(obj, cloneClassInstances = false, seen = /* @__PURE__
     Object.defineProperty(clone, key, descriptor);
   }
   return clone;
+}
+
+// lib/utils/validators.ts
+function isEmpty(value) {
+  return value === null || value === void 0 || typeof value === "string" && value.trim() === "" || Array.isArray(value) && value.length === 0 || typeof value === "object" && Object.keys(value).length === 0;
+}
+function is(value, type) {
+  if (typeof type !== "string") {
+    return value instanceof type;
+  }
+  if (type === "array") {
+    return Array.isArray(value);
+  }
+  if (type === "object") {
+    return value !== null && typeof value === "object" && !Array.isArray(value);
+  }
+  if (type === "number") {
+    return typeof value === "number" && !isNaN(value);
+  }
+  return typeof value === type;
+}
+function isFunction(value) {
+  return is(value, "function");
+}
+function isString(value) {
+  return is(value, "string");
+}
+function isNumber(value) {
+  return is(value, "number");
+}
+function isFiniteNumber(value) {
+  return isNumber(value) && Number.isFinite(value);
+}
+function isBoolean(value) {
+  return is(value, "boolean");
+}
+function isObject(value) {
+  return is(value, "object");
+}
+function hasLength(value, length) {
+  if (isString(value)) {
+    return value.length === length;
+  }
+  return Array.isArray(value) && value.length === length;
+}
+function hasMinLength(value, length) {
+  if (isString(value)) {
+    return value.length >= length;
+  }
+  return Array.isArray(value) && value.length >= length;
+}
+function hasMaxLength(value, length) {
+  if (isString(value)) {
+    return value.length <= length;
+  }
+  return Array.isArray(value) && value.length <= length;
+}
+function hasLengthBetween(value, min, max) {
+  if (isString(value)) {
+    return value.length >= min && value.length <= max;
+  }
+  return Array.isArray(value) && value.length >= min && value.length <= max;
+}
+function isLessThan(value, limit) {
+  return isNumber(value) && value < limit;
+}
+function isGreaterThan(value, limit) {
+  return isNumber(value) && value > limit;
+}
+function isBetween(value, min, max) {
+  return isNumber(value) && value >= min && value <= max;
+}
+function pick(source, keys) {
+  const result = {};
+  if (!source || typeof source !== "object") {
+    return result;
+  }
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(source, key)) {
+      result[key] = source[key];
+    }
+  }
+  return result;
+}
+function ensureIn(value, allowed) {
+  return allowed.includes(value);
 }

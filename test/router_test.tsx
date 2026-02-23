@@ -1,8 +1,8 @@
 import "valyrian.js/node";
 
 /* eslint-disable no-console */
-import { Request, Router, mountRouter } from "valyrian.js/router";
-import { Children, Properties, update, v } from "valyrian.js";
+import { Request, Router, afterRoute, beforeRoute, mountRouter } from "valyrian.js/router";
+import { Children, Properties, onCreate, update, v } from "valyrian.js";
 
 import { expect, describe, test as it } from "bun:test";
 
@@ -586,6 +586,46 @@ describe("Router", () => {
     expect(result).toEqual("<div>Error handler: Some error</div>");
   });
 
+  it("should preserve the latest error when an error middleware throws", async () => {
+    const router = new Router();
+    router.add("/", () => {
+      throw new Error("Initial route error");
+    });
+
+    router.catch((req: Request, error: Error) => {
+      if (error.message === "Initial route error") {
+        throw new Error("Error inside error middleware");
+      }
+      return () => <div>{error.message}</div>;
+    });
+
+    mountRouter("body", router);
+
+    const result = await router.go("/");
+
+    expect(result).toEqual("<div>Error inside error middleware</div>");
+  });
+
+  it("should stop recursive handling when an error middleware rethrows the same error", async () => {
+    const router = new Router();
+    router.add("/", () => {
+      throw new Error("Same error");
+    });
+
+    router.catch((req: Request, error: Error) => {
+      throw error;
+    });
+
+    let message = "";
+    try {
+      await router.go("/");
+    } catch (error: any) {
+      message = error.message;
+    }
+
+    expect(message).toEqual("Too many error causes. Possible circular error handling.");
+  });
+
   it("Test multiple dynamic parameters", async () => {
     const Component = ({ userId, postId }: Properties) => (
       <div>
@@ -779,6 +819,159 @@ describe("Router", () => {
 
     const result = await router.go("/first");
     expect(result).toEqual("<div>Final Destination</div>");
+  });
+
+  it("should run component-scoped beforeRoute and afterRoute only on the next route change", async () => {
+    let beforeHits = 0;
+    let afterHits = 0;
+    let isValid = true;
+
+    const Users = () => {
+      onCreate(() => {
+        isValid = true;
+        beforeRoute(() => {
+          beforeHits++;
+          if (!isValid) {
+            return false;
+          }
+        });
+        afterRoute(() => {
+          afterHits++;
+          isValid = false;
+        });
+      });
+      return <div>Users</div>;
+    };
+
+    const Home = () => <div>Home</div>;
+
+    const router = new Router();
+    router.add("/users", () => Users);
+    router.add("/home", () => Home);
+
+    mountRouter("body", router);
+
+    await router.go("/users");
+
+    expect(beforeHits).toEqual(0);
+    expect(afterHits).toEqual(0);
+    expect(isValid).toEqual(true);
+
+    await router.go("/home");
+
+    expect(beforeHits).toEqual(1);
+    expect(afterHits).toEqual(1);
+    expect(isValid).toEqual(false);
+  });
+
+  it("should cancel navigation when beforeRoute returns false", async () => {
+    const Home = () => {
+      onCreate(() => {
+        beforeRoute((next) => {
+          if (next.path === "/secret") {
+            return false;
+          }
+        });
+      });
+      return <div>Home</div>;
+    };
+
+    const Secret = () => <div>Secret</div>;
+
+    const router = new Router();
+    router.add("/", () => Home);
+    router.add("/secret", () => Secret);
+
+    mountRouter("body", router);
+
+    await router.go("/");
+
+    const result = await router.go("/secret");
+
+    expect(result).toBeUndefined();
+    expect(router.path).toEqual("/");
+  });
+
+  it("should throw beforeRoute and afterRoute when called outside a component context", async () => {
+    const Home = () => <div>Home</div>;
+
+    const router = new Router();
+    router.add("/", () => Home);
+
+    mountRouter("body", router);
+    await router.go("/");
+
+    expect(() => beforeRoute(() => undefined)).toThrow("beforeRoute must be called inside a component context.");
+    expect(() => afterRoute(() => undefined)).toThrow("afterRoute must be called inside a component context.");
+  });
+
+  it("should not stack callbacks when the same function reference is registered on rerender", async () => {
+    let beforeHits = 0;
+    let afterHits = 0;
+
+    function validateRoute() {
+      beforeHits++;
+    }
+
+    function resetState() {
+      afterHits++;
+    }
+
+    const Users = () => {
+      beforeRoute(validateRoute);
+      afterRoute(resetState);
+      return <div>Users</div>;
+    };
+
+    const Home = () => <div>Home</div>;
+
+    const router = new Router();
+    router.add("/users", () => Users);
+    router.add("/home", () => Home);
+
+    mountRouter("body", router);
+
+    await router.go("/users");
+    await router.go("/users");
+    await router.go("/users");
+    await router.go("/home");
+
+    expect(beforeHits).toEqual(1);
+    expect(afterHits).toEqual(1);
+  });
+
+  it("should not run callbacks from a previous route after leaving that route", async () => {
+    let beforeHits = 0;
+    let afterHits = 0;
+
+    const Users = () => {
+      onCreate(() => {
+        beforeRoute(() => {
+          beforeHits++;
+        });
+        afterRoute(() => {
+          afterHits++;
+        });
+      });
+      return <div>Users</div>;
+    };
+
+    const Home = () => <div>Home</div>;
+    const Other = () => <div>Other</div>;
+
+    const router = new Router();
+    router.add("/users", () => Users);
+    router.add("/home", () => Home);
+    router.add("/other", () => Other);
+
+    mountRouter("body", router);
+
+    await router.go("/users");
+    await router.go("/home");
+    await router.go("/other");
+
+    expect(beforeHits).toEqual(1);
+    expect(afterHits).toEqual(1);
   });
 
   it("Performance test: 1000 routes with 1000 subroutes with :${[a-z]} param", async () => {

@@ -1,0 +1,82 @@
+# 5.2. Pulses (`valyrian.js/pulses`)
+
+Pulses provide fine-grained reactive state primitives and store helpers.
+
+## 5.2.1. `createPulse`
+
+```ts
+import { createPulse } from "valyrian.js/pulses";
+
+const [count, setCount, runSubscribers] = createPulse(0);
+
+setCount((current) => current + 1);
+```
+
+Returned tuple:
+
+1. `read()`
+2. `write(newValue | updater)`
+3. `runSubscribers()`
+
+`write` only notifies when value actually changes.
+
+## 5.2.2. `createEffect`
+
+```ts
+import { createEffect, createPulse } from "valyrian.js/pulses";
+
+const [count, setCount] = createPulse(0);
+
+createEffect(() => {
+  console.log("count", count());
+});
+
+setCount(1);
+```
+
+Effects subscribe to pulses read during execution.
+
+## 5.2.3. `createPulseStore`
+
+```ts
+import { createPulseStore } from "valyrian.js/pulses";
+
+const store = createPulseStore(
+  { todos: [], loading: false },
+  {
+    addTodo(state, text: string) {
+      state.todos.push({ text, done: false });
+    },
+    async fetchTodos(state) {
+      state.loading = true;
+      await this.$flush();
+      const response = await fetch("/api/todos");
+      state.todos = await response.json();
+      state.loading = false;
+    }
+  }
+);
+```
+
+Rules:
+
+* State is immutable outside pulse methods.
+* Pulse methods run with context including `$flush()`.
+* Updates are coalesced and delivered with a debounced subscriber flush.
+
+## 5.2.4. Store Events
+
+Store objects expose:
+
+* `store.on(event, callback)`
+* `store.off(event, callback)`
+
+Important event:
+
+* `pulse` -> callback receives `(pulseName, args)`.
+
+## 5.2.5. `createMutableStore`
+
+`createMutableStore` disables immutability protections.
+
+Warning: changes made outside pulse methods do not trigger re-render notifications.

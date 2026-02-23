@@ -1,0 +1,525 @@
+import { directive, VnodeWithDom } from "valyrian.js";
+import { createPulseStore } from "valyrian.js/pulses";
+import { isFunction, isString } from "valyrian.js/utils";
+import { SchemaShield, ValidationError, Validator } from "schema-shield";
+
+type JsonSchema = Record<string, unknown>;
+export type FormState = Record<string, unknown>;
+
+type EventHandler = ((event: Event) => void) | null;
+
+type FormControl = {
+  name?: string;
+  type?: string;
+  tagName?: string;
+  value?: unknown;
+  checked?: boolean;
+  disabled?: boolean;
+  oninput?: EventHandler;
+  onchange?: EventHandler;
+  getAttribute?: (name: string) => string | null;
+  vnode?: { props?: Record<string, unknown> };
+};
+
+type FormNode = {
+  nodeType?: number;
+  childNodes?: FormNode[];
+  tagName?: string;
+  type?: string;
+  disabled?: boolean;
+  onsubmit?: ((event: Event) => Promise<void> | void) | null;
+  getAttribute?: (name: string) => string | null;
+  vnode?: { props?: Record<string, unknown> };
+};
+
+export type FormTransformContext<TState extends FormState> = {
+  name: keyof TState | string;
+  state: TState;
+  control: FormControl | null;
+  event?: Event;
+};
+
+export type FormTransform<TState extends FormState> = (
+  value: unknown,
+  context: FormTransformContext<TState>
+) => unknown;
+
+export type FormTransformMap<TState extends FormState> = Partial<
+  Record<keyof TState | string, FormTransform<TState>>
+>;
+
+export type FormOptions<TState extends FormState> = {
+  state: TState;
+  schema: JsonSchema;
+  clean?: FormTransformMap<TState>;
+  format?: FormTransformMap<TState>;
+  onSubmit?: (values: TState) => Promise<void> | void;
+};
+
+type FormInternalState<TState extends FormState> = {
+  values: TState;
+  errors: Record<string, string>;
+  isInflight: boolean;
+  isDirty: boolean;
+};
+
+type FormInternalPulses<TState extends FormState> = {
+  setValue: (state: FormInternalState<TState>, name: string, value: unknown) => void;
+  setErrors: (state: FormInternalState<TState>, errors: Record<string, string>) => void;
+  setInflight: (state: FormInternalState<TState>, inflight: boolean) => void;
+  reset: (state: FormInternalState<TState>) => void;
+};
+
+type FormPulseStore<TState extends FormState> = {
+  state: FormInternalState<TState>;
+  setValue: (name: string, value: unknown) => void;
+  setErrors: (errors: Record<string, string>) => void;
+  setInflight: (inflight: boolean) => void;
+  reset: () => void;
+};
+
+type ControlBinding = {
+  formStore: FormStore<FormState>;
+  name: string;
+  type: string;
+  onInput: EventHandler;
+  onChange: EventHandler;
+};
+
+type FormBinding = {
+  formStore: FormStore<FormState>;
+  onSubmit: ((event: Event) => Promise<void> | void) | null;
+};
+
+const controlBindingKey = Symbol("forms-control-binding");
+const formBindingKey = Symbol("forms-form-binding");
+
+function getTagName(node: FormNode | FormControl) {
+  return String(node.tagName || "").toUpperCase();
+}
+
+function getNodeAttribute(node: FormNode | FormControl, attributeName: string) {
+  if (!isFunction(node.getAttribute)) {
+    return null;
+  }
+  return node.getAttribute(attributeName);
+}
+
+function getNodeName(node: FormControl) {
+  const vnodeName = node.vnode?.props?.name;
+  if (isString(vnodeName)) {
+    return vnodeName;
+  }
+
+  if (isString(node.name)) {
+    return node.name;
+  }
+
+  const attributeName = getNodeAttribute(node, "name");
+  return isString(attributeName) ? attributeName : "";
+}
+
+function getNodeType(node: FormControl) {
+  return String(node.type || getNodeAttribute(node, "type") || "").toLowerCase();
+}
+
+function decodeJsonPointerToken(token: string) {
+  return token.replace(/~1/g, "/").replace(/~0/g, "~");
+}
+
+function getFieldNameFromError(error: ValidationError) {
+  const path = String(error.getPath().instancePath || "");
+  if (path.startsWith("#/")) {
+    const token = path.slice(2).split("/")[0];
+    if (token.length > 0) {
+      return decodeJsonPointerToken(token);
+    }
+  }
+
+  if (isString(error.item)) {
+    return error.item;
+  }
+
+  return null;
+}
+
+function getFieldNameFromChain(error: ValidationError) {
+  let current: ValidationError | undefined = error;
+  while (current) {
+    const fieldName = getFieldNameFromError(current);
+    if (fieldName) {
+      return fieldName;
+    }
+    current = current.cause;
+  }
+  return null;
+}
+
+function getRootError(error: ValidationError) {
+  let current: ValidationError = error;
+  while (current.cause) {
+    current = current.cause;
+  }
+  return current;
+}
+
+function cloneStateShallow<TState extends FormState>(state: TState): TState {
+  const clone = Object.create(Object.getPrototypeOf(state)) as TState;
+  return Object.assign(clone, state);
+}
+
+function walkElements(root: FormNode, visitor: (node: FormNode) => void) {
+  const children = root.childNodes || [];
+  for (const child of children) {
+    if (!child || child.nodeType !== 1) {
+      continue;
+    }
+    visitor(child);
+    walkElements(child, visitor);
+  }
+}
+
+function getControls(formDom: FormNode) {
+  const controls: FormControl[] = [];
+
+  walkElements(formDom, (node) => {
+    const tagName = getTagName(node);
+    if (tagName !== "INPUT" && tagName !== "SELECT" && tagName !== "TEXTAREA") {
+      return;
+    }
+
+    const control = node as unknown as FormControl;
+    const controlName = getNodeName(control);
+    if (controlName.length === 0) {
+      return;
+    }
+
+    control.name = controlName;
+    controls.push(control);
+  });
+
+  return controls;
+}
+
+function getSubmitters(formDom: FormNode) {
+  const submitters: FormNode[] = [];
+
+  walkElements(formDom, (node) => {
+    const tagName = getTagName(node);
+    const nodeType = String(node.type || getNodeAttribute(node, "type") || "").toLowerCase();
+    if ((tagName === "BUTTON" || tagName === "INPUT") && nodeType === "submit") {
+      submitters.push(node);
+    }
+  });
+
+  return submitters;
+}
+
+function setControlValue(control: FormControl, value: unknown) {
+  control.value = value == null ? "" : value;
+}
+
+export class FormStore<TState extends FormState> {
+  static #schemaShield = FormStore.createSchemaShield();
+
+  #validator: Validator;
+  #onSubmit: ((values: TState) => Promise<void> | void) | null;
+  #clean: FormTransformMap<TState>;
+  #format: FormTransformMap<TState>;
+  #pulseStore: FormPulseStore<TState>;
+
+  static createSchemaShield() {
+    const schemaShield = new SchemaShield({
+      failFast: false,
+      immutable: true
+    });
+
+    schemaShield.addFormat(
+      "url",
+      (value: unknown) => {
+        if (!isString(value)) {
+          return false;
+        }
+
+        try {
+          const parsedUrl = new URL(value);
+          return parsedUrl.protocol.length > 0;
+        } catch {
+          return false;
+        }
+      },
+      true
+    );
+
+    return schemaShield;
+  }
+
+  constructor(options: FormOptions<TState>) {
+    this.#validator = FormStore.#schemaShield.compile(options.schema);
+    this.#onSubmit = options.onSubmit || null;
+    this.#clean = options.clean || {};
+    this.#format = options.format || {};
+
+    const initialValues = cloneStateShallow(options.state);
+
+    this.#pulseStore = createPulseStore<FormInternalState<TState>, FormInternalPulses<TState>>(
+      {
+        values: cloneStateShallow(initialValues),
+        errors: {},
+        isInflight: false,
+        isDirty: false
+      },
+      {
+        setValue(state, name, value) {
+          (state.values as FormState)[name] = value;
+          state.isDirty = true;
+        },
+        setErrors(state, errors) {
+          state.errors = errors;
+        },
+        setInflight(state, inflight) {
+          state.isInflight = inflight;
+        },
+        reset(state) {
+          state.values = cloneStateShallow(initialValues);
+          state.errors = {};
+          state.isInflight = false;
+          state.isDirty = false;
+        }
+      }
+    ) as unknown as FormPulseStore<TState>;
+  }
+
+  get state() {
+    return this.#pulseStore.state.values;
+  }
+
+  get errors() {
+    return this.#pulseStore.state.errors;
+  }
+
+  get isInflight() {
+    return this.#pulseStore.state.isInflight;
+  }
+
+  get isDirty() {
+    return this.#pulseStore.state.isDirty;
+  }
+
+  #runTransform(
+    map: FormTransformMap<TState>,
+    name: string,
+    value: unknown,
+    control: FormControl | null,
+    event?: Event
+  ) {
+    const transform = map[name];
+    if (!transform) {
+      return value;
+    }
+
+    return transform(value, {
+      name,
+      state: this.state,
+      control,
+      event
+    });
+  }
+
+  formatValue(name: string, value: unknown, control: FormControl | null = null) {
+    return this.#runTransform(this.#format, name, value, control);
+  }
+
+  setField(name: string, rawValue: unknown, control: FormControl | null = null, event?: Event) {
+    const cleanedValue = this.#runTransform(this.#clean, name, rawValue, control, event);
+    this.#pulseStore.setValue(name, cleanedValue);
+    this.validate();
+  }
+
+  #mapValidationError(error: ValidationError | true | null) {
+    if (!error) {
+      return {};
+    }
+
+    if (error === true) {
+      return { _form: "Invalid form data" };
+    }
+
+    const fieldName = getFieldNameFromChain(error);
+    const rootError = getRootError(error);
+    const message = rootError.message || "Invalid form data";
+
+    if (!fieldName) {
+      return { _form: message };
+    }
+
+    return { [fieldName]: message };
+  }
+
+  validate() {
+    const result = this.#validator(this.state);
+    const errors = result.valid ? {} : this.#mapValidationError(result.error);
+    this.#pulseStore.setErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
+  async submit(event?: Event) {
+    event?.preventDefault();
+
+    if (!this.validate()) {
+      return false;
+    }
+
+    if (this.isInflight) {
+      return false;
+    }
+
+    this.#pulseStore.setInflight(true);
+
+    try {
+      if (this.#onSubmit) {
+        await this.#onSubmit(this.state);
+      }
+      return true;
+    } finally {
+      this.#pulseStore.setInflight(false);
+    }
+  }
+
+  reset() {
+    this.#pulseStore.reset();
+  }
+}
+
+function bindControl(formStore: FormStore<FormState>, control: FormControl) {
+  const name = getNodeName(control);
+  if (name.length === 0) {
+    return;
+  }
+
+  control.name = name;
+
+  const type = getNodeType(control);
+  const tagName = getTagName(control);
+  const stateValue = formStore.state[name];
+
+  if (type === "checkbox") {
+    control.checked = Boolean(stateValue);
+  } else if (type === "radio") {
+    control.checked = String(stateValue) === String(control.value || "");
+  } else if (tagName === "SELECT" || tagName === "TEXTAREA" || tagName === "INPUT") {
+    const formattedValue = formStore.formatValue(name, stateValue, control);
+    setControlValue(control, formattedValue);
+  }
+
+  const withBinding = control as FormControl & { [controlBindingKey]?: ControlBinding };
+  if (!withBinding[controlBindingKey]) {
+    const binding: ControlBinding = {
+      formStore,
+      name,
+      type,
+      onInput: control.oninput || null,
+      onChange: control.onchange || null
+    };
+
+    withBinding[controlBindingKey] = binding;
+
+    control.oninput = (event: Event) => {
+      const currentBinding = withBinding[controlBindingKey];
+      if (!currentBinding) {
+        return;
+      }
+
+      if (currentBinding.type !== "checkbox" && currentBinding.type !== "radio") {
+        const target = event.target as FormControl;
+        currentBinding.formStore.setField(currentBinding.name, target.value, target, event);
+        const formattedValue = currentBinding.formStore.formatValue(
+          currentBinding.name,
+          currentBinding.formStore.state[currentBinding.name],
+          target
+        );
+        setControlValue(target, formattedValue);
+      }
+
+      if (currentBinding.onInput) {
+        currentBinding.onInput(event);
+      }
+    };
+
+    control.onchange = (event: Event) => {
+      const currentBinding = withBinding[controlBindingKey];
+      if (!currentBinding) {
+        return;
+      }
+
+      const target = event.target as FormControl;
+      if (currentBinding.type === "checkbox") {
+        currentBinding.formStore.setField(currentBinding.name, Boolean(target.checked), target, event);
+      } else if (currentBinding.type === "radio") {
+        currentBinding.formStore.setField(currentBinding.name, target.value, target, event);
+      }
+
+      if (currentBinding.onChange) {
+        currentBinding.onChange(event);
+      }
+    };
+  }
+
+  withBinding[controlBindingKey]!.formStore = formStore;
+  withBinding[controlBindingKey]!.name = name;
+  withBinding[controlBindingKey]!.type = type;
+}
+
+function syncSubmitButtons(formDom: FormNode, formStore: FormStore<FormState>) {
+  const submitters = getSubmitters(formDom);
+  for (const submitter of submitters) {
+    submitter.disabled = formStore.isInflight;
+  }
+}
+
+directive("form", (formStore: FormStore<FormState>, vnode: VnodeWithDom) => {
+  const formDom = vnode.dom as unknown as FormNode;
+  if (!formDom || getTagName(formDom) !== "FORM") {
+    return;
+  }
+
+  const withBinding = formDom as FormNode & { [formBindingKey]?: FormBinding };
+  if (!withBinding[formBindingKey]) {
+    const binding: FormBinding = {
+      formStore,
+      onSubmit: formDom.onsubmit || null
+    };
+
+    withBinding[formBindingKey] = binding;
+
+    formDom.onsubmit = async (event: Event) => {
+      const currentBinding = withBinding[formBindingKey];
+      if (!currentBinding) {
+        return;
+      }
+
+      const success = await currentBinding.formStore.submit(event);
+      if (!success) {
+        event.preventDefault();
+      }
+
+      if (currentBinding.onSubmit) {
+        await currentBinding.onSubmit(event);
+      }
+    };
+  }
+
+  withBinding[formBindingKey]!.formStore = formStore;
+
+  const controls = getControls(formDom);
+  for (const control of controls) {
+    bindControl(formStore, control);
+  }
+
+  syncSubmitButtons(formDom, formStore);
+});
+
+directive("field", (formStore: FormStore<FormState>, vnode: VnodeWithDom) => {
+  const control = vnode.dom as unknown as FormControl;
+  bindControl(formStore, control);
+});

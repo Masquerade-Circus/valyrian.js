@@ -1,6 +1,6 @@
 import { expect, describe, test as it, beforeEach, afterEach } from "bun:test";
 import { mount, unmount, v } from "valyrian.js";
-import { t, setTranslations, getTranslations, setLang, getLang, NumberFormatter } from "valyrian.js/translate";
+import { t, setTranslations, getTranslations, setLang, getLang } from "valyrian.js/translate";
 
 describe("Translate", () => {
   // Test for t function
@@ -86,80 +86,6 @@ describe("Translate", () => {
           goodbye: "Adiós"
         }
       });
-    });
-  });
-
-  // Test for NumberFormatter class
-  describe("NumberFormatter class", () => {
-    beforeEach(() => {
-      setTranslations({}, { en: {}, de: {} });
-    });
-    afterEach(() => {
-      setLang("en");
-    });
-    it("should format a number as currency correctly", () => {
-      const formatter = NumberFormatter.create(1234.56);
-      expect(formatter.format()).toEqual("$1,234.56");
-
-      const formatter2 = NumberFormatter.create(1234.56);
-      expect(formatter2.format(1)).toEqual("$1,234.6");
-    });
-
-    it("should format a number as currency correctly using default locale", function () {
-      const formatter = NumberFormatter.create(1234.56);
-      setLang("en");
-      expect(formatter.format()).toEqual("$1,234.56");
-      setLang("de");
-      expect(formatter.format()).toEqual("1.234,56 $");
-    });
-
-    it("should format a number as currency correctly using custom locale", function () {
-      const formatter = NumberFormatter.create(1234.56);
-      expect(formatter.format(2, {}, "de-DE")).toEqual("1.234,56 $");
-      expect(getLang()).toEqual("en");
-    });
-
-    it("should format a number with custom Intl.NumberFormat options", function () {
-      const formatter = NumberFormatter.create(1234.56);
-      const options: Intl.NumberFormatOptions = { style: "currency", currency: "EUR" };
-      expect(formatter.format(2, options)).toEqual("€1,234.56");
-    });
-
-    it("should shift decimal places correctly using toDecimalPlaces", () => {
-      const formatter = NumberFormatter.create(123.456);
-      expect(formatter.toDecimalPlaces(1).value).toEqual(12345.6);
-    });
-
-    it("should shift decimal places correctly using fromDecimalPlaces", () => {
-      const formatter = NumberFormatter.create(123.456);
-      expect(formatter.fromDecimalPlaces(2).value).toEqual(1234.56);
-    });
-
-    it("should shift decimal places correctly using shiftDecimalPlaces", () => {
-      const formatter = NumberFormatter.create(123.456);
-      expect(formatter.shiftDecimalPlaces().value).toEqual(123456);
-    });
-
-    it("should clean a string number correctly", () => {
-      const formatter = NumberFormatter.create("$1,234.56");
-      expect(formatter.value).toEqual(1234.56);
-
-      const formatter2 = NumberFormatter.create("1,234.56");
-      expect(formatter2.value).toEqual(1234.56);
-
-      const formatter3 = NumberFormatter.create("1234.56");
-      expect(formatter3.value).toEqual(1234.56);
-
-      const formatter4 = NumberFormatter.create("1234 . 56");
-      expect(formatter4.value).toEqual(1234.56);
-
-      const formatter5 = NumberFormatter.create("1,234.56", true);
-      expect(formatter5.value).toEqual(123456);
-    });
-
-    it("should return the correct number of decimal places", () => {
-      const formatter = NumberFormatter.create(1234.5678);
-      expect(formatter.getDecimalPlaces()).toEqual(4);
     });
   });
 

@@ -1,0 +1,51 @@
+# 4.2. Data Fetching and Async Workflows (Hub)
+
+This chapter is a hub for networked and async modules used in SPA flows.
+
+Use these pages in order so each layer builds on the previous one.
+
+## Suggested Sequence
+
+1. [./4-request.md](./4-request.md)
+2. [./4-suspense.md](./4-suspense.md)
+3. [./4-tasks.md](./4-tasks.md)
+4. [./4-query.md](./4-query.md)
+5. [./4-network.md](./4-network.md)
+6. [./4-offline.md](./4-offline.md)
+
+## 4.2.1. Requests
+
+* File: [./4-request.md](./4-request.md)
+* Covers request helpers, serialization/parsing rules, plugins, scoped clients, and option APIs.
+
+## 4.2.2. Suspense
+
+* File: [./4-suspense.md](./4-suspense.md)
+* Covers fallback/error rendering, required `key`, child compatibility, and stale result protection.
+
+## 4.2.3. Tasks
+
+* File: [./4-tasks.md](./4-tasks.md)
+* Covers async strategy control (`takeLatest`, `enqueue`, `drop`, `restartable`), state, and events.
+
+## 4.2.4. Query Cache
+
+* File: [./4-query.md](./4-query.md)
+* Covers cached queries/mutations, dedupe, invalidation, persistence, and change events.
+
+## 4.2.5. Network Awareness
+
+* File: [./4-network.md](./4-network.md)
+* Covers connectivity events, signal levels, runtime differences, and listener cleanup.
+
+## 4.2.6. Offline Queue
+
+* File: [./4-offline.md](./4-offline.md)
+* Covers operation queueing, retry/backoff behavior, sync lifecycle, and recovery APIs.
+
+## Common Beginner Mistakes
+
+1. Using cache/invalidation before confirming plain request flows.
+2. Skipping stable `Suspense` keys.
+3. Assuming offline retry drains the queue in one sync pass.
+4. Forgetting explicit cleanup (`off()`/`destroy()`) for long-lived listeners.

@@ -22,11 +22,14 @@ var index_exports = {};
 __export(index_exports, {
   Router: () => Router,
   RouterError: () => RouterError,
+  afterRoute: () => afterRoute,
+  beforeRoute: () => beforeRoute,
   mountRouter: () => mountRouter,
   redirect: () => redirect
 });
 module.exports = __toCommonJS(index_exports);
 var import_valyrian = require("valyrian.js");
+var import_utils = require("valyrian.js/utils");
 function flat(array) {
   return Array.isArray(array) ? array.flat(Infinity) : [array];
 }
@@ -40,6 +43,9 @@ function getPathWithoutLastSlash(path) {
   }
   return pathWithoutLastSlash;
 }
+function isErrorClassLike(value) {
+  return Boolean(value) && (0, import_utils.isString)(value.name) && value.name.includes("Error");
+}
 function parseQuery(queryParts) {
   const parts = queryParts ? queryParts.split("&") : [];
   const query = {};
@@ -48,6 +54,31 @@ function parseQuery(queryParts) {
     query[name] = isNaN(Number(value)) === false ? Number(value) : value === "true" ? true : value === "false" ? false : value;
   }
   return query;
+}
+function createRouteCallbackCollection() {
+  return {
+    before: /* @__PURE__ */ new Set(),
+    after: /* @__PURE__ */ new Set()
+  };
+}
+function areEqualShallow(a, b) {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) {
+    return false;
+  }
+  for (const key of aKeys) {
+    if (String(a[key]) !== String(b[key])) {
+      return false;
+    }
+  }
+  return true;
+}
+function hasRouteChanged(nextRoute, currentRoute) {
+  if (!currentRoute) {
+    return true;
+  }
+  return nextRoute.path !== currentRoute.path || !areEqualShallow(nextRoute.query, currentRoute.query) || !areEqualShallow(nextRoute.params, currentRoute.params);
 }
 var RouteTree = class {
   root = { segment: "", children: /* @__PURE__ */ new Map(), isDynamic: false };
@@ -128,14 +159,49 @@ var Router = class _Router {
   matches = [];
   pathPrefix = "";
   errorHandlers = /* @__PURE__ */ new Map();
+  activeRouteCallbacks = createRouteCallbackCollection();
+  pendingRouteCallbacks = null;
+  callbackRegistrationTarget = "active";
+  currentRoute = null;
   constructor(pathPrefix = "") {
     this.pathPrefix = pathPrefix;
   }
+  getRegistrationCallbacks() {
+    if (this.callbackRegistrationTarget === "pending" && this.pendingRouteCallbacks) {
+      return this.pendingRouteCallbacks;
+    }
+    return this.activeRouteCallbacks;
+  }
+  beginPendingRouteCallbacksCollection() {
+    this.pendingRouteCallbacks = createRouteCallbackCollection();
+    this.callbackRegistrationTarget = "pending";
+  }
+  commitPendingRouteCallbacksCollection() {
+    this.activeRouteCallbacks = this.pendingRouteCallbacks || createRouteCallbackCollection();
+    this.pendingRouteCallbacks = null;
+    this.callbackRegistrationTarget = "active";
+  }
+  rollbackPendingRouteCallbacksCollection() {
+    this.pendingRouteCallbacks = null;
+    this.callbackRegistrationTarget = "active";
+  }
+  beforeRoute(callback) {
+    this.getRegistrationCallbacks().before.add(callback);
+    return () => {
+      this.activeRouteCallbacks.before.delete(callback);
+      this.pendingRouteCallbacks?.before.delete(callback);
+    };
+  }
+  afterRoute(callback) {
+    this.getRegistrationCallbacks().after.add(callback);
+    return () => {
+      this.activeRouteCallbacks.after.delete(callback);
+      this.pendingRouteCallbacks?.after.delete(callback);
+    };
+  }
   add(...args) {
     const flatArgs = flat(args);
-    const path = getPathWithoutLastSlash(
-      `${this.pathPrefix}${typeof flatArgs[0] === "string" ? flatArgs.shift() : "/.*"}`
-    );
+    const path = getPathWithoutLastSlash(`${this.pathPrefix}${(0, import_utils.isString)(flatArgs[0]) ? flatArgs.shift() : "/.*"}`);
     if (flatArgs.length === 1 && flatArgs[0] instanceof _Router) {
       const subrouter = flatArgs[0];
       for (const subroute of subrouter.routes()) {
@@ -146,7 +212,7 @@ var Router = class _Router {
       if (flatArgs.some((item) => item instanceof _Router)) {
         throw new RouterError("You cannot add middlewares when adding a subrouter.");
       }
-      if (flatArgs.some((item) => typeof item !== "function")) {
+      if (flatArgs.some((item) => !(0, import_utils.isFunction)(item))) {
         throw new RouterError("All middlewares must be functions.");
       }
       this.routeTree.addRoute(path, flatArgs);
@@ -154,11 +220,12 @@ var Router = class _Router {
     return this;
   }
   catch(...args) {
-    const condition = typeof args[0] === "number" || typeof args[0] === "string" || args[0].name.includes("Error") ? args.shift() : "generic";
-    if (typeof condition !== "number" && typeof condition !== "string" && !condition.name.includes("Error")) {
+    const firstArg = args[0];
+    const condition = (0, import_utils.isNumber)(firstArg) || (0, import_utils.isString)(firstArg) || isErrorClassLike(firstArg) ? args.shift() : "generic";
+    if (!(0, import_utils.isNumber)(condition) && !(0, import_utils.isString)(condition) && !isErrorClassLike(condition)) {
       throw new RouterError("The condition must be a number, string or an instance of Error.");
     }
-    if (args.some((item) => typeof item !== "function")) {
+    if (args.some((item) => !(0, import_utils.isFunction)(item))) {
       throw new RouterError("All middlewares must be functions.");
     }
     let handlers = this.errorHandlers.get(condition);
@@ -182,10 +249,8 @@ var Router = class _Router {
     }
     const constructedPath = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
     const parts = constructedPath.split("?", 2);
-    this.url = constructedPath;
-    this.query = parseQuery(parts[1]);
+    const nextQuery = parseQuery(parts[1]);
     const finalPath = parts[0].replace(/(.+)\/$/, "$1").split("#")[0];
-    this.path = path;
     let route = this.routeTree.findRoute(finalPath);
     if (!route || !route.middlewares) {
       const finalPathParts = finalPath.split("/");
@@ -204,31 +269,70 @@ var Router = class _Router {
       }
     }
     const { middlewares, params } = route;
-    this.params = params;
-    let component = await this.searchComponent(middlewares, parentComponent);
-    if (component === false) {
-      return;
-    }
-    if (!component) {
-      return this.handleError(
-        new RouterError(`The URL ${constructedPath} did not return a valid component.`),
-        parentComponent
-      );
-    }
-    if ((0, import_valyrian.isComponent)(parentComponent) || (0, import_valyrian.isVnodeComponent)(parentComponent)) {
-      const childComponent = (0, import_valyrian.isVnodeComponent)(component) ? component : (0, import_valyrian.v)(component, {});
-      if ((0, import_valyrian.isVnodeComponent)(parentComponent)) {
-        parentComponent.children.push(childComponent);
-        component = parentComponent;
-      } else {
-        component = (0, import_valyrian.v)(parentComponent, {}, childComponent);
+    const nextRoute = {
+      path: getPathWithoutLastSlash(path),
+      query: nextQuery,
+      params
+    };
+    const routeChanged = hasRouteChanged(nextRoute, this.currentRoute);
+    if (routeChanged) {
+      for (const callback of this.activeRouteCallbacks.before) {
+        const result = await callback(nextRoute, this.currentRoute);
+        if (result === false) {
+          return;
+        }
       }
+      this.beginPendingRouteCallbacksCollection();
+    } else {
+      this.callbackRegistrationTarget = "active";
     }
-    if (!import_valyrian.isNodeJs && window.location.pathname + window.location.search !== constructedPath) {
-      window.history.pushState(null, "", constructedPath);
-    }
-    if (this.container) {
-      return (0, import_valyrian.mount)(this.container, component);
+    let routeTransitionCompleted = false;
+    try {
+      this.url = constructedPath;
+      this.query = nextQuery;
+      this.path = path;
+      this.params = params;
+      let component = await this.searchComponent(middlewares, parentComponent);
+      if (component === false) {
+        return;
+      }
+      if (!component) {
+        return this.handleError(
+          new RouterError(`The URL ${constructedPath} did not return a valid component.`),
+          parentComponent
+        );
+      }
+      if ((0, import_valyrian.isComponent)(parentComponent) || (0, import_valyrian.isVnodeComponent)(parentComponent)) {
+        const childComponent = (0, import_valyrian.isVnodeComponent)(component) ? component : (0, import_valyrian.v)(component, {});
+        if ((0, import_valyrian.isVnodeComponent)(parentComponent)) {
+          parentComponent.children.push(childComponent);
+          component = parentComponent;
+        } else {
+          component = (0, import_valyrian.v)(parentComponent, {}, childComponent);
+        }
+      }
+      if (!import_valyrian.isNodeJs && window.location.pathname + window.location.search !== constructedPath) {
+        window.history.pushState(null, "", constructedPath);
+      }
+      let mountedResult = void 0;
+      if (this.container) {
+        mountedResult = await (0, import_valyrian.mount)(this.container, component);
+      }
+      if (routeChanged) {
+        const previousRoute = this.currentRoute;
+        const previousAfterCallbacks = this.activeRouteCallbacks.after;
+        this.currentRoute = nextRoute;
+        this.commitPendingRouteCallbacksCollection();
+        routeTransitionCompleted = true;
+        for (const callback of previousAfterCallbacks) {
+          await callback(nextRoute, previousRoute);
+        }
+      }
+      return mountedResult;
+    } finally {
+      if (routeChanged && !routeTransitionCompleted) {
+        this.rollbackPendingRouteCallbacksCollection();
+      }
     }
   }
   getOnClickHandler(url) {
@@ -236,7 +340,7 @@ var Router = class _Router {
       if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.defaultPrevented) {
         return;
       }
-      if (typeof url === "string" && url.length > 0) {
+      if ((0, import_utils.isString)(url) && url.length > 0) {
         this.go(url);
       }
       e.preventDefault();
@@ -265,17 +369,17 @@ var Router = class _Router {
   }
   getErrorConditionMiddlewares(error) {
     for (const [condition, middlewares] of this.errorHandlers) {
-      if (typeof condition !== "number" && typeof condition !== "string" && error instanceof condition && error.name === condition.name) {
+      if (!(0, import_utils.isNumber)(condition) && !(0, import_utils.isString)(condition) && error instanceof condition && error.name === condition.name) {
         return middlewares;
       }
     }
     for (const [condition, middlewares] of this.errorHandlers) {
-      if (typeof condition === "number" && (error.status === condition || error.code === condition)) {
+      if ((0, import_utils.isNumber)(condition) && (error.status === condition || error.code === condition)) {
         return middlewares;
       }
     }
     for (const [condition, middlewares] of this.errorHandlers) {
-      if (typeof condition === "string" && (error.name === condition || error.message.includes(condition))) {
+      if ((0, import_utils.isString)(condition) && (error.name === condition || error.message.includes(condition))) {
         return middlewares;
       }
     }
@@ -302,15 +406,28 @@ var Router = class _Router {
         }
       }
     } catch (err) {
-      err.cause = error;
-      let errorCauseCount = 0;
-      while (err.cause) {
-        errorCauseCount++;
-      }
-      if (errorCauseCount > 20) {
+      const nextError = err instanceof Error ? err : new RouterError(String(err));
+      if (nextError === error) {
         throw new RouterError("Too many error causes. Possible circular error handling.");
       }
-      return this.handleError(err, parentComponent);
+      if (!nextError.cause) {
+        nextError.cause = error;
+      }
+      let errorCauseCount = 0;
+      const seen = /* @__PURE__ */ new Set();
+      let currentError = nextError;
+      while (currentError instanceof Error && currentError.cause) {
+        if (seen.has(currentError)) {
+          throw new RouterError("Too many error causes. Possible circular error handling.");
+        }
+        seen.add(currentError);
+        errorCauseCount++;
+        if (errorCauseCount > 20) {
+          throw new RouterError("Too many error causes. Possible circular error handling.");
+        }
+        currentError = currentError.cause;
+      }
+      return this.handleError(nextError, parentComponent);
     }
     if (component) {
       if ((0, import_valyrian.isComponent)(parentComponent) || (0, import_valyrian.isVnodeComponent)(parentComponent)) {
@@ -351,6 +468,25 @@ var Router = class _Router {
   }
 };
 var localRedirect;
+var activeRouter = null;
+function beforeRoute(callback) {
+  if (!activeRouter) {
+    throw new RouterError("Router is not mounted. Call mountRouter(...) before registering route callbacks.");
+  }
+  if (!import_valyrian.current.vnode) {
+    throw new RouterError("beforeRoute must be called inside a component context.");
+  }
+  return activeRouter.beforeRoute(callback);
+}
+function afterRoute(callback) {
+  if (!activeRouter) {
+    throw new RouterError("Router is not mounted. Call mountRouter(...) before registering route callbacks.");
+  }
+  if (!import_valyrian.current.vnode) {
+    throw new RouterError("afterRoute must be called inside a component context.");
+  }
+  return activeRouter.afterRoute(callback);
+}
 async function redirect(url, parentComponent, preventPushState = false) {
   if (!localRedirect) {
     console.warn("Redirect function is not initialized. Please mount the router first.");
@@ -361,6 +497,7 @@ async function redirect(url, parentComponent, preventPushState = false) {
 function mountRouter(elementContainer, router) {
   router.container = elementContainer;
   localRedirect = router.go.bind(router);
+  activeRouter = router;
   if (!import_valyrian.isNodeJs) {
     let onPopStateGoToRoute2 = function() {
       const pathWithoutPrefix = getPathWithoutPrefix(document.location.pathname, router.pathPrefix);
@@ -375,3 +512,4 @@ function mountRouter(elementContainer, router) {
     (0, import_valyrian.setAttribute)("onclick", router.getOnClickHandler(url), vnode);
   });
 }
+//# sourceMappingURL=index.js.map

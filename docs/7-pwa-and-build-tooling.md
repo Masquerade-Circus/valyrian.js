@@ -1,0 +1,63 @@
+# 7.3. PWA and Build Tooling
+
+Valyrian includes build helpers in `valyrian.js/node` and a service worker runtime manager in `valyrian.js/sw`.
+
+Adoption tip: add these after core routing + data + SSR behavior is stable.
+
+For runtime update orchestration APIs, see [./7-sw-runtime.md](./7-sw-runtime.md).
+
+## Icons and Manifest Generation
+
+Use `icons()` to generate app icon assets and related metadata from one source image.
+
+```js
+import { icons } from "valyrian.js/node";
+
+await icons("./assets/logo.png", {
+  iconsPath: "./public/icons",
+  linksViewPath: "./src/generated",
+  appName: "My Valyrian App"
+});
+```
+
+## Service Worker File Generation
+
+```js
+import { sw } from "valyrian.js/node";
+import pkg from "./package.json";
+
+sw("./public/sw.js", {
+  version: pkg.version,
+  name: "my-app-cache",
+  criticalUrls: ["/", "/index.html", "/dist/main.js"],
+  optionalUrls: ["/offline.html"],
+  offlinePage: "/offline.html"
+});
+```
+
+`urls` remains supported for compatibility, but `criticalUrls` and `optionalUrls` are preferred.
+
+## JavaScript and TypeScript Bundling (`inline`)
+
+```js
+import fs from "fs";
+import { inline } from "valyrian.js/node";
+
+const bundle = await inline("./src/index.tsx", { compact: true });
+fs.writeFileSync("./public/main.js", bundle.raw);
+```
+
+For TS/TSX entries, `inline` validates types by default (`noValidate: true` disables this).
+
+`inline(...)` returns `{ raw, map, file }`.
+
+## CSS Bundling and Purging
+
+```js
+import { inline } from "valyrian.js/node";
+
+const cssBundle = await inline("./src/app.css");
+const criticalCss = await inline.uncss([renderedHtml], cssBundle.raw);
+```
+
+`inline.uncss` removes unused selectors using rendered HTML as input.

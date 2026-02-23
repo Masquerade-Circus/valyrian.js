@@ -1,0 +1,155 @@
+# 3.7. Runtime Core API (`valyrian.js`)
+
+This page is the runtime reference for the base `valyrian.js` package.
+
+Use [./3-the-essentials.md](./3-the-essentials.md) for the learning path, then use this page for exact API behavior.
+
+## Render Lifecycle APIs
+
+### `mount(container, component)`
+
+`mount` accepts:
+
+1. A selector string or a DOM element as `container`.
+2. A component function.
+3. A POJO component (`{ view() {} }`).
+4. A vnode component.
+5. A plain value (wrapped into a trivial render function).
+
+On mount, Valyrian hydrates the current container DOM into a vnode tree and then runs the normal patch cycle.
+
+```tsx
+import { mount } from "valyrian.js";
+
+const App = () => <h1>Hello</h1>;
+mount("#app", App);
+```
+
+### `update()`
+
+Runs a patch pass for the mounted app.
+
+Use it when async logic changes state outside delegated event handlers.
+
+### `unmount()`
+
+Unmounts the current app, cleans listeners/resources, and clears delegated event bindings.
+
+## Component Lifecycle Helpers
+
+Use these inside a component render path:
+
+* `onCreate(fn)`
+* `onUpdate(fn)`
+* `onCleanup(fn)`
+* `onRemove(fn)`
+
+These helpers throw if called outside component execution.
+
+Practical timing model:
+
+* `onCreate`: runs when the component appears in the tree.
+* `onUpdate`: runs on later patches while the component stays in the tree.
+* `onCleanup`: runs before each patch of that vnode subtree and before subtree detach.
+* `onRemove`: runs after detach, when the component subtree is actually removed.
+
+```tsx
+import { onCleanup, onCreate } from "valyrian.js";
+
+const Clock = () => {
+  let timer: ReturnType<typeof setInterval> | null = null;
+
+  onCreate(() => {
+    timer = setInterval(() => {
+      // do work
+    }, 1000);
+  });
+
+  onCleanup(() => {
+    if (timer) clearInterval(timer);
+  });
+
+  return <div>Clock</div>;
+};
+```
+
+## `debouncedUpdate(timeout?)`
+
+Debounces rendering. Default timeout is `42ms`.
+
+If called from an active event context, it prevents default on that event before scheduling update.
+
+```tsx
+import { debouncedUpdate } from "valyrian.js";
+
+const SearchBox = {
+  term: "",
+  onInput(event: Event) {
+    this.term = (event.target as HTMLInputElement).value;
+    debouncedUpdate(80);
+  },
+  view() {
+    return <input value={this.term} oninput={this.onInput} />;
+  }
+};
+```
+
+## Raw HTML: `trust(html)`
+
+`trust` parses an HTML string into vnode-compatible children.
+
+```tsx
+import { trust } from "valyrian.js";
+
+const Rich = ({ html }) => <article>{trust(html)}</article>;
+```
+
+Only use trusted/sanitized HTML.
+
+## `v-model` Contract
+
+`v-model` is a built-in directive with mode-specific behavior.
+
+Rules:
+
+1. The control must have `name`.
+2. Existing control handler (`oninput`/`onclick`) is preserved and runs after model sync.
+
+Reader note: for `select[multiple]`, this implementation listens on `onclick` and supports additive selection with `Ctrl`.
+
+Behavior by control type:
+
+* `input` (default types): syncs `value` with `oninput`.
+* `input[type=checkbox]`:
+  * model array: toggle `value` membership.
+  * scalar with `value` prop: toggle between `value` and `null`.
+  * scalar without `value`: toggle boolean.
+* `input[type=radio]`: checked when `model[name] === input.value`.
+* `select` single: sets selected option from model.
+* `select[multiple]`: model is array, selection handler runs on `onclick`.
+* `textarea`: vnode children mirror model value.
+
+```tsx
+const state = { tags: [], newsletter: false, role: "user", bio: "" };
+
+const Form = () => (
+  <form>
+    <input type="checkbox" name="newsletter" v-model={state} />
+
+    <select multiple name="tags" v-model={state}>
+      <option value="ts">TypeScript</option>
+      <option value="ssr">SSR</option>
+    </select>
+
+    <textarea name="bio" v-model={state} />
+  </form>
+);
+```
+
+## Hydration Behavior
+
+At mount time, existing DOM is converted to vnode structure (including text and attributes), then patching continues from that structure.
+
+This allows SSR HTML and pre-existing markup to become interactive without replacing the full container tree.
+
+If you need the learning path version (instead of reference style), start at [./3-the-essentials.md](./3-the-essentials.md).

@@ -1,4 +1,5 @@
 import { htmlToHyperscript, icons, inline, render, sw, htmlToDom, domToHtml } from "valyrian.js/node";
+import { SwRuntimeManager } from "valyrian.js/sw";
 
 import { expect, describe, test as it } from "bun:test";
 import fs from "fs";
@@ -105,6 +106,92 @@ describe("Node test", () => {
     });
 
     expect(fs.existsSync(file)).toBeTruthy();
+  });
+
+  it("should create sw runtime and react to update lifecycle with mocks", async () => {
+    const originalNavigator = (globalThis as any).navigator;
+    const originalWindow = (globalThis as any).window;
+
+    const postedMessages: any[] = [];
+    const listeners: Record<string, Function> = {};
+    const swListeners: Record<string, Function> = {};
+
+    const installingWorker = {
+      state: "installing",
+      addEventListener(event: string, cb: Function) {
+        listeners[event] = cb;
+      }
+    } as any;
+
+    const waitingWorker = {
+      postMessage(msg: any) {
+        postedMessages.push(msg);
+      }
+    } as any;
+
+    const registration = {
+      waiting: null,
+      installing: installingWorker,
+      addEventListener(event: string, cb: Function) {
+        listeners[event] = cb;
+      },
+      update: async () => {},
+      unregister: async () => true
+    } as any;
+
+    (globalThis as any).navigator = {
+      serviceWorker: {
+        controller: {},
+        register: async () => registration,
+        addEventListener(event: string, cb: Function) {
+          swListeners[event] = cb;
+        }
+      }
+    };
+
+    const reloadCalls: number[] = [];
+    (globalThis as any).window = {
+      location: {
+        reload() {
+          reloadCalls.push(1);
+        }
+      }
+    };
+
+    const runtime = await new SwRuntimeManager({
+      strategy: "manual",
+      runtime: {
+        isNodeJs: false,
+        navigator: (globalThis as any).navigator,
+        window: (globalThis as any).window
+      }
+    }).init();
+    const seen: string[] = [];
+    runtime.on("registered", () => seen.push("registered"));
+    runtime.on("updateavailable", () => seen.push("updateavailable"));
+    runtime.on("updated", () => seen.push("updated"));
+
+    // Trigger registration update lifecycle
+    listeners.updatefound();
+    installingWorker.state = "installed";
+    registration.waiting = waitingWorker;
+    listeners.statechange();
+
+    expect(runtime.state.updateAvailable).toBeTrue();
+    runtime.applyUpdate();
+    expect(postedMessages).toEqual([{ type: "SKIP_WAITING" }]);
+
+    swListeners.controllerchange();
+    expect(runtime.state.updateAvailable).toBeFalse();
+    expect(reloadCalls.length).toEqual(0);
+
+    await runtime.checkForUpdate();
+    expect(await runtime.unregister()).toBeTrue();
+    expect(seen).toContain("updateavailable");
+    expect(seen).toContain("updated");
+
+    (globalThis as any).navigator = originalNavigator;
+    (globalThis as any).window = originalWindow;
   });
 
   // NOTE: This test will take some time between 30 and 60 seconds
@@ -256,6 +343,13 @@ describe("All lib files", () => {
         (acc, file) => `${acc}\n\n/****************** Path: ${file.path} ******************/\n${file.content}`,
         ""
       );
+
+    const docsText = allDocsFiles.reduce(
+      (acc, file) => `${acc}\n\n____________________________________________\n\n${file.content}`,
+      ""
+    );
+
+    fs.writeFileSync(".tmp/docs-files.md", docsText);
 
     fs.writeFileSync(".tmp/all-files.ts", text);
   });

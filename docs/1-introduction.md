@@ -1,60 +1,62 @@
 # 1. Introduction
 
-Valyrian.js is an isomorphic micro-framework designed to unify web application development. It provides a complete, cohesive ecosystem for building modern interfaces that run seamlessly in both the browser and the server, without the need for complex build steps or heavy external dependencies.
+Valyrian.js is an isomorphic micro-framework for building web apps with one runtime model across browser and server.
 
-It is built on the premise that a framework should be a facilitator of the web platform, not an abstraction layer that hides it.
+The goal is simple: ship fast, keep control, and add complexity only when your app needs it.
 
-## 1.1. What is Valyrian.js?
+## What this guide gives you
 
-Valyrian.js is a **Full-Stack Library** in a micro-package. It consolidates the essential pillars of modern application development—Rendering, Routing, State Management, and Server-Side capabilities—into a single, synchronized core.
+* A fast first-success path (chapters 1-3).
+* A practical SPA path (chapter 4 and its module pages).
+* A clear expansion path for state, optimization, and full-stack runtime concerns.
 
-* **Agnostic Runtime:** It runs natively in any JavaScript environment (Browsers, Node.js, Deno, Bun) without requiring modification or transpilation.
-* **Batteries-Included:** It eliminates the need to assemble a fragmented stack of third-party libraries for basic needs like routing or HTTP requests.
-* **Unified Logic:** It allows developers to write application logic once and execute it anywhere, ensuring that the behavior on the server matches exactly the behavior on the client.
+## Estimated Time
+
+* First render in browser: 2-5 minutes.
+* Solid fundamentals (chapters 1-3): 20-40 minutes.
+
+## 1.1. What Valyrian.js Is
+
+Valyrian is designed around one mental model that works in both runtime contexts.
+
+Core areas:
+
+* UI rendering and vnode patching.
+* Router and navigation lifecycle.
+* State options (`POJO`, `pulse`, `pulse store`, `flux store`).
+* Request and async orchestration modules.
+* Node-side SSR and build utilities.
 
 ## 1.2. Philosophy
 
-Valyrian.js was born to address the **"Incidental Complexity"** of the modern web.
+The project emphasizes:
 
-Current development often involves managing a disjointed set of tools: one library for the UI, another for the router, another for the state, and a different framework entirely for the server. This fragmentation leads to fragile codebases, complex configurations, and a steep learning curve.
+1. **Simplicity first**: complexity should come from product logic, not framework ceremony.
+2. **Platform-native APIs**: lean on Web/JS primitives whenever practical.
+3. **Deterministic updates**: avoid hidden schedulers where explicit control is clearer.
+4. **Unified behavior**: keep runtime semantics consistent between client and server.
 
-Valyrian.js proposes a **Unified Standard**:
-
-1. **Simplicity First:** The complexity of the application should come from the business logic, not the tools used to build it.
-2. **Platform Native:** Use the capabilities of the language and the browser directly. If the platform provides a solution (like Events or Storage), the framework should leverage it, not reinvent it.
-3. **Transparency:** The framework provides clear, deterministic flows of data and rendering. There is no "magic" happening behind the scenes; the developer retains full control over when and how updates occur.
-
-## 1.3. The Architecture
-
-Valyrian.js operates as a single cohesive unit where the boundaries between Client and Server are fluid.
-
-Instead of treating the Frontend and Backend as separate entities that communicate via API calls, Valyrian architecture treats the application as a continuous flow of **State** and **Views** that can be resolved in any environment.
+## 1.3. Architecture Overview
 
 ```mermaid
-graph LR
-    Input[User / Request] --> Router
-    
-    subgraph "Valyrian Application Core"
-        Router[Universal Router]
-        State[State Management]
-        Components[Component Tree]
-        
-        Router --> Components
-        State --> Components
-        Components --> State
-    end
-
-    Components --> Output
-    
-    subgraph "Environment Output"
-        Output{Context}
-        Output -->|Browser| DOM[Interactive DOM]
-        Output -->|Server| HTML[Static HTML String]
-    end
+flowchart LR
+    input[User or Request] --> router[Router]
+    router --> components[Components]
+    state[State] --> components
+    components --> state
+    components --> target[Render Target]
+    target --> dom[Interactive DOM]
+    target --> html[HTML String]
 ```
 
-### Architectural Pillars
+## 1.4. Reading Path
 
-1. **Universal Routing:** The application structure is defined by a single routing map that serves as the source of truth for both navigation in the browser and request handling on the server.
-2. **Isomorphic State:** Data management strategies are designed to persist and synchronize across environments, allowing sessions and application state to flow from the server to the client naturally.
-3. **Adaptive Rendering:** The engine automatically detects the execution context, delivering optimized HTML strings on the server for performance and SEO, and interactive DOM updates on the client for user experience.
+Recommended order:
+
+1. [./2-getting-started.md](./2-getting-started.md)
+2. [./3-the-essentials.md](./3-the-essentials.md)
+3. [./4-routing-and-navigation.md](./4-routing-and-navigation.md)
+4. [./4-data-fetching-and-async.md](./4-data-fetching-and-async.md)
+5. [./4-forms.md](./4-forms.md)
+
+If your goal is first success only, complete chapters 2 and 3 first, then return for chapter 4 when you need routing and async workflows.

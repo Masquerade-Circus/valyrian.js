@@ -1,64 +1,62 @@
-# 3. The Essentials (View & Interaction)
+# 3. The Essentials (View and Interaction)
 
-Valyrian.js simplifies the UI development model by removing complex abstractions. The core concept is straightforward: You define your view using Components, and the framework updates the view automatically when user events occur.
+This chapter covers the core primitives you need to build interactive UI with Valyrian.js.
+
+By the end of this page, you should be able to:
+
+* Render components
+* Handle events
+* Use built-in directives
+* Control async UI updates
+
+If you need full API contracts for `mount/update/unmount`, lifecycle helpers, `debouncedUpdate`, `trust`, and `v-model`, see [./3-runtime-core.md](./3-runtime-core.md).
 
 ## 3.1. Hello World
 
-At its core, Valyrian.js renders Virtual Nodes (VNodes) into the DOM. While you can use the `v()` function directly, most developers prefer **JSX/TSX** for its declarative syntax.
+Start here if you are new. This confirms your base render flow is working.
 
 ```tsx
 import { mount } from "valyrian.js";
 
 const App = () => (
-  <div id="main">
+  <main>
     <h1>Hello World</h1>
     <p>Welcome to Valyrian.js</p>
-  </div>
+  </main>
 );
 
-// Mounts the component into the document body
 mount("body", App);
 ```
 
 ## 3.2. Components
 
-Valyrian supports two primary types of components: **Functional** (stateless or hook-based) and **POJO** (Plain Old JavaScript Object).
+Valyrian supports:
 
-### Functional Components
+* **Functional components** for straightforward rendering.
+* **POJO components** (`{ view() {} }`) for grouped state + logic + view.
 
-These are standard functions that return VNodes. They receive `props` and `children` as arguments.
+### Functional components
 
 ```tsx
 const Button = ({ color, ...props }, children) => (
-  <button style={`background: ${color}`} {...props}>
+  <button style={`background: ${color};`} {...props}>
     {children}
   </button>
 );
-
-const App = () => (
-  <Button color="blue" onclick={() => alert('Clicked!')}>
-    Press Me
-  </Button>
-);
 ```
 
-### POJO Components
-
-This is a unique feature of Valyrian.js. Instead of using classes or hooks, you can use a plain object. The framework automatically binds the `view` method to the object itself, allowing you to use `this` to access properties naturally.
-
-This pattern is ideal for grouping **State + Logic + View** without the overhead of classes.
+### POJO components
 
 ```tsx
 const Counter = {
-  count: 0, // State
-  increment() { // Logic
-    this.count++;
+  count: 0,
+  increment() {
+    this.count += 1;
   },
-  view() { // View
+  view() {
     return (
-      <div class="counter-widget">
+      <div>
         <span>Count: {this.count}</span>
-        {/* "this" is automatically bound to the Counter object */}
         <button onclick={this.increment}>+</button>
       </div>
     );
@@ -68,56 +66,56 @@ const Counter = {
 mount("body", Counter.view);
 ```
 
-## 3.3. Handling Events
+## 3.3. Events and Update Cycle
 
-Valyrian.js uses **Native Event Delegation**. It attaches a single listener to the root of your application for each event type. When an event occurs, it propagates it to the correct handler defined in your VNode.
+Valyrian uses delegated native events (`onclick`, `oninput`, `onsubmit`, ...).
 
-You use standard HTML event names (lowercase), such as `onclick`, `oninput`, `onsubmit`.
+* After an event handler runs, Valyrian triggers a render update.
+* If `event.preventDefault()` is called, the automatic update is skipped.
+
+### Event Flow
+
+```mermaid
+flowchart TD
+    evt[User event] --> handler[Event handler runs]
+    handler --> prevent{preventDefault called?}
+    prevent -- Yes --> skip[Skip automatic update]
+    prevent -- No --> render[Run update and render cycle]
+    render --> synced[UI synced]
+```
 
 ```tsx
-const InputHandler = () => (
-  <input 
-    type="text" 
-    oninput={(e) => console.log(e.target.value)} 
-  />
+const Form = () => (
+  <input oninput={(event) => console.log((event.target as HTMLInputElement).value)} />
 );
 ```
 
-**The Update Cycle:**
-By default, Valyrian triggers a global `update()` after any event handler finishes execution. This means you don't need to call `setState` to update the UI in response to user interaction.
-
-To prevent an update after an event (e.g., for performance optimization on high-frequency events), you can use `e.preventDefault()`.
+If your UI does not update after interaction, check if `event.preventDefault()` is being called by mistake.
 
 ## 3.4. Basic Directives
 
-Directives in Valyrian are special attributes starting with `v-` that control how elements are rendered.
-
-### Structural Directives
-
-* **`v-if`**: Conditionally renders the element. If false, the element is removed from the DOM.
-* **`v-show`**: Toggles the `display: none` style. The element remains in the DOM.
+### Structural: `v-if`, `v-show`
 
 ```tsx
-const Toggle = ({ visible }) => (
-  <div>
-    <span v-if={visible}>I exist in the DOM</span>
-    <span v-show={visible}>I am visible</span>
-  </div>
+const Panel = ({ visible }) => (
+  <section>
+    <p v-if={visible}>Mounted only when visible</p>
+    <p v-show={visible}>Always mounted, hidden with CSS</p>
+  </section>
 );
 ```
 
-### Lists (`v-for`)
+Directive order note: when `v-if` resolves to `false`, later directives on that same vnode are skipped for that patch.
 
-The `v-for` directive expects an array (or iterable) and a **callback function** as its child.
+### Lists: `v-for`
 
-> **Note:** Unlike `array.map()`, using `v-for` allows Valyrian to optimize list rendering internally.
+`v-for` expects an iterable value plus a callback child.
 
 ```tsx
 const TodoList = ({ items }) => (
   <ul v-for={items}>
-    {/* The child is a function that receives the item and index */}
     {(todo, index) => (
-      <li class={todo.done ? 'completed' : ''}>
+      <li key={todo.id}>
         {index + 1}. {todo.text}
       </li>
     )}
@@ -125,143 +123,128 @@ const TodoList = ({ items }) => (
 );
 ```
 
-## 3.5. Reactivity & Async Control
+### Content: `v-html`, `v-text`
 
-Valyrian.js does not use hidden schedulers or "magic" reactivity variables by default. It follows a deterministic flow.
-
-### The POJO Pattern (Event-Driven)
-
-In most UI interactions, state changes happen synchronously inside an event listener. Since Valyrian automatically updates after events, **Plain Objects are reactive by nature** in this context.
+Use these when you want direct text/html assignment semantics.
 
 ```tsx
-const state = { value: "Hello" };
+const state = {
+  html: "<strong>Rich text</strong>",
+  text: "Plain text only"
+};
 
-// Changing state.value updates the UI automatically 
-// because 'oninput' triggers a render cycle.
-const Input = () => <input oninput={(e) => state.value = e.target.value} />;
+const Content = () => (
+  <div>
+    <div v-html={state.html} />
+    <div v-text={state.text} />
+  </div>
+);
 ```
 
-### Async Flows (Manual Updates)
+### Class toggles: `v-class`
 
-When dealing with asynchronous operations (like `fetch` or `setTimeout`), the automatic update cycle has already finished by the time your data arrives. In these cases, you must call `update()` manually.
+`v-class` accepts:
 
-This gives you precise control over when the application repaints, allowing you to batch updates or manage loading states explicitly.
+* string: full class name string
+* array: joined class names
+* object: `{ className: boolean | () => boolean }`
+
+## 3.5. Reactivity and Async Control
+
+For synchronous user interactions, mutating plain objects in event handlers is usually enough because updates are event-driven.
+
+For async flows, call `update()` manually when state transitions should be rendered.
 
 ```tsx
-import { update, v } from "valyrian.js";
+import { update } from "valyrian.js";
 
 const UserProfile = {
-  data: null,
   loading: false,
+  user: null,
 
-  async loadUser() {
-    // 1. Set loading state
+  async load() {
     this.loading = true;
-    update(); // Manually trigger render to show "Loading..."
+    update();
 
-    // 2. Fetch data
-    const res = await fetch("/api/user");
-    this.data = await res.json();
+    const response = await fetch("/api/user");
+    this.user = await response.json();
 
-    // 3. Set final state
     this.loading = false;
-    update(); // Manually trigger render to show the data
+    update();
   },
 
   view() {
-    if (this.loading) return <div>Loading...</div>;
-    if (!this.data) return <button onclick={this.loadUser}>Load Profile</button>;
-    
-    return <div>Welcome, {this.data.name}</div>;
+    if (this.loading) return <p>Loading...</p>;
+    if (!this.user) return <button onclick={this.load}>Load user</button>;
+    return <p>Hello {this.user.name}</p>;
   }
 };
 ```
 
-This **"Loading -> Wait -> Result"** pattern is fundamental to Valyrian's philosophy: **You control the render loop.**
-
 ## 3.6. Creating Custom Directives
 
-Valyrian.js allows you to extend its template language by registering custom directives. A directive is essentially a function that hooks into the rendering cycle of an element, allowing you to manipulate the DOM node directly based on the value passed to it.
+Register directives with `directive(name, handler)`. The runtime exposes:
 
-Directives are ideal for low-level DOM access, integrating third-party libraries (like jQuery plugins or D3 charts), or creating reusable behaviors (like click-outside detection or auto-focus).
+1. `value`: directive input value.
+2. `vnode`: current vnode (with `vnode.dom`).
+3. `oldProps`: previous props (`undefined` on mount).
 
-### Registering a Directive
+If a custom directive needs to mutate vnode props, use `setAttribute(...)` for reliable integration with patch behavior.
 
-Use the `directive` function to register a new behavior. The name you provide will be prefixed with `v-` automatically.
+### Directive Lifecycle Flow
 
-```typescript
+```mermaid
+flowchart TD
+    mount[Element mounted] --> create[v-create]
+    create --> patchStart[Patch starts]
+    patchStart --> cleanupPatch[v-cleanup before patch]
+    cleanupPatch --> updateHook[v-update during patch]
+    updateHook --> patchStart
+    patchStart --> detach{Element removed?}
+    detach -- Yes --> cleanupDetach[v-cleanup before detach]
+    cleanupDetach --> remove[v-remove after detach]
+```
+
+```ts
 import { directive } from "valyrian.js";
 
-// Usage: <div v-my-directive="value" />
-directive("my-directive", (value, vnode, oldProps) => {
-  // Logic here
+directive("focus", (enabled, vnode, oldProps) => {
+  if (!oldProps && enabled && vnode.dom) {
+    setTimeout(() => (vnode.dom as HTMLInputElement).focus(), 0);
+  }
 });
 ```
 
-### The Directive Interface
+### Cleanup with `v-cleanup`
 
-The callback function receives three arguments:
+If your directive attaches listeners/resources, pair it with `v-cleanup`.
 
-1. **`value`**: The value passed to the directive in the JSX/Template (e.g., `true`, a string, an object, or a function).
-2. **`vnode`**: The current Virtual Node being rendered. You can access the real DOM element via `vnode.dom`.
-3. **`oldProps`**: The properties of this node from the *previous* render cycle.
-   * If `oldProps` is `undefined`, this is the **First Render (Mount)**.
-   * If `oldProps` exists, this is an **Update**.
+`v-cleanup` runs in two moments:
 
-### Example 1: Auto-Focus (`v-focus`)
+1. Before each patch cycle for existing nodes.
+2. Before a node subtree is detached.
 
-A common use case is focusing an input element when it appears on the screen.
+Use it as an idempotent teardown step.
 
-```javascript
-import { directive, mount } from "valyrian.js";
-
-// 1. Create the directive
-directive("focus", (shouldFocus, vnode, oldProps) => {
-  // Run only on mount (when oldProps is undefined)
-  // and if the value passed is true
-  if (!oldProps && shouldFocus && vnode.dom) {
-    // Use setTimeout to ensure the element is fully painted
-    setTimeout(() => vnode.dom.focus(), 0);
-  }
-});
-
-// 2. Use it in a component
-const Form = () => (
-  <div>
-    <input type="text" placeholder="I will be focused" v-focus={true} />
-  </div>
+```tsx
+const App = () => (
+  <div
+    v-create={(vnode) => {
+      const listener = () => console.log("resize");
+      window.addEventListener("resize", listener);
+      vnode.props.__listener = listener;
+    }}
+    v-cleanup={(vnode) => {
+      window.removeEventListener("resize", vnode.props.__listener);
+    }}
+  />
 );
-
-mount("body", Form);
 ```
 
-### Example 2: Efficient Updates (`v-highlight`)
+Use this pattern to avoid duplicate subscriptions and memory leaks.
 
-You can use the `oldProps` argument to optimize performance, applying changes only when the value actually changes, similar to `useEffect` dependencies but for the DOM.
+## Common Beginner Mistakes
 
-```javascript
-directive("highlight", (color, vnode, oldProps) => {
-  // If it's an update, check if the color actually changed
-  if (oldProps && oldProps["v-highlight"] === color) {
-    return; // Do nothing if value is the same
-  }
-
-  // Apply style directly to the DOM
-  vnode.dom.style.backgroundColor = color;
-});
-
-const App = () => <div v-highlight="yellow">Highlighted Text</div>;
-```
-
-### Advanced: Directive Return Values
-
-The return value of a directive can control the rendering flow of the component:
-
-* **`false`**: If a directive returns `false`, Valyrian stops processing the remaining attributes and directives for that node. This is useful for conditional rendering logic similar to `v-if`.
-* **`void` / `any`**: Standard behavior; the framework continues processing the node.
-
-### Best Practices
-
-1. **Direct DOM Access:** Directives are the safe place to touch `vnode.dom`.
-2. **Clean Up:** If your directive adds event listeners (e.g., `v-click-outside`), remember to manage their removal. Since directives run on every update, ensure you don't attach duplicate listeners, or use `v-cleanup` alongside your custom directive to handle teardown.
-3. **Naming:** Keep directive names short, lowercase, and descriptive (e.g., `v-tooltip`, `v-scroll`, `v-lazy`).
+1. Forgetting `name` in form controls used with directives like `v-model`/`v-field`.
+2. Expecting async state changes to render without calling `update()`.
+3. Mixing direct DOM mutations and framework-driven render flow in the same UI path.

@@ -325,6 +325,83 @@ describe("Request", () => {
 
         await server.close();
       });
+
+      it("should support request/response plugins and eject", async () => {
+        const server = await createServer();
+        const pluginId = request.use({
+          request(ctx: any) {
+            ctx.options.headers["X-Plugin"] = "enabled";
+            return ctx;
+          },
+          response(ctx: any) {
+            return {
+              ...ctx,
+              body: {
+                ...ctx.body,
+                pluginTouched: true
+              }
+            };
+          }
+        });
+
+        const res = await request.get(`${(server as any).baseUrl}/posts/1`);
+        expect(res).toEqual(
+          expect.objectContaining({
+            id: 1,
+            pluginTouched: true
+          })
+        );
+
+        request.eject(pluginId);
+        await server.close();
+      });
+
+      it("should support error plugins and inherit plugins in scoped requests", async () => {
+        const server = await createServer();
+        const parent = request.new(`${(server as any).baseUrl}`);
+
+        const pluginId = parent.use({
+          response(ctx: any) {
+            return {
+              ...ctx,
+              body: {
+                ...ctx.body,
+                inherited: true
+              }
+            };
+          },
+          error(ctx: any) {
+            const normalized = new Error("Normalized request error") as Error & { status?: number };
+            normalized.status = ctx.response?.status;
+            return {
+              ...ctx,
+              error: normalized
+            };
+          }
+        });
+
+        const child = parent.new("/");
+        const ok = await child.get("/posts/1");
+        expect(ok).toEqual(
+          expect.objectContaining({
+            id: 1,
+            inherited: true
+          })
+        );
+
+        let thrown: any = null;
+        try {
+          await child.get("/unknown-route");
+        } catch (error: any) {
+          thrown = error;
+        }
+        expect(thrown).toBeDefined();
+        expect(thrown.message).toEqual("Normalized request error");
+        expect(thrown.status).toEqual(404);
+
+        parent.eject(pluginId);
+        await server.close();
+      });
     });
   }
 });

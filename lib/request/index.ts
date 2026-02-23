@@ -1,10 +1,10 @@
 import { isNodeJs } from "valyrian.js";
-import { get, set } from "valyrian.js/utils";
+import { get, isObject, isString, set } from "valyrian.js/utils";
 
 interface UrlOptions {
-  base?: string; // Used to prefix the url for scoped requests.
-  node?: string | null; // Used to redirect local requests to node server for server side rendering.
-  api?: string | null; // Used to redirect api requests to node server for server side rendering.
+  base?: string;
+  node?: string | null;
+  api?: string | null;
 }
 
 interface RequestOptions {
@@ -25,13 +25,46 @@ interface SendOptions extends RequestOptionsWithUrls, RequestInit {
   resolveWithFullResponse?: boolean;
 }
 
+export interface RequestPlugin {
+  name?: string;
+  request?: (ctx: RequestContext) => RequestContext | Promise<RequestContext | void> | void;
+  response?: (ctx: ResponseContext) => ResponseContext | Promise<ResponseContext | void> | void;
+  error?: (ctx: ErrorContext) => ErrorContext | Promise<ErrorContext | void> | void;
+}
+
+export interface RequestContext {
+  method: string;
+  url: URL;
+  data?: Record<string, any> | null;
+  options: SendOptions;
+}
+
+export interface ResponseContext extends RequestContext {
+  response: Response;
+  body: any;
+}
+
+export interface ErrorContext extends RequestContext {
+  response?: Response;
+  error: any;
+  body?: any;
+}
+
 export interface RequestInterface {
   // eslint-disable-next-line no-unused-vars
   (method: string, url: string, data?: Record<string, any> | null, options?: Partial<SendOptions>): any | Response;
   // eslint-disable-next-line no-unused-vars
   new: (baseUrl: string, options?: RequestOptions) => RequestInterface;
   // eslint-disable-next-line no-unused-vars
-  setOptions: (key: string, value: any) => void;
+  use: (plugin: RequestPlugin) => number;
+  // eslint-disable-next-line no-unused-vars
+  eject: (pluginId: number) => void;
+  // eslint-disable-next-line no-unused-vars
+  setOption: (key: string, value: any) => RequestOptions;
+  // eslint-disable-next-line no-unused-vars
+  setOptions: (values: Record<string, any>) => RequestOptions;
+  // eslint-disable-next-line no-unused-vars
+  getOption: (key: string) => any;
   // eslint-disable-next-line no-unused-vars
   getOptions: (key?: string) => RequestOptions | void;
   // eslint-disable-next-line no-unused-vars
@@ -51,25 +84,20 @@ export interface RequestInterface {
   [key: string | number | symbol]: any;
 }
 
-// This method is used to serialize an object into a query string.
 function serialize(obj: any, prefix?: string): URLSearchParams {
   if (obj === null || obj === undefined) {
     return new URLSearchParams();
   }
 
   const params = new URLSearchParams();
-
   Object.keys(obj).forEach((prop) => {
     const key = prefix ? `${prefix}[${prop}]` : prop;
-
     if (typeof obj[prop] === "object" && obj[prop] !== null) {
       const nestedParams = serialize(obj[prop], key);
-      nestedParams.forEach((value, nestedKey) => {
-        params.append(nestedKey, value);
-      });
-    } else {
-      params.append(key, obj[prop]);
+      nestedParams.forEach((value, nestedKey) => params.append(nestedKey, value));
+      return;
     }
+    params.append(key, obj[prop]);
   });
   return params;
 }
@@ -80,7 +108,6 @@ function serializeFormData(data: Record<string, any>): FormData {
     if (value === null || value === undefined) {
       return;
     }
-
     if (Array.isArray(value)) {
       value.forEach((v) => fd.append(key, v));
     } else {
@@ -91,14 +118,13 @@ function serializeFormData(data: Record<string, any>): FormData {
 }
 
 function parseUrl(url: string, options: RequestOptionsWithUrls) {
-  const urlWithoutSlash = url.replace(/\/+$/, "").trim();
+  const urlWithoutSlash = url.replace(/\/+$/g, "").trim();
   const u = /^https?/gi.test(urlWithoutSlash) ? urlWithoutSlash : `${options.urls.base || ""}${urlWithoutSlash}`;
 
-  if (isNodeJs && typeof options.urls.node === "string") {
-    if (typeof options.urls.api === "string") {
+  if (isNodeJs && isString(options.urls.node)) {
+    if (isString(options.urls.api)) {
       return new URL(u.replace(options.urls.api, options.urls.node));
     }
-
     if (!/^https?/gi.test(u)) {
       return new URL(u, options.urls.node);
     }
@@ -115,7 +141,9 @@ function parseUrl(url: string, options: RequestOptionsWithUrls) {
   return new URL(u);
 }
 
-const defaultOptions: RequestOptions = { allowedMethods: ["get", "post", "put", "patch", "delete", "head", "options"] };
+const defaultOptions: RequestOptions = {
+  allowedMethods: ["get", "post", "put", "patch", "delete", "head", "options"]
+};
 
 const isNativeBody = (data: any) =>
   data instanceof FormData ||
@@ -125,7 +153,6 @@ const isNativeBody = (data: any) =>
   (typeof DataView !== "undefined" && data instanceof DataView) ||
   (typeof ReadableStream !== "undefined" && data instanceof ReadableStream);
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
   const url = baseUrl.replace(/\/$/gi, "").trim();
   if (!options.urls) {
@@ -149,7 +176,51 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
     }
   };
 
-  // eslint-disable-next-line complexity
+  const plugins = new Map<number, RequestPlugin>();
+  let pluginId = 0;
+
+  const applyRequestPlugins = async (ctx: RequestContext) => {
+    let nextCtx = ctx;
+    for (const plugin of plugins.values()) {
+      if (!plugin.request) {
+        continue;
+      }
+      const maybe = await plugin.request(nextCtx);
+      if (maybe) {
+        nextCtx = maybe;
+      }
+    }
+    return nextCtx;
+  };
+
+  const applyResponsePlugins = async (ctx: ResponseContext) => {
+    let nextCtx = ctx;
+    for (const plugin of plugins.values()) {
+      if (!plugin.response) {
+        continue;
+      }
+      const maybe = await plugin.response(nextCtx);
+      if (maybe) {
+        nextCtx = maybe;
+      }
+    }
+    return nextCtx;
+  };
+
+  const applyErrorPlugins = async (ctx: ErrorContext) => {
+    let nextCtx = ctx;
+    for (const plugin of plugins.values()) {
+      if (!plugin.error) {
+        continue;
+      }
+      const maybe = await plugin.error(nextCtx);
+      if (maybe) {
+        nextCtx = maybe;
+      }
+    }
+    return nextCtx;
+  };
+
   const request = async function request(
     method: string,
     url: string,
@@ -164,14 +235,14 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
       ...options
     } as SendOptions;
 
-    innerOptions.headers = { ...innerOptions.headers, ...opts.headers, ...options.headers };
-
+    innerOptions.headers = {
+      ...innerOptions.headers,
+      ...opts.headers,
+      ...options.headers
+    };
     if (!innerOptions.headers.Accept) {
       innerOptions.headers.Accept = "application/json";
     }
-
-    const acceptType = innerOptions.headers.Accept;
-    const contentType = innerOptions.headers["Content-Type"] || innerOptions.headers["content-type"] || "";
 
     if (!innerOptions.allowedMethods.includes(method)) {
       throw new Error(`Method ${method} not allowed. Allowed methods: ${innerOptions.allowedMethods.join(", ")}`);
@@ -186,80 +257,141 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
       throw err;
     }
 
-    if (data) {
-      if (innerOptions.method === "GET" && typeof data === "object") {
-        finalUrl.search = serialize(data).toString();
-      } else if (isNativeBody(data) || typeof data === "string") {
-        innerOptions.body = data as BodyInit;
+    let requestContext = await applyRequestPlugins({
+      method,
+      url: finalUrl,
+      data,
+      options: innerOptions
+    });
+
+    finalUrl = requestContext.url;
+
+    const acceptType = requestContext.options.headers.Accept;
+    const contentType =
+      requestContext.options.headers["Content-Type"] || requestContext.options.headers["content-type"] || "";
+
+    if (requestContext.data) {
+      if (requestContext.options.method === "GET" && typeof requestContext.data === "object") {
+        finalUrl.search = serialize(requestContext.data).toString();
+      } else if (isNativeBody(requestContext.data) || isString(requestContext.data)) {
+        requestContext.options.body = requestContext.data as BodyInit;
       } else {
         const isJson = /json/gi.test(contentType);
-        if (isJson) {
-          innerOptions.body = JSON.stringify(data);
-        } else {
-          innerOptions.body = serializeFormData(data);
-        }
+        requestContext.options.body = isJson
+          ? JSON.stringify(requestContext.data)
+          : serializeFormData(requestContext.data);
       }
     }
 
-    const response = await fetch(finalUrl.toString(), innerOptions);
-    let body = null;
-    if (!response.ok) {
-      const err = new Error(`${response.status}: ${response.statusText}`) as Error & { response?: any; body?: any };
-      err.response = response;
+    try {
+      const response = await fetch(finalUrl.toString(), requestContext.options);
+
+      if (!response.ok) {
+        const err = new Error(`${response.status}: ${response.statusText}`) as Error & {
+          response?: any;
+          body?: any;
+        };
+        err.response = response;
+        if (/text/gi.test(acceptType)) {
+          err.body = await response.text();
+        } else if (/json/gi.test(acceptType)) {
+          try {
+            err.body = await response.json();
+          } catch {
+            err.body = null;
+          }
+        }
+
+        const errorContext = await applyErrorPlugins({
+          ...requestContext,
+          response,
+          body: err.body,
+          error: err
+        });
+
+        const normalizedError = errorContext.error as any;
+        if (isObject(normalizedError)) {
+          (normalizedError as any).__requestPluginHandled = true;
+        }
+        throw normalizedError;
+      }
+
+      if (requestContext.options.resolveWithFullResponse) {
+        return response;
+      }
+
+      let body: any = response;
       if (/text/gi.test(acceptType)) {
-        err.body = await response.text();
-      }
-
-      if (/json/gi.test(acceptType)) {
+        body = await response.text();
+      } else if (/json/gi.test(acceptType)) {
         try {
-          err.body = await response.json();
-        } catch (error) {
-          err.body = null;
-          // eslint-disable-next-line no-console
-          console.warn("Failed to parse JSON response:", error);
+          body = await response.json();
+        } catch {
+          body = null;
         }
+      } else if (/blob/gi.test(acceptType)) {
+        body = await response.blob();
+      } else if (/arraybuffer/gi.test(acceptType)) {
+        body = await response.arrayBuffer();
       }
 
-      throw err;
-    }
+      const responseContext = await applyResponsePlugins({
+        ...requestContext,
+        response,
+        body
+      });
 
-    if (innerOptions.resolveWithFullResponse) {
-      return response;
-    }
-
-    if (/text/gi.test(acceptType)) {
-      body = await response.text();
-    } else if (/json/gi.test(acceptType)) {
-      try {
-        body = await response.json();
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.warn("Failed to parse JSON response:", error);
-        body = null;
+      return responseContext.body;
+    } catch (error: any) {
+      if (error && (error.response || error.__requestPluginHandled)) {
+        throw error;
       }
-    } else if (/blob/gi.test(acceptType)) {
-      body = await response.blob();
-    } else if (/arraybuffer/gi.test(acceptType)) {
-      body = await response.arrayBuffer();
-    } else {
-      body = response;
+      const errorContext = await applyErrorPlugins({
+        ...requestContext,
+        error
+      });
+      const normalizedError = errorContext.error as any;
+      if (isObject(normalizedError)) {
+        (normalizedError as any).__requestPluginHandled = true;
+      }
+      throw normalizedError;
     }
-
-    return body || response;
   } as unknown as RequestInterface;
 
-  request.new = (baseUrl: string, options?: RequestOptions) => Requester(baseUrl, { ...opts, ...(options || {}) });
+  request.new = (baseUrl: string, options?: RequestOptions) => {
+    const next = Requester(baseUrl, { ...opts, ...(options || {}) });
+    plugins.forEach((plugin) => next.use(plugin));
+    return next;
+  };
+
+  request.use = (plugin: RequestPlugin) => {
+    pluginId += 1;
+    plugins.set(pluginId, plugin);
+    return pluginId;
+  };
+
+  request.eject = (id: number) => {
+    plugins.delete(id);
+  };
 
   request.setOption = (key: string, value: any) => {
     set(opts, key, value);
     return opts;
   };
 
+  request.setOptions = (values: Record<string, any>) => {
+    for (const key of Object.keys(values)) {
+      set(opts, key, values[key]);
+    }
+    return opts;
+  };
+
+  request.getOption = (key: string) => get(opts, key);
+
   request.getOptions = (key?: string) => {
     if (key) {
       return get(opts, key);
     }
-
     return opts;
   };
 

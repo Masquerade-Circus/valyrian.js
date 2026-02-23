@@ -75,6 +75,7 @@
     "form-data": "^4.0.5",
     "purgecss": "^7.0.2",
     "remark": "^15.0.1",
+    "schema-shield": "^1.0.0",
     "terser": "^5.44.1",
     "ts-node": "^10.9.2",
     "tsc-prog": "^2.3.0",
@@ -87,7 +88,7 @@
     "@types/clean-css": "^4.2.11",
     "@types/node": "^24.10.1",
     "@types/node-fetch": "^2.6.13",
-    "@types/parse-path": "^7.1.0",
+    "@types/parse-path": "7.0.3",
     "@types/sharp": "^0.32.0",
     "@types/source-map": "^0.5.7",
     "@typescript-eslint/eslint-plugin": "^8.47.0",
@@ -110,6 +111,7 @@
     "typescript-eslint": "^8.47.0"
   },
   "overrides": {
+    "@types/parse-path": "7.0.3",
     "minimist": "^1.2.8",
     "source-map-support": "^0.5.21"
   },

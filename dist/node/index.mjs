@@ -1,4 +1,24 @@
-import { fileURLToPath } from 'url';const __filename = fileURLToPath(import.meta.url);const __dirname = path.dirname(__filename);// lib/node/utils/tree-adapter.ts
+import { fileURLToPath } from 'url';const __filename = fileURLToPath(import.meta.url);const __dirname = path.dirname(__filename);// lib/utils/validators.ts
+function is(value, type) {
+  if (typeof type !== "string") {
+    return value instanceof type;
+  }
+  if (type === "array") {
+    return Array.isArray(value);
+  }
+  if (type === "object") {
+    return value !== null && typeof value === "object" && !Array.isArray(value);
+  }
+  if (type === "number") {
+    return typeof value === "number" && !isNaN(value);
+  }
+  return typeof value === type;
+}
+function isString(value) {
+  return is(value, "string");
+}
+
+// lib/node/utils/tree-adapter.ts
 var Node = class _Node {
   // eslint-disable-next-line no-use-before-define
   childNodes = [];
@@ -292,7 +312,7 @@ var Element = class extends Node {
     return this._style;
   }
   set style(value) {
-    if (typeof value === "string") {
+    if (isString(value)) {
       const regex = /([^:\s]+):\s*((url\([^)]+\))|[^;]+(?=(;|$)))/g;
       let match;
       while ((match = regex.exec(value)) !== null) {
@@ -782,7 +802,7 @@ import { PurgeCSS } from "purgecss";
 import esbuild from "esbuild";
 import fs2 from "fs";
 async function inline(file, options = {}) {
-  if (typeof file === "string") {
+  if (isString(file)) {
     const ext = file.split(".").pop();
     if (ext && /(js|cjs|jsx|mjs|ts|tsx)/.test(ext)) {
       if (/(ts|tsx)/.test(ext) && !options.noValidate) {

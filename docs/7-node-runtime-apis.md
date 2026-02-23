@@ -1,0 +1,61 @@
+# 7.1.1. Node Runtime APIs (`valyrian.js/node`)
+
+`valyrian.js/node` provides server runtime setup plus SSR/build utility exports.
+
+## Runtime Setup Side Effects
+
+Importing `valyrian.js/node` initializes:
+
+* `global.document` (lightweight DOM adapter)
+* `global.FormData`
+* `global.sessionStorage` and `global.localStorage` backed by `ServerStorage`
+
+Import it before using server-side modules that expect these globals.
+
+## `render(...nodes)`
+
+`render` mounts content into a server DOM container, serializes HTML, and unmounts internally.
+
+```tsx
+import { render } from "valyrian.js/node";
+
+const html = render(<main><h1>Hello SSR</h1></main>);
+```
+
+You can pass multiple nodes; they are rendered in order.
+
+Reader note: because `render` unmounts internally, each call is isolated and does not reuse DOM state from previous calls.
+
+## DOM Transform Utilities
+
+Exports:
+
+* `htmlToDom`
+* `domToHtml`
+* `htmlToHyperscript`
+* `domToHyperscript`
+
+```ts
+import { htmlToDom, domToHtml } from "valyrian.js/node";
+
+const dom = htmlToDom("<section><p>Hello</p></section>");
+const html = domToHtml(dom);
+```
+
+## Build Helpers Also Exported Here
+
+`valyrian.js/node` also exports build helpers:
+
+* `inline`
+* `icons`
+* `sw`
+
+Use them from tooling scripts (see [./7-pwa-and-build-tooling.md](./7-pwa-and-build-tooling.md)).
+
+## Request-Scoped Storage
+
+`ServerStorage` is exported for per-request storage isolation patterns.
+
+Use `ServerStorage.run(() => { ... })` per incoming request to avoid storage leakage between concurrent SSR requests.
+
+See [./7-isomorphic-networking-and-storage.md](./7-isomorphic-networking-and-storage.md) for practical request-scoped usage.

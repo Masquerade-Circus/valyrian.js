@@ -5,6 +5,7 @@ import {
   POJOComponent,
   VnodeComponentInterface,
   VnodeWithDom,
+  current,
   directive,
   isComponent,
   isNodeJs,
@@ -13,6 +14,7 @@ import {
   setAttribute,
   v
 } from "valyrian.js";
+import { isFunction, isNumber, isString } from "valyrian.js/utils";
 
 export interface Request {
   params: Record<string, any>;
@@ -26,7 +28,10 @@ export interface Request {
 
 export interface Middleware {
   // eslint-disable-next-line no-unused-vars
-  (req: Request, err?: any):
+  (
+    req: Request,
+    err?: any
+  ):
     | Promise<any | Component | POJOComponent | VnodeComponentInterface>
     | any
     | Component
@@ -63,6 +68,10 @@ function getPathWithoutLastSlash(path: string) {
   return pathWithoutLastSlash;
 }
 
+function isErrorClassLike(value: any): value is Error | typeof Error {
+  return Boolean(value) && isString(value.name) && value.name.includes("Error");
+}
+
 // Parse a query string into an object
 function parseQuery(queryParts?: string): Record<string, any> {
   const parts = queryParts ? queryParts.split("&") : [];
@@ -75,6 +84,54 @@ function parseQuery(queryParts?: string): Record<string, any> {
   }
 
   return query;
+}
+
+type RouteSnapshot = {
+  path: string;
+  query: Record<string, any>;
+  params: Record<string, any>;
+};
+
+type RouteCallback = (
+  nextRoute: RouteSnapshot,
+  currentRoute: RouteSnapshot | null
+) => boolean | void | Promise<boolean | void>;
+
+type RouteCallbackCollection = {
+  before: Set<RouteCallback>;
+  after: Set<RouteCallback>;
+};
+
+function createRouteCallbackCollection(): RouteCallbackCollection {
+  return {
+    before: new Set<RouteCallback>(),
+    after: new Set<RouteCallback>()
+  };
+}
+
+function areEqualShallow(a: Record<string, any>, b: Record<string, any>) {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) {
+    return false;
+  }
+  for (const key of aKeys) {
+    if (String(a[key]) !== String(b[key])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function hasRouteChanged(nextRoute: RouteSnapshot, currentRoute: RouteSnapshot | null) {
+  if (!currentRoute) {
+    return true;
+  }
+  return (
+    nextRoute.path !== currentRoute.path ||
+    !areEqualShallow(nextRoute.query, currentRoute.query) ||
+    !areEqualShallow(nextRoute.params, currentRoute.params)
+  );
 }
 
 interface RouteNode {
@@ -190,16 +247,59 @@ export class Router {
   pathPrefix: string = "";
 
   private errorHandlers: Map<number | string | Error | "generic", Middlewares> = new Map();
+  private activeRouteCallbacks: RouteCallbackCollection = createRouteCallbackCollection();
+  private pendingRouteCallbacks: RouteCallbackCollection | null = null;
+  private callbackRegistrationTarget: "active" | "pending" = "active";
+  private currentRoute: RouteSnapshot | null = null;
 
   constructor(pathPrefix: string = "") {
     this.pathPrefix = pathPrefix;
   }
 
+  private getRegistrationCallbacks() {
+    if (this.callbackRegistrationTarget === "pending" && this.pendingRouteCallbacks) {
+      return this.pendingRouteCallbacks;
+    }
+    return this.activeRouteCallbacks;
+  }
+
+  private beginPendingRouteCallbacksCollection() {
+    this.pendingRouteCallbacks = createRouteCallbackCollection();
+    this.callbackRegistrationTarget = "pending";
+  }
+
+  private commitPendingRouteCallbacksCollection() {
+    this.activeRouteCallbacks = this.pendingRouteCallbacks || createRouteCallbackCollection();
+    this.pendingRouteCallbacks = null;
+    this.callbackRegistrationTarget = "active";
+  }
+
+  private rollbackPendingRouteCallbacksCollection() {
+    this.pendingRouteCallbacks = null;
+    this.callbackRegistrationTarget = "active";
+  }
+
+  beforeRoute(callback: RouteCallback) {
+    this.getRegistrationCallbacks().before.add(callback);
+
+    return () => {
+      this.activeRouteCallbacks.before.delete(callback);
+      this.pendingRouteCallbacks?.before.delete(callback);
+    };
+  }
+
+  afterRoute(callback: RouteCallback) {
+    this.getRegistrationCallbacks().after.add(callback);
+
+    return () => {
+      this.activeRouteCallbacks.after.delete(callback);
+      this.pendingRouteCallbacks?.after.delete(callback);
+    };
+  }
+
   add(...args: RouteParams[]): Router {
     const flatArgs = flat(args);
-    const path = getPathWithoutLastSlash(
-      `${this.pathPrefix}${typeof flatArgs[0] === "string" ? flatArgs.shift() : "/.*"}`
-    );
+    const path = getPathWithoutLastSlash(`${this.pathPrefix}${isString(flatArgs[0]) ? flatArgs.shift() : "/.*"}`);
 
     // If the first argument is a Router, add all its routes
     if (flatArgs.length === 1 && flatArgs[0] instanceof Router) {
@@ -215,7 +315,7 @@ export class Router {
       }
 
       // Verify that all middlewares are functions
-      if (flatArgs.some((item) => typeof item !== "function")) {
+      if (flatArgs.some((item) => !isFunction(item))) {
         throw new RouterError("All middlewares must be functions.");
       }
 
@@ -226,17 +326,18 @@ export class Router {
   }
 
   catch(...args: (number | string | Error | typeof Error | Middleware)[]): Router {
+    const firstArg = args[0];
     const condition =
-      typeof args[0] === "number" || typeof args[0] === "string" || args[0].name.includes("Error")
+      isNumber(firstArg) || isString(firstArg) || isErrorClassLike(firstArg)
         ? (args.shift() as number | string | Error)
         : "generic";
 
-    if (typeof condition !== "number" && typeof condition !== "string" && !condition.name.includes("Error")) {
+    if (!isNumber(condition) && !isString(condition) && !isErrorClassLike(condition)) {
       throw new RouterError("The condition must be a number, string or an instance of Error.");
     }
 
     // Verify that all middlewares are functions
-    if (args.some((item) => typeof item !== "function")) {
+    if (args.some((item) => !isFunction(item))) {
       throw new RouterError("All middlewares must be functions.");
     }
 
@@ -269,11 +370,9 @@ export class Router {
 
     const constructedPath = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
     const parts = constructedPath.split("?", 2);
-    this.url = constructedPath;
-    this.query = parseQuery(parts[1]);
+    const nextQuery = parseQuery(parts[1]);
 
     const finalPath = parts[0].replace(/(.+)\/$/, "$1").split("#")[0];
-    this.path = path;
 
     let route = this.routeTree.findRoute(finalPath);
 
@@ -299,37 +398,85 @@ export class Router {
     }
 
     const { middlewares, params } = route;
-    this.params = params;
 
-    let component = await this.searchComponent(middlewares, parentComponent);
+    const nextRoute: RouteSnapshot = {
+      path: getPathWithoutLastSlash(path),
+      query: nextQuery,
+      params
+    };
 
-    if (component === false) {
-      return;
-    }
+    const routeChanged = hasRouteChanged(nextRoute, this.currentRoute);
 
-    if (!component) {
-      return this.handleError(
-        new RouterError(`The URL ${constructedPath} did not return a valid component.`),
-        parentComponent
-      );
-    }
-
-    if (isComponent(parentComponent) || isVnodeComponent(parentComponent)) {
-      const childComponent = isVnodeComponent(component) ? component : v(component as Component, {});
-      if (isVnodeComponent(parentComponent)) {
-        parentComponent.children.push(childComponent);
-        component = parentComponent;
-      } else {
-        component = v(parentComponent, {}, childComponent) as VnodeComponentInterface;
+    if (routeChanged) {
+      for (const callback of this.activeRouteCallbacks.before) {
+        const result = await callback(nextRoute, this.currentRoute);
+        if (result === false) {
+          return;
+        }
       }
+      this.beginPendingRouteCallbacksCollection();
+    } else {
+      this.callbackRegistrationTarget = "active";
     }
 
-    if (!isNodeJs && window.location.pathname + window.location.search !== constructedPath) {
-      window.history.pushState(null, "", constructedPath);
-    }
+    let routeTransitionCompleted = false;
 
-    if (this.container) {
-      return mount(this.container, component);
+    try {
+      this.url = constructedPath;
+      this.query = nextQuery;
+      this.path = path;
+      this.params = params;
+
+      let component = await this.searchComponent(middlewares, parentComponent);
+
+      if (component === false) {
+        return;
+      }
+
+      if (!component) {
+        return this.handleError(
+          new RouterError(`The URL ${constructedPath} did not return a valid component.`),
+          parentComponent
+        );
+      }
+
+      if (isComponent(parentComponent) || isVnodeComponent(parentComponent)) {
+        const childComponent = isVnodeComponent(component) ? component : v(component as Component, {});
+        if (isVnodeComponent(parentComponent)) {
+          parentComponent.children.push(childComponent);
+          component = parentComponent;
+        } else {
+          component = v(parentComponent, {}, childComponent) as VnodeComponentInterface;
+        }
+      }
+
+      if (!isNodeJs && window.location.pathname + window.location.search !== constructedPath) {
+        window.history.pushState(null, "", constructedPath);
+      }
+
+      let mountedResult: string | void = undefined;
+      if (this.container) {
+        mountedResult = await mount(this.container, component);
+      }
+
+      if (routeChanged) {
+        const previousRoute = this.currentRoute;
+        const previousAfterCallbacks = this.activeRouteCallbacks.after;
+
+        this.currentRoute = nextRoute;
+        this.commitPendingRouteCallbacksCollection();
+        routeTransitionCompleted = true;
+
+        for (const callback of previousAfterCallbacks) {
+          await callback(nextRoute, previousRoute);
+        }
+      }
+
+      return mountedResult;
+    } finally {
+      if (routeChanged && !routeTransitionCompleted) {
+        this.rollbackPendingRouteCallbacksCollection();
+      }
     }
   }
 
@@ -339,7 +486,7 @@ export class Router {
         return;
       }
 
-      if (typeof url === "string" && url.length > 0) {
+      if (isString(url) && url.length > 0) {
         this.go(url);
       }
       e.preventDefault();
@@ -376,8 +523,8 @@ export class Router {
     // Search first for class and name errors
     for (const [condition, middlewares] of this.errorHandlers) {
       if (
-        typeof condition !== "number" &&
-        typeof condition !== "string" &&
+        !isNumber(condition) &&
+        !isString(condition) &&
         error instanceof (condition as any) &&
         error.name === condition.name
       ) {
@@ -387,14 +534,14 @@ export class Router {
 
     // then for code errors
     for (const [condition, middlewares] of this.errorHandlers) {
-      if (typeof condition === "number" && (error.status === condition || error.code === condition)) {
+      if (isNumber(condition) && (error.status === condition || error.code === condition)) {
         return middlewares;
       }
     }
 
     // and then for message errors
     for (const [condition, middlewares] of this.errorHandlers) {
-      if (typeof condition === "string" && (error.name === condition || error.message.includes(condition))) {
+      if (isString(condition) && (error.name === condition || error.message.includes(condition))) {
         return middlewares;
       }
     }
@@ -435,18 +582,35 @@ export class Router {
       }
     } catch (err) {
       // If an error occurs during the error handling, we handle it recursively
-      (err as Error).cause = error;
+      const nextError = err instanceof Error ? err : new RouterError(String(err));
 
-      let errorCauseCount = 0;
-      while ((err as Error).cause) {
-        errorCauseCount++;
-      }
-
-      if (errorCauseCount > 20) {
+      if (nextError === error) {
         throw new RouterError("Too many error causes. Possible circular error handling.");
       }
 
-      return this.handleError(err as Error, parentComponent);
+      if (!nextError.cause) {
+        nextError.cause = error;
+      }
+
+      let errorCauseCount = 0;
+      const seen = new Set<unknown>();
+      let currentError: unknown = nextError;
+
+      while (currentError instanceof Error && currentError.cause) {
+        if (seen.has(currentError)) {
+          throw new RouterError("Too many error causes. Possible circular error handling.");
+        }
+
+        seen.add(currentError);
+        errorCauseCount++;
+        if (errorCauseCount > 20) {
+          throw new RouterError("Too many error causes. Possible circular error handling.");
+        }
+
+        currentError = currentError.cause;
+      }
+
+      return this.handleError(nextError, parentComponent);
     }
 
     if (component) {
@@ -507,6 +671,31 @@ export class Router {
 }
 
 let localRedirect: RedirectFunction;
+let activeRouter: Router | null = null;
+
+export function beforeRoute(callback: RouteCallback) {
+  if (!activeRouter) {
+    throw new RouterError("Router is not mounted. Call mountRouter(...) before registering route callbacks.");
+  }
+
+  if (!current.vnode) {
+    throw new RouterError("beforeRoute must be called inside a component context.");
+  }
+
+  return activeRouter.beforeRoute(callback);
+}
+
+export function afterRoute(callback: RouteCallback) {
+  if (!activeRouter) {
+    throw new RouterError("Router is not mounted. Call mountRouter(...) before registering route callbacks.");
+  }
+
+  if (!current.vnode) {
+    throw new RouterError("afterRoute must be called inside a component context.");
+  }
+
+  return activeRouter.afterRoute(callback);
+}
 
 export async function redirect(
   url: string,
@@ -524,6 +713,7 @@ export async function redirect(
 export function mountRouter(elementContainer: string | any, router: Router): void {
   router.container = elementContainer;
   localRedirect = router.go.bind(router);
+  activeRouter = router;
 
   if (!isNodeJs) {
     function onPopStateGoToRoute(): void {

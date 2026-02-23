@@ -213,9 +213,13 @@ async function copy({ entryPoint, outfileName }) {
   const buildStart = hrtime();
 
   const otherModules = [
-    "hooks",
     "request",
+    "tasks",
+    "forms",
     "sw",
+    "network",
+    "query",
+    "offline",
     "flux-store",
     "pulses",
     "router",
@@ -223,6 +227,7 @@ async function copy({ entryPoint, outfileName }) {
     "suspense",
     "native-store",
     "translate",
+    "money",
     "redux-devtools"
   ];
 

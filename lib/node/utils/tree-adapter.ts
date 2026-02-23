@@ -1,5 +1,7 @@
 /* eslint-disable no-use-before-define */
 /* eslint-disable complexity */
+import { isString } from "../../utils";
+
 interface ChildNodes extends Array<Node | Element | Text | DocumentFragment> {}
 
 export class Node implements Node {
@@ -340,7 +342,7 @@ export class Element extends Node {
   }
 
   set style(value: string) {
-    if (typeof value === "string") {
+    if (isString(value)) {
       // should match pairs like "color: red; font-size: 12px; background: url(http://example.com/image.png?s=1024x1024&amp;w=is&amp;k=20&amp;c=ASa_AG8uP5Di7azXgJraSA6ME7fbLB0GX4YT_OzCARI=);"
       const regex = /([^:\s]+):\s*((url\([^)]+\))|[^;]+(?=(;|$)))/g;
       let match;

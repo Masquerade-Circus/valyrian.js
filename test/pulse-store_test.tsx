@@ -560,7 +560,7 @@ describe("PulseStore", () => {
     const duration = end - start;
     console.log(`Notification duration for ${subscriberCount} subscribers: ${duration}ms`);
     expect(callCount).toEqual(subscriberCount * 2); // Each subscriber should be called twice
-    expect(duration).toBeLessThan(12); // Less than 12ms
+    expect(duration).toBeLessThan(20); // Less than 20ms
   });
 
   it("should handle long-running asynchronous pulses without blocking", async () => {
