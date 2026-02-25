@@ -64,7 +64,7 @@
     "badges": "node scripts/generate-badges.mjs",
     "badges:strict": "node scripts/generate-badges.mjs --require-coverage",
     "test": "cross-env NODE_ENV=development bun test --bail --coverage --coverage-reporter=lcov --coverage-reporter=text",
-    "commit": "git add . && git-cz && git push",
+    "commit": "bun run build && git add . && git-cz && git push",
     "release": "release-it --verbose",
     "release-test": "release-it --dry-run --verbose",
     "update": "ncu -u && bun install"
