@@ -20,11 +20,6 @@ jobs:
       - name: Run tests
         run: bun test
         continue-on-error: false
-      - name: Coveralls
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && success()
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
   auto-approve:
     needs: test
     runs-on: ubuntu-latest

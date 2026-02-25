@@ -35,7 +35,12 @@ Recommended order:
 
 ## 11.4. Useful Commands
 
+These commands are for framework development in this repository.
+For app usage, follow [./2-getting-started.md](./2-getting-started.md).
+
 ```bash
 bun test
 bun run dev:test
+bun run build:source
+bun run badges
 ```

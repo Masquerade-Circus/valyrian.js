@@ -121,17 +121,20 @@ Not the best fit:
 
 Valyrian.js tests are behavior-first and API-contract driven. Public modules validate happy paths, edge cases, and runtime consistency across browser-like and Node-like environments. Documentation examples are kept aligned with tested behavior.
 
-## Tests
+## Tests (Framework Repository)
 
 ```bash
-npm test
+bun test
 ```
 
-For development mode:
+For development mode in this repository:
 
 ```bash
-npm run dev:test
+bun run dev:test
 ```
+
+These commands are for contributors developing this framework repository.
+For app usage, keep following [docs/2-getting-started.md](docs/2-getting-started.md).
 
 ## More Guides
 

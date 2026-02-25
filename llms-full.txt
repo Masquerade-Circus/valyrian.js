@@ -1,4 +1,4 @@
-# Valyrian.js — llms-full.txt (Official Documentation)
+# Valyrian.js - llms-full.txt (Official Documentation)
 
 Purpose
 This file aggregates the official documentation sources from the `docs/` directory as a single reference for AI agents and tooling.
@@ -12,33 +12,33 @@ Source Files (in order)
 1. `docs/toc.md`
 2. `docs/1-introduction.md`
 3. `docs/2-getting-started.md`
-4. `docs/3-the-essentials.md`
-5. `docs/3-runtime-core.md`
+4. `docs/3-runtime-core.md`
+5. `docs/3-the-essentials.md`
 6. `docs/4-building-spa.md`
-7. `docs/4-routing-and-navigation.md`
-8. `docs/4-data-fetching-and-async.md`
-9. `docs/4-request.md`
-10. `docs/4-suspense.md`
-11. `docs/4-tasks.md`
-12. `docs/4-query.md`
-13. `docs/4-network.md`
-14. `docs/4-offline.md`
-15. `docs/4-forms.md`
+7. `docs/4-data-fetching-and-async.md`
+8. `docs/4-forms.md`
+9. `docs/4-network.md`
+10. `docs/4-offline.md`
+11. `docs/4-query.md`
+12. `docs/4-request.md`
+13. `docs/4-routing-and-navigation.md`
+14. `docs/4-suspense.md`
+15. `docs/4-tasks.md`
 16. `docs/5-advanced-state-management.md`
-17. `docs/5-pulses.md`
-18. `docs/5-flux-store.md`
+17. `docs/5-flux-store.md`
+18. `docs/5-pulses.md`
 19. `docs/5-redux-devtools.md`
 20. `docs/6-optimization-and-performance.md`
 21. `docs/7-full-stack-capability.md`
-22. `docs/7-ssr.md`
+22. `docs/7-isomorphic-networking-and-storage.md`
 23. `docs/7-node-runtime-apis.md`
-24. `docs/7-isomorphic-networking-and-storage.md`
-25. `docs/7-pwa-and-build-tooling.md`
+24. `docs/7-pwa-and-build-tooling.md`
+25. `docs/7-ssr.md`
 26. `docs/7-sw-runtime.md`
-27. `docs/8-utilities-and-ecosystem.md`
-28. `docs/8-translate.md`
-29. `docs/8-money.md`
-30. `docs/8-native-store.md`
+27. `docs/8-money.md`
+28. `docs/8-native-store.md`
+29. `docs/8-translate.md`
+30. `docs/8-utilities-and-ecosystem.md`
 31. `docs/8-utils.md`
 32. `docs/9-recipes-and-integrations.md`
 33. `docs/10-meta-framework-cli.md`
@@ -331,6 +331,166 @@ If you are testing locally, use any static server (for example `npx serve .`) an
 
 ____________________________________________
 
+# Source: docs/3-runtime-core.md
+
+# 3.7. Runtime Core API (`valyrian.js`)
+
+This page is the runtime reference for the base `valyrian.js` package.
+
+Use [./3-the-essentials.md](./3-the-essentials.md) for the learning path, then use this page for exact API behavior.
+
+## Render Lifecycle APIs
+
+### `mount(container, component)`
+
+`mount` accepts:
+
+1. A selector string or a DOM element as `container`.
+2. A component function.
+3. A POJO component (`{ view() {} }`).
+4. A vnode component.
+5. A plain value (wrapped into a trivial render function).
+
+On mount, Valyrian hydrates the current container DOM into a vnode tree and then runs the normal patch cycle.
+
+```tsx
+import { mount } from "valyrian.js";
+
+const App = () => <h1>Hello</h1>;
+mount("#app", App);
+```
+
+### `update()`
+
+Runs a patch pass for the mounted app.
+
+Use it when async logic changes state outside delegated event handlers.
+
+### `unmount()`
+
+Unmounts the current app, cleans listeners/resources, and clears delegated event bindings.
+
+## Component Lifecycle Helpers
+
+Use these inside a component render path:
+
+* `onCreate(fn)`
+* `onUpdate(fn)`
+* `onCleanup(fn)`
+* `onRemove(fn)`
+
+These helpers throw if called outside component execution.
+
+Practical timing model:
+
+* `onCreate`: runs when the component appears in the tree.
+* `onUpdate`: runs on later patches while the component stays in the tree.
+* `onCleanup`: runs before each patch of that vnode subtree and before subtree detach.
+* `onRemove`: runs after detach, when the component subtree is actually removed.
+
+```tsx
+import { onCleanup, onCreate } from "valyrian.js";
+
+const Clock = () => {
+  let timer: ReturnType<typeof setInterval> | null = null;
+
+  onCreate(() => {
+    timer = setInterval(() => {
+      // do work
+    }, 1000);
+  });
+
+  onCleanup(() => {
+    if (timer) clearInterval(timer);
+  });
+
+  return <div>Clock</div>;
+};
+```
+
+## `debouncedUpdate(timeout?)`
+
+Debounces rendering. Default timeout is `42ms`.
+
+If called from an active event context, it prevents default on that event before scheduling update.
+
+```tsx
+import { debouncedUpdate } from "valyrian.js";
+
+const SearchBox = {
+  term: "",
+  onInput(event: Event) {
+    this.term = (event.target as HTMLInputElement).value;
+    debouncedUpdate(80);
+  },
+  view() {
+    return <input value={this.term} oninput={this.onInput} />;
+  }
+};
+```
+
+## Raw HTML: `trust(html)`
+
+`trust` parses an HTML string into vnode-compatible children.
+
+```tsx
+import { trust } from "valyrian.js";
+
+const Rich = ({ html }) => <article>{trust(html)}</article>;
+```
+
+Only use trusted/sanitized HTML.
+
+## `v-model` Contract
+
+`v-model` is a built-in directive with mode-specific behavior.
+
+Rules:
+
+1. The control must have `name`.
+2. Existing control handler (`oninput`/`onclick`) is preserved and runs after model sync.
+
+Reader note: for `select[multiple]`, this implementation listens on `onclick` and supports additive selection with `Ctrl`.
+
+Behavior by control type:
+
+* `input` (default types): syncs `value` with `oninput`.
+* `input[type=checkbox]`:
+  * model array: toggle `value` membership.
+  * scalar with `value` prop: toggle between `value` and `null`.
+  * scalar without `value`: toggle boolean.
+* `input[type=radio]`: checked when `model[name] === input.value`.
+* `select` single: sets selected option from model.
+* `select[multiple]`: model is array, selection handler runs on `onclick`.
+* `textarea`: vnode children mirror model value.
+
+```tsx
+const state = { tags: [], newsletter: false, role: "user", bio: "" };
+
+const Form = () => (
+  <form>
+    <input type="checkbox" name="newsletter" v-model={state} />
+
+    <select multiple name="tags" v-model={state}>
+      <option value="ts">TypeScript</option>
+      <option value="ssr">SSR</option>
+    </select>
+
+    <textarea name="bio" v-model={state} />
+  </form>
+);
+```
+
+## Hydration Behavior
+
+At mount time, existing DOM is converted to vnode structure (including text and attributes), then patching continues from that structure.
+
+This allows SSR HTML and pre-existing markup to become interactive without replacing the full container tree.
+
+If you need the learning path version (instead of reference style), start at [./3-the-essentials.md](./3-the-essentials.md).
+
+____________________________________________
+
 # Source: docs/3-the-essentials.md
 
 # 3. The Essentials (View and Interaction)
@@ -586,166 +746,6 @@ Use this pattern to avoid duplicate subscriptions and memory leaks.
 
 ____________________________________________
 
-# Source: docs/3-runtime-core.md
-
-# 3.7. Runtime Core API (`valyrian.js`)
-
-This page is the runtime reference for the base `valyrian.js` package.
-
-Use [./3-the-essentials.md](./3-the-essentials.md) for the learning path, then use this page for exact API behavior.
-
-## Render Lifecycle APIs
-
-### `mount(container, component)`
-
-`mount` accepts:
-
-1. A selector string or a DOM element as `container`.
-2. A component function.
-3. A POJO component (`{ view() {} }`).
-4. A vnode component.
-5. A plain value (wrapped into a trivial render function).
-
-On mount, Valyrian hydrates the current container DOM into a vnode tree and then runs the normal patch cycle.
-
-```tsx
-import { mount } from "valyrian.js";
-
-const App = () => <h1>Hello</h1>;
-mount("#app", App);
-```
-
-### `update()`
-
-Runs a patch pass for the mounted app.
-
-Use it when async logic changes state outside delegated event handlers.
-
-### `unmount()`
-
-Unmounts the current app, cleans listeners/resources, and clears delegated event bindings.
-
-## Component Lifecycle Helpers
-
-Use these inside a component render path:
-
-* `onCreate(fn)`
-* `onUpdate(fn)`
-* `onCleanup(fn)`
-* `onRemove(fn)`
-
-These helpers throw if called outside component execution.
-
-Practical timing model:
-
-* `onCreate`: runs when the component appears in the tree.
-* `onUpdate`: runs on later patches while the component stays in the tree.
-* `onCleanup`: runs before each patch of that vnode subtree and before subtree detach.
-* `onRemove`: runs after detach, when the component subtree is actually removed.
-
-```tsx
-import { onCleanup, onCreate } from "valyrian.js";
-
-const Clock = () => {
-  let timer: ReturnType<typeof setInterval> | null = null;
-
-  onCreate(() => {
-    timer = setInterval(() => {
-      // do work
-    }, 1000);
-  });
-
-  onCleanup(() => {
-    if (timer) clearInterval(timer);
-  });
-
-  return <div>Clock</div>;
-};
-```
-
-## `debouncedUpdate(timeout?)`
-
-Debounces rendering. Default timeout is `42ms`.
-
-If called from an active event context, it prevents default on that event before scheduling update.
-
-```tsx
-import { debouncedUpdate } from "valyrian.js";
-
-const SearchBox = {
-  term: "",
-  onInput(event: Event) {
-    this.term = (event.target as HTMLInputElement).value;
-    debouncedUpdate(80);
-  },
-  view() {
-    return <input value={this.term} oninput={this.onInput} />;
-  }
-};
-```
-
-## Raw HTML: `trust(html)`
-
-`trust` parses an HTML string into vnode-compatible children.
-
-```tsx
-import { trust } from "valyrian.js";
-
-const Rich = ({ html }) => <article>{trust(html)}</article>;
-```
-
-Only use trusted/sanitized HTML.
-
-## `v-model` Contract
-
-`v-model` is a built-in directive with mode-specific behavior.
-
-Rules:
-
-1. The control must have `name`.
-2. Existing control handler (`oninput`/`onclick`) is preserved and runs after model sync.
-
-Reader note: for `select[multiple]`, this implementation listens on `onclick` and supports additive selection with `Ctrl`.
-
-Behavior by control type:
-
-* `input` (default types): syncs `value` with `oninput`.
-* `input[type=checkbox]`:
-  * model array: toggle `value` membership.
-  * scalar with `value` prop: toggle between `value` and `null`.
-  * scalar without `value`: toggle boolean.
-* `input[type=radio]`: checked when `model[name] === input.value`.
-* `select` single: sets selected option from model.
-* `select[multiple]`: model is array, selection handler runs on `onclick`.
-* `textarea`: vnode children mirror model value.
-
-```tsx
-const state = { tags: [], newsletter: false, role: "user", bio: "" };
-
-const Form = () => (
-  <form>
-    <input type="checkbox" name="newsletter" v-model={state} />
-
-    <select multiple name="tags" v-model={state}>
-      <option value="ts">TypeScript</option>
-      <option value="ssr">SSR</option>
-    </select>
-
-    <textarea name="bio" v-model={state} />
-  </form>
-);
-```
-
-## Hydration Behavior
-
-At mount time, existing DOM is converted to vnode structure (including text and attributes), then patching continues from that structure.
-
-This allows SSR HTML and pre-existing markup to become interactive without replacing the full container tree.
-
-If you need the learning path version (instead of reference style), start at [./3-the-essentials.md](./3-the-essentials.md).
-
-____________________________________________
-
 # Source: docs/4-building-spa.md
 
 # 4. Building Single Page Applications (SPA Hub)
@@ -786,6 +786,618 @@ Suggested pacing:
 * Routing page: 15-25 minutes
 * Data fetching page: 20-35 minutes
 * Forms page: 15-30 minutes
+
+____________________________________________
+
+# Source: docs/4-data-fetching-and-async.md
+
+# 4.2. Data Fetching and Async Workflows (Hub)
+
+This chapter is a hub for networked and async modules used in SPA flows.
+
+Use these pages in order so each layer builds on the previous one.
+
+## Suggested Sequence
+
+1. [./4-request.md](./4-request.md)
+2. [./4-suspense.md](./4-suspense.md)
+3. [./4-tasks.md](./4-tasks.md)
+4. [./4-query.md](./4-query.md)
+5. [./4-network.md](./4-network.md)
+6. [./4-offline.md](./4-offline.md)
+
+## 4.2.1. Requests
+
+* File: [./4-request.md](./4-request.md)
+* Covers request helpers, serialization/parsing rules, plugins, scoped clients, and option APIs.
+
+## 4.2.2. Suspense
+
+* File: [./4-suspense.md](./4-suspense.md)
+* Covers fallback/error rendering, required `key`, child compatibility, and stale result protection.
+
+## 4.2.3. Tasks
+
+* File: [./4-tasks.md](./4-tasks.md)
+* Covers async strategy control (`takeLatest`, `enqueue`, `drop`, `restartable`), state, and events.
+
+## 4.2.4. Query Cache
+
+* File: [./4-query.md](./4-query.md)
+* Covers cached queries/mutations, dedupe, invalidation, persistence, and change events.
+
+## 4.2.5. Network Awareness
+
+* File: [./4-network.md](./4-network.md)
+* Covers connectivity events, signal levels, runtime differences, and listener cleanup.
+
+## 4.2.6. Offline Queue
+
+* File: [./4-offline.md](./4-offline.md)
+* Covers operation queueing, retry/backoff behavior, sync lifecycle, and recovery APIs.
+
+## Common Beginner Mistakes
+
+1. Using cache/invalidation before confirming plain request flows.
+2. Skipping stable `Suspense` keys.
+3. Assuming offline retry drains the queue in one sync pass.
+4. Forgetting explicit cleanup (`off()`/`destroy()`) for long-lived listeners.
+
+____________________________________________
+
+# Source: docs/4-forms.md
+
+# 4.3. Forms (`valyrian.js/forms`)
+
+Use `FormStore` when you need schema validation, canonical transforms, and consistent submit behavior.
+
+Keep simple forms simple. Move to `FormStore` when form logic starts repeating across screens.
+
+## Quick Start Recipe
+
+1. Create a `FormStore` with `state` + `schema`.
+2. Bind `<form v-form={form}>`.
+3. Bind inputs with `v-field` and `name`.
+4. Call `submit()` or let submit event trigger it.
+
+## 4.3.1. Basic FormStore
+
+```tsx
+import { FormStore } from "valyrian.js/forms";
+
+const loginForm = new FormStore({
+  state: { email: "", password: "" },
+  schema: {
+    type: "object",
+    properties: {
+      email: { type: "string", format: "email" },
+      password: { type: "string", minLength: 8 }
+    },
+    required: ["email", "password"]
+  },
+  clean: {
+    email: (value) => String(value).trim().toLowerCase()
+  },
+  onSubmit: async (values) => {
+    await authApi.login(values as { email: string; password: string });
+  }
+});
+```
+
+Common runtime properties:
+
+* `form.state`
+* `form.errors`
+* `form.isInflight`
+* `form.isDirty`
+
+## 4.3.2. `v-form` and `v-field`
+
+```tsx
+const Login = () => (
+  <form v-form={loginForm}>
+    <input name="email" v-field={loginForm} />
+    <input name="password" type="password" v-field={loginForm} />
+
+    <p v-if={loginForm.errors.email}>{loginForm.errors.email}</p>
+    <p v-if={loginForm.errors.password}>{loginForm.errors.password}</p>
+
+    <button type="submit">Sign in</button>
+  </form>
+);
+```
+
+`v-form` wires submit handling and inflight submit button states.
+
+`v-field` wires value/checked/input behavior by `name`.
+
+`v-field` preserves existing handlers and binds nested controls under the form subtree.
+
+Reader note: in `FormStore` field binding, checkboxes map to boolean state (`checked`), and radio controls map to the selected `value`.
+
+## Form Submit Flow
+
+```mermaid
+flowchart TD
+    input[User input through v-field] --> clean[Apply clean transforms]
+    clean --> state[Write canonical state]
+    state --> submit[submit called]
+    submit --> validate[Run validate]
+    validate --> valid{Valid?}
+    valid -- No --> errors[Set errors and return false]
+    valid -- Yes --> inflight{Already inflight?}
+    inflight -- Yes --> blocked[Return false]
+    inflight -- No --> action[Run onSubmit]
+    action --> success[Return true]
+```
+
+## 4.3.3. Validation and Submit Contract
+
+* `validate()` updates `errors` and returns `true`/`false`.
+* `submit()` returns:
+  * `false` if validation fails
+  * `false` if already inflight
+  * `true` after successful submit
+* Common schema formats used in form validation include `email` and `url`.
+
+`v-form` submit handling always prevents native browser submit navigation and runs the `FormStore` flow first.
+
+```ts
+const ok = await loginForm.submit();
+if (!ok) {
+  console.log(loginForm.errors);
+}
+```
+
+## 4.3.4. Clean and Format Transforms
+
+* `clean`: `input -> state`
+* `format`: `state -> input`
+
+This helps keep state canonical while preserving user-friendly display values.
+
+```tsx
+import { Money, formatMoney, parseMoneyInput } from "valyrian.js/money";
+
+const form = new FormStore({
+  state: { amountInCents: 0 },
+  schema: {
+    type: "object",
+    properties: {
+      amountInCents: { type: "number", minimum: 0 }
+    },
+    required: ["amountInCents"]
+  },
+  clean: {
+    amountInCents: (value) => parseMoneyInput(String(value), { decimalPlaces: 2 }).toCents()
+  },
+  format: {
+    amountInCents: (value) =>
+      formatMoney(Money.fromCents(Number(value) || 0), { currency: "USD", locale: "en-US", digits: 2 })
+  }
+});
+```
+
+## 4.3.5. Additional FormStore APIs
+
+* `validate()` -> updates `errors` and returns boolean.
+* `submit(event?)` -> returns success boolean.
+* `setField(name, value, control?)` -> writes canonical state for one field.
+* `formatValue(name, value, control?)` -> maps canonical value to display value.
+* `reset()` -> resets state, errors, and inflight status.
+
+## Common Beginner Mistakes
+
+1. Forgetting `name` on inputs (required for field mapping).
+2. Treating `submit()` as always successful without checking its boolean result.
+3. Mixing raw input values and canonical state values without `clean`/`format`.
+
+____________________________________________
+
+# Source: docs/4-network.md
+
+# 4.2.5. Network Awareness (`valyrian.js/network`)
+
+`NetworkManager` wraps browser online/offline and connection signals in a small API.
+
+## Quick Start
+
+```ts
+import { NetworkEvent, NetworkManager, SignalLevel } from "valyrian.js/network";
+
+const network = new NetworkManager();
+
+network.on(NetworkEvent.CHANGE, (status) => {
+  console.log(status.online, status.effectiveType);
+});
+
+if (network.getSignalLevel() <= SignalLevel.Poor) {
+  console.log("enable low-bandwidth mode");
+}
+```
+
+## API Surface
+
+* `getNetworkStatus()`
+* `getSignalLevel()`
+* `isConnectionPoor()`
+* `getStatus()` (alias of network status)
+* `on(event, listener)`
+* `off(event, listener)`
+* `destroy()`
+
+`isConnectionPoor()` is a strict check for `SignalLevel.None`.
+
+Events:
+
+* `NetworkEvent.ONLINE`
+* `NetworkEvent.OFFLINE`
+* `NetworkEvent.CHANGE`
+
+## Signal Mapping
+
+Signal levels:
+
+* `SignalLevel.None`
+* `SignalLevel.Poor`
+* `SignalLevel.Fair`
+* `SignalLevel.Good`
+* `SignalLevel.Excellent`
+
+The mapping considers `online`, `effectiveType`, `downlink`, and `rtt` when available.
+
+## Runtime Differences
+
+Node runtime behavior is intentionally simple:
+
+* `getNetworkStatus()` returns `{ online: true }`
+* `getSignalLevel()` returns `SignalLevel.Good`
+
+Browser runtime reads `navigator` and optional Network Information API fields.
+
+If the Network Information API is unavailable, status still includes `online` and omits connection metrics.
+
+## Cleanup
+
+Call `destroy()` when the manager is no longer needed to remove listeners and clear subscriptions.
+
+____________________________________________
+
+# Source: docs/4-offline.md
+
+# 4.2.6. Offline Queue (`valyrian.js/offline`)
+
+`OfflineQueue` stores operations and syncs them when the network is available.
+
+## Quick Start
+
+```ts
+import { OfflineQueue } from "valyrian.js/offline";
+import { NetworkManager } from "valyrian.js/network";
+
+const queue = new OfflineQueue({
+  id: "orders-queue",
+  network: new NetworkManager(),
+  handler: (operation) => request.post(`/api/offline/${operation.type}`, operation.payload as Record<string, unknown>)
+});
+
+queue.enqueue({ type: "create-order", payload: { sku: "sword" } });
+await queue.sync();
+```
+
+## Queue State and Inspection
+
+* `state()` -> `{ pending, failed, syncing, lastSyncAt, lastError }`
+* `pending()` -> copy of pending operations
+* `failed()` -> copy of failed operations
+
+`enqueue(...)` auto-generates `id`, `createdAt`, and initializes `retries` to `0`.
+
+## Sync Lifecycle
+
+1. `sync()` exits early if already syncing.
+2. `sync()` exits early if network reports offline.
+3. Pending operations are processed in order.
+4. Success removes operation from pending.
+5. Non-retryable or max-retries errors move operation to failed.
+6. Retryable errors apply backoff and stop current sync pass.
+
+Retryable failure does not drain the entire queue in one call. Later `sync()` calls continue processing.
+
+## Retry and Recovery APIs
+
+* `retryOne(id)`
+* `retryAll()`
+* `discardFailed()`
+
+`retryOne(id)` is a safe no-op when the id is not found.
+
+## Events
+
+* `change` -> queue state snapshot
+* `sync:success` -> successful operation
+* `sync:error` -> `{ operation, error }`
+
+```ts
+queue.on("change", (state) => console.log(state.pending, state.failed));
+```
+
+## Auto-Sync and Cleanup
+
+Queue subscribes to `NetworkEvent.ONLINE` and triggers `sync()` automatically.
+
+Call `destroy()` to remove network and queue listeners when the queue is no longer used.
+
+## Options
+
+`OfflineQueue` accepts:
+
+* `id`
+* `network`
+* `storage` (`"local"` or `"session"`)
+* `handler(operation)`
+* `isRetryable(error)`
+* `backoff` (`strategy`, `baseMs`, `maxMs`)
+* `maxRetries`
+
+____________________________________________
+
+# Source: docs/4-query.md
+
+# 4.2.4. Query Cache (`valyrian.js/query`)
+
+`QueryClient` provides cached queries, mutations, invalidation, and optional persistence.
+
+## Quick Start
+
+```ts
+import { QueryClient } from "valyrian.js/query";
+
+const client = new QueryClient({
+  staleTime: 30000,
+  cacheTime: 300000,
+  persist: true,
+  persistId: "my-cache"
+});
+
+const posts = client.query({
+  key: ["posts", { page: 1 }],
+  fetcher: () => request.get("/api/posts", { page: 1 })
+});
+
+await posts.fetch();
+```
+
+## Query Handles
+
+`client.query(config)` returns `QueryHandle`:
+
+* `key`
+* `state`
+* `data`
+* `fetch()`
+* `invalidate()`
+
+Fetch behavior:
+
+* fresh successful data returns immediately
+* stale data triggers fetch
+* in-flight fetch is deduped per key
+
+`invalidate()` marks that query stale (`updatedAt = 0`), then the next `fetch()` refetches.
+
+## Mutation Handles
+
+`client.mutation(config)` returns `MutationHandle`:
+
+* `state`
+* `execute(payload)`
+* `reset()`
+
+`reset()` returns mutation state to `idle` and clears previous result/error.
+
+```ts
+const savePost = client.mutation({
+  execute: (payload) => request.post("/api/posts", payload),
+  onSuccess: () => client.invalidate(["posts"])
+});
+
+await savePost.execute({ title: "New post" });
+```
+
+## Invalidation and Cache Control
+
+* `invalidate(partialKey)` uses prefix matching.
+* `clear()` removes all entries and gc timers.
+
+Prefix matching example:
+
+* invalidating `["posts"]` affects `["posts", 1]` and `["posts", { page: 2 }]`.
+
+## Persistence and Rehydration
+
+With `persist: true`, cache state is saved to `native-store` local storage.
+
+On startup, persisted entries are normalized:
+
+* `loading` states are rehydrated as `idle`
+* previous `success/error/data/updatedAt` are restored when valid
+
+Persistence is opt-in (`persist: true`).
+
+## Change Events
+
+Subscribe with:
+
+```ts
+const listener = (event) => {
+  console.log(event.type, event.key, event.state);
+};
+
+const off = client.on("change", listener);
+
+// later
+off();
+
+// equivalent explicit cleanup
+client.off("change", listener);
+```
+
+Common event types include:
+
+* `query:start`
+* `query:success`
+* `query:error`
+* `query:invalidate`
+* `mutation:start`
+* `mutation:success`
+* `mutation:error`
+* `cache:clear`
+* `gc`
+
+`QueryChangeEvent` may include `key`, `state`, and `payload` depending on event type.
+
+____________________________________________
+
+# Source: docs/4-request.md
+
+# 4.2.1. Requests (`valyrian.js/request`)
+
+`request` is a small fetch wrapper with serialization rules, plugin hooks, and scoped clients.
+
+## Quick Start
+
+```ts
+import { request } from "valyrian.js/request";
+
+const users = await request.get("/api/users", { page: 1 });
+```
+
+## API Surface
+
+Main call signature:
+
+```ts
+request(method, url, data?, options?)
+```
+
+Reader-safe default: use helper methods (`request.get`, `request.post`, ...). They pass the expected lowercase method names.
+
+Generated helpers depend on `allowedMethods`:
+
+* `request.get`
+* `request.post`
+* `request.put`
+* `request.patch`
+* `request.delete`
+* `request.head`
+* `request.options`
+
+If you remove a method from `allowedMethods`, that helper is not generated.
+
+```ts
+const readonlyApi = request.new("/api", {
+  allowedMethods: ["get"]
+});
+
+await readonlyApi.get("/users");
+```
+
+## Serialization Rules
+
+```mermaid
+flowchart TD
+    call[request call] --> get{Method is GET?}
+    get -- Yes --> query[Serialize object data as query string]
+    get -- No --> native{Native body or string?}
+    native -- Yes --> asis[Send body as is]
+    native -- No --> json{Content-Type contains json?}
+    json -- Yes --> stringify[JSON.stringify body]
+    json -- No --> formdata[Convert object to FormData]
+```
+
+Notes:
+
+* `GET` + object data is appended as URL query params.
+* Native bodies are passed through (`FormData`, `URLSearchParams`, `Blob`, `ArrayBuffer`, `DataView`, `ReadableStream`, string).
+* Non-GET object bodies use JSON only when `Content-Type` includes `json`.
+* Otherwise non-GET object bodies are converted to `FormData`.
+
+## Response Parsing
+
+`Accept` controls parsing:
+
+Default: if you do not pass `Accept`, it uses `application/json`.
+
+* `application/json` -> `response.json()` (invalid JSON resolves to `null`)
+* `text/*` -> `response.text()`
+* `*blob*` -> `response.blob()`
+* `*arraybuffer*` -> `response.arrayBuffer()`
+* Otherwise response object is returned as body value.
+
+For non-OK responses, an error is thrown with `response` and optional parsed `body`.
+
+Reader note: non-OK parsing follows the same `Accept` logic for `text/*` and `application/json`. Other accept types keep `body` unset on the thrown error.
+
+## Scoped Clients and Options
+
+```ts
+const api = request.new("/api", {
+  headers: { "Content-Type": "application/json" },
+  urls: { base: "", api: "/api", node: "http://localhost:3000" }
+});
+
+api.setOption("headers.Authorization", `Bearer ${token}`);
+const auth = api.getOption("headers.Authorization");
+```
+
+Available helpers:
+
+* `new(baseUrl, options?)`
+* `setOption(path, value)`
+* `setOptions(values)`
+* `getOption(path)`
+* `getOptions(path?)`
+
+Scoped clients created with `new(...)` inherit parent plugins.
+
+For full runtime URL rewriting details, see [./7-isomorphic-networking-and-storage.md](./7-isomorphic-networking-and-storage.md).
+
+## Plugins
+
+```ts
+const id = api.use({
+  request(ctx) {
+    ctx.options.headers["X-Request-Id"] = crypto.randomUUID();
+    return ctx;
+  },
+  response(ctx) {
+    return { ...ctx, body: { data: ctx.body } };
+  },
+  error(ctx) {
+    return ctx;
+  }
+});
+
+api.eject(id);
+```
+
+Plugin hooks run in registration order.
+
+Error normalization note: if an `error` plugin returns a custom error object, that object becomes the thrown value.
+
+If no plugin handles an error, the original error is thrown.
+
+## Full Response Mode
+
+Set `resolveWithFullResponse: true` in options to return the raw `Response` object.
+
+```ts
+const response = await request.get("/health", null, {
+  headers: { Accept: "text/plain" },
+  resolveWithFullResponse: true
+});
+```
 
 ____________________________________________
 
@@ -999,204 +1611,6 @@ const Nav = () => (
 
 ____________________________________________
 
-# Source: docs/4-data-fetching-and-async.md
-
-# 4.2. Data Fetching and Async Workflows (Hub)
-
-This chapter is a hub for networked and async modules used in SPA flows.
-
-Use these pages in order so each layer builds on the previous one.
-
-## Suggested Sequence
-
-1. [./4-request.md](./4-request.md)
-2. [./4-suspense.md](./4-suspense.md)
-3. [./4-tasks.md](./4-tasks.md)
-4. [./4-query.md](./4-query.md)
-5. [./4-network.md](./4-network.md)
-6. [./4-offline.md](./4-offline.md)
-
-## 4.2.1. Requests
-
-* File: [./4-request.md](./4-request.md)
-* Covers request helpers, serialization/parsing rules, plugins, scoped clients, and option APIs.
-
-## 4.2.2. Suspense
-
-* File: [./4-suspense.md](./4-suspense.md)
-* Covers fallback/error rendering, required `key`, child compatibility, and stale result protection.
-
-## 4.2.3. Tasks
-
-* File: [./4-tasks.md](./4-tasks.md)
-* Covers async strategy control (`takeLatest`, `enqueue`, `drop`, `restartable`), state, and events.
-
-## 4.2.4. Query Cache
-
-* File: [./4-query.md](./4-query.md)
-* Covers cached queries/mutations, dedupe, invalidation, persistence, and change events.
-
-## 4.2.5. Network Awareness
-
-* File: [./4-network.md](./4-network.md)
-* Covers connectivity events, signal levels, runtime differences, and listener cleanup.
-
-## 4.2.6. Offline Queue
-
-* File: [./4-offline.md](./4-offline.md)
-* Covers operation queueing, retry/backoff behavior, sync lifecycle, and recovery APIs.
-
-## Common Beginner Mistakes
-
-1. Using cache/invalidation before confirming plain request flows.
-2. Skipping stable `Suspense` keys.
-3. Assuming offline retry drains the queue in one sync pass.
-4. Forgetting explicit cleanup (`off()`/`destroy()`) for long-lived listeners.
-
-____________________________________________
-
-# Source: docs/4-request.md
-
-# 4.2.1. Requests (`valyrian.js/request`)
-
-`request` is a small fetch wrapper with serialization rules, plugin hooks, and scoped clients.
-
-## Quick Start
-
-```ts
-import { request } from "valyrian.js/request";
-
-const users = await request.get("/api/users", { page: 1 });
-```
-
-## API Surface
-
-Main call signature:
-
-```ts
-request(method, url, data?, options?)
-```
-
-Reader-safe default: use helper methods (`request.get`, `request.post`, ...). They pass the expected lowercase method names.
-
-Generated helpers depend on `allowedMethods`:
-
-* `request.get`
-* `request.post`
-* `request.put`
-* `request.patch`
-* `request.delete`
-* `request.head`
-* `request.options`
-
-If you remove a method from `allowedMethods`, that helper is not generated.
-
-```ts
-const readonlyApi = request.new("/api", {
-  allowedMethods: ["get"]
-});
-
-await readonlyApi.get("/users");
-```
-
-## Serialization Rules
-
-```mermaid
-flowchart TD
-    call[request call] --> get{Method is GET?}
-    get -- Yes --> query[Serialize object data as query string]
-    get -- No --> native{Native body or string?}
-    native -- Yes --> asis[Send body as is]
-    native -- No --> json{Content-Type contains json?}
-    json -- Yes --> stringify[JSON.stringify body]
-    json -- No --> formdata[Convert object to FormData]
-```
-
-Notes:
-
-* `GET` + object data is appended as URL query params.
-* Native bodies are passed through (`FormData`, `URLSearchParams`, `Blob`, `ArrayBuffer`, `DataView`, `ReadableStream`, string).
-* Non-GET object bodies use JSON only when `Content-Type` includes `json`.
-* Otherwise non-GET object bodies are converted to `FormData`.
-
-## Response Parsing
-
-`Accept` controls parsing:
-
-Default: if you do not pass `Accept`, it uses `application/json`.
-
-* `application/json` -> `response.json()` (invalid JSON resolves to `null`)
-* `text/*` -> `response.text()`
-* `*blob*` -> `response.blob()`
-* `*arraybuffer*` -> `response.arrayBuffer()`
-* Otherwise response object is returned as body value.
-
-For non-OK responses, an error is thrown with `response` and optional parsed `body`.
-
-Reader note: non-OK parsing follows the same `Accept` logic for `text/*` and `application/json`. Other accept types keep `body` unset on the thrown error.
-
-## Scoped Clients and Options
-
-```ts
-const api = request.new("/api", {
-  headers: { "Content-Type": "application/json" },
-  urls: { base: "", api: "/api", node: "http://localhost:3000" }
-});
-
-api.setOption("headers.Authorization", `Bearer ${token}`);
-const auth = api.getOption("headers.Authorization");
-```
-
-Available helpers:
-
-* `new(baseUrl, options?)`
-* `setOption(path, value)`
-* `setOptions(values)`
-* `getOption(path)`
-* `getOptions(path?)`
-
-Scoped clients created with `new(...)` inherit parent plugins.
-
-For full runtime URL rewriting details, see [./7-isomorphic-networking-and-storage.md](./7-isomorphic-networking-and-storage.md).
-
-## Plugins
-
-```ts
-const id = api.use({
-  request(ctx) {
-    ctx.options.headers["X-Request-Id"] = crypto.randomUUID();
-    return ctx;
-  },
-  response(ctx) {
-    return { ...ctx, body: { data: ctx.body } };
-  },
-  error(ctx) {
-    return ctx;
-  }
-});
-
-api.eject(id);
-```
-
-Plugin hooks run in registration order.
-
-Error normalization note: if an `error` plugin returns a custom error object, that object becomes the thrown value.
-
-If no plugin handles an error, the original error is thrown.
-
-## Full Response Mode
-
-Set `resolveWithFullResponse: true` in options to return the raw `Response` object.
-
-```ts
-const response = await request.get("/health", null, {
-  headers: { Accept: "text/plain" },
-  resolveWithFullResponse: true
-});
-```
-
-____________________________________________
-
 # Source: docs/4-suspense.md
 
 # 4.2.2. Suspense (`valyrian.js/suspense`)
@@ -1331,420 +1745,6 @@ For `drop`, repeated calls while running resolve immediately with the current st
 
 ____________________________________________
 
-# Source: docs/4-query.md
-
-# 4.2.4. Query Cache (`valyrian.js/query`)
-
-`QueryClient` provides cached queries, mutations, invalidation, and optional persistence.
-
-## Quick Start
-
-```ts
-import { QueryClient } from "valyrian.js/query";
-
-const client = new QueryClient({
-  staleTime: 30000,
-  cacheTime: 300000,
-  persist: true,
-  persistId: "my-cache"
-});
-
-const posts = client.query({
-  key: ["posts", { page: 1 }],
-  fetcher: () => request.get("/api/posts", { page: 1 })
-});
-
-await posts.fetch();
-```
-
-## Query Handles
-
-`client.query(config)` returns `QueryHandle`:
-
-* `key`
-* `state`
-* `data`
-* `fetch()`
-* `invalidate()`
-
-Fetch behavior:
-
-* fresh successful data returns immediately
-* stale data triggers fetch
-* in-flight fetch is deduped per key
-
-`invalidate()` marks that query stale (`updatedAt = 0`), then the next `fetch()` refetches.
-
-## Mutation Handles
-
-`client.mutation(config)` returns `MutationHandle`:
-
-* `state`
-* `execute(payload)`
-* `reset()`
-
-`reset()` returns mutation state to `idle` and clears previous result/error.
-
-```ts
-const savePost = client.mutation({
-  execute: (payload) => request.post("/api/posts", payload),
-  onSuccess: () => client.invalidate(["posts"])
-});
-
-await savePost.execute({ title: "New post" });
-```
-
-## Invalidation and Cache Control
-
-* `invalidate(partialKey)` uses prefix matching.
-* `clear()` removes all entries and gc timers.
-
-Prefix matching example:
-
-* invalidating `["posts"]` affects `["posts", 1]` and `["posts", { page: 2 }]`.
-
-## Persistence and Rehydration
-
-With `persist: true`, cache state is saved to `native-store` local storage.
-
-On startup, persisted entries are normalized:
-
-* `loading` states are rehydrated as `idle`
-* previous `success/error/data/updatedAt` are restored when valid
-
-Persistence is opt-in (`persist: true`).
-
-## Change Events
-
-Subscribe with:
-
-```ts
-const listener = (event) => {
-  console.log(event.type, event.key, event.state);
-};
-
-const off = client.on("change", listener);
-
-// later
-off();
-
-// equivalent explicit cleanup
-client.off("change", listener);
-```
-
-Common event types include:
-
-* `query:start`
-* `query:success`
-* `query:error`
-* `query:invalidate`
-* `mutation:start`
-* `mutation:success`
-* `mutation:error`
-* `cache:clear`
-* `gc`
-
-`QueryChangeEvent` may include `key`, `state`, and `payload` depending on event type.
-
-____________________________________________
-
-# Source: docs/4-network.md
-
-# 4.2.5. Network Awareness (`valyrian.js/network`)
-
-`NetworkManager` wraps browser online/offline and connection signals in a small API.
-
-## Quick Start
-
-```ts
-import { NetworkEvent, NetworkManager, SignalLevel } from "valyrian.js/network";
-
-const network = new NetworkManager();
-
-network.on(NetworkEvent.CHANGE, (status) => {
-  console.log(status.online, status.effectiveType);
-});
-
-if (network.getSignalLevel() <= SignalLevel.Poor) {
-  console.log("enable low-bandwidth mode");
-}
-```
-
-## API Surface
-
-* `getNetworkStatus()`
-* `getSignalLevel()`
-* `isConnectionPoor()`
-* `getStatus()` (alias of network status)
-* `on(event, listener)`
-* `off(event, listener)`
-* `destroy()`
-
-`isConnectionPoor()` is a strict check for `SignalLevel.None`.
-
-Events:
-
-* `NetworkEvent.ONLINE`
-* `NetworkEvent.OFFLINE`
-* `NetworkEvent.CHANGE`
-
-## Signal Mapping
-
-Signal levels:
-
-* `SignalLevel.None`
-* `SignalLevel.Poor`
-* `SignalLevel.Fair`
-* `SignalLevel.Good`
-* `SignalLevel.Excellent`
-
-The mapping considers `online`, `effectiveType`, `downlink`, and `rtt` when available.
-
-## Runtime Differences
-
-Node runtime behavior is intentionally simple:
-
-* `getNetworkStatus()` returns `{ online: true }`
-* `getSignalLevel()` returns `SignalLevel.Good`
-
-Browser runtime reads `navigator` and optional Network Information API fields.
-
-If the Network Information API is unavailable, status still includes `online` and omits connection metrics.
-
-## Cleanup
-
-Call `destroy()` when the manager is no longer needed to remove listeners and clear subscriptions.
-
-____________________________________________
-
-# Source: docs/4-offline.md
-
-# 4.2.6. Offline Queue (`valyrian.js/offline`)
-
-`OfflineQueue` stores operations and syncs them when the network is available.
-
-## Quick Start
-
-```ts
-import { OfflineQueue } from "valyrian.js/offline";
-import { NetworkManager } from "valyrian.js/network";
-
-const queue = new OfflineQueue({
-  id: "orders-queue",
-  network: new NetworkManager(),
-  handler: (operation) => request.post(`/api/offline/${operation.type}`, operation.payload as Record<string, unknown>)
-});
-
-queue.enqueue({ type: "create-order", payload: { sku: "sword" } });
-await queue.sync();
-```
-
-## Queue State and Inspection
-
-* `state()` -> `{ pending, failed, syncing, lastSyncAt, lastError }`
-* `pending()` -> copy of pending operations
-* `failed()` -> copy of failed operations
-
-`enqueue(...)` auto-generates `id`, `createdAt`, and initializes `retries` to `0`.
-
-## Sync Lifecycle
-
-1. `sync()` exits early if already syncing.
-2. `sync()` exits early if network reports offline.
-3. Pending operations are processed in order.
-4. Success removes operation from pending.
-5. Non-retryable or max-retries errors move operation to failed.
-6. Retryable errors apply backoff and stop current sync pass.
-
-Retryable failure does not drain the entire queue in one call. Later `sync()` calls continue processing.
-
-## Retry and Recovery APIs
-
-* `retryOne(id)`
-* `retryAll()`
-* `discardFailed()`
-
-`retryOne(id)` is a safe no-op when the id is not found.
-
-## Events
-
-* `change` -> queue state snapshot
-* `sync:success` -> successful operation
-* `sync:error` -> `{ operation, error }`
-
-```ts
-queue.on("change", (state) => console.log(state.pending, state.failed));
-```
-
-## Auto-Sync and Cleanup
-
-Queue subscribes to `NetworkEvent.ONLINE` and triggers `sync()` automatically.
-
-Call `destroy()` to remove network and queue listeners when the queue is no longer used.
-
-## Options
-
-`OfflineQueue` accepts:
-
-* `id`
-* `network`
-* `storage` (`"local"` or `"session"`)
-* `handler(operation)`
-* `isRetryable(error)`
-* `backoff` (`strategy`, `baseMs`, `maxMs`)
-* `maxRetries`
-
-____________________________________________
-
-# Source: docs/4-forms.md
-
-# 4.3. Forms (`valyrian.js/forms`)
-
-Use `FormStore` when you need schema validation, canonical transforms, and consistent submit behavior.
-
-Keep simple forms simple. Move to `FormStore` when form logic starts repeating across screens.
-
-## Quick Start Recipe
-
-1. Create a `FormStore` with `state` + `schema`.
-2. Bind `<form v-form={form}>`.
-3. Bind inputs with `v-field` and `name`.
-4. Call `submit()` or let submit event trigger it.
-
-## 4.3.1. Basic FormStore
-
-```tsx
-import { FormStore } from "valyrian.js/forms";
-
-const loginForm = new FormStore({
-  state: { email: "", password: "" },
-  schema: {
-    type: "object",
-    properties: {
-      email: { type: "string", format: "email" },
-      password: { type: "string", minLength: 8 }
-    },
-    required: ["email", "password"]
-  },
-  clean: {
-    email: (value) => String(value).trim().toLowerCase()
-  },
-  onSubmit: async (values) => {
-    await authApi.login(values as { email: string; password: string });
-  }
-});
-```
-
-Common runtime properties:
-
-* `form.state`
-* `form.errors`
-* `form.isInflight`
-* `form.isDirty`
-
-## 4.3.2. `v-form` and `v-field`
-
-```tsx
-const Login = () => (
-  <form v-form={loginForm}>
-    <input name="email" v-field={loginForm} />
-    <input name="password" type="password" v-field={loginForm} />
-
-    <p v-if={loginForm.errors.email}>{loginForm.errors.email}</p>
-    <p v-if={loginForm.errors.password}>{loginForm.errors.password}</p>
-
-    <button type="submit">Sign in</button>
-  </form>
-);
-```
-
-`v-form` wires submit handling and inflight submit button states.
-
-`v-field` wires value/checked/input behavior by `name`.
-
-`v-field` preserves existing handlers and binds nested controls under the form subtree.
-
-Reader note: in `FormStore` field binding, checkboxes map to boolean state (`checked`), and radio controls map to the selected `value`.
-
-## Form Submit Flow
-
-```mermaid
-flowchart TD
-    input[User input through v-field] --> clean[Apply clean transforms]
-    clean --> state[Write canonical state]
-    state --> submit[submit called]
-    submit --> validate[Run validate]
-    validate --> valid{Valid?}
-    valid -- No --> errors[Set errors and return false]
-    valid -- Yes --> inflight{Already inflight?}
-    inflight -- Yes --> blocked[Return false]
-    inflight -- No --> action[Run onSubmit]
-    action --> success[Return true]
-```
-
-## 4.3.3. Validation and Submit Contract
-
-* `validate()` updates `errors` and returns `true`/`false`.
-* `submit()` returns:
-  * `false` if validation fails
-  * `false` if already inflight
-  * `true` after successful submit
-* Common schema formats used in form validation include `email` and `url`.
-
-`v-form` submit handling always prevents native browser submit navigation and runs the `FormStore` flow first.
-
-```ts
-const ok = await loginForm.submit();
-if (!ok) {
-  console.log(loginForm.errors);
-}
-```
-
-## 4.3.4. Clean and Format Transforms
-
-* `clean`: `input -> state`
-* `format`: `state -> input`
-
-This helps keep state canonical while preserving user-friendly display values.
-
-```tsx
-import { Money, formatMoney, parseMoneyInput } from "valyrian.js/money";
-
-const form = new FormStore({
-  state: { amountInCents: 0 },
-  schema: {
-    type: "object",
-    properties: {
-      amountInCents: { type: "number", minimum: 0 }
-    },
-    required: ["amountInCents"]
-  },
-  clean: {
-    amountInCents: (value) => parseMoneyInput(String(value), { decimalPlaces: 2 }).toCents()
-  },
-  format: {
-    amountInCents: (value) =>
-      formatMoney(Money.fromCents(Number(value) || 0), { currency: "USD", locale: "en-US", digits: 2 })
-  }
-});
-```
-
-## 4.3.5. Additional FormStore APIs
-
-* `validate()` -> updates `errors` and returns boolean.
-* `submit(event?)` -> returns success boolean.
-* `setField(name, value, control?)` -> writes canonical state for one field.
-* `formatValue(name, value, control?)` -> maps canonical value to display value.
-* `reset()` -> resets state, errors, and inflight status.
-
-## Common Beginner Mistakes
-
-1. Forgetting `name` on inputs (required for field mapping).
-2. Treating `submit()` as always successful without checking its boolean result.
-3. Mixing raw input values and canonical state values without `clean`/`format`.
-
-____________________________________________
-
 # Source: docs/5-advanced-state-management.md
 
 # 5. Advanced State Management (Hub)
@@ -1797,6 +1797,91 @@ flowchart TD
 1. [./5-pulses.md](./5-pulses.md)
 2. [./5-flux-store.md](./5-flux-store.md)
 3. [./5-redux-devtools.md](./5-redux-devtools.md)
+
+____________________________________________
+
+# Source: docs/5-flux-store.md
+
+# 5.3. FluxStore (`valyrian.js/flux-store`)
+
+`FluxStore` provides strict state mutation, async actions, module namespacing, and event hooks.
+
+## Quick Start
+
+```ts
+import { FluxStore } from "valyrian.js/flux-store";
+
+const store = new FluxStore({
+  state: { count: 0 },
+  mutations: {
+    INCREMENT(state, amount: number) {
+      state.count += amount;
+    }
+  },
+  actions: {
+    async incrementAsync(store, amount: number) {
+      await Promise.resolve();
+      store.commit("INCREMENT", amount);
+    }
+  },
+  getters: {
+    doubled(state) {
+      return state.count * 2;
+    }
+  }
+});
+```
+
+## Constructor Options
+
+* `state` object or state factory function
+* `mutations`
+* `actions`
+* `getters`
+* `modules`
+* `shouldFreeze` (default `true`)
+
+## Core Rules
+
+* Use `commit` for writes.
+* Use `dispatch` for async orchestration.
+* Read computed values via `getters`.
+* With `shouldFreeze`, direct writes outside mutations throw.
+
+## Namespaced Modules
+
+Register/unregister modules dynamically:
+
+```ts
+store.registerModule("users", usersModule);
+store.commit("users.SET_LIST", payload);
+await store.dispatch("users.fetch", params);
+store.unregisterModule("users");
+```
+
+Nested namespaces use dot notation (`a.b.MUTATION`).
+
+Getters receive `(state, getters, rootState, rootGetters)` so module getters can compose with root data.
+
+## Event API
+
+Use `store.on(event, listener)` and `store.off(event, listener)`.
+
+Main events:
+
+* `set`, `delete`
+* `beforecommit`, `commit`
+* `beforedispatch`, `dispatch`
+* `getter`
+* `addlistener`, `removelistener`
+* `plugin`
+* `registerModule`, `unregisterModule`
+
+## Plugins
+
+Use `store.use(plugin, ...options)`.
+
+A plugin is only applied once per store instance (duplicate registrations are ignored).
 
 ____________________________________________
 
@@ -1884,91 +1969,6 @@ Important event:
 `createMutableStore` disables immutability protections.
 
 Warning: changes made outside pulse methods do not trigger re-render notifications.
-
-____________________________________________
-
-# Source: docs/5-flux-store.md
-
-# 5.3. FluxStore (`valyrian.js/flux-store`)
-
-`FluxStore` provides strict state mutation, async actions, module namespacing, and event hooks.
-
-## Quick Start
-
-```ts
-import { FluxStore } from "valyrian.js/flux-store";
-
-const store = new FluxStore({
-  state: { count: 0 },
-  mutations: {
-    INCREMENT(state, amount: number) {
-      state.count += amount;
-    }
-  },
-  actions: {
-    async incrementAsync(store, amount: number) {
-      await Promise.resolve();
-      store.commit("INCREMENT", amount);
-    }
-  },
-  getters: {
-    doubled(state) {
-      return state.count * 2;
-    }
-  }
-});
-```
-
-## Constructor Options
-
-* `state` object or state factory function
-* `mutations`
-* `actions`
-* `getters`
-* `modules`
-* `shouldFreeze` (default `true`)
-
-## Core Rules
-
-* Use `commit` for writes.
-* Use `dispatch` for async orchestration.
-* Read computed values via `getters`.
-* With `shouldFreeze`, direct writes outside mutations throw.
-
-## Namespaced Modules
-
-Register/unregister modules dynamically:
-
-```ts
-store.registerModule("users", usersModule);
-store.commit("users.SET_LIST", payload);
-await store.dispatch("users.fetch", params);
-store.unregisterModule("users");
-```
-
-Nested namespaces use dot notation (`a.b.MUTATION`).
-
-Getters receive `(state, getters, rootState, rootGetters)` so module getters can compose with root data.
-
-## Event API
-
-Use `store.on(event, listener)` and `store.off(event, listener)`.
-
-Main events:
-
-* `set`, `delete`
-* `beforecommit`, `commit`
-* `beforedispatch`, `dispatch`
-* `getter`
-* `addlistener`, `removelistener`
-* `plugin`
-* `registerModule`, `unregisterModule`
-
-## Plugins
-
-Use `store.use(plugin, ...options)`.
-
-A plugin is only applied once per store instance (duplicate registrations are ignored).
 
 ____________________________________________
 
@@ -2146,133 +2146,6 @@ This chapter is a hub split into focused pages:
 
 ____________________________________________
 
-# Source: docs/7-ssr.md
-
-# 7.1. Server-Side Rendering
-
-Server rendering in Valyrian is built around `render` from `valyrian.js/node`.
-
-For full node runtime exports (`render`, DOM helpers, `ServerStorage`, build helpers), see [./7-node-runtime-apis.md](./7-node-runtime-apis.md).
-
-## Quick Start Checklist
-
-1. Import `render` from `valyrian.js/node`.
-2. Render one component to string.
-3. Return that HTML from your HTTP handler.
-4. Mount the same app on the same browser container.
-
-## Render to HTML String
-
-```tsx
-import { render } from "valyrian.js/node";
-
-const App = () => <div>Hello SSR</div>;
-const html = render(<App />);
-```
-
-`render()` returns markup as string.
-
-## Automatic DOM Rehydration
-
-When SSR HTML reaches the browser, mount your app on the same container used for the server markup.
-
-During mount, Valyrian parses existing DOM, rebuilds the vnode tree, then continues normal patching and delegated event wiring.
-
-This makes server-rendered markup interactive without replacing the full DOM tree.
-
-```mermaid
-flowchart TD
-    server[Server renders HTML string] --> response[HTML reaches browser]
-    response --> mount[Mount app on same container]
-    mount --> parse[Parse existing DOM]
-    parse --> tree[Rebuild vnode tree]
-    tree --> listeners[Attach delegated listeners]
-    listeners --> interactive[Interactive UI without full DOM replacement]
-```
-
-## Guard Browser-Only Code
-
-Use `isNodeJs` from `valyrian.js` when components need browser APIs.
-
-```tsx
-import { isNodeJs } from "valyrian.js";
-
-const Component = () => {
-  if (!isNodeJs) {
-    console.log(window.innerWidth);
-  }
-  return <div>Safe in both runtimes</div>;
-};
-```
-
-____________________________________________
-
-# Source: docs/7-node-runtime-apis.md
-
-# 7.1.1. Node Runtime APIs (`valyrian.js/node`)
-
-`valyrian.js/node` provides server runtime setup plus SSR/build utility exports.
-
-## Runtime Setup Side Effects
-
-Importing `valyrian.js/node` initializes:
-
-* `global.document` (lightweight DOM adapter)
-* `global.FormData`
-* `global.sessionStorage` and `global.localStorage` backed by `ServerStorage`
-
-Import it before using server-side modules that expect these globals.
-
-## `render(...nodes)`
-
-`render` mounts content into a server DOM container, serializes HTML, and unmounts internally.
-
-```tsx
-import { render } from "valyrian.js/node";
-
-const html = render(<main><h1>Hello SSR</h1></main>);
-```
-
-You can pass multiple nodes; they are rendered in order.
-
-Reader note: because `render` unmounts internally, each call is isolated and does not reuse DOM state from previous calls.
-
-## DOM Transform Utilities
-
-Exports:
-
-* `htmlToDom`
-* `domToHtml`
-* `htmlToHyperscript`
-* `domToHyperscript`
-
-```ts
-import { htmlToDom, domToHtml } from "valyrian.js/node";
-
-const dom = htmlToDom("<section><p>Hello</p></section>");
-const html = domToHtml(dom);
-```
-
-## Build Helpers Also Exported Here
-
-`valyrian.js/node` also exports build helpers:
-
-* `inline`
-* `icons`
-* `sw`
-
-Use them from tooling scripts (see [./7-pwa-and-build-tooling.md](./7-pwa-and-build-tooling.md)).
-
-## Request-Scoped Storage
-
-`ServerStorage` is exported for per-request storage isolation patterns.
-
-Use `ServerStorage.run(() => { ... })` per incoming request to avoid storage leakage between concurrent SSR requests.
-
-See [./7-isomorphic-networking-and-storage.md](./7-isomorphic-networking-and-storage.md) for practical request-scoped usage.
-
-____________________________________________
-
 # Source: docs/7-isomorphic-networking-and-storage.md
 
 # 7.2. Isomorphic Networking and Storage
@@ -2364,6 +2237,72 @@ In Node.js, import `valyrian.js/node` before creating native stores.
 
 ____________________________________________
 
+# Source: docs/7-node-runtime-apis.md
+
+# 7.1.1. Node Runtime APIs (`valyrian.js/node`)
+
+`valyrian.js/node` provides server runtime setup plus SSR/build utility exports.
+
+## Runtime Setup Side Effects
+
+Importing `valyrian.js/node` initializes:
+
+* `global.document` (lightweight DOM adapter)
+* `global.FormData`
+* `global.sessionStorage` and `global.localStorage` backed by `ServerStorage`
+
+Import it before using server-side modules that expect these globals.
+
+## `render(...nodes)`
+
+`render` mounts content into a server DOM container, serializes HTML, and unmounts internally.
+
+```tsx
+import { render } from "valyrian.js/node";
+
+const html = render(<main><h1>Hello SSR</h1></main>);
+```
+
+You can pass multiple nodes; they are rendered in order.
+
+Reader note: because `render` unmounts internally, each call is isolated and does not reuse DOM state from previous calls.
+
+## DOM Transform Utilities
+
+Exports:
+
+* `htmlToDom`
+* `domToHtml`
+* `htmlToHyperscript`
+* `domToHyperscript`
+
+```ts
+import { htmlToDom, domToHtml } from "valyrian.js/node";
+
+const dom = htmlToDom("<section><p>Hello</p></section>");
+const html = domToHtml(dom);
+```
+
+## Build Helpers Also Exported Here
+
+`valyrian.js/node` also exports build helpers:
+
+* `inline`
+* `icons`
+* `sw`
+
+Use them from tooling scripts (see [./7-pwa-and-build-tooling.md](./7-pwa-and-build-tooling.md)).
+
+## Request-Scoped Storage
+
+`ServerStorage` is exported for per-request storage isolation patterns.
+
+Use `ServerStorage.run(() => { ... })` per incoming request to avoid storage leakage between concurrent SSR requests.
+
+See [./7-isomorphic-networking-and-storage.md](./7-isomorphic-networking-and-storage.md) for practical request-scoped usage.
+
+____________________________________________
+
 # Source: docs/7-pwa-and-build-tooling.md
 
 # 7.3. PWA and Build Tooling
@@ -2432,6 +2371,67 @@ const criticalCss = await inline.uncss([renderedHtml], cssBundle.raw);
 
 ____________________________________________
 
+# Source: docs/7-ssr.md
+
+# 7.1. Server-Side Rendering
+
+Server rendering in Valyrian is built around `render` from `valyrian.js/node`.
+
+For full node runtime exports (`render`, DOM helpers, `ServerStorage`, build helpers), see [./7-node-runtime-apis.md](./7-node-runtime-apis.md).
+
+## Quick Start Checklist
+
+1. Import `render` from `valyrian.js/node`.
+2. Render one component to string.
+3. Return that HTML from your HTTP handler.
+4. Mount the same app on the same browser container.
+
+## Render to HTML String
+
+```tsx
+import { render } from "valyrian.js/node";
+
+const App = () => <div>Hello SSR</div>;
+const html = render(<App />);
+```
+
+`render()` returns markup as string.
+
+## Automatic DOM Rehydration
+
+When SSR HTML reaches the browser, mount your app on the same container used for the server markup.
+
+During mount, Valyrian parses existing DOM, rebuilds the vnode tree, then continues normal patching and delegated event wiring.
+
+This makes server-rendered markup interactive without replacing the full DOM tree.
+
+```mermaid
+flowchart TD
+    server[Server renders HTML string] --> response[HTML reaches browser]
+    response --> mount[Mount app on same container]
+    mount --> parse[Parse existing DOM]
+    parse --> tree[Rebuild vnode tree]
+    tree --> listeners[Attach delegated listeners]
+    listeners --> interactive[Interactive UI without full DOM replacement]
+```
+
+## Guard Browser-Only Code
+
+Use `isNodeJs` from `valyrian.js` when components need browser APIs.
+
+```tsx
+import { isNodeJs } from "valyrian.js";
+
+const Component = () => {
+  if (!isNodeJs) {
+    console.log(window.innerWidth);
+  }
+  return <div>Safe in both runtimes</div>;
+};
+```
+
+____________________________________________
+
 # Source: docs/7-sw-runtime.md
 
 # 7.3.1. Service Worker Runtime (`valyrian.js/sw`)
@@ -2483,124 +2483,6 @@ await registerSw("/sw.js", { scope: "/" });
 ```
 
 If service workers are unsupported, it returns without throwing.
-
-____________________________________________
-
-# Source: docs/8-utilities-and-ecosystem.md
-
-# 8. Utilities and Ecosystem (Hub)
-
-Valyrian includes utility modules used by the framework and available to your app code.
-
-These modules keep the same design style as core runtime APIs: explicit behavior and small surfaces.
-
-Reader-first advice: start with the module closest to your current task, then come back for the rest.
-
-## 8.1. Internationalization
-
-* File: [./8-translate.md](./8-translate.md)
-* Covers language dictionaries, interpolation, `v-t`, language persistence strategies, and missing-key logs.
-
-## 8.2. Money and Number Formatting
-
-* File: [./8-money.md](./8-money.md)
-* Covers `Money`, `NumberFormatter`, parsing/formatting helpers, and `v-money`.
-
-## 8.3. Native Persistence
-
-* File: [./8-native-store.md](./8-native-store.md)
-* Covers `createNativeStore`, storage types, duplicate-id behavior, sync semantics, and Node runtime requirements.
-
-## 8.4. Helpers
-
-* File: [./8-utils.md](./8-utils.md)
-* Covers object path helpers, deep clone/freeze helpers, change detection, and validators/guards.
-
-## Suggested Reading Order
-
-1. [./8-translate.md](./8-translate.md)
-2. [./8-money.md](./8-money.md)
-3. [./8-native-store.md](./8-native-store.md)
-4. [./8-utils.md](./8-utils.md)
-
-____________________________________________
-
-# Source: docs/8-translate.md
-
-# 8.1. Internationalization (`valyrian.js/translate`)
-
-The translate module provides language dictionaries, runtime language switching, and the `v-t` directive.
-
-## Setup
-
-```ts
-import { setTranslations, setLang } from "valyrian.js/translate";
-
-setTranslations(
-  {
-    nav: { home: "Home" },
-    welcome: "Welcome {name}"
-  },
-  {
-    es: {
-      nav: { home: "Inicio" },
-      welcome: "Bienvenido {name}"
-    }
-  }
-);
-
-setLang("es");
-```
-
-## Core APIs
-
-* `setTranslations(defaultTranslation, newTranslations?)`
-* `setLang(lang)`
-* `getLang()`
-* `t(path, params?)`
-* `getTranslations()`
-
-## Important Semantics
-
-* `setTranslations` clears previous language map before applying new dictionaries.
-* `en` is always based on `defaultTranslation`.
-* locale input in `setLang` is normalized (`es-MX`, `es_MX` -> `es`).
-* unknown languages throw.
-
-## Persisting Selected Language
-
-Use `setStoreStrategy` to integrate with your own language persistence.
-
-```ts
-import { setStoreStrategy } from "valyrian.js/translate";
-
-setStoreStrategy({
-  get: () => localStorage.getItem("lang") || "en",
-  set: (lang) => localStorage.setItem("lang", lang)
-});
-```
-
-## Missing Key Logs
-
-Enable warnings for missing keys:
-
-```ts
-import { setLog } from "valyrian.js/translate";
-
-setLog(true);
-```
-
-## Template Directive: `v-t`
-
-`v-t` supports both key-as-prop and key-as-children forms.
-
-```tsx
-<span v-t="nav.home" />
-<h1 v-t="welcome" v-t-params={{ name: user.name }} />
-<p v-t>{"welcome"}</p>
-```
-
-`v-t-params` is a reserved prop used for interpolation replacements.
 
 ____________________________________________
 
@@ -2744,6 +2626,124 @@ In Node.js, import `valyrian.js/node` before creating native stores so storage g
 import "valyrian.js/node";
 import { createNativeStore } from "valyrian.js/native-store";
 ```
+
+____________________________________________
+
+# Source: docs/8-translate.md
+
+# 8.1. Internationalization (`valyrian.js/translate`)
+
+The translate module provides language dictionaries, runtime language switching, and the `v-t` directive.
+
+## Setup
+
+```ts
+import { setTranslations, setLang } from "valyrian.js/translate";
+
+setTranslations(
+  {
+    nav: { home: "Home" },
+    welcome: "Welcome {name}"
+  },
+  {
+    es: {
+      nav: { home: "Inicio" },
+      welcome: "Bienvenido {name}"
+    }
+  }
+);
+
+setLang("es");
+```
+
+## Core APIs
+
+* `setTranslations(defaultTranslation, newTranslations?)`
+* `setLang(lang)`
+* `getLang()`
+* `t(path, params?)`
+* `getTranslations()`
+
+## Important Semantics
+
+* `setTranslations` clears previous language map before applying new dictionaries.
+* `en` is always based on `defaultTranslation`.
+* locale input in `setLang` is normalized (`es-MX`, `es_MX` -> `es`).
+* unknown languages throw.
+
+## Persisting Selected Language
+
+Use `setStoreStrategy` to integrate with your own language persistence.
+
+```ts
+import { setStoreStrategy } from "valyrian.js/translate";
+
+setStoreStrategy({
+  get: () => localStorage.getItem("lang") || "en",
+  set: (lang) => localStorage.setItem("lang", lang)
+});
+```
+
+## Missing Key Logs
+
+Enable warnings for missing keys:
+
+```ts
+import { setLog } from "valyrian.js/translate";
+
+setLog(true);
+```
+
+## Template Directive: `v-t`
+
+`v-t` supports both key-as-prop and key-as-children forms.
+
+```tsx
+<span v-t="nav.home" />
+<h1 v-t="welcome" v-t-params={{ name: user.name }} />
+<p v-t>{"welcome"}</p>
+```
+
+`v-t-params` is a reserved prop used for interpolation replacements.
+
+____________________________________________
+
+# Source: docs/8-utilities-and-ecosystem.md
+
+# 8. Utilities and Ecosystem (Hub)
+
+Valyrian includes utility modules used by the framework and available to your app code.
+
+These modules keep the same design style as core runtime APIs: explicit behavior and small surfaces.
+
+Reader-first advice: start with the module closest to your current task, then come back for the rest.
+
+## 8.1. Internationalization
+
+* File: [./8-translate.md](./8-translate.md)
+* Covers language dictionaries, interpolation, `v-t`, language persistence strategies, and missing-key logs.
+
+## 8.2. Money and Number Formatting
+
+* File: [./8-money.md](./8-money.md)
+* Covers `Money`, `NumberFormatter`, parsing/formatting helpers, and `v-money`.
+
+## 8.3. Native Persistence
+
+* File: [./8-native-store.md](./8-native-store.md)
+* Covers `createNativeStore`, storage types, duplicate-id behavior, sync semantics, and Node runtime requirements.
+
+## 8.4. Helpers
+
+* File: [./8-utils.md](./8-utils.md)
+* Covers object path helpers, deep clone/freeze helpers, change detection, and validators/guards.
+
+## Suggested Reading Order
+
+1. [./8-translate.md](./8-translate.md)
+2. [./8-money.md](./8-money.md)
+3. [./8-native-store.md](./8-native-store.md)
+4. [./8-utils.md](./8-utils.md)
 
 ____________________________________________
 
@@ -2946,14 +2946,19 @@ Recommended order:
 
 ## 11.3. Documentation Quality Rules
 
-* Avoid claims that are not backed by code or tests.
-* Prefer short, runnable examples.
-* Clearly mark planned features as planned.
-* Keep terminology consistent across pages.
+- Avoid claims that are not backed by code or tests.
+- Prefer short, runnable examples.
+- Clearly mark planned features as planned.
+- Keep terminology consistent across pages.
 
 ## 11.4. Useful Commands
+
+These commands are for framework development in this repository.
+For app usage, follow [./2-getting-started.md](./2-getting-started.md).
 
 ```bash
 bun test
 bun run dev:test
+bun run build:source
+bun run badges
 ```
