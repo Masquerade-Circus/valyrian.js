@@ -59,10 +59,11 @@
     "dev:source": "NODE_ENV=development chokidar './lib/**/*.ts' -c 'bun run source.js'",
     "dev:test": "bun test --watch",
     "dev:web": "browser-sync start --config 'www/bs-config.js'",
-    "build": "bun run build:source && bun run remark",
+    "build": "bun run build:source && bun run badges",
     "build:source": "cross-env NODE_ENV=production bun run source.js",
+    "badges": "node scripts/generate-badges.mjs",
+    "badges:strict": "node scripts/generate-badges.mjs --require-coverage",
     "test": "cross-env NODE_ENV=development bun test --bail --coverage --coverage-reporter=lcov --coverage-reporter=text",
-    "remark": "remark . -o",
     "commit": "git add . && git-cz && git push",
     "release": "release-it --verbose",
     "release-test": "release-it --dry-run --verbose",
@@ -74,7 +75,6 @@
     "favicons": "^7.2.0",
     "form-data": "^4.0.5",
     "purgecss": "^7.0.2",
-    "remark": "^15.0.1",
     "schema-shield": "^1.0.0",
     "terser": "^5.44.1",
     "ts-node": "^10.9.2",
@@ -104,21 +104,13 @@
     "expect": "^30.2.0",
     "fastify": "^5.6.2",
     "gzip-size": "^7.0.0",
-    "pirates": "^4.0.7",
     "release-it": "^19.0.6",
-    "remark-cli": "^12.0.1",
-    "remark-toc": "^9.0.0",
     "typescript-eslint": "^8.47.0"
   },
   "overrides": {
     "@types/parse-path": "7.0.3",
     "minimist": "^1.2.8",
     "source-map-support": "^0.5.21"
-  },
-  "remarkConfig": {
-    "plugins": [
-      "toc"
-    ]
   },
   "config": {
     "commitizen": {
@@ -195,15 +187,12 @@
     },
     "hooks": {
       "before:init": [
-        "bun run build",
-        "bun run test"
+        "bun run build:source",
+        "bun run test",
+        "bun run badges:strict"
       ],
-      "after:bump": [
-        "bun run remark"
-      ],
-      "after:@release-it/conventional-changelog": [
-        "bun run remark"
-      ]
+      "after:bump": [],
+      "after:@release-it/conventional-changelog": []
     }
   }
 }

@@ -28,15 +28,14 @@ Recommended order:
 
 ## 11.3. Documentation Quality Rules
 
-* Avoid claims that are not backed by code or tests.
-* Prefer short, runnable examples.
-* Clearly mark planned features as planned.
-* Keep terminology consistent across pages.
+- Avoid claims that are not backed by code or tests.
+- Prefer short, runnable examples.
+- Clearly mark planned features as planned.
+- Keep terminology consistent across pages.
 
 ## 11.4. Useful Commands
 
 ```bash
-npm test
-npm run dev:test
-npm run remark
+bun test
+bun run dev:test
 ```

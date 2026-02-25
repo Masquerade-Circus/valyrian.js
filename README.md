@@ -10,17 +10,17 @@
 ![](https://badgen.net/npm/types/valyrian.js)
 [![License](https://img.shields.io/github/license/masquerade-circus/valyrian.js.svg)](https://github.com/masquerade-circus/valyrian.js/blob/main/LICENSE)
 
-![](https://badgen.net/badgesize/normal/masquerade-circus/valyrian.js/main/dist/index.min.js)
-![](https://badgen.net/badgesize/gzip/masquerade-circus/valyrian.js/main/dist/index.min.js)
-![](https://badgen.net/badgesize/brotli/masquerade-circus/valyrian.js/main/dist/index.min.js)
+[![Minified size](assets/badges/size-min.svg)](dist/index.min.js)
+[![Gzip size](assets/badges/size-gzip.svg)](dist/index.min.js)
+[![Brotli size](assets/badges/size-brotli.svg)](dist/index.min.js)
 
-![Travis (.org)](https://img.shields.io/travis/masquerade-circus/valyrian.js)
+[![Test](https://github.com/Masquerade-Circus/valyrian.js/actions/workflows/test.yml/badge.svg)](https://github.com/Masquerade-Circus/valyrian.js/actions/workflows/test.yml)
 ![Libraries.io dependency status for latest release](https://img.shields.io/librariesio/release/npm/valyrian.js)
-[![Maintainability](https://api.codeclimate.com/v1/badges/aa7528a4a6b0d264e4d6/maintainability)](https://codeclimate.com/github/Masquerade-Circus/valyrian.js/maintainability)
+[![CodeQL](https://github.com/Masquerade-Circus/valyrian.js/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/Masquerade-Circus/valyrian.js/actions/workflows/codeql-analysis.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/8d5204c73bdc42089e4cebdb4b4d43e0)](https://www.codacy.com/gh/Masquerade-Circus/valyrian.js/dashboard?utm_source=github.com\&utm_medium=referral\&utm_content=Masquerade-Circus/valyrian.js\&utm_campaign=Badge_Grade)
 
 ![](https://img.shields.io/github/issues/masquerade-circus/valyrian.js.svg)
-[![Coverage Status](https://coveralls.io/repos/github/Masquerade-Circus/valyrian.js/badge.svg?branch=main)](https://coveralls.io/github/Masquerade-Circus/valyrian.js?branch=main)
+[![Coverage](assets/badges/coverage.svg)](https://github.com/Masquerade-Circus/valyrian.js/actions/workflows/test.yml)
 
 </p>
 
