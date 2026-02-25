@@ -85,7 +85,7 @@ var reservedProps = /* @__PURE__ */ new Set([
   "v-cleanup",
   "v-remove"
 ]);
-var SUBTREE_LC = Symbol.for("valyrian.subtreeLifecycle");
+var SUBTREE_LC = /* @__PURE__ */ Symbol.for("valyrian.subtreeLifecycle");
 function markSubtreeLifecycle(dom) {
   let node = dom;
   while (node && node.nodeType === 1 && !node[SUBTREE_LC]) {

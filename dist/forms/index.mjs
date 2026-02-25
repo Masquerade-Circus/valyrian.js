@@ -1596,8 +1596,8 @@ var SchemaShield = class {
 };
 
 // lib/forms/index.ts
-var controlBindingKey = Symbol("forms-control-binding");
-var formBindingKey = Symbol("forms-form-binding");
+var controlBindingKey = /* @__PURE__ */ Symbol("forms-control-binding");
+var formBindingKey = /* @__PURE__ */ Symbol("forms-form-binding");
 function getTagName(node) {
   return String(node.tagName || "").toUpperCase();
 }
