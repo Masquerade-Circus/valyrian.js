@@ -4,10 +4,10 @@ This chapter covers the core primitives you need to build interactive UI with Va
 
 By the end of this page, you should be able to:
 
-* Render components
-* Handle events
-* Use built-in directives
-* Control async UI updates
+- Render components
+- Handle events
+- Use built-in directives
+- Control async UI updates
 
 If you need full API contracts for `mount/update/unmount`, lifecycle helpers, `debouncedUpdate`, `trust`, and `v-model`, see [./3-runtime-core.md](./3-runtime-core.md).
 
@@ -32,8 +32,8 @@ mount("body", App);
 
 Valyrian supports:
 
-* **Functional components** for straightforward rendering.
-* **POJO components** (`{ view() {} }`) for grouped state + logic + view.
+- **Functional components** for straightforward rendering.
+- **POJO components** (`{ view() {} }`) for grouped state + logic + view.
 
 ### Functional components
 
@@ -70,8 +70,8 @@ mount("body", Counter.view);
 
 Valyrian uses delegated native events (`onclick`, `oninput`, `onsubmit`, ...).
 
-* After an event handler runs, Valyrian triggers a render update.
-* If `event.preventDefault()` is called, the automatic update is skipped.
+- After an event handler runs, Valyrian triggers a render update.
+- If `event.preventDefault()` is called, the automatic update is skipped.
 
 ### Event Flow
 
@@ -85,9 +85,7 @@ flowchart TD
 ```
 
 ```tsx
-const Form = () => (
-  <input oninput={(event) => console.log((event.target as HTMLInputElement).value)} />
-);
+const Form = () => <input oninput={(event) => console.log((event.target as HTMLInputElement).value)} />;
 ```
 
 If your UI does not update after interaction, check if `event.preventDefault()` is being called by mistake.
@@ -145,15 +143,23 @@ const Content = () => (
 
 `v-class` accepts:
 
-* string: full class name string
-* array: joined class names
-* object: `{ className: boolean | () => boolean }`
+- string: full class name string
+- array: joined class names
+- object: `{ className: boolean | () => boolean }`
 
 ## 3.5. Reactivity and Async Control
 
-For synchronous user interactions, mutating plain objects in event handlers is usually enough because updates are event-driven.
+For synchronous user interactions, mutating plain objects in delegated event handlers is usually enough because updates are event-driven.
 
-For async flows, call `update()` manually when state transitions should be rendered.
+For async delegated handlers, Valyrian runs one automatic render after the handler returns.
+
+Practical rule:
+
+- Without `event.preventDefault()`, state changes before the first `await` are included in the automatic render.
+- State changes after `await` need `update()`.
+- If you call `event.preventDefault()` before the first `await`, automatic rendering is skipped and you must call `update()` for each transition.
+
+Default async handler pattern (no `preventDefault`):
 
 ```tsx
 import { update } from "valyrian.js";
@@ -163,6 +169,35 @@ const UserProfile = {
   user: null,
 
   async load() {
+    this.loading = true;
+
+    const response = await fetch("/api/user");
+    this.user = await response.json();
+
+    this.loading = false;
+    update();
+  },
+
+  view() {
+    if (this.loading) return <p>Loading...</p>;
+    if (!this.user) return <button onclick={this.load}>Load user</button>;
+    return <p>Hello {this.user.name}</p>;
+  }
+};
+```
+
+Manual-control async pattern (with `preventDefault`):
+
+```tsx
+import { update } from "valyrian.js";
+
+const UserProfileManual = {
+  loading: false,
+  user: null,
+
+  async load(event: Event) {
+    event.preventDefault();
+
     this.loading = true;
     update();
 
@@ -175,7 +210,7 @@ const UserProfile = {
 
   view() {
     if (this.loading) return <p>Loading...</p>;
-    if (!this.user) return <button onclick={this.load}>Load user</button>;
+    if (!this.user) return <button onclick={(event) => this.load(event)}>Load user</button>;
     return <p>Hello {this.user.name}</p>;
   }
 };
@@ -246,5 +281,5 @@ Use this pattern to avoid duplicate subscriptions and memory leaks.
 ## Common Beginner Mistakes
 
 1. Forgetting `name` in form controls used with directives like `v-model`/`v-field`.
-2. Expecting async state changes to render without calling `update()`.
-3. Mixing direct DOM mutations and framework-driven render flow in the same UI path.
+2. Expecting post-`await` async state changes to render without calling `update()`.
+3. Calling `event.preventDefault()` in delegated handlers and forgetting manual `update()` calls.

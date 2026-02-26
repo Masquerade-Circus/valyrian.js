@@ -763,6 +763,28 @@ describe("Router", () => {
     expect(middlewareLog).toEqual(["Middleware 1", "Middleware 2"]);
   });
 
+  it("supports lazy route component loading from async middleware", async () => {
+    let loaderCalls = 0;
+    const loadUsersPage = async () => {
+      loaderCalls += 1;
+      return {
+        default: () => <div>Lazy Users</div>
+      };
+    };
+
+    const router = new Router();
+    router.add("/users", async () => {
+      const module = await loadUsersPage();
+      return module.default;
+    });
+
+    mountRouter("body", router);
+
+    const result = await router.go("/users");
+    expect(result).toEqual("<div>Lazy Users</div>");
+    expect(loaderCalls).toEqual(1);
+  });
+
   it("Test multiple redirections within middleware chain", async () => {
     const FinalComponent = () => <div>Final Route</div>;
 

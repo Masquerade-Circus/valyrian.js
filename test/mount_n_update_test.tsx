@@ -150,6 +150,108 @@ describe("Mount and update", () => {
     });
   });
 
+  it("should auto-update delegated events unless preventDefault is called", () => {
+    unmount();
+
+    const listeners: Record<string, (event: Event) => void> = {};
+    const dom = document.createElement("div");
+    (dom as any).addEventListener = (type: string, callback: EventListenerOrEventListenerObject | null) => {
+      listeners[type] = callback as (event: Event) => void;
+    };
+    (dom as any).removeEventListener = () => {};
+
+    const state = { count: 0 };
+    const Component = () => (
+      <button
+        onclick={(event: Event) => {
+          state.count += 1;
+          if (state.count === 2) {
+            event.preventDefault();
+          }
+        }}
+      >
+        {state.count}
+      </button>
+    );
+
+    mount(dom, Component);
+
+    const triggerClick = () => {
+      const button = dom.childNodes[0] as unknown as Element;
+      const event: {
+        type: string;
+        target: Element;
+        defaultPrevented: boolean;
+        preventDefault?: () => void;
+      } = {
+        type: "click",
+        target: button,
+        defaultPrevented: false
+      };
+      event.preventDefault = () => {
+        event.defaultPrevented = true;
+      };
+
+      listeners.click(event as unknown as Event);
+    };
+
+    triggerClick();
+    expect(dom.innerHTML).toEqual("<button>1</button>");
+
+    triggerClick();
+    expect(dom.innerHTML).toEqual("<button>1</button>");
+    expect(update()).toEqual("<button>2</button>");
+  });
+
+  it("should require manual update for async state changes after await in delegated events", async () => {
+    unmount();
+
+    const listeners: Record<string, (event: Event) => void> = {};
+    const dom = document.createElement("div");
+    (dom as any).addEventListener = (type: string, callback: EventListenerOrEventListenerObject | null) => {
+      listeners[type] = callback as (event: Event) => void;
+    };
+    (dom as any).removeEventListener = () => {};
+
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const state = { phase: "idle" };
+
+    const Component = () => (
+      <button
+        onclick={async () => {
+          state.phase = "loading";
+          await wait(5);
+          state.phase = "done";
+        }}
+      >
+        {state.phase}
+      </button>
+    );
+
+    mount(dom, Component);
+
+    const event: {
+      type: string;
+      target: Element;
+      defaultPrevented: boolean;
+      preventDefault?: () => void;
+    } = {
+      type: "click",
+      target: dom.childNodes[0] as unknown as Element,
+      defaultPrevented: false
+    };
+    event.preventDefault = () => {
+      event.defaultPrevented = true;
+    };
+
+    listeners.click(event as unknown as Event);
+    expect(dom.innerHTML).toEqual("<button>loading</button>");
+
+    await wait(15);
+    expect(dom.innerHTML).toEqual("<button>loading</button>");
+    expect(update()).toEqual("<button>done</button>");
+  });
+
   it("Antipattern: Mount and update with functional stateless component", () => {
     const Component = ({ props }: Properties) => <div id={props.id}>Hello {props.world}</div>;
     const props = {

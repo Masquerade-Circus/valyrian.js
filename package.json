@@ -59,10 +59,10 @@
     "dev:source": "NODE_ENV=development chokidar './lib/**/*.ts' -c 'bun run source.js'",
     "dev:test": "bun test --watch",
     "dev:web": "browser-sync start --config 'www/bs-config.js'",
-    "build": "bun run build:source && bun run badges",
+    "build": "bun run build:source && bun run test && bun run badges && bun run llms:full",
     "build:source": "cross-env NODE_ENV=production bun run source.js",
-    "badges": "node scripts/generate-badges.mjs",
-    "badges:strict": "node scripts/generate-badges.mjs --require-coverage",
+    "badges": "bun run scripts/generate-badges.ts",
+    "llms:full": "bun run scripts/generate-llms-full.ts",
     "test": "cross-env NODE_ENV=development bun test --bail --coverage --coverage-reporter=lcov --coverage-reporter=text",
     "commit": "bun run build && git add . && git-cz && git push",
     "release": "release-it --verbose",
@@ -187,9 +187,7 @@
     },
     "hooks": {
       "before:init": [
-        "bun run build:source",
-        "bun run test",
-        "bun run badges:strict"
+        "bun run build"
       ],
       "after:bump": [],
       "after:@release-it/conventional-changelog": []

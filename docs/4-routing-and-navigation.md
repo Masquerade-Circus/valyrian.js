@@ -198,6 +198,32 @@ const Nav = () => (
 
 `v-route` sets `href` and an optimized click handler. Modifier keys (Ctrl/Cmd/Shift/Alt) keep native browser behavior.
 
+## 4.1.9. Lazy Route Loading (Code Splitting)
+
+Routes can resolve components asynchronously. This allows per-route code splitting with dynamic imports.
+
+```tsx
+import { Router, mountRouter } from "valyrian.js/router";
+
+const router = new Router();
+
+let usersPageModule: Promise<{ default: (props: { userId: string }) => unknown }> | null = null;
+const loadUsersPage = () => {
+  usersPageModule ||= import("./pages/users.page");
+  return usersPageModule;
+};
+
+router.add("/users/:id", async (req) => {
+  const module = await loadUsersPage();
+  const UsersPage = module.default;
+  return () => <UsersPage userId={req.params.id} />;
+});
+
+mountRouter("body", router);
+```
+
+Reader tip: keep one loader function per route/module so repeated navigations reuse the same module promise.
+
 ## Common Beginner Mistakes
 
 1. Registering routes after calling `mountRouter`.

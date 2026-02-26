@@ -22,14 +22,18 @@ On mount, Valyrian hydrates the current container DOM into a vnode tree and then
 import { mount } from "valyrian.js";
 
 const App = () => <h1>Hello</h1>;
-mount("#app", App);
+mount("body", App);
 ```
+
+Mounting by selector or element is still supported for partial integration scenarios, but the default Valyrian architecture is app-owned `body`.
 
 ### `update()`
 
 Runs a patch pass for the mounted app.
 
-Use it when async logic changes state outside delegated event handlers.
+Use it when state changes happen outside delegated event handlers, when async changes happen after an `await`, or when you want to show an intermediate state before an `await`.
+
+If a delegated handler calls `event.preventDefault()` before the first `await`, the automatic event-driven update is skipped and you must call `update()` manually for each UI transition.
 
 ### `unmount()`
 
@@ -39,19 +43,19 @@ Unmounts the current app, cleans listeners/resources, and clears delegated event
 
 Use these inside a component render path:
 
-* `onCreate(fn)`
-* `onUpdate(fn)`
-* `onCleanup(fn)`
-* `onRemove(fn)`
+- `onCreate(fn)`
+- `onUpdate(fn)`
+- `onCleanup(fn)`
+- `onRemove(fn)`
 
 These helpers throw if called outside component execution.
 
 Practical timing model:
 
-* `onCreate`: runs when the component appears in the tree.
-* `onUpdate`: runs on later patches while the component stays in the tree.
-* `onCleanup`: runs before each patch of that vnode subtree and before subtree detach.
-* `onRemove`: runs after detach, when the component subtree is actually removed.
+- `onCreate`: runs when the component appears in the tree.
+- `onUpdate`: runs on later patches while the component stays in the tree.
+- `onCleanup`: runs before each patch of that vnode subtree and before subtree detach.
+- `onRemove`: runs after detach, when the component subtree is actually removed.
 
 ```tsx
 import { onCleanup, onCreate } from "valyrian.js";
@@ -119,15 +123,15 @@ Reader note: for `select[multiple]`, this implementation listens on `onclick` an
 
 Behavior by control type:
 
-* `input` (default types): syncs `value` with `oninput`.
-* `input[type=checkbox]`:
-  * model array: toggle `value` membership.
-  * scalar with `value` prop: toggle between `value` and `null`.
-  * scalar without `value`: toggle boolean.
-* `input[type=radio]`: checked when `model[name] === input.value`.
-* `select` single: sets selected option from model.
-* `select[multiple]`: model is array, selection handler runs on `onclick`.
-* `textarea`: vnode children mirror model value.
+- `input` (default types): syncs `value` with `oninput`.
+- `input[type=checkbox]`:
+  - model array: toggle `value` membership.
+  - scalar with `value` prop: toggle between `value` and `null`.
+  - scalar without `value`: toggle boolean.
+- `input[type=radio]`: checked when `model[name] === input.value`.
+- `select` single: sets selected option from model.
+- `select[multiple]`: model is array, selection handler runs on `onclick`.
+- `textarea`: vnode children mirror model value.
 
 ```tsx
 const state = { tags: [], newsletter: false, role: "user", bio: "" };

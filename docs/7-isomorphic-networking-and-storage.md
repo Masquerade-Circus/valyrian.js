@@ -28,10 +28,10 @@ flowchart TD
     kind -- Other absolute --> keep[Keep URL unchanged]
 ```
 
-* In browser: relative URLs are resolved against `window.location.origin`.
-* In Node.js:
-  * relative URLs are resolved against `urls.node`
-  * absolute URLs matching `urls.api` are rewritten to `urls.node`
+- In browser: relative URLs are resolved against `window.location.origin`.
+- In Node.js:
+  - relative URLs are resolved against `urls.node`.
+  - absolute URLs matching `urls.api` are rewritten to `urls.node`.
 
 ## Scoped Request Instances per Incoming Request
 
@@ -54,12 +54,109 @@ app.get("*", (req, res) => {
 });
 ```
 
+## End-to-End Isomorphic Prefetch Flow
+
+Use this recipe when the server should prefetch data and the browser should continue from that same state.
+
+This version skips duplicate first-load fetches when SSR already provided data.
+
+If you want route middleware to prefetch on SSR and fetch again on client mount for freshness, see [./7-ssr.md](./7-ssr.md) (SSR + Router Prefetch + Client Refetch).
+
+Shared app component:
+
+```tsx
+import { onCreate, update } from "valyrian.js";
+
+export const App = ({ api, initialState }) => {
+  const state = {
+    user: initialState.user || null,
+    loading: false
+  };
+
+  onCreate(async () => {
+    if (state.user) {
+      return;
+    }
+
+    state.loading = true;
+    update();
+
+    state.user = await api.get(`/api/users/${initialState.userId}`);
+    state.loading = false;
+    update();
+  });
+
+  if (state.loading) return <p>Loading...</p>;
+  if (!state.user) return <p>No data</p>;
+  return <h1>{state.user.name}</h1>;
+};
+```
+
+Server request handler:
+
+```tsx
+import { request } from "valyrian.js/request";
+import { render, ServerStorage } from "valyrian.js/node";
+import { App } from "./app";
+import { AppShell } from "./app-shell";
+
+app.get("/users/:id", (req, res, next) => {
+  ServerStorage.run(() => {
+    void (async () => {
+      const api = request.new("", {
+        headers: {
+          Cookie: req.headers.cookie || "",
+          Authorization: req.headers.authorization || ""
+        }
+      });
+
+      const user = await api.get(`/api/users/${req.params.id}`);
+      const initialState = { userId: req.params.id, user };
+
+      const html = render(
+        <AppShell initialState={initialState}>
+          <App api={api} initialState={initialState} />
+        </AppShell>
+      );
+
+      res.type("html").send(html);
+    })().catch(next);
+  });
+});
+```
+
+Browser entry:
+
+```tsx
+import { mount } from "valyrian.js";
+import { request } from "valyrian.js/request";
+import { App } from "./app";
+
+declare global {
+  interface Window {
+    __INITIAL_STATE__?: { user?: any; userId?: string };
+  }
+}
+
+const api = request.new("", {
+  urls: {
+    base: "",
+    api: "https://api.example.com",
+    node: "http://localhost:3000"
+  }
+});
+
+mount("body", <App api={api} initialState={window.__INITIAL_STATE__ || {}} />);
+```
+
+This keeps one fetch path while avoiding duplicate first-load requests when SSR already provided the data.
+
 ## Request-Scoped Storage (`ServerStorage`)
 
 `valyrian.js/node` provides `ServerStorage` to isolate `sessionStorage`/`localStorage` per async request context.
 
 ```ts
-import { ServerStorage, render } from "valyrian.js/node";
+import { ServerStorage } from "valyrian.js/node";
 
 app.use((req, _res, next) => {
   ServerStorage.run(() => {

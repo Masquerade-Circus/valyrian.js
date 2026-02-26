@@ -1,4 +1,4 @@
-import { htmlToHyperscript, icons, inline, render, sw, htmlToDom, domToHtml } from "valyrian.js/node";
+import { htmlToHyperscript, icons, inline, render, sw, htmlToDom, domToHtml, ServerStorage } from "valyrian.js/node";
 import { SwRuntimeManager } from "valyrian.js/sw";
 
 import { expect, describe, test as it } from "bun:test";
@@ -192,6 +192,29 @@ describe("Node test", () => {
 
     (globalThis as any).navigator = originalNavigator;
     (globalThis as any).window = originalWindow;
+  });
+
+  it("should keep sessionStorage isolated per ServerStorage context", async () => {
+    sessionStorage.clear();
+
+    const getSessionValueInsideContext = (value: string, waitMs: number) =>
+      new Promise<string | null>((resolve) => {
+        ServerStorage.run(() => {
+          sessionStorage.setItem("request-id", value);
+          setTimeout(() => {
+            resolve(sessionStorage.getItem("request-id"));
+          }, waitMs);
+        });
+      });
+
+    const [first, second] = await Promise.all([
+      getSessionValueInsideContext("first-request", 20),
+      getSessionValueInsideContext("second-request", 5)
+    ]);
+
+    expect(first).toEqual("first-request");
+    expect(second).toEqual("second-request");
+    expect(sessionStorage.getItem("request-id")).toEqual(null);
   });
 
   // NOTE: This test will take some time between 30 and 60 seconds

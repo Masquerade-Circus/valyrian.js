@@ -5,7 +5,7 @@ import {
   parseLcovCoverage,
   pickCoverageColor,
   renderBadgeSvg
-} from "../scripts/generate-badges.mjs";
+} from "../scripts/generate-badges.ts";
 
 describe("Badge generator helpers", () => {
   it("formats bytes into human-readable units", () => {
