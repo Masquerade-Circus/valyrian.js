@@ -1,6 +1,6 @@
 {
   "name": "valyrian.js",
-  "version": "9.0.0",
+  "version": "9.0.1",
   "description": "Lightweight steel to forge PWAs. (Minimal Frontend Framework with server side rendering and other capabilities)",
   "repository": "git@github.com:Masquerade-Circus/valyrian.js.git",
   "author": "Masquerade <christian@masquerade-circus.net>",
@@ -30,8 +30,12 @@
     "dist",
     "lib",
     "package-lock.json",
+    "bun.lockb",
     "LICENSE",
-    "tsconfig.json"
+    "tsconfig.json",
+    "llms.txt",
+    "llms-full.txt",
+    "docs"
   ],
   "keywords": [
     "valyrian.js",
@@ -107,11 +111,7 @@
     "release-it": "^19.2.4",
     "typescript-eslint": "^8.56.1"
   },
-  "overrides": {
-    "@types/parse-path": "7.0.3",
-    "minimist": "^1.2.8",
-    "source-map-support": "^0.5.21"
-  },
+  "overrides": {},
   "config": {
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"

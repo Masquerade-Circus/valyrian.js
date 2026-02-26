@@ -1,5 +1,23 @@
 # Changelog
 
+## [9.0.1](https://github.com/Masquerade-Circus/valyrian/compare/9.0.0...9.0.1) (2026-02-26)
+
+### Documentation
+
+* update docs ([30e5bec](https://github.com/Masquerade-Circus/valyrian/commit/30e5becb6b8f8c2cd00e01c9d9d0216883eac950))
+
+### Miscellaneous Chores
+
+* add context7.json ([c72128e](https://github.com/Masquerade-Circus/valyrian/commit/c72128e2f594eb4157980a2d7d922d46fc5bd74d))
+* add llms.txt files and improve badges ([45bc6d0](https://github.com/Masquerade-Circus/valyrian/commit/45bc6d085a9b1db1f4cd1dac4bcbd43c22419314))
+* only ignore lcov temp files, but allow to track the coverage directory ([0bf8db3](https://github.com/Masquerade-Circus/valyrian/commit/0bf8db362686ac5ab340f170c345a703402d3434))
+* remove context7.json ([10cc45a](https://github.com/Masquerade-Circus/valyrian/commit/10cc45ae8979a2d3f4a89edf6c8f1ecd89e66c2f))
+* remove coverals from github workflows and rebuild docs and llms-full.txt ([f389237](https://github.com/Masquerade-Circus/valyrian/commit/f3892371385831e967607522c1ac9cac115939a8))
+* update bun commit command to build before push ([ea9ae06](https://github.com/Masquerade-Circus/valyrian/commit/ea9ae06c86d9d495ba037b1a76fa1dedfd775f91))
+* update coverage for tests ([0a03f7c](https://github.com/Masquerade-Circus/valyrian/commit/0a03f7c336826a00f28cc29d379246c4f5489770))
+* update coverageThreshold ([fa4b016](https://github.com/Masquerade-Circus/valyrian/commit/fa4b016398beed774960a1f4ccbee065104c45be))
+* update dependencies ([773f6ca](https://github.com/Masquerade-Circus/valyrian/commit/773f6cad455ba3893202c6e68b65df0e8fc205b3))
+
 ## [9.0.0](///compare/8.1.12...9.0.0) (2026-02-23)
 
 ### ⚠ BREAKING CHANGES

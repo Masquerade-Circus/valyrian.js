@@ -129,7 +129,7 @@ export class Node implements Node {
     if (this.nodeType === 1) {
       const node = new Element();
       node.nodeType = this.nodeType;
-      this.nodeName = this.nodeName;
+      node.nodeName = this.nodeName;
       if (this.attributes) {
         for (let i = 0, l = this.attributes.length; i < l; i++) {
           node.setAttribute(this.attributes[i].nodeName, this.attributes[i].nodeValue);

@@ -8,7 +8,7 @@ export function get(obj: unknown, path: string, defaultValue?: unknown) {
   const result = path.split(".").reduce((acc: any, part) => acc && acc?.[part], obj);
 
   if (typeof result === "undefined") {
-    return defaultValue || null;
+    return defaultValue ?? null;
   }
 
   return result;

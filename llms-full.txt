@@ -3153,7 +3153,8 @@ set(data, "users.0.name", "Arya");
 Behavior details:
 
 * `get(obj, path, defaultValue?)` returns `defaultValue` when found value is missing.
-* If you pass a falsy default (`0`, `""`, `false`), current behavior may still resolve to `null` when missing.
+* Falsy defaults (`0`, `""`, `false`) are respected.
+* If `defaultValue` is omitted and the value is missing, `get` returns `null`.
 * `set(obj, path, value)` creates intermediate plain objects when segments do not exist.
 * Numeric segments in paths (for example `items.0.name`) are treated as object keys unless that structure already exists.
 

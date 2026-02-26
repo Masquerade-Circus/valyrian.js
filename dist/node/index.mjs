@@ -129,7 +129,7 @@ var Node = class _Node {
     if (this.nodeType === 1) {
       const node2 = new Element();
       node2.nodeType = this.nodeType;
-      this.nodeName = this.nodeName;
+      node2.nodeName = this.nodeName;
       if (this.attributes) {
         for (let i = 0, l = this.attributes.length; i < l; i++) {
           node2.setAttribute(this.attributes[i].nodeName, this.attributes[i].nodeValue);

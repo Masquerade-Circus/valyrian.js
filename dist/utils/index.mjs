@@ -5,7 +5,7 @@ function get(obj, path, defaultValue) {
   }
   const result = path.split(".").reduce((acc, part) => acc && acc?.[part], obj);
   if (typeof result === "undefined") {
-    return defaultValue || null;
+    return defaultValue ?? null;
   }
   return result;
 }
