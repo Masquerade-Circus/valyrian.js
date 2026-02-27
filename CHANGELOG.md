@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.1.0](https://github.com/Masquerade-Circus/valyrian/compare/9.0.1...9.1.0) (2026-02-27)
+
+### Features
+
+* add context module and improve documentation ([161e9dc](https://github.com/Masquerade-Circus/valyrian/commit/161e9dcf553caf8dd52488d5aa2d6be87da96fed))
+
 ## [9.0.1](https://github.com/Masquerade-Circus/valyrian/compare/9.0.0...9.0.1) (2026-02-26)
 
 ### Documentation
