@@ -6,23 +6,23 @@ If you are adopting Valyrian for the first time, follow these pages in order and
 
 ## 4.1. Routing and Navigation
 
-* File: [./4-routing-and-navigation.md](./4-routing-and-navigation.md)
+* File: [./4.1-routing-and-navigation.md](./4.1-routing-and-navigation.md)
 * Covers `valyrian.js/router`, `mountRouter`, route lifecycle hooks, and `v-route`.
 
 ## 4.2. Data Fetching and Async Workflows (Hub)
 
-* File: [./4-data-fetching-and-async.md](./4-data-fetching-and-async.md)
+* File: [./4.2-data-fetching-and-async.md](./4.2-data-fetching-and-async.md)
 * Subpages:
-  * [./4-request.md](./4-request.md)
-  * [./4-suspense.md](./4-suspense.md)
-  * [./4-tasks.md](./4-tasks.md)
-  * [./4-query.md](./4-query.md)
-  * [./4-network.md](./4-network.md)
-  * [./4-offline.md](./4-offline.md)
+  * [./4.2.1-request.md](./4.2.1-request.md)
+  * [./4.2.2-suspense.md](./4.2.2-suspense.md)
+  * [./4.2.3-tasks.md](./4.2.3-tasks.md)
+  * [./4.2.4-query.md](./4.2.4-query.md)
+  * [./4.2.5-network.md](./4.2.5-network.md)
+  * [./4.2.6-offline.md](./4.2.6-offline.md)
 
 ## 4.3. Forms
 
-* File: [./4-forms.md](./4-forms.md)
+* File: [./4.3-forms.md](./4.3-forms.md)
 * Covers `FormStore`, `v-form`, `v-field`, validation, transforms, and submit orchestration.
 
 ## Suggested Reading Order

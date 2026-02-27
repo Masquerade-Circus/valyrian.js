@@ -4,45 +4,54 @@ Purpose
 This file aggregates the official documentation sources from the `docs/` directory as a single reference for AI agents and tooling.
 
 Generated
-- Date (UTC): 2026-02-26
+- Date (UTC): 2026-02-27
 - Source root: `docs/`
-- File count: 34
+- File count: 43
 
 Source Files (in order)
 1. `docs/toc.md`
 2. `docs/1-introduction.md`
 3. `docs/2-getting-started.md`
-4. `docs/3-runtime-core.md`
-5. `docs/3-the-essentials.md`
+4. `docs/3-the-essentials.md`
+5. `docs/3.1-runtime-core.md`
 6. `docs/4-building-spa.md`
-7. `docs/4-data-fetching-and-async.md`
-8. `docs/4-forms.md`
-9. `docs/4-network.md`
-10. `docs/4-offline.md`
-11. `docs/4-query.md`
-12. `docs/4-request.md`
-13. `docs/4-routing-and-navigation.md`
-14. `docs/4-suspense.md`
-15. `docs/4-tasks.md`
+7. `docs/4.1-routing-and-navigation.md`
+8. `docs/4.2-data-fetching-and-async.md`
+9. `docs/4.2.1-request.md`
+10. `docs/4.2.2-suspense.md`
+11. `docs/4.2.3-tasks.md`
+12. `docs/4.2.4-query.md`
+13. `docs/4.2.5-network.md`
+14. `docs/4.2.6-offline.md`
+15. `docs/4.3-forms.md`
 16. `docs/5-advanced-state-management.md`
-17. `docs/5-flux-store.md`
-18. `docs/5-pulses.md`
-19. `docs/5-redux-devtools.md`
+17. `docs/5.2-pulses.md`
+18. `docs/5.3-flux-store.md`
+19. `docs/5.4-redux-devtools.md`
 20. `docs/6-optimization-and-performance.md`
 21. `docs/7-full-stack-capability.md`
-22. `docs/7-isomorphic-networking-and-storage.md`
-23. `docs/7-node-runtime-apis.md`
-24. `docs/7-pwa-and-build-tooling.md`
-25. `docs/7-ssr.md`
-26. `docs/7-sw-runtime.md`
-27. `docs/8-money.md`
-28. `docs/8-native-store.md`
-29. `docs/8-translate.md`
-30. `docs/8-utilities-and-ecosystem.md`
-31. `docs/8-utils.md`
-32. `docs/9-recipes-and-integrations.md`
-33. `docs/10-meta-framework-cli.md`
-34. `docs/11-roadmap-and-contribution.md`
+22. `docs/7.1-ssr.md`
+23. `docs/7.1.1-node-runtime-apis.md`
+24. `docs/7.2-isomorphic-networking-and-storage.md`
+25. `docs/7.3-pwa-and-build-tooling.md`
+26. `docs/7.3.1-sw-runtime.md`
+27. `docs/7.4-server-context.md`
+28. `docs/8-utilities-and-ecosystem.md`
+29. `docs/8.1-translate.md`
+30. `docs/8.2-money.md`
+31. `docs/8.3-native-store.md`
+32. `docs/8.4-utils.md`
+33. `docs/9-recipes-and-integrations.md`
+34. `docs/9.1-vite-integration.md`
+35. `docs/9.2-webpack-rspack-integration.md`
+36. `docs/9.3-express-fastify-ssr.md`
+37. `docs/9.4-api-client-composition.md`
+38. `docs/9.5-offline-first-commands.md`
+39. `docs/9.6-production-checklist.md`
+40. `docs/9.7-counter-variants-by-component-shape.md`
+41. `docs/9.8-reactive-counter-variants.md`
+42. `docs/10-meta-framework-cli.md`
+43. `docs/11-roadmap-and-contribution.md`
 
 
 ____________________________________________
@@ -59,43 +68,52 @@ If you are new to Valyrian.js, follow the recommended path first. It gives the f
 1. [Introduction](./1-introduction.md)
 2. [Getting Started (No-Build First)](./2-getting-started.md)
 3. [The Essentials (View and Interaction)](./3-the-essentials.md)
-4. [Routing and Navigation](./4-routing-and-navigation.md)
-5. [Data Fetching and Async Workflows (Hub)](./4-data-fetching-and-async.md)
-6. [Forms](./4-forms.md)
+4. [Routing and Navigation](./4.1-routing-and-navigation.md)
+5. [Data Fetching and Async Workflows (Hub)](./4.2-data-fetching-and-async.md)
+6. [Forms](./4.3-forms.md)
 
 ## Full Table of Contents
 
 1. [Introduction](./1-introduction.md)
 2. [Getting Started (No-Build First)](./2-getting-started.md)
 3. [The Essentials](./3-the-essentials.md)
-   * [Runtime Core API](./3-runtime-core.md)
+   * [Runtime Core API](./3.1-runtime-core.md)
 4. [Building Single Page Applications (SPA Hub)](./4-building-spa.md)
-   * [4.1. Routing and Navigation](./4-routing-and-navigation.md)
-   * [4.2. Data Fetching and Async Workflows (Hub)](./4-data-fetching-and-async.md)
-     * [4.2.1. Requests](./4-request.md)
-     * [4.2.2. Suspense](./4-suspense.md)
-     * [4.2.3. Tasks](./4-tasks.md)
-     * [4.2.4. Query Cache](./4-query.md)
-     * [4.2.5. Network Awareness](./4-network.md)
-     * [4.2.6. Offline Queue](./4-offline.md)
-   * [4.3. Forms](./4-forms.md)
+   * [4.1. Routing and Navigation](./4.1-routing-and-navigation.md)
+   * [4.2. Data Fetching and Async Workflows (Hub)](./4.2-data-fetching-and-async.md)
+     * [4.2.1. Requests](./4.2.1-request.md)
+     * [4.2.2. Suspense](./4.2.2-suspense.md)
+     * [4.2.3. Tasks](./4.2.3-tasks.md)
+     * [4.2.4. Query Cache](./4.2.4-query.md)
+     * [4.2.5. Network Awareness](./4.2.5-network.md)
+     * [4.2.6. Offline Queue](./4.2.6-offline.md)
+   * [4.3. Forms](./4.3-forms.md)
 5. [Advanced State Management (Hub)](./5-advanced-state-management.md)
-   * [5.2. Pulses](./5-pulses.md)
-   * [5.3. FluxStore](./5-flux-store.md)
-   * [5.4. Redux DevTools Bridge](./5-redux-devtools.md)
+   * [5.2. Pulses](./5.2-pulses.md)
+   * [5.3. FluxStore](./5.3-flux-store.md)
+   * [5.4. Redux DevTools Bridge](./5.4-redux-devtools.md)
 6. [Optimization and Performance](./6-optimization-and-performance.md)
 7. [The Full-Stack Capability (Isomorphism Hub)](./7-full-stack-capability.md)
-   * [7.1. Server-Side Rendering](./7-ssr.md)
-     * [7.1.1. Node Runtime APIs](./7-node-runtime-apis.md)
-   * [7.2. Isomorphic Networking and Storage](./7-isomorphic-networking-and-storage.md)
-   * [7.3. PWA and Build Tooling](./7-pwa-and-build-tooling.md)
-     * [7.3.1. Service Worker Runtime](./7-sw-runtime.md)
+   * [7.1. Server-Side Rendering](./7.1-ssr.md)
+      * [7.1.1. Node Runtime APIs](./7.1.1-node-runtime-apis.md)
+   * [7.2. Isomorphic Networking and Storage](./7.2-isomorphic-networking-and-storage.md)
+   * [7.3. PWA and Build Tooling](./7.3-pwa-and-build-tooling.md)
+      * [7.3.1. Service Worker Runtime](./7.3.1-sw-runtime.md)
+   * [7.4. Server Execution Context](./7.4-server-context.md)
 8. [Utilities and Ecosystem (Hub)](./8-utilities-and-ecosystem.md)
-   * [8.1. Internationalization](./8-translate.md)
-   * [8.2. Money and Number Formatting](./8-money.md)
-   * [8.3. Native Persistence](./8-native-store.md)
-   * [8.4. Helpers](./8-utils.md)
-9. [Recipes and Integrations](./9-recipes-and-integrations.md)
+   * [8.1. Internationalization](./8.1-translate.md)
+   * [8.2. Money and Number Formatting](./8.2-money.md)
+   * [8.3. Native Persistence](./8.3-native-store.md)
+   * [8.4. Helpers](./8.4-utils.md)
+9. [Recipes and Integrations (Hub)](./9-recipes-and-integrations.md)
+   * [9.1. Vite Integration (Client App)](./9.1-vite-integration.md)
+   * [9.2. Webpack/Rspack Integration](./9.2-webpack-rspack-integration.md)
+   * [9.3. Express/Fastify SSR](./9.3-express-fastify-ssr.md)
+   * [9.4. API Client Composition](./9.4-api-client-composition.md)
+   * [9.5. Offline-First Commands](./9.5-offline-first-commands.md)
+   * [9.6. Production Checklist](./9.6-production-checklist.md)
+   * [9.7. Counter Variants by Component Shape](./9.7-counter-variants-by-component-shape.md)
+   * [9.8. Reactive Counter Variants](./9.8-reactive-counter-variants.md)
 10. [Meta-Framework and CLI](./10-meta-framework-cli.md)
 11. [Roadmap and Contribution](./11-roadmap-and-contribution.md)
 
@@ -164,9 +182,9 @@ Recommended order:
 
 1. [./2-getting-started.md](./2-getting-started.md)
 2. [./3-the-essentials.md](./3-the-essentials.md)
-3. [./4-routing-and-navigation.md](./4-routing-and-navigation.md)
-4. [./4-data-fetching-and-async.md](./4-data-fetching-and-async.md)
-5. [./4-forms.md](./4-forms.md)
+3. [./4.1-routing-and-navigation.md](./4.1-routing-and-navigation.md)
+4. [./4.2-data-fetching-and-async.md](./4.2-data-fetching-and-async.md)
+5. [./4.3-forms.md](./4.3-forms.md)
 
 If your goal is first success only, complete chapters 2 and 3 first, then return for chapter 4 when you need routing and async workflows.
 
@@ -327,172 +345,8 @@ If you are testing locally, use any static server (for example `npx serve .`) an
 ## Next Steps
 
 1. Continue with [./3-the-essentials.md](./3-the-essentials.md) for components, directives, and update flow.
-2. Move to [./4-routing-and-navigation.md](./4-routing-and-navigation.md) to build your first SPA route.
+2. Move to [./4.1-routing-and-navigation.md](./4.1-routing-and-navigation.md) to build your first SPA route.
 3. Use [./9-recipes-and-integrations.md](./9-recipes-and-integrations.md) when you are ready for Vite/Webpack and backend integration patterns.
-
-
-____________________________________________
-# Source: docs/3-runtime-core.md
-
-# 3.7. Runtime Core API (`valyrian.js`)
-
-This page is the runtime reference for the base `valyrian.js` package.
-
-Use [./3-the-essentials.md](./3-the-essentials.md) for the learning path, then use this page for exact API behavior.
-
-## Render Lifecycle APIs
-
-### `mount(container, component)`
-
-`mount` accepts:
-
-1. A selector string or a DOM element as `container`.
-2. A component function.
-3. A POJO component (`{ view() {} }`).
-4. A vnode component.
-5. A plain value (wrapped into a trivial render function).
-
-On mount, Valyrian hydrates the current container DOM into a vnode tree and then runs the normal patch cycle.
-
-```tsx
-import { mount } from "valyrian.js";
-
-const App = () => <h1>Hello</h1>;
-mount("body", App);
-```
-
-Mounting by selector or element is still supported for partial integration scenarios, but the default Valyrian architecture is app-owned `body`.
-
-### `update()`
-
-Runs a patch pass for the mounted app.
-
-Use it when state changes happen outside delegated event handlers, when async changes happen after an `await`, or when you want to show an intermediate state before an `await`.
-
-If a delegated handler calls `event.preventDefault()` before the first `await`, the automatic event-driven update is skipped and you must call `update()` manually for each UI transition.
-
-### `unmount()`
-
-Unmounts the current app, cleans listeners/resources, and clears delegated event bindings.
-
-## Component Lifecycle Helpers
-
-Use these inside a component render path:
-
-- `onCreate(fn)`
-- `onUpdate(fn)`
-- `onCleanup(fn)`
-- `onRemove(fn)`
-
-These helpers throw if called outside component execution.
-
-Practical timing model:
-
-- `onCreate`: runs when the component appears in the tree.
-- `onUpdate`: runs on later patches while the component stays in the tree.
-- `onCleanup`: runs before each patch of that vnode subtree and before subtree detach.
-- `onRemove`: runs after detach, when the component subtree is actually removed.
-
-```tsx
-import { onCleanup, onCreate } from "valyrian.js";
-
-const Clock = () => {
-  let timer: ReturnType<typeof setInterval> | null = null;
-
-  onCreate(() => {
-    timer = setInterval(() => {
-      // do work
-    }, 1000);
-  });
-
-  onCleanup(() => {
-    if (timer) clearInterval(timer);
-  });
-
-  return <div>Clock</div>;
-};
-```
-
-## `debouncedUpdate(timeout?)`
-
-Debounces rendering. Default timeout is `42ms`.
-
-If called from an active event context, it prevents default on that event before scheduling update.
-
-```tsx
-import { debouncedUpdate } from "valyrian.js";
-
-const SearchBox = {
-  term: "",
-  onInput(event: Event) {
-    this.term = (event.target as HTMLInputElement).value;
-    debouncedUpdate(80);
-  },
-  view() {
-    return <input value={this.term} oninput={this.onInput} />;
-  }
-};
-```
-
-## Raw HTML: `trust(html)`
-
-`trust` parses an HTML string into vnode-compatible children.
-
-```tsx
-import { trust } from "valyrian.js";
-
-const Rich = ({ html }) => <article>{trust(html)}</article>;
-```
-
-Only use trusted/sanitized HTML.
-
-## `v-model` Contract
-
-`v-model` is a built-in directive with mode-specific behavior.
-
-Rules:
-
-1. The control must have `name`.
-2. Existing control handler (`oninput`/`onclick`) is preserved and runs after model sync.
-
-Reader note: for `select[multiple]`, this implementation listens on `onclick` and supports additive selection with `Ctrl`.
-
-Behavior by control type:
-
-- `input` (default types): syncs `value` with `oninput`.
-- `input[type=checkbox]`:
-  - model array: toggle `value` membership.
-  - scalar with `value` prop: toggle between `value` and `null`.
-  - scalar without `value`: toggle boolean.
-- `input[type=radio]`: checked when `model[name] === input.value`.
-- `select` single: sets selected option from model.
-- `select[multiple]`: model is array, selection handler runs on `onclick`.
-- `textarea`: vnode children mirror model value.
-
-```tsx
-const state = { tags: [], newsletter: false, role: "user", bio: "" };
-
-const Form = () => (
-  <form>
-    <input type="checkbox" name="newsletter" v-model={state} />
-
-    <select multiple name="tags" v-model={state}>
-      <option value="ts">TypeScript</option>
-      <option value="ssr">SSR</option>
-    </select>
-
-    <textarea name="bio" v-model={state} />
-  </form>
-);
-```
-
-## Hydration Behavior
-
-At mount time, existing DOM is converted to vnode structure (including text and attributes), then patching continues from that structure.
-
-This allows SSR HTML and pre-existing markup to become interactive without replacing the full container tree.
-
-If you need the learning path version (instead of reference style), start at [./3-the-essentials.md](./3-the-essentials.md).
 
 
 ____________________________________________
@@ -509,7 +363,7 @@ By the end of this page, you should be able to:
 - Use built-in directives
 - Control async UI updates
 
-If you need full API contracts for `mount/update/unmount`, lifecycle helpers, `debouncedUpdate`, `trust`, and `v-model`, see [./3-runtime-core.md](./3-runtime-core.md).
+If you need full API contracts for `mount/update/unmount`, lifecycle helpers, `debouncedUpdate`, `trust`, and `v-model`, see [./3.1-runtime-core.md](./3.1-runtime-core.md).
 
 ## 3.1. Hello World
 
@@ -557,14 +411,87 @@ const Counter = {
     return (
       <div>
         <span>Count: {this.count}</span>
-        <button onclick={this.increment}>+</button>
+        <button onclick={() => this.increment()}>+</button>
       </div>
     );
   }
 };
 
-mount("body", Counter.view);
+mount("body", Counter);
 ```
+
+### Intentional Versatility: Component Shape and State Model
+
+Valyrian separates two independent decisions:
+
+1. **Component shape** (function, POJO, class instance, props-only pure function).
+2. **State model** (local/shared state, `createPulse`, `createPulseStore`, `FluxStore`).
+
+These choices are combinable. Component shape does not force a single state model.
+
+| Component shape | Where state lives | Strengths | Tradeoffs |
+| --- | --- | --- | --- |
+| Function | Closure, module variables, or stores | Simple and flexible syntax | Can mix concerns if boundaries are not explicit |
+| POJO (`{ view() {} }`) | Object properties | State and methods grouped in one unit | If it uses `this`, mount the full object |
+| Class instance (`new X()`) | Instance/static fields | Reuses OO patterns and supports multiple instances | Can add ceremony for simple cases |
+| Props-only pure function | External state (container/store) | Deterministic render and easy testing | Needs a container to create state and handlers |
+
+Compact counter examples with the three main reactive models:
+
+```tsx
+import { createPulse } from "valyrian.js/pulses";
+
+const [count, setCount] = createPulse(0);
+
+const CounterWithPulse = () => (
+  <div>
+    <span>{count()}</span>
+    <button onclick={() => setCount((current) => current + 1)}>Increment</button>
+  </div>
+);
+```
+
+```tsx
+import { createPulseStore } from "valyrian.js/pulses";
+
+const counterStore = createPulseStore(
+  { count: 0 },
+  {
+    increment(state) {
+      state.count += 1;
+    }
+  }
+);
+
+const CounterWithPulseStore = () => (
+  <div>
+    <span>{counterStore.state.count}</span>
+    <button onclick={() => counterStore.increment()}>Increment</button>
+  </div>
+);
+```
+
+```tsx
+import { FluxStore } from "valyrian.js/flux-store";
+
+const counterFlux = new FluxStore({
+  state: { count: 0 },
+  mutations: {
+    INCREMENT(state) {
+      state.count += 1;
+    }
+  }
+});
+
+const CounterWithFluxStore = () => (
+  <div>
+    <span>{counterFlux.state.count}</span>
+    <button onclick={() => counterFlux.commit("INCREMENT")}>Increment</button>
+  </div>
+);
+```
+
+For exhaustive counter variants (shared/per-instance component shape patterns), see [./9.7-counter-variants-by-component-shape.md](./9.7-counter-variants-by-component-shape.md). For reactive equivalents, see [./9.8-reactive-counter-variants.md](./9.8-reactive-counter-variants.md).
 
 ## 3.3. Events and Update Cycle
 
@@ -680,7 +607,7 @@ const UserProfile = {
 
   view() {
     if (this.loading) return <p>Loading...</p>;
-    if (!this.user) return <button onclick={this.load}>Load user</button>;
+    if (!this.user) return <button onclick={() => this.load()}>Load user</button>;
     return <p>Hello {this.user.name}</p>;
   }
 };
@@ -786,6 +713,177 @@ Use this pattern to avoid duplicate subscriptions and memory leaks.
 
 
 ____________________________________________
+# Source: docs/3.1-runtime-core.md
+
+# 3.1. Runtime Core API (`valyrian.js`)
+
+This page is the runtime reference for the base `valyrian.js` package.
+
+Use [./3-the-essentials.md](./3-the-essentials.md) for the learning path, then use this page for exact API behavior.
+
+## Render Lifecycle APIs
+
+### `mount(container, component)`
+
+`mount` accepts:
+
+1. A selector string or a DOM element as `container`.
+2. A component function.
+3. A POJO component (`{ view() {} }`).
+4. A vnode component.
+5. A plain value (wrapped into a trivial render function).
+
+On mount, Valyrian hydrates the current container DOM into a vnode tree and then runs the normal patch cycle.
+
+Container resolution behavior:
+
+- In browsers, a string container (for example `"body"` or `"#app"`) is resolved with `document.querySelector(...)`.
+- In Node.js, a string container creates a fresh element via `createElement(...)` for that mount call.
+
+The Node.js behavior is useful in SSR request handlers because each render call works with an isolated container element.
+
+```tsx
+import { mount } from "valyrian.js";
+
+const App = () => <h1>Hello</h1>;
+mount("body", App);
+```
+
+Mounting by selector or element is still supported for partial integration scenarios, but the default Valyrian architecture is app-owned `body`.
+
+### `update()`
+
+Runs a patch pass for the mounted app.
+
+Use it when state changes happen outside delegated event handlers, when async changes happen after an `await`, or when you want to show an intermediate state before an `await`.
+
+If a delegated handler calls `event.preventDefault()` before the first `await`, the automatic event-driven update is skipped and you must call `update()` manually for each UI transition.
+
+### `unmount()`
+
+Unmounts the current app, cleans listeners/resources, and clears delegated event bindings.
+
+## Component Lifecycle Helpers
+
+Use these inside a component render path:
+
+- `onCreate(fn)`
+- `onUpdate(fn)`
+- `onCleanup(fn)`
+- `onRemove(fn)`
+
+These helpers throw if called outside component execution.
+
+Practical timing model:
+
+- `onCreate`: runs when the component appears in the tree.
+- `onUpdate`: runs on later patches while the component stays in the tree.
+- `onCleanup`: runs before each patch of that vnode subtree and before subtree detach.
+- `onRemove`: runs after detach, when the component subtree is actually removed.
+
+```tsx
+import { onCleanup, onCreate } from "valyrian.js";
+
+const Clock = () => {
+  let timer: ReturnType<typeof setInterval> | null = null;
+
+  onCreate(() => {
+    timer = setInterval(() => {
+      // do work
+    }, 1000);
+  });
+
+  onCleanup(() => {
+    if (timer) clearInterval(timer);
+  });
+
+  return <div>Clock</div>;
+};
+```
+
+## `debouncedUpdate(timeout?)`
+
+Debounces rendering. Default timeout is `42ms`.
+
+If called from an active event context, it prevents default on that event before scheduling update.
+
+```tsx
+import { debouncedUpdate } from "valyrian.js";
+
+const SearchBox = {
+  term: "",
+  onInput(event: Event) {
+    this.term = (event.target as HTMLInputElement).value;
+    debouncedUpdate(80);
+  },
+  view() {
+    return <input value={this.term} oninput={(event) => this.onInput(event)} />;
+  }
+};
+```
+
+## Raw HTML: `trust(html)`
+
+`trust` parses an HTML string into vnode-compatible children.
+
+```tsx
+import { trust } from "valyrian.js";
+
+const Rich = ({ html }) => <article>{trust(html)}</article>;
+```
+
+Only use trusted/sanitized HTML.
+
+## `v-model` Contract
+
+`v-model` is a built-in directive with mode-specific behavior.
+
+Rules:
+
+1. The control must have `name`.
+2. Existing control handler (`oninput`/`onclick`) is preserved and runs after model sync.
+
+Reader note: for `select[multiple]`, this implementation listens on `onclick` and supports additive selection with `Ctrl`.
+
+Behavior by control type:
+
+- `input` (default types): syncs `value` with `oninput`.
+- `input[type=checkbox]`:
+  - model array: toggle `value` membership.
+  - scalar with `value` prop: toggle between `value` and `null`.
+  - scalar without `value`: toggle boolean.
+- `input[type=radio]`: checked when `model[name] === input.value`.
+- `select` single: sets selected option from model.
+- `select[multiple]`: model is array, selection handler runs on `onclick`.
+- `textarea`: vnode children mirror model value.
+
+```tsx
+const state = { tags: [], newsletter: false, role: "user", bio: "" };
+
+const Form = () => (
+  <form>
+    <input type="checkbox" name="newsletter" v-model={state} />
+
+    <select multiple name="tags" v-model={state}>
+      <option value="ts">TypeScript</option>
+      <option value="ssr">SSR</option>
+    </select>
+
+    <textarea name="bio" v-model={state} />
+  </form>
+);
+```
+
+## Hydration Behavior
+
+At mount time, existing DOM is converted to vnode structure (including text and attributes), then patching continues from that structure.
+
+This allows SSR HTML and pre-existing markup to become interactive without replacing the full container tree.
+
+If you need the learning path version (instead of reference style), start at [./3-the-essentials.md](./3-the-essentials.md).
+
+
+____________________________________________
 # Source: docs/4-building-spa.md
 
 # 4. Building Single Page Applications (SPA Hub)
@@ -796,23 +894,23 @@ If you are adopting Valyrian for the first time, follow these pages in order and
 
 ## 4.1. Routing and Navigation
 
-* File: [./4-routing-and-navigation.md](./4-routing-and-navigation.md)
+* File: [./4.1-routing-and-navigation.md](./4.1-routing-and-navigation.md)
 * Covers `valyrian.js/router`, `mountRouter`, route lifecycle hooks, and `v-route`.
 
 ## 4.2. Data Fetching and Async Workflows (Hub)
 
-* File: [./4-data-fetching-and-async.md](./4-data-fetching-and-async.md)
+* File: [./4.2-data-fetching-and-async.md](./4.2-data-fetching-and-async.md)
 * Subpages:
-  * [./4-request.md](./4-request.md)
-  * [./4-suspense.md](./4-suspense.md)
-  * [./4-tasks.md](./4-tasks.md)
-  * [./4-query.md](./4-query.md)
-  * [./4-network.md](./4-network.md)
-  * [./4-offline.md](./4-offline.md)
+  * [./4.2.1-request.md](./4.2.1-request.md)
+  * [./4.2.2-suspense.md](./4.2.2-suspense.md)
+  * [./4.2.3-tasks.md](./4.2.3-tasks.md)
+  * [./4.2.4-query.md](./4.2.4-query.md)
+  * [./4.2.5-network.md](./4.2.5-network.md)
+  * [./4.2.6-offline.md](./4.2.6-offline.md)
 
 ## 4.3. Forms
 
-* File: [./4-forms.md](./4-forms.md)
+* File: [./4.3-forms.md](./4.3-forms.md)
 * Covers `FormStore`, `v-form`, `v-field`, validation, transforms, and submit orchestration.
 
 ## Suggested Reading Order
@@ -829,619 +927,7 @@ Suggested pacing:
 
 
 ____________________________________________
-# Source: docs/4-data-fetching-and-async.md
-
-# 4.2. Data Fetching and Async Workflows (Hub)
-
-This chapter is a hub for networked and async modules used in SPA flows.
-
-Use these pages in order so each layer builds on the previous one.
-
-## Suggested Sequence
-
-1. [./4-request.md](./4-request.md)
-2. [./4-suspense.md](./4-suspense.md)
-3. [./4-tasks.md](./4-tasks.md)
-4. [./4-query.md](./4-query.md)
-5. [./4-network.md](./4-network.md)
-6. [./4-offline.md](./4-offline.md)
-
-## 4.2.1. Requests
-
-* File: [./4-request.md](./4-request.md)
-* Covers request helpers, serialization/parsing rules, plugins, scoped clients, and option APIs.
-
-## 4.2.2. Suspense
-
-* File: [./4-suspense.md](./4-suspense.md)
-* Covers fallback/error rendering, required `key`, child compatibility, and stale result protection.
-
-## 4.2.3. Tasks
-
-* File: [./4-tasks.md](./4-tasks.md)
-* Covers async strategy control (`takeLatest`, `enqueue`, `drop`, `restartable`), state, and events.
-
-## 4.2.4. Query Cache
-
-* File: [./4-query.md](./4-query.md)
-* Covers cached queries/mutations, dedupe, invalidation, persistence, and change events.
-
-## 4.2.5. Network Awareness
-
-* File: [./4-network.md](./4-network.md)
-* Covers connectivity events, signal levels, runtime differences, and listener cleanup.
-
-## 4.2.6. Offline Queue
-
-* File: [./4-offline.md](./4-offline.md)
-* Covers operation queueing, retry/backoff behavior, sync lifecycle, and recovery APIs.
-
-## Common Beginner Mistakes
-
-1. Using cache/invalidation before confirming plain request flows.
-2. Skipping stable `Suspense` keys.
-3. Assuming offline retry drains the queue in one sync pass.
-4. Forgetting explicit cleanup (`off()`/`destroy()`) for long-lived listeners.
-
-
-____________________________________________
-# Source: docs/4-forms.md
-
-# 4.3. Forms (`valyrian.js/forms`)
-
-Use `FormStore` when you need schema validation, canonical transforms, and consistent submit behavior.
-
-Keep simple forms simple. Move to `FormStore` when form logic starts repeating across screens.
-
-## Quick Start Recipe
-
-1. Create a `FormStore` with `state` + `schema`.
-2. Bind `<form v-form={form}>`.
-3. Bind inputs with `v-field` and `name`.
-4. Call `submit()` or let submit event trigger it.
-
-## 4.3.1. Basic FormStore
-
-```tsx
-import { FormStore } from "valyrian.js/forms";
-
-const loginForm = new FormStore({
-  state: { email: "", password: "" },
-  schema: {
-    type: "object",
-    properties: {
-      email: { type: "string", format: "email" },
-      password: { type: "string", minLength: 8 }
-    },
-    required: ["email", "password"]
-  },
-  clean: {
-    email: (value) => String(value).trim().toLowerCase()
-  },
-  onSubmit: async (values) => {
-    await authApi.login(values as { email: string; password: string });
-  }
-});
-```
-
-Common runtime properties:
-
-* `form.state`
-* `form.errors`
-* `form.isInflight`
-* `form.isDirty`
-
-## 4.3.2. `v-form` and `v-field`
-
-```tsx
-const Login = () => (
-  <form v-form={loginForm}>
-    <input name="email" v-field={loginForm} />
-    <input name="password" type="password" v-field={loginForm} />
-
-    <p v-if={loginForm.errors.email}>{loginForm.errors.email}</p>
-    <p v-if={loginForm.errors.password}>{loginForm.errors.password}</p>
-
-    <button type="submit">Sign in</button>
-  </form>
-);
-```
-
-`v-form` wires submit handling and inflight submit button states.
-
-`v-field` wires value/checked/input behavior by `name`.
-
-`v-field` preserves existing handlers and binds nested controls under the form subtree.
-
-Reader note: in `FormStore` field binding, checkboxes map to boolean state (`checked`), and radio controls map to the selected `value`.
-
-## Form Submit Flow
-
-```mermaid
-flowchart TD
-    input[User input through v-field] --> clean[Apply clean transforms]
-    clean --> state[Write canonical state]
-    state --> submit[submit called]
-    submit --> validate[Run validate]
-    validate --> valid{Valid?}
-    valid -- No --> errors[Set errors and return false]
-    valid -- Yes --> inflight{Already inflight?}
-    inflight -- Yes --> blocked[Return false]
-    inflight -- No --> action[Run onSubmit]
-    action --> success[Return true]
-```
-
-## 4.3.3. Validation and Submit Contract
-
-* `validate()` updates `errors` and returns `true`/`false`.
-* `submit()` returns:
-  * `false` if validation fails
-  * `false` if already inflight
-  * `true` after successful submit
-* Common schema formats used in form validation include `email` and `url`.
-
-`v-form` submit handling always prevents native browser submit navigation and runs the `FormStore` flow first.
-
-```ts
-const ok = await loginForm.submit();
-if (!ok) {
-  console.log(loginForm.errors);
-}
-```
-
-## 4.3.4. Clean and Format Transforms
-
-* `clean`: `input -> state`
-* `format`: `state -> input`
-
-This helps keep state canonical while preserving user-friendly display values.
-
-```tsx
-import { Money, formatMoney, parseMoneyInput } from "valyrian.js/money";
-
-const form = new FormStore({
-  state: { amountInCents: 0 },
-  schema: {
-    type: "object",
-    properties: {
-      amountInCents: { type: "number", minimum: 0 }
-    },
-    required: ["amountInCents"]
-  },
-  clean: {
-    amountInCents: (value) => parseMoneyInput(String(value), { decimalPlaces: 2 }).toCents()
-  },
-  format: {
-    amountInCents: (value) =>
-      formatMoney(Money.fromCents(Number(value) || 0), { currency: "USD", locale: "en-US", digits: 2 })
-  }
-});
-```
-
-## 4.3.5. Additional FormStore APIs
-
-* `validate()` -> updates `errors` and returns boolean.
-* `submit(event?)` -> returns success boolean.
-* `setField(name, value, control?)` -> writes canonical state for one field.
-* `formatValue(name, value, control?)` -> maps canonical value to display value.
-* `reset()` -> resets state, errors, and inflight status.
-
-## Common Beginner Mistakes
-
-1. Forgetting `name` on inputs (required for field mapping).
-2. Treating `submit()` as always successful without checking its boolean result.
-3. Mixing raw input values and canonical state values without `clean`/`format`.
-
-
-____________________________________________
-# Source: docs/4-network.md
-
-# 4.2.5. Network Awareness (`valyrian.js/network`)
-
-`NetworkManager` wraps browser online/offline and connection signals in a small API.
-
-## Quick Start
-
-```ts
-import { NetworkEvent, NetworkManager, SignalLevel } from "valyrian.js/network";
-
-const network = new NetworkManager();
-
-network.on(NetworkEvent.CHANGE, (status) => {
-  console.log(status.online, status.effectiveType);
-});
-
-if (network.getSignalLevel() <= SignalLevel.Poor) {
-  console.log("enable low-bandwidth mode");
-}
-```
-
-## API Surface
-
-* `getNetworkStatus()`
-* `getSignalLevel()`
-* `isConnectionPoor()`
-* `getStatus()` (alias of network status)
-* `on(event, listener)`
-* `off(event, listener)`
-* `destroy()`
-
-`isConnectionPoor()` is a strict check for `SignalLevel.None`.
-
-Events:
-
-* `NetworkEvent.ONLINE`
-* `NetworkEvent.OFFLINE`
-* `NetworkEvent.CHANGE`
-
-## Signal Mapping
-
-Signal levels:
-
-* `SignalLevel.None`
-* `SignalLevel.Poor`
-* `SignalLevel.Fair`
-* `SignalLevel.Good`
-* `SignalLevel.Excellent`
-
-The mapping considers `online`, `effectiveType`, `downlink`, and `rtt` when available.
-
-## Runtime Differences
-
-Node runtime behavior is intentionally simple:
-
-* `getNetworkStatus()` returns `{ online: true }`
-* `getSignalLevel()` returns `SignalLevel.Good`
-
-Browser runtime reads `navigator` and optional Network Information API fields.
-
-If the Network Information API is unavailable, status still includes `online` and omits connection metrics.
-
-## Cleanup
-
-Call `destroy()` when the manager is no longer needed to remove listeners and clear subscriptions.
-
-
-____________________________________________
-# Source: docs/4-offline.md
-
-# 4.2.6. Offline Queue (`valyrian.js/offline`)
-
-`OfflineQueue` stores operations and syncs them when the network is available.
-
-## Quick Start
-
-```ts
-import { OfflineQueue } from "valyrian.js/offline";
-import { NetworkManager } from "valyrian.js/network";
-
-const queue = new OfflineQueue({
-  id: "orders-queue",
-  network: new NetworkManager(),
-  handler: (operation) => request.post(`/api/offline/${operation.type}`, operation.payload as Record<string, unknown>)
-});
-
-queue.enqueue({ type: "create-order", payload: { sku: "sword" } });
-await queue.sync();
-```
-
-## Queue State and Inspection
-
-* `state()` -> `{ pending, failed, syncing, lastSyncAt, lastError }`
-* `pending()` -> copy of pending operations
-* `failed()` -> copy of failed operations
-
-`enqueue(...)` auto-generates `id`, `createdAt`, and initializes `retries` to `0`.
-
-## Sync Lifecycle
-
-1. `sync()` exits early if already syncing.
-2. `sync()` exits early if network reports offline.
-3. Pending operations are processed in order.
-4. Success removes operation from pending.
-5. Non-retryable or max-retries errors move operation to failed.
-6. Retryable errors apply backoff and stop current sync pass.
-
-Retryable failure does not drain the entire queue in one call. Later `sync()` calls continue processing.
-
-## Retry and Recovery APIs
-
-* `retryOne(id)`
-* `retryAll()`
-* `discardFailed()`
-
-`retryOne(id)` is a safe no-op when the id is not found.
-
-## Events
-
-* `change` -> queue state snapshot
-* `sync:success` -> successful operation
-* `sync:error` -> `{ operation, error }`
-
-```ts
-queue.on("change", (state) => console.log(state.pending, state.failed));
-```
-
-## Auto-Sync and Cleanup
-
-Queue subscribes to `NetworkEvent.ONLINE` and triggers `sync()` automatically.
-
-Call `destroy()` to remove network and queue listeners when the queue is no longer used.
-
-## Options
-
-`OfflineQueue` accepts:
-
-* `id`
-* `network`
-* `storage` (`"local"` or `"session"`)
-* `handler(operation)`
-* `isRetryable(error)`
-* `backoff` (`strategy`, `baseMs`, `maxMs`)
-* `maxRetries`
-
-
-____________________________________________
-# Source: docs/4-query.md
-
-# 4.2.4. Query Cache (`valyrian.js/query`)
-
-`QueryClient` provides cached queries, mutations, invalidation, and optional persistence.
-
-## Quick Start
-
-```ts
-import { QueryClient } from "valyrian.js/query";
-
-const client = new QueryClient({
-  staleTime: 30000,
-  cacheTime: 300000,
-  persist: true,
-  persistId: "my-cache"
-});
-
-const posts = client.query({
-  key: ["posts", { page: 1 }],
-  fetcher: () => request.get("/api/posts", { page: 1 })
-});
-
-await posts.fetch();
-```
-
-## Query Handles
-
-`client.query(config)` returns `QueryHandle`:
-
-* `key`
-* `state`
-* `data`
-* `fetch()`
-* `invalidate()`
-
-Fetch behavior:
-
-* fresh successful data returns immediately
-* stale data triggers fetch
-* in-flight fetch is deduped per key
-
-`invalidate()` marks that query stale (`updatedAt = 0`), then the next `fetch()` refetches.
-
-## Mutation Handles
-
-`client.mutation(config)` returns `MutationHandle`:
-
-* `state`
-* `execute(payload)`
-* `reset()`
-
-`reset()` returns mutation state to `idle` and clears previous result/error.
-
-```ts
-const savePost = client.mutation({
-  execute: (payload) => request.post("/api/posts", payload),
-  onSuccess: () => client.invalidate(["posts"])
-});
-
-await savePost.execute({ title: "New post" });
-```
-
-## Invalidation and Cache Control
-
-* `invalidate(partialKey)` uses prefix matching.
-* `clear()` removes all entries and gc timers.
-
-Prefix matching example:
-
-* invalidating `["posts"]` affects `["posts", 1]` and `["posts", { page: 2 }]`.
-
-## Persistence and Rehydration
-
-With `persist: true`, cache state is saved to `native-store` local storage.
-
-On startup, persisted entries are normalized:
-
-* `loading` states are rehydrated as `idle`
-* previous `success/error/data/updatedAt` are restored when valid
-
-Persistence is opt-in (`persist: true`).
-
-## Change Events
-
-Subscribe with:
-
-```ts
-const listener = (event) => {
-  console.log(event.type, event.key, event.state);
-};
-
-const off = client.on("change", listener);
-
-// later
-off();
-
-// equivalent explicit cleanup
-client.off("change", listener);
-```
-
-Common event types include:
-
-* `query:start`
-* `query:success`
-* `query:error`
-* `query:invalidate`
-* `mutation:start`
-* `mutation:success`
-* `mutation:error`
-* `cache:clear`
-* `gc`
-
-`QueryChangeEvent` may include `key`, `state`, and `payload` depending on event type.
-
-
-____________________________________________
-# Source: docs/4-request.md
-
-# 4.2.1. Requests (`valyrian.js/request`)
-
-`request` is a small fetch wrapper with serialization rules, plugin hooks, and scoped clients.
-
-## Quick Start
-
-```ts
-import { request } from "valyrian.js/request";
-
-const users = await request.get("/api/users", { page: 1 });
-```
-
-## API Surface
-
-Main call signature:
-
-```ts
-request(method, url, data?, options?)
-```
-
-Reader-safe default: use helper methods (`request.get`, `request.post`, ...). They pass the expected lowercase method names.
-
-Generated helpers depend on `allowedMethods`:
-
-* `request.get`
-* `request.post`
-* `request.put`
-* `request.patch`
-* `request.delete`
-* `request.head`
-* `request.options`
-
-If you remove a method from `allowedMethods`, that helper is not generated.
-
-```ts
-const readonlyApi = request.new("/api", {
-  allowedMethods: ["get"]
-});
-
-await readonlyApi.get("/users");
-```
-
-## Serialization Rules
-
-```mermaid
-flowchart TD
-    call[request call] --> get{Method is GET?}
-    get -- Yes --> query[Serialize object data as query string]
-    get -- No --> native{Native body or string?}
-    native -- Yes --> asis[Send body as is]
-    native -- No --> json{Content-Type contains json?}
-    json -- Yes --> stringify[JSON.stringify body]
-    json -- No --> formdata[Convert object to FormData]
-```
-
-Notes:
-
-* `GET` + object data is appended as URL query params.
-* Native bodies are passed through (`FormData`, `URLSearchParams`, `Blob`, `ArrayBuffer`, `DataView`, `ReadableStream`, string).
-* Non-GET object bodies use JSON only when `Content-Type` includes `json`.
-* Otherwise non-GET object bodies are converted to `FormData`.
-
-## Response Parsing
-
-`Accept` controls parsing:
-
-Default: if you do not pass `Accept`, it uses `application/json`.
-
-* `application/json` -> `response.json()` (invalid JSON resolves to `null`)
-* `text/*` -> `response.text()`
-* `*blob*` -> `response.blob()`
-* `*arraybuffer*` -> `response.arrayBuffer()`
-* Otherwise response object is returned as body value.
-
-For non-OK responses, an error is thrown with `response` and optional parsed `body`.
-
-Reader note: non-OK parsing follows the same `Accept` logic for `text/*` and `application/json`. Other accept types keep `body` unset on the thrown error.
-
-## Scoped Clients and Options
-
-```ts
-const api = request.new("/api", {
-  headers: { "Content-Type": "application/json" },
-  urls: { base: "", api: "/api", node: "http://localhost:3000" }
-});
-
-api.setOption("headers.Authorization", `Bearer ${token}`);
-const auth = api.getOption("headers.Authorization");
-```
-
-Available helpers:
-
-* `new(baseUrl, options?)`
-* `setOption(path, value)`
-* `setOptions(values)`
-* `getOption(path)`
-* `getOptions(path?)`
-
-Scoped clients created with `new(...)` inherit parent plugins.
-
-For full runtime URL rewriting details, see [./7-isomorphic-networking-and-storage.md](./7-isomorphic-networking-and-storage.md).
-
-## Plugins
-
-```ts
-const id = api.use({
-  request(ctx) {
-    ctx.options.headers["X-Request-Id"] = crypto.randomUUID();
-    return ctx;
-  },
-  response(ctx) {
-    return { ...ctx, body: { data: ctx.body } };
-  },
-  error(ctx) {
-    return ctx;
-  }
-});
-
-api.eject(id);
-```
-
-Plugin hooks run in registration order.
-
-Error normalization note: if an `error` plugin returns a custom error object, that object becomes the thrown value.
-
-If no plugin handles an error, the original error is thrown.
-
-## Full Response Mode
-
-Set `resolveWithFullResponse: true` in options to return the raw `Response` object.
-
-```ts
-const response = await request.get("/health", null, {
-  headers: { Accept: "text/plain" },
-  resolveWithFullResponse: true
-});
-```
-
-
-____________________________________________
-# Source: docs/4-routing-and-navigation.md
+# Source: docs/4.1-routing-and-navigation.md
 
 # 4.1. Routing and Navigation
 
@@ -1471,6 +957,11 @@ flowchart TD
     catcher --> resolved
     resolved --> render[Mount and update URL]
 ```
+
+Node.js SSR note:
+
+- In Node.js SSR, you can call `await router.go(req.url)` without `mountRouter(...)`.
+- If no container is set, Node.js route rendering uses an isolated `"body"` container per render call.
 
 ## 4.1.1. Basic Router Setup
 
@@ -1677,7 +1168,205 @@ Reader tip: keep one loader function per route/module so repeated navigations re
 
 
 ____________________________________________
-# Source: docs/4-suspense.md
+# Source: docs/4.2-data-fetching-and-async.md
+
+# 4.2. Data Fetching and Async Workflows (Hub)
+
+This chapter is a hub for networked and async modules used in SPA flows.
+
+Use these pages in order so each layer builds on the previous one.
+
+## Suggested Sequence
+
+1. [./4.2.1-request.md](./4.2.1-request.md)
+2. [./4.2.2-suspense.md](./4.2.2-suspense.md)
+3. [./4.2.3-tasks.md](./4.2.3-tasks.md)
+4. [./4.2.4-query.md](./4.2.4-query.md)
+5. [./4.2.5-network.md](./4.2.5-network.md)
+6. [./4.2.6-offline.md](./4.2.6-offline.md)
+
+## 4.2.1. Requests
+
+* File: [./4.2.1-request.md](./4.2.1-request.md)
+* Covers request helpers, serialization/parsing rules, plugins, scoped clients, and option APIs.
+
+## 4.2.2. Suspense
+
+* File: [./4.2.2-suspense.md](./4.2.2-suspense.md)
+* Covers fallback/error rendering, required `key`, child compatibility, and stale result protection.
+
+## 4.2.3. Tasks
+
+* File: [./4.2.3-tasks.md](./4.2.3-tasks.md)
+* Covers async strategy control (`takeLatest`, `enqueue`, `drop`, `restartable`), state, and events.
+
+## 4.2.4. Query Cache
+
+* File: [./4.2.4-query.md](./4.2.4-query.md)
+* Covers cached queries/mutations, dedupe, invalidation, persistence, and change events.
+
+## 4.2.5. Network Awareness
+
+* File: [./4.2.5-network.md](./4.2.5-network.md)
+* Covers connectivity events, signal levels, runtime differences, and listener cleanup.
+
+## 4.2.6. Offline Queue
+
+* File: [./4.2.6-offline.md](./4.2.6-offline.md)
+* Covers operation queueing, retry/backoff behavior, sync lifecycle, and recovery APIs.
+
+## Common Beginner Mistakes
+
+1. Using cache/invalidation before confirming plain request flows.
+2. Skipping stable `Suspense` keys.
+3. Assuming offline retry drains the queue in one sync pass.
+4. Forgetting explicit cleanup (`off()`/`destroy()`) for long-lived listeners.
+
+
+____________________________________________
+# Source: docs/4.2.1-request.md
+
+# 4.2.1. Requests (`valyrian.js/request`)
+
+`request` is a small fetch wrapper with serialization rules, plugin hooks, and scoped clients.
+
+## Quick Start
+
+```ts
+import { request } from "valyrian.js/request";
+
+const users = await request.get("/api/users", { page: 1 });
+```
+
+## API Surface
+
+Main call signature:
+
+```ts
+request(method, url, data?, options?)
+```
+
+Reader-safe default: use helper methods (`request.get`, `request.post`, ...). They pass the expected lowercase method names.
+
+Generated helpers depend on `allowedMethods`:
+
+* `request.get`
+* `request.post`
+* `request.put`
+* `request.patch`
+* `request.delete`
+* `request.head`
+* `request.options`
+
+If you remove a method from `allowedMethods`, that helper is not generated.
+
+```ts
+const readonlyApi = request.new("/api", {
+  allowedMethods: ["get"]
+});
+
+await readonlyApi.get("/users");
+```
+
+## Serialization Rules
+
+```mermaid
+flowchart TD
+    call[request call] --> get{Method is GET?}
+    get -- Yes --> query[Serialize object data as query string]
+    get -- No --> native{Native body or string?}
+    native -- Yes --> asis[Send body as is]
+    native -- No --> json{Content-Type contains json?}
+    json -- Yes --> stringify[JSON.stringify body]
+    json -- No --> formdata[Convert object to FormData]
+```
+
+Notes:
+
+* `GET` + object data is appended as URL query params.
+* Native bodies are passed through (`FormData`, `URLSearchParams`, `Blob`, `ArrayBuffer`, `DataView`, `ReadableStream`, string).
+* Non-GET object bodies use JSON only when `Content-Type` includes `json`.
+* Otherwise non-GET object bodies are converted to `FormData`.
+
+## Response Parsing
+
+`Accept` controls parsing:
+
+Default: if you do not pass `Accept`, it uses `application/json`.
+
+* `application/json` -> `response.json()` (invalid JSON resolves to `null`)
+* `text/*` -> `response.text()`
+* `*blob*` -> `response.blob()`
+* `*arraybuffer*` -> `response.arrayBuffer()`
+* Otherwise response object is returned as body value.
+
+For non-OK responses, an error is thrown with `response` and optional parsed `body`.
+
+Reader note: non-OK parsing follows the same `Accept` logic for `text/*` and `application/json`. Other accept types keep `body` unset on the thrown error.
+
+## Scoped Clients and Options
+
+```ts
+const api = request.new("/api", {
+  headers: { "Content-Type": "application/json" },
+  urls: { base: "", api: "/api", node: "http://localhost:3000" }
+});
+
+api.setOption("headers.Authorization", `Bearer ${token}`);
+const auth = api.getOption("headers.Authorization");
+```
+
+Available helpers:
+
+* `new(baseUrl, options?)`
+* `setOption(path, value)`
+* `setOptions(values)`
+* `getOption(path)`
+* `getOptions(path?)`
+
+Scoped clients created with `new(...)` inherit parent plugins.
+
+For full runtime URL rewriting details, see [./7.2-isomorphic-networking-and-storage.md](./7.2-isomorphic-networking-and-storage.md).
+
+## Plugins
+
+```ts
+const id = api.use({
+  request(ctx) {
+    ctx.options.headers["X-Request-Id"] = crypto.randomUUID();
+    return ctx;
+  },
+  response(ctx) {
+    return { ...ctx, body: { data: ctx.body } };
+  },
+  error(ctx) {
+    return ctx;
+  }
+});
+
+api.eject(id);
+```
+
+Plugin hooks run in registration order.
+
+Error normalization note: if an `error` plugin returns a custom error object, that object becomes the thrown value.
+
+If no plugin handles an error, the original error is thrown.
+
+## Full Response Mode
+
+Set `resolveWithFullResponse: true` in options to return the raw `Response` object.
+
+```ts
+const response = await request.get("/health", null, {
+  headers: { Accept: "text/plain" },
+  resolveWithFullResponse: true
+});
+```
+
+
+____________________________________________
+# Source: docs/4.2.2-suspense.md
 
 # 4.2.2. Suspense (`valyrian.js/suspense`)
 
@@ -1739,7 +1428,7 @@ Reader note: with the same host + key, resolved value and error state are reused
 
 
 ____________________________________________
-# Source: docs/4-tasks.md
+# Source: docs/4.2.3-tasks.md
 
 # 4.2.3. Tasks (`valyrian.js/tasks`)
 
@@ -1811,6 +1500,440 @@ For `drop`, repeated calls while running resolve immediately with the current st
 
 
 ____________________________________________
+# Source: docs/4.2.4-query.md
+
+# 4.2.4. Query Cache (`valyrian.js/query`)
+
+`QueryClient` provides cached queries, mutations, invalidation, and optional persistence.
+
+## Quick Start
+
+```ts
+import { QueryClient } from "valyrian.js/query";
+
+const client = new QueryClient({
+  staleTime: 30000,
+  cacheTime: 300000,
+  persist: true,
+  persistId: "my-cache"
+});
+
+const posts = client.query({
+  key: ["posts", { page: 1 }],
+  fetcher: () => request.get("/api/posts", { page: 1 })
+});
+
+await posts.fetch();
+```
+
+## Query Handles
+
+`client.query(config)` returns `QueryHandle`:
+
+* `key`
+* `state`
+* `data`
+* `fetch()`
+* `invalidate()`
+
+Fetch behavior:
+
+* fresh successful data returns immediately
+* stale data triggers fetch
+* in-flight fetch is deduped per key
+
+`invalidate()` marks that query stale (`updatedAt = 0`), then the next `fetch()` refetches.
+
+## Mutation Handles
+
+`client.mutation(config)` returns `MutationHandle`:
+
+* `state`
+* `execute(payload)`
+* `reset()`
+
+`reset()` returns mutation state to `idle` and clears previous result/error.
+
+```ts
+const savePost = client.mutation({
+  execute: (payload) => request.post("/api/posts", payload),
+  onSuccess: () => client.invalidate(["posts"])
+});
+
+await savePost.execute({ title: "New post" });
+```
+
+## Invalidation and Cache Control
+
+* `invalidate(partialKey)` uses prefix matching.
+* `clear()` removes all entries and gc timers.
+
+Prefix matching example:
+
+* invalidating `["posts"]` affects `["posts", 1]` and `["posts", { page: 2 }]`.
+
+## Persistence and Rehydration
+
+With `persist: true`, cache state is saved to `native-store` local storage.
+
+On startup, persisted entries are normalized:
+
+* `loading` states are rehydrated as `idle`
+* previous `success/error/data/updatedAt` are restored when valid
+
+Persistence is opt-in (`persist: true`).
+
+## Change Events
+
+Subscribe with:
+
+```ts
+const listener = (event) => {
+  console.log(event.type, event.key, event.state);
+};
+
+const off = client.on("change", listener);
+
+// later
+off();
+
+// equivalent explicit cleanup
+client.off("change", listener);
+```
+
+Common event types include:
+
+* `query:start`
+* `query:success`
+* `query:error`
+* `query:invalidate`
+* `mutation:start`
+* `mutation:success`
+* `mutation:error`
+* `cache:clear`
+* `gc`
+
+`QueryChangeEvent` may include `key`, `state`, and `payload` depending on event type.
+
+
+____________________________________________
+# Source: docs/4.2.5-network.md
+
+# 4.2.5. Network Awareness (`valyrian.js/network`)
+
+`NetworkManager` wraps browser online/offline and connection signals in a small API.
+
+## Quick Start
+
+```ts
+import { NetworkEvent, NetworkManager, SignalLevel } from "valyrian.js/network";
+
+const network = new NetworkManager();
+
+network.on(NetworkEvent.CHANGE, (status) => {
+  console.log(status.online, status.effectiveType);
+});
+
+if (network.getSignalLevel() <= SignalLevel.Poor) {
+  console.log("enable low-bandwidth mode");
+}
+```
+
+## API Surface
+
+* `getNetworkStatus()`
+* `getSignalLevel()`
+* `isConnectionPoor()`
+* `getStatus()` (alias of network status)
+* `on(event, listener)`
+* `off(event, listener)`
+* `destroy()`
+
+`isConnectionPoor()` is a strict check for `SignalLevel.None`.
+
+Events:
+
+* `NetworkEvent.ONLINE`
+* `NetworkEvent.OFFLINE`
+* `NetworkEvent.CHANGE`
+
+## Signal Mapping
+
+Signal levels:
+
+* `SignalLevel.None`
+* `SignalLevel.Poor`
+* `SignalLevel.Fair`
+* `SignalLevel.Good`
+* `SignalLevel.Excellent`
+
+The mapping considers `online`, `effectiveType`, `downlink`, and `rtt` when available.
+
+## Runtime Differences
+
+Node runtime behavior is intentionally simple:
+
+* `getNetworkStatus()` returns `{ online: true }`
+* `getSignalLevel()` returns `SignalLevel.Good`
+
+Browser runtime reads `navigator` and optional Network Information API fields.
+
+If the Network Information API is unavailable, status still includes `online` and omits connection metrics.
+
+## Cleanup
+
+Call `destroy()` when the manager is no longer needed to remove listeners and clear subscriptions.
+
+
+____________________________________________
+# Source: docs/4.2.6-offline.md
+
+# 4.2.6. Offline Queue (`valyrian.js/offline`)
+
+`OfflineQueue` stores operations and syncs them when the network is available.
+
+## Quick Start
+
+```ts
+import { OfflineQueue } from "valyrian.js/offline";
+import { NetworkManager } from "valyrian.js/network";
+
+const queue = new OfflineQueue({
+  id: "orders-queue",
+  network: new NetworkManager(),
+  handler: (operation) => request.post(`/api/offline/${operation.type}`, operation.payload as Record<string, unknown>)
+});
+
+queue.enqueue({ type: "create-order", payload: { sku: "sword" } });
+await queue.sync();
+```
+
+## Queue State and Inspection
+
+* `state()` -> `{ pending, failed, syncing, lastSyncAt, lastError }`
+* `pending()` -> copy of pending operations
+* `failed()` -> copy of failed operations
+
+`enqueue(...)` auto-generates `id`, `createdAt`, and initializes `retries` to `0`.
+
+## Sync Lifecycle
+
+1. `sync()` exits early if already syncing.
+2. `sync()` exits early if network reports offline.
+3. Pending operations are processed in order.
+4. Success removes operation from pending.
+5. Non-retryable or max-retries errors move operation to failed.
+6. Retryable errors apply backoff and stop current sync pass.
+
+Retryable failure does not drain the entire queue in one call. Later `sync()` calls continue processing.
+
+## Retry and Recovery APIs
+
+* `retryOne(id)`
+* `retryAll()`
+* `discardFailed()`
+
+`retryOne(id)` is a safe no-op when the id is not found.
+
+## Events
+
+* `change` -> queue state snapshot
+* `sync:success` -> successful operation
+* `sync:error` -> `{ operation, error }`
+
+```ts
+queue.on("change", (state) => console.log(state.pending, state.failed));
+```
+
+## Auto-Sync and Cleanup
+
+Queue subscribes to `NetworkEvent.ONLINE` and triggers `sync()` automatically.
+
+Call `destroy()` to remove network and queue listeners when the queue is no longer used.
+
+## Options
+
+`OfflineQueue` accepts:
+
+* `id`
+* `network`
+* `storage` (`"local"` or `"session"`)
+* `handler(operation)`
+* `isRetryable(error)`
+* `backoff` (`strategy`, `baseMs`, `maxMs`)
+* `maxRetries`
+
+
+____________________________________________
+# Source: docs/4.3-forms.md
+
+# 4.3. Forms (`valyrian.js/forms`)
+
+Use `FormStore` when you need schema validation, canonical transforms, and consistent submit behavior.
+
+Keep simple forms simple. Move to `FormStore` when form logic starts repeating across screens.
+
+## Quick Start Recipe
+
+1. Create a `FormStore` with `state` + `schema`.
+2. Bind `<form v-form={form}>`.
+3. Bind inputs with `v-field` and `name`.
+4. Call `submit()` or let submit event trigger it.
+5. Choose `validationMode` when needed (`safe` default, `fast` opt-in).
+
+## 4.3.1. Basic FormStore
+
+```tsx
+import { FormStore } from "valyrian.js/forms";
+
+const loginForm = new FormStore({
+  state: { email: "", password: "" },
+  validationMode: "safe", // default
+  schema: {
+    type: "object",
+    properties: {
+      email: { type: "string", format: "email" },
+      password: { type: "string", minLength: 8 }
+    },
+    required: ["email", "password"]
+  },
+  clean: {
+    email: (value) => String(value).trim().toLowerCase()
+  },
+  onSubmit: async (values) => {
+    await authApi.login(values as { email: string; password: string });
+  }
+});
+```
+
+Common runtime properties:
+
+* `form.state`
+* `form.errors`
+* `form.isInflight`
+* `form.isDirty`
+
+## 4.3.2. `v-form` and `v-field`
+
+```tsx
+const Login = () => (
+  <form v-form={loginForm}>
+    <input name="email" v-field={loginForm} />
+    <input name="password" type="password" v-field={loginForm} />
+
+    <p v-if={loginForm.errors.email}>{loginForm.errors.email}</p>
+    <p v-if={loginForm.errors.password}>{loginForm.errors.password}</p>
+
+    <button type="submit">Sign in</button>
+  </form>
+);
+```
+
+`v-form` wires submit handling and inflight submit button states.
+
+`v-field` wires value/checked/input behavior by `name`.
+
+`v-field` preserves existing handlers and binds nested controls under the form subtree.
+
+Reader note: in `FormStore` field binding, checkboxes map to boolean state (`checked`), and radio controls map to the selected `value`.
+
+## Form Submit Flow
+
+```mermaid
+flowchart TD
+    input[User input through v-field] --> clean[Apply clean transforms]
+    clean --> state[Write canonical state]
+    state --> submit[submit called]
+    submit --> validate[Run validate]
+    validate --> valid{Valid?}
+    valid -- No --> errors[Set errors and return false]
+    valid -- Yes --> inflight{Already inflight?}
+    inflight -- Yes --> blocked[Return false]
+    inflight -- No --> action[Run onSubmit]
+    action --> success[Return true]
+```
+
+## 4.3.3. Validation and Submit Contract
+
+* `validate()` updates `errors` and returns `true`/`false`.
+* `submit()` returns:
+  * `false` if validation fails
+  * `false` if already inflight
+  * `true` after successful submit
+* Common schema formats used in form validation include `email` and `url`.
+
+Validation mode:
+
+* `safe` (default): validates a cloned snapshot of form values.
+* `fast`: validates live form values (faster, but schema defaults/custom keywords may mutate state during validation).
+
+`v-form` submit handling always prevents native browser submit navigation and runs the `FormStore` flow first.
+
+```ts
+const ok = await loginForm.submit();
+if (!ok) {
+  console.log(loginForm.errors);
+}
+```
+
+## 4.3.4. Clean and Format Transforms
+
+* `clean`: `input -> state`
+* `format`: `state -> input`
+
+This helps keep state canonical while preserving user-friendly display values.
+
+```tsx
+import { Money, formatMoney, parseMoneyInput } from "valyrian.js/money";
+
+const form = new FormStore({
+  state: { amountInCents: 0 },
+  schema: {
+    type: "object",
+    properties: {
+      amountInCents: { type: "number", minimum: 0 }
+    },
+    required: ["amountInCents"]
+  },
+  clean: {
+    amountInCents: (value) => parseMoneyInput(String(value), { decimalPlaces: 2 }).toCents()
+  },
+  format: {
+    amountInCents: (value) =>
+      formatMoney(Money.fromCents(Number(value) || 0), { currency: "USD", locale: "en-US", digits: 2 })
+  }
+});
+```
+
+## 4.3.5. Additional FormStore APIs
+
+* `validate()` -> updates `errors` and returns boolean.
+* `submit(event?)` -> returns success boolean.
+* `setField(name, value, control?)` -> writes canonical state for one field.
+* `formatValue(name, value, control?)` -> maps canonical value to display value.
+* `reset()` -> resets state, errors, and inflight status.
+
+Global schema engine access:
+
+* `formSchemaShield` export from `valyrian.js/forms`.
+* `FormStore.schemaShield` static getter.
+
+```ts
+import { formSchemaShield } from "valyrian.js/forms";
+
+formSchemaShield.addFormat("starts-with-a", (value) => typeof value === "string" && value.startsWith("A"));
+```
+
+Formats/keywords/types added there are shared by all `FormStore` instances.
+
+## Common Beginner Mistakes
+
+1. Forgetting `name` on inputs (required for field mapping).
+2. Treating `submit()` as always successful without checking its boolean result.
+3. Mixing raw input values and canonical state values without `clean`/`format`.
+
+
+____________________________________________
 # Source: docs/5-advanced-state-management.md
 
 # 5. Advanced State Management (Hub)
@@ -1845,28 +1968,117 @@ flowchart TD
 
 ## 5.2. Pulses
 
-* File: [./5-pulses.md](./5-pulses.md)
+* File: [./5.2-pulses.md](./5.2-pulses.md)
 * Covers `createPulse`, `createEffect`, `createPulseStore`, `createMutableStore`, and store pulse events.
 
 ## 5.3. FluxStore
 
-* File: [./5-flux-store.md](./5-flux-store.md)
+* File: [./5.3-flux-store.md](./5.3-flux-store.md)
 * Covers commit/dispatch/getters, namespaced modules, event hooks, and plugin behavior.
 
 ## 5.4. Redux DevTools Bridge
 
-* File: [./5-redux-devtools.md](./5-redux-devtools.md)
+* File: [./5.4-redux-devtools.md](./5.4-redux-devtools.md)
 * Covers `connectFluxStore`, `connectPulseStore`, `connectPulse`, and safe no-op behavior when extension is missing.
 
 ## Suggested Reading Order
 
-1. [./5-pulses.md](./5-pulses.md)
-2. [./5-flux-store.md](./5-flux-store.md)
-3. [./5-redux-devtools.md](./5-redux-devtools.md)
+1. [./5.2-pulses.md](./5.2-pulses.md)
+2. [./5.3-flux-store.md](./5.3-flux-store.md)
+3. [./5.4-redux-devtools.md](./5.4-redux-devtools.md)
+4. [./9.7-counter-variants-by-component-shape.md](./9.7-counter-variants-by-component-shape.md) (component-shape counter variants)
+5. [./9.8-reactive-counter-variants.md](./9.8-reactive-counter-variants.md) (reactive counter variants)
 
 
 ____________________________________________
-# Source: docs/5-flux-store.md
+# Source: docs/5.2-pulses.md
+
+# 5.2. Pulses (`valyrian.js/pulses`)
+
+Pulses provide fine-grained reactive state primitives and store helpers.
+
+## 5.2.1. `createPulse`
+
+```ts
+import { createPulse } from "valyrian.js/pulses";
+
+const [count, setCount, runSubscribers] = createPulse(0);
+
+setCount((current) => current + 1);
+```
+
+Returned tuple:
+
+1. `read()`
+2. `write(newValue | updater)`
+3. `runSubscribers()`
+
+`write` only notifies when value actually changes.
+
+## 5.2.2. `createEffect`
+
+```ts
+import { createEffect, createPulse } from "valyrian.js/pulses";
+
+const [count, setCount] = createPulse(0);
+
+createEffect(() => {
+  console.log("count", count());
+});
+
+setCount(1);
+```
+
+Effects subscribe to pulses read during execution.
+
+## 5.2.3. `createPulseStore`
+
+```ts
+import { createPulseStore } from "valyrian.js/pulses";
+
+const store = createPulseStore(
+  { todos: [], loading: false },
+  {
+    addTodo(state, text: string) {
+      state.todos.push({ text, done: false });
+    },
+    async fetchTodos(state) {
+      state.loading = true;
+      this.$flush();
+      const response = await fetch("/api/todos");
+      state.todos = await response.json();
+      state.loading = false;
+    }
+  }
+);
+```
+
+Rules:
+
+* State is immutable outside pulse methods.
+* Pulse methods run with context including `$flush()`.
+* Updates are coalesced and delivered with a debounced subscriber flush.
+
+## 5.2.4. Store Events
+
+Store objects expose:
+
+* `store.on(event, callback)`
+* `store.off(event, callback)`
+
+Important event:
+
+* `pulse` -> callback receives `(pulseName, args)`.
+
+## 5.2.5. `createMutableStore`
+
+`createMutableStore` disables immutability protections.
+
+Warning: changes made outside pulse methods do not trigger re-render notifications.
+
+
+____________________________________________
+# Source: docs/5.3-flux-store.md
 
 # 5.3. FluxStore (`valyrian.js/flux-store`)
 
@@ -1951,94 +2163,7 @@ A plugin is only applied once per store instance (duplicate registrations are ig
 
 
 ____________________________________________
-# Source: docs/5-pulses.md
-
-# 5.2. Pulses (`valyrian.js/pulses`)
-
-Pulses provide fine-grained reactive state primitives and store helpers.
-
-## 5.2.1. `createPulse`
-
-```ts
-import { createPulse } from "valyrian.js/pulses";
-
-const [count, setCount, runSubscribers] = createPulse(0);
-
-setCount((current) => current + 1);
-```
-
-Returned tuple:
-
-1. `read()`
-2. `write(newValue | updater)`
-3. `runSubscribers()`
-
-`write` only notifies when value actually changes.
-
-## 5.2.2. `createEffect`
-
-```ts
-import { createEffect, createPulse } from "valyrian.js/pulses";
-
-const [count, setCount] = createPulse(0);
-
-createEffect(() => {
-  console.log("count", count());
-});
-
-setCount(1);
-```
-
-Effects subscribe to pulses read during execution.
-
-## 5.2.3. `createPulseStore`
-
-```ts
-import { createPulseStore } from "valyrian.js/pulses";
-
-const store = createPulseStore(
-  { todos: [], loading: false },
-  {
-    addTodo(state, text: string) {
-      state.todos.push({ text, done: false });
-    },
-    async fetchTodos(state) {
-      state.loading = true;
-      await this.$flush();
-      const response = await fetch("/api/todos");
-      state.todos = await response.json();
-      state.loading = false;
-    }
-  }
-);
-```
-
-Rules:
-
-* State is immutable outside pulse methods.
-* Pulse methods run with context including `$flush()`.
-* Updates are coalesced and delivered with a debounced subscriber flush.
-
-## 5.2.4. Store Events
-
-Store objects expose:
-
-* `store.on(event, callback)`
-* `store.off(event, callback)`
-
-Important event:
-
-* `pulse` -> callback receives `(pulseName, args)`.
-
-## 5.2.5. `createMutableStore`
-
-`createMutableStore` disables immutability protections.
-
-Warning: changes made outside pulse methods do not trigger re-render notifications.
-
-
-____________________________________________
-# Source: docs/5-redux-devtools.md
+# Source: docs/5.4-redux-devtools.md
 
 # 5.4. Redux DevTools Bridge (`valyrian.js/redux-devtools`)
 
@@ -2180,367 +2305,51 @@ This chapter is a hub split into focused pages:
 
 ## 7.1. Server-Side Rendering
 
-* File: [./7-ssr.md](./7-ssr.md)
+* File: [./7.1-ssr.md](./7.1-ssr.md)
 * Covers SSR render flow and browser hydration behavior.
 
 ### 7.1.1. Node Runtime APIs
 
-* File: [./7-node-runtime-apis.md](./7-node-runtime-apis.md)
+* File: [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md)
 * Covers `render`, DOM utilities, runtime side effects, and node exports.
 
 ## 7.2. Isomorphic Networking and Storage
 
-* File: [./7-isomorphic-networking-and-storage.md](./7-isomorphic-networking-and-storage.md)
+* File: [./7.2-isomorphic-networking-and-storage.md](./7.2-isomorphic-networking-and-storage.md)
 * Covers environment-aware request URLs and request-scoped storage with `ServerStorage`.
 
 ## 7.3. PWA and Build Tooling
 
-* File: [./7-pwa-and-build-tooling.md](./7-pwa-and-build-tooling.md)
+* File: [./7.3-pwa-and-build-tooling.md](./7.3-pwa-and-build-tooling.md)
 * Covers icons, service worker file generation, JS/CSS bundling, and `inline.uncss`.
 
 ### 7.3.1. Service Worker Runtime
 
-* File: [./7-sw-runtime.md](./7-sw-runtime.md)
+* File: [./7.3.1-sw-runtime.md](./7.3.1-sw-runtime.md)
 * Covers `SwRuntimeManager`, update strategies, lifecycle events, and update application.
+
+## 7.4. Server Execution Context
+
+* File: [./7.4-server-context.md](./7.4-server-context.md)
+* Covers request-scoped server context and how core modules infer context automatically in Node.js.
 
 ## Read This If You Are Starting SSR
 
-1. Start with [./7-ssr.md](./7-ssr.md).
-2. Use [./7-node-runtime-apis.md](./7-node-runtime-apis.md) for runtime-level server APIs.
-3. Configure request URL rewriting and storage isolation with [./7-isomorphic-networking-and-storage.md](./7-isomorphic-networking-and-storage.md).
-4. Add PWA/build tooling and service worker runtime only after SSR flow is stable.
+1. Start with [./7.1-ssr.md](./7.1-ssr.md).
+2. Use [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md) for runtime-level server APIs.
+3. Configure request URL rewriting and storage isolation with [./7.2-isomorphic-networking-and-storage.md](./7.2-isomorphic-networking-and-storage.md).
+4. Review request-scoped context behavior with [./7.4-server-context.md](./7.4-server-context.md).
+5. Add PWA/build tooling and service worker runtime only after SSR flow is stable.
 
 
 ____________________________________________
-# Source: docs/7-isomorphic-networking-and-storage.md
-
-# 7.2. Isomorphic Networking and Storage
-
-Start with one endpoint first. Confirm URL rewriting works in Node.js, then expand to the rest of your API surface.
-
-## Request URL Rewriting (`valyrian.js/request`)
-
-Server runtime often needs different API hosts than browser runtime. Configure `request` with `urls`.
-
-```ts
-import { request } from "valyrian.js/request";
-
-request.setOption("urls", {
-  base: "",
-  node: "http://localhost:3000",
-  api: "https://api.example.com"
-});
-```
-
-Behavior summary:
-
-```mermaid
-flowchart TD
-    url[Request URL] --> runtime{Runtime}
-    runtime -- Browser --> browser[Resolve relative URLs against origin]
-    runtime -- Node.js --> kind{URL type}
-    kind -- Relative --> nodebase[Resolve against urls.node]
-    kind -- Absolute matching urls.api --> rewrite[Rewrite to urls.node]
-    kind -- Other absolute --> keep[Keep URL unchanged]
-```
-
-- In browser: relative URLs are resolved against `window.location.origin`.
-- In Node.js:
-  - relative URLs are resolved against `urls.node`.
-  - absolute URLs matching `urls.api` are rewritten to `urls.node`.
-
-## Scoped Request Instances per Incoming Request
-
-`request` is a singleton. For SSR, create scoped instances to avoid cross-request header leakage.
-
-```ts
-import { request } from "valyrian.js/request";
-import { render } from "valyrian.js/node";
-
-app.get("*", (req, res) => {
-  const api = request.new("", {
-    headers: {
-      Cookie: req.headers.cookie || "",
-      Authorization: req.headers.authorization || ""
-    }
-  });
-
-  const html = render(<App api={api} />);
-  res.send(html);
-});
-```
-
-## End-to-End Isomorphic Prefetch Flow
-
-Use this recipe when the server should prefetch data and the browser should continue from that same state.
-
-This version skips duplicate first-load fetches when SSR already provided data.
-
-If you want route middleware to prefetch on SSR and fetch again on client mount for freshness, see [./7-ssr.md](./7-ssr.md) (SSR + Router Prefetch + Client Refetch).
-
-Shared app component:
-
-```tsx
-import { onCreate, update } from "valyrian.js";
-
-export const App = ({ api, initialState }) => {
-  const state = {
-    user: initialState.user || null,
-    loading: false
-  };
-
-  onCreate(async () => {
-    if (state.user) {
-      return;
-    }
-
-    state.loading = true;
-    update();
-
-    state.user = await api.get(`/api/users/${initialState.userId}`);
-    state.loading = false;
-    update();
-  });
-
-  if (state.loading) return <p>Loading...</p>;
-  if (!state.user) return <p>No data</p>;
-  return <h1>{state.user.name}</h1>;
-};
-```
-
-Server request handler:
-
-```tsx
-import { request } from "valyrian.js/request";
-import { render, ServerStorage } from "valyrian.js/node";
-import { App } from "./app";
-import { AppShell } from "./app-shell";
-
-app.get("/users/:id", (req, res, next) => {
-  ServerStorage.run(() => {
-    void (async () => {
-      const api = request.new("", {
-        headers: {
-          Cookie: req.headers.cookie || "",
-          Authorization: req.headers.authorization || ""
-        }
-      });
-
-      const user = await api.get(`/api/users/${req.params.id}`);
-      const initialState = { userId: req.params.id, user };
-
-      const html = render(
-        <AppShell initialState={initialState}>
-          <App api={api} initialState={initialState} />
-        </AppShell>
-      );
-
-      res.type("html").send(html);
-    })().catch(next);
-  });
-});
-```
-
-Browser entry:
-
-```tsx
-import { mount } from "valyrian.js";
-import { request } from "valyrian.js/request";
-import { App } from "./app";
-
-declare global {
-  interface Window {
-    __INITIAL_STATE__?: { user?: any; userId?: string };
-  }
-}
-
-const api = request.new("", {
-  urls: {
-    base: "",
-    api: "https://api.example.com",
-    node: "http://localhost:3000"
-  }
-});
-
-mount("body", <App api={api} initialState={window.__INITIAL_STATE__ || {}} />);
-```
-
-This keeps one fetch path while avoiding duplicate first-load requests when SSR already provided the data.
-
-## Request-Scoped Storage (`ServerStorage`)
-
-`valyrian.js/node` provides `ServerStorage` to isolate `sessionStorage`/`localStorage` per async request context.
-
-```ts
-import { ServerStorage } from "valyrian.js/node";
-
-app.use((req, _res, next) => {
-  ServerStorage.run(() => {
-    if (req.headers.cookie) {
-      sessionStorage.setItem("cookie", req.headers.cookie);
-    }
-    next();
-  });
-});
-```
-
-Inside this context, code can read/write storage with the same APIs used in browser code.
-
-Reader tip: wrap the full request lifecycle in `ServerStorage.run(...)` so async work in that request keeps the same isolated storage context.
-
-## Native Store in Isomorphic Code
-
-```ts
-import { createNativeStore, StorageType } from "valyrian.js/native-store";
-
-const session = createNativeStore("user-session", { user: null }, StorageType.Session);
-```
-
-In Node.js, import `valyrian.js/node` before creating native stores.
-
-
-____________________________________________
-# Source: docs/7-node-runtime-apis.md
-
-# 7.1.1. Node Runtime APIs (`valyrian.js/node`)
-
-`valyrian.js/node` provides server runtime setup plus SSR/build utility exports.
-
-## Runtime Setup Side Effects
-
-Importing `valyrian.js/node` initializes:
-
-* `global.document` (lightweight DOM adapter)
-* `global.FormData`
-* `global.sessionStorage` and `global.localStorage` backed by `ServerStorage`
-
-Import it before using server-side modules that expect these globals.
-
-## `render(...nodes)`
-
-`render` mounts content into a server DOM container, serializes HTML, and unmounts internally.
-
-```tsx
-import { render } from "valyrian.js/node";
-
-const html = render(<main><h1>Hello SSR</h1></main>);
-```
-
-You can pass multiple nodes; they are rendered in order.
-
-Reader note: because `render` unmounts internally, each call is isolated and does not reuse DOM state from previous calls.
-
-## DOM Transform Utilities
-
-Exports:
-
-* `htmlToDom`
-* `domToHtml`
-* `htmlToHyperscript`
-* `domToHyperscript`
-
-```ts
-import { htmlToDom, domToHtml } from "valyrian.js/node";
-
-const dom = htmlToDom("<section><p>Hello</p></section>");
-const html = domToHtml(dom);
-```
-
-## Build Helpers Also Exported Here
-
-`valyrian.js/node` also exports build helpers:
-
-* `inline`
-* `icons`
-* `sw`
-
-Use them from tooling scripts (see [./7-pwa-and-build-tooling.md](./7-pwa-and-build-tooling.md)).
-
-## Request-Scoped Storage
-
-`ServerStorage` is exported for per-request storage isolation patterns.
-
-Use `ServerStorage.run(() => { ... })` per incoming request to avoid storage leakage between concurrent SSR requests.
-
-See [./7-isomorphic-networking-and-storage.md](./7-isomorphic-networking-and-storage.md) for practical request-scoped usage.
-
-
-____________________________________________
-# Source: docs/7-pwa-and-build-tooling.md
-
-# 7.3. PWA and Build Tooling
-
-Valyrian includes build helpers in `valyrian.js/node` and a service worker runtime manager in `valyrian.js/sw`.
-
-Adoption tip: add these after core routing + data + SSR behavior is stable.
-
-For runtime update orchestration APIs, see [./7-sw-runtime.md](./7-sw-runtime.md).
-
-## Icons and Manifest Generation
-
-Use `icons()` to generate app icon assets and related metadata from one source image.
-
-```js
-import { icons } from "valyrian.js/node";
-
-await icons("./assets/logo.png", {
-  iconsPath: "./public/icons",
-  linksViewPath: "./src/generated",
-  appName: "My Valyrian App"
-});
-```
-
-## Service Worker File Generation
-
-```js
-import { sw } from "valyrian.js/node";
-import pkg from "./package.json";
-
-sw("./public/sw.js", {
-  version: pkg.version,
-  name: "my-app-cache",
-  criticalUrls: ["/", "/index.html", "/dist/main.js"],
-  optionalUrls: ["/offline.html"],
-  offlinePage: "/offline.html"
-});
-```
-
-`urls` remains supported for compatibility, but `criticalUrls` and `optionalUrls` are preferred.
-
-## JavaScript and TypeScript Bundling (`inline`)
-
-```js
-import fs from "fs";
-import { inline } from "valyrian.js/node";
-
-const bundle = await inline("./src/index.tsx", { compact: true });
-fs.writeFileSync("./public/main.js", bundle.raw);
-```
-
-For TS/TSX entries, `inline` validates types by default (`noValidate: true` disables this).
-
-`inline(...)` returns `{ raw, map, file }`.
-
-## CSS Bundling and Purging
-
-```js
-import { inline } from "valyrian.js/node";
-
-const cssBundle = await inline("./src/app.css");
-const criticalCss = await inline.uncss([renderedHtml], cssBundle.raw);
-```
-
-`inline.uncss` removes unused selectors using rendered HTML as input.
-
-
-____________________________________________
-# Source: docs/7-ssr.md
+# Source: docs/7.1-ssr.md
 
 # 7.1. Server-Side Rendering
 
 Server rendering in Valyrian is built around `render` from `valyrian.js/node`.
 
-For full node runtime exports (`render`, DOM helpers, `ServerStorage`, build helpers), see [./7-node-runtime-apis.md](./7-node-runtime-apis.md).
+For full node runtime exports (`render`, DOM helpers, `ServerStorage`, build helpers), see [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md).
 
 ## Quick Start Checklist
 
@@ -2819,7 +2628,334 @@ const Component = () => {
 
 
 ____________________________________________
-# Source: docs/7-sw-runtime.md
+# Source: docs/7.1.1-node-runtime-apis.md
+
+# 7.1.1. Node Runtime APIs (`valyrian.js/node`)
+
+`valyrian.js/node` provides server runtime setup plus SSR/build utility exports.
+
+## Runtime Setup Side Effects
+
+Importing `valyrian.js/node` initializes:
+
+* `global.document` (lightweight DOM adapter)
+* `global.FormData`
+* `global.sessionStorage` and `global.localStorage` backed by `ServerStorage`
+
+Import it before using server-side modules that expect these globals.
+
+## `render(...nodes)`
+
+`render` mounts content into a server DOM container, serializes HTML, and unmounts internally.
+
+```tsx
+import { render } from "valyrian.js/node";
+
+const html = render(<main><h1>Hello SSR</h1></main>);
+```
+
+You can pass multiple nodes; they are rendered in order.
+
+Reader note: because `render` unmounts internally, each call is isolated and does not reuse DOM state from previous calls.
+
+## DOM Transform Utilities
+
+Exports:
+
+* `htmlToDom`
+* `domToHtml`
+* `htmlToHyperscript`
+* `domToHyperscript`
+
+```ts
+import { htmlToDom, domToHtml } from "valyrian.js/node";
+
+const dom = htmlToDom("<section><p>Hello</p></section>");
+const html = domToHtml(dom);
+```
+
+## Build Helpers Also Exported Here
+
+`valyrian.js/node` also exports build helpers:
+
+* `inline`
+* `icons`
+* `sw`
+
+Use them from tooling scripts (see [./7.3-pwa-and-build-tooling.md](./7.3-pwa-and-build-tooling.md)).
+
+## Request-Scoped Storage
+
+`ServerStorage` is exported for per-request storage isolation patterns.
+
+Use `ServerStorage.run(() => { ... })` per incoming request to avoid storage leakage between concurrent SSR requests.
+
+See [./7.2-isomorphic-networking-and-storage.md](./7.2-isomorphic-networking-and-storage.md) for practical request-scoped usage.
+
+
+____________________________________________
+# Source: docs/7.2-isomorphic-networking-and-storage.md
+
+# 7.2. Isomorphic Networking and Storage
+
+Start with one endpoint first. Confirm URL rewriting works in Node.js, then expand to the rest of your API surface.
+
+## Request URL Rewriting (`valyrian.js/request`)
+
+Server runtime often needs different API hosts than browser runtime. Configure `request` with `urls`.
+
+```ts
+import { request } from "valyrian.js/request";
+
+request.setOption("urls", {
+  base: "",
+  node: "http://localhost:3000",
+  api: "https://api.example.com"
+});
+```
+
+Behavior summary:
+
+```mermaid
+flowchart TD
+    url[Request URL] --> runtime{Runtime}
+    runtime -- Browser --> browser[Resolve relative URLs against origin]
+    runtime -- Node.js --> kind{URL type}
+    kind -- Relative --> nodebase[Resolve against urls.node]
+    kind -- Absolute matching urls.api --> rewrite[Rewrite to urls.node]
+    kind -- Other absolute --> keep[Keep URL unchanged]
+```
+
+- In browser: relative URLs are resolved against `window.location.origin`.
+- In Node.js:
+  - relative URLs are resolved against `urls.node`.
+  - absolute URLs matching `urls.api` are rewritten to `urls.node`.
+
+## Scoped Request Instances per Incoming Request
+
+`request` is a singleton. For SSR, create scoped instances to avoid cross-request header leakage.
+
+```ts
+import { request } from "valyrian.js/request";
+import { render } from "valyrian.js/node";
+
+app.get("*", (req, res) => {
+  const api = request.new("", {
+    headers: {
+      Cookie: req.headers.cookie || "",
+      Authorization: req.headers.authorization || ""
+    }
+  });
+
+  const html = render(<App api={api} />);
+  res.send(html);
+});
+```
+
+Context note:
+
+- In Node.js request context (`ServerStorage.run(...)`), calling `request.new(...)` sets that scoped client as the active request context for the current async request.
+- Calls through the exported singleton `request` inside that same request context resolve to the contextual scoped client.
+
+## End-to-End Isomorphic Prefetch Flow
+
+Use this recipe when the server should prefetch data and the browser should continue from that same state.
+
+This version skips duplicate first-load fetches when SSR already provided data.
+
+If you want route middleware to prefetch on SSR and fetch again on client mount for freshness, see [./7.1-ssr.md](./7.1-ssr.md) (SSR + Router Prefetch + Client Refetch).
+
+Shared app component:
+
+```tsx
+import { onCreate, update } from "valyrian.js";
+
+export const App = ({ api, initialState }) => {
+  const state = {
+    user: initialState.user || null,
+    loading: false
+  };
+
+  onCreate(async () => {
+    if (state.user) {
+      return;
+    }
+
+    state.loading = true;
+    update();
+
+    state.user = await api.get(`/api/users/${initialState.userId}`);
+    state.loading = false;
+    update();
+  });
+
+  if (state.loading) return <p>Loading...</p>;
+  if (!state.user) return <p>No data</p>;
+  return <h1>{state.user.name}</h1>;
+};
+```
+
+Server request handler:
+
+```tsx
+import { request } from "valyrian.js/request";
+import { render, ServerStorage } from "valyrian.js/node";
+import { App } from "./app";
+import { AppShell } from "./app-shell";
+
+app.get("/users/:id", (req, res, next) => {
+  ServerStorage.run(() => {
+    void (async () => {
+      const api = request.new("", {
+        headers: {
+          Cookie: req.headers.cookie || "",
+          Authorization: req.headers.authorization || ""
+        }
+      });
+
+      const user = await api.get(`/api/users/${req.params.id}`);
+      const initialState = { userId: req.params.id, user };
+
+      const html = render(
+        <AppShell initialState={initialState}>
+          <App api={api} initialState={initialState} />
+        </AppShell>
+      );
+
+      res.type("html").send(html);
+    })().catch(next);
+  });
+});
+```
+
+Browser entry:
+
+```tsx
+import { mount } from "valyrian.js";
+import { request } from "valyrian.js/request";
+import { App } from "./app";
+
+declare global {
+  interface Window {
+    __INITIAL_STATE__?: { user?: any; userId?: string };
+  }
+}
+
+const api = request.new("", {
+  urls: {
+    base: "",
+    api: "https://api.example.com",
+    node: "http://localhost:3000"
+  }
+});
+
+mount("body", <App api={api} initialState={window.__INITIAL_STATE__ || {}} />);
+```
+
+This keeps one fetch path while avoiding duplicate first-load requests when SSR already provided the data.
+
+## Request-Scoped Storage (`ServerStorage`)
+
+`valyrian.js/node` provides `ServerStorage` to isolate `sessionStorage`/`localStorage` per async request context.
+
+```ts
+import { ServerStorage } from "valyrian.js/node";
+
+app.use((req, _res, next) => {
+  ServerStorage.run(() => {
+    if (req.headers.cookie) {
+      sessionStorage.setItem("cookie", req.headers.cookie);
+    }
+    next();
+  });
+});
+```
+
+Inside this context, code can read/write storage with the same APIs used in browser code.
+
+Reader tip: wrap the full request lifecycle in `ServerStorage.run(...)` so async work in that request keeps the same isolated storage context.
+
+## Native Store in Isomorphic Code
+
+```ts
+import { createNativeStore, StorageType } from "valyrian.js/native-store";
+
+const session = createNativeStore("user-session", { user: null }, StorageType.Session);
+```
+
+In Node.js, import `valyrian.js/node` before creating native stores.
+
+
+____________________________________________
+# Source: docs/7.3-pwa-and-build-tooling.md
+
+# 7.3. PWA and Build Tooling
+
+Valyrian includes build helpers in `valyrian.js/node` and a service worker runtime manager in `valyrian.js/sw`.
+
+Adoption tip: add these after core routing + data + SSR behavior is stable.
+
+For runtime update orchestration APIs, see [./7.3.1-sw-runtime.md](./7.3.1-sw-runtime.md).
+
+## Icons and Manifest Generation
+
+Use `icons()` to generate app icon assets and related metadata from one source image.
+
+```js
+import { icons } from "valyrian.js/node";
+
+await icons("./assets/logo.png", {
+  iconsPath: "./public/icons",
+  linksViewPath: "./src/generated",
+  appName: "My Valyrian App"
+});
+```
+
+## Service Worker File Generation
+
+```js
+import { sw } from "valyrian.js/node";
+import pkg from "./package.json";
+
+sw("./public/sw.js", {
+  version: pkg.version,
+  name: "my-app-cache",
+  criticalUrls: ["/", "/index.html", "/dist/main.js"],
+  optionalUrls: ["/offline.html"],
+  offlinePage: "/offline.html"
+});
+```
+
+`urls` remains supported for compatibility, but `criticalUrls` and `optionalUrls` are preferred.
+
+## JavaScript and TypeScript Bundling (`inline`)
+
+```js
+import fs from "fs";
+import { inline } from "valyrian.js/node";
+
+const bundle = await inline("./src/index.tsx", { compact: true });
+fs.writeFileSync("./public/main.js", bundle.raw);
+```
+
+For TS/TSX entries, `inline` validates types by default (`noValidate: true` disables this).
+
+`inline(...)` returns `{ raw, map, file }`.
+
+## CSS Bundling and Purging
+
+```js
+import { inline } from "valyrian.js/node";
+
+const cssBundle = await inline("./src/app.css");
+const criticalCss = await inline.uncss([renderedHtml], cssBundle.raw);
+```
+
+`inline.uncss` removes unused selectors using rendered HTML as input.
+
+
+____________________________________________
+# Source: docs/7.3.1-sw-runtime.md
 
 # 7.3.1. Service Worker Runtime (`valyrian.js/sw`)
 
@@ -2873,150 +3009,99 @@ If service workers are unsupported, it returns without throwing.
 
 
 ____________________________________________
-# Source: docs/8-money.md
+# Source: docs/7.4-server-context.md
 
-# 8.2. Money and Number Formatting (`valyrian.js/money`)
+# 7.4. Server Execution Context
 
-This module keeps money values precise with cents-based arithmetic and formatting helpers.
+Valyrian provides `valyrian.js/context` for request-scoped values in server runtime flows.
 
-## `Money` Value Object
+Important:
 
-```ts
-import { Money } from "valyrian.js/money";
+- This is **server execution context** (request-scope), not a UI tree context.
+- It is **not** React Context API, Vue provide/inject, or any component-tree dependency injection API.
 
-const subtotal = Money.fromDecimal(19.99);
-const tax = Money.fromDecimal(1.6);
-const total = subtotal.add(tax);
-```
+## Why it exists
 
-Core APIs:
+Concurrent SSR requests can run at the same time. Some modules need per-request values without leaking to other requests.
 
-* `Money.fromCents(cents)`
-* `Money.fromDecimal(value, decimalPlaces?)`
-* `toCents()`
-* `toDecimal(decimalPlaces?)`
-* `add`, `subtract`, `multiply`, `divide`
+The context module gives one place to store and resolve request-scoped values.
 
-`divide(0)` throws.
-
-## `NumberFormatter`
-
-`NumberFormatter` is lower-level numeric cleanup + formatting utility.
+## API
 
 ```ts
-import { NumberFormatter } from "valyrian.js/money";
+import { createContextScope, getContext, hasContext, setContext, runWithContext } from "valyrian.js/context";
 
-const formatted = NumberFormatter.create("$1,234.56").format(2, { currency: "USD" }, "en-US");
+const scope = createContextScope<string>("example");
+
+runWithContext(scope, "value", () => {
+  console.log(getContext(scope)); // "value"
+});
+
+const restore = setContext(scope, "another-value");
+restore();
 ```
 
-Useful APIs:
+## Node.js behavior
 
-* `set(value, shiftDecimal?)`
-* `format(digits?, options?, locale?)`
-* `fromDecimalPlaces(decimalPlaces)`
-* `toDecimalPlaces(decimalPlaces)`
-* `shiftDecimalPlaces()`
+When `valyrian.js/node` is imported, `ServerStorage.run(...)` creates isolated async request context.
 
-## Parsing and Formatting Helpers
+`valyrian.js/context` uses that request context automatically in Node.js.
 
-```ts
-import { formatMoney, parseMoneyInput } from "valyrian.js/money";
+That means context values are isolated across concurrent requests.
 
-const parsed = parseMoneyInput("$1,234.56", { decimalPlaces: 2 });
-const view = formatMoney(parsed, { currency: "USD", locale: "en-US", digits: 2 });
-```
+## Modules using this internally
 
-Parsing notes:
+The following modules infer context automatically in Node.js while keeping their existing public API:
 
-* strips spaces and currency symbols
-* normalizes decimal separators
-* invalid input returns `Money.fromCents(0)`
+- `valyrian.js/router`
+- `valyrian.js/request`
+- `valyrian.js/translate`
+- `valyrian.js/native-store`
 
-## `v-money` Directive
-
-`v-money` keeps an input in formatted currency while storing cents in your model.
-
-```tsx
-<input
-  v-money={{
-    model: form.state,
-    field: "amountInCents",
-    currency: "USD",
-    locale: "en-US",
-    decimalPlaces: 2
-  }}
-/>
-```
-
-`v-money` preserves any existing `oninput` handler and calls it after updating and reformatting the input value.
+You can keep using these modules with the same API. Context resolution is internal behavior for SSR safety.
 
 
 ____________________________________________
-# Source: docs/8-native-store.md
+# Source: docs/8-utilities-and-ecosystem.md
 
-# 8.3. Native Persistence (`valyrian.js/native-store`)
+# 8. Utilities and Ecosystem (Hub)
 
-`createNativeStore` provides a small persisted store over `localStorage` or `sessionStorage`.
+Valyrian includes utility modules used by the framework and available to your app code.
 
-## Quick Start
+These modules keep the same design style as core runtime APIs: explicit behavior and small surfaces.
 
-```ts
-import { createNativeStore, StorageType } from "valyrian.js/native-store";
+Reader-first advice: start with the module closest to your current task, then come back for the rest.
 
-const settings = createNativeStore(
-  "app-settings",
-  {
-    state: { theme: "light" },
-    toggleTheme() {
-      this.set("theme", this.state.theme === "light" ? "dark" : "light");
-    }
-  },
-  StorageType.Local
-);
-```
+## 8.1. Internationalization
 
-## Signature
+* File: [./8.1-translate.md](./8.1-translate.md)
+* Covers language dictionaries, interpolation, `v-t`, language persistence strategies, and missing-key logs.
 
-```ts
-createNativeStore(id, definition?, storageType?, reuseIfExist?)
-```
+## 8.2. Money and Number Formatting
 
-* `storageType`: `StorageType.Local` or `StorageType.Session`
-* `reuseIfExist`: if `true`, returns existing store for same id; otherwise duplicate id throws
+* File: [./8.2-money.md](./8.2-money.md)
+* Covers `Money`, `NumberFormatter`, parsing/formatting helpers, and `v-money`.
 
-Reader note: store identity is keyed by `id` in-memory. Creating the same id twice throws unless `reuseIfExist` is `true`.
+## 8.3. Native Persistence
 
-## Base Store API
+* File: [./8.3-native-store.md](./8.3-native-store.md)
+* Covers `createNativeStore`, storage types, duplicate-id behavior, sync semantics, and Node runtime requirements.
 
-Every store exposes:
+## 8.4. Helpers
 
-* `state`
-* `set(key, value)`
-* `get(key)`
-* `delete(key)`
-* `load()`
-* `clear()`
+* File: [./8.4-utils.md](./8.4-utils.md)
+* Covers object path helpers, deep clone/freeze helpers, change detection, and validators/guards.
 
-`get` lazily calls `load()` when state is empty.
+## Suggested Reading Order
 
-## Storage Sync Behavior
-
-For `StorageType.Local` in browser runtime, store state syncs across tabs via the `storage` event.
-
-`StorageType.Session` does not use cross-tab sync.
-
-## Node Runtime Requirement
-
-In Node.js, import `valyrian.js/node` before creating native stores so storage globals are available.
-
-```ts
-import "valyrian.js/node";
-import { createNativeStore } from "valyrian.js/native-store";
-```
+1. [./8.1-translate.md](./8.1-translate.md)
+2. [./8.2-money.md](./8.2-money.md)
+3. [./8.3-native-store.md](./8.3-native-store.md)
+4. [./8.4-utils.md](./8.4-utils.md)
 
 
 ____________________________________________
-# Source: docs/8-translate.md
+# Source: docs/8.1-translate.md
 
 # 8.1. Internationalization (`valyrian.js/translate`)
 
@@ -3095,46 +3180,150 @@ setLog(true);
 
 
 ____________________________________________
-# Source: docs/8-utilities-and-ecosystem.md
+# Source: docs/8.2-money.md
 
-# 8. Utilities and Ecosystem (Hub)
+# 8.2. Money and Number Formatting (`valyrian.js/money`)
 
-Valyrian includes utility modules used by the framework and available to your app code.
+This module keeps money values precise with cents-based arithmetic and formatting helpers.
 
-These modules keep the same design style as core runtime APIs: explicit behavior and small surfaces.
+## `Money` Value Object
 
-Reader-first advice: start with the module closest to your current task, then come back for the rest.
+```ts
+import { Money } from "valyrian.js/money";
 
-## 8.1. Internationalization
+const subtotal = Money.fromDecimal(19.99);
+const tax = Money.fromDecimal(1.6);
+const total = subtotal.add(tax);
+```
 
-* File: [./8-translate.md](./8-translate.md)
-* Covers language dictionaries, interpolation, `v-t`, language persistence strategies, and missing-key logs.
+Core APIs:
 
-## 8.2. Money and Number Formatting
+* `Money.fromCents(cents)`
+* `Money.fromDecimal(value, decimalPlaces?)`
+* `toCents()`
+* `toDecimal(decimalPlaces?)`
+* `add`, `subtract`, `multiply`, `divide`
 
-* File: [./8-money.md](./8-money.md)
-* Covers `Money`, `NumberFormatter`, parsing/formatting helpers, and `v-money`.
+`divide(0)` throws.
 
-## 8.3. Native Persistence
+## `NumberFormatter`
 
-* File: [./8-native-store.md](./8-native-store.md)
-* Covers `createNativeStore`, storage types, duplicate-id behavior, sync semantics, and Node runtime requirements.
+`NumberFormatter` is lower-level numeric cleanup + formatting utility.
 
-## 8.4. Helpers
+```ts
+import { NumberFormatter } from "valyrian.js/money";
 
-* File: [./8-utils.md](./8-utils.md)
-* Covers object path helpers, deep clone/freeze helpers, change detection, and validators/guards.
+const formatted = NumberFormatter.create("$1,234.56").format(2, { currency: "USD" }, "en-US");
+```
 
-## Suggested Reading Order
+Useful APIs:
 
-1. [./8-translate.md](./8-translate.md)
-2. [./8-money.md](./8-money.md)
-3. [./8-native-store.md](./8-native-store.md)
-4. [./8-utils.md](./8-utils.md)
+* `set(value, shiftDecimal?)`
+* `format(digits?, options?, locale?)`
+* `fromDecimalPlaces(decimalPlaces)`
+* `toDecimalPlaces(decimalPlaces)`
+* `shiftDecimalPlaces()`
+
+## Parsing and Formatting Helpers
+
+```ts
+import { formatMoney, parseMoneyInput } from "valyrian.js/money";
+
+const parsed = parseMoneyInput("$1,234.56", { decimalPlaces: 2 });
+const view = formatMoney(parsed, { currency: "USD", locale: "en-US", digits: 2 });
+```
+
+Parsing notes:
+
+* strips spaces and currency symbols
+* normalizes decimal separators
+* invalid input returns `Money.fromCents(0)`
+
+## `v-money` Directive
+
+`v-money` keeps an input in formatted currency while storing cents in your model.
+
+```tsx
+<input
+  v-money={{
+    model: form.state,
+    field: "amountInCents",
+    currency: "USD",
+    locale: "en-US",
+    decimalPlaces: 2
+  }}
+/>
+```
+
+`v-money` preserves any existing `oninput` handler and calls it after updating and reformatting the input value.
 
 
 ____________________________________________
-# Source: docs/8-utils.md
+# Source: docs/8.3-native-store.md
+
+# 8.3. Native Persistence (`valyrian.js/native-store`)
+
+`createNativeStore` provides a small persisted store over `localStorage` or `sessionStorage`.
+
+## Quick Start
+
+```ts
+import { createNativeStore, StorageType } from "valyrian.js/native-store";
+
+const settings = createNativeStore(
+  "app-settings",
+  {
+    state: { theme: "light" },
+    toggleTheme() {
+      this.set("theme", this.state.theme === "light" ? "dark" : "light");
+    }
+  },
+  StorageType.Local
+);
+```
+
+## Signature
+
+```ts
+createNativeStore(id, definition?, storageType?, reuseIfExist?)
+```
+
+* `storageType`: `StorageType.Local` or `StorageType.Session`
+* `reuseIfExist`: if `true`, returns existing store for same id; otherwise duplicate id throws
+
+Reader note: store identity is keyed by `id` in-memory. Creating the same id twice throws unless `reuseIfExist` is `true`.
+
+## Base Store API
+
+Every store exposes:
+
+* `state`
+* `set(key, value)`
+* `get(key)`
+* `delete(key)`
+* `load()`
+* `clear()`
+
+`get` lazily calls `load()` when state is empty.
+
+## Storage Sync Behavior
+
+For `StorageType.Local` in browser runtime, store state syncs across tabs via the `storage` event.
+
+`StorageType.Session` does not use cross-tab sync.
+
+## Node Runtime Requirement
+
+In Node.js, import `valyrian.js/node` before creating native stores so storage globals are available.
+
+```ts
+import "valyrian.js/node";
+import { createNativeStore } from "valyrian.js/native-store";
+```
+
+
+____________________________________________
+# Source: docs/8.4-utils.md
 
 # 8.4. Helpers (`valyrian.js/utils`)
 
@@ -3194,122 +3383,1493 @@ const subset = pick({ a: 1, b: 2 }, ["a"]);
 ____________________________________________
 # Source: docs/9-recipes-and-integrations.md
 
-# 9. Recipes and Integrations
+# 9. Recipes and Integrations (Hub)
 
-This page contains practical integration patterns.
+This chapter contains two tracks:
 
-Pick one recipe at a time. Keep the first integration path working before you combine strategies.
+1. Integration and operations recipes (`9.1`-`9.6`).
+2. Architecture reference patterns (`9.7`-`9.8`).
+
+Pick one recipe at a time. Keep the first integration path stable before combining strategies.
+
+## Integration and Operations Recipes
 
 ## 9.1. Vite Integration (Client App)
 
-Valyrian works with Vite when you want HMR and ecosystem plugins.
-
-```bash
-npm i valyrian.js vite
-```
-
-Use `valyrian.js` in your app entry as usual; Vite handles dev server and production bundling.
+* File: [./9.1-vite-integration.md](./9.1-vite-integration.md)
+* Use this when you want Vite dev server, HMR, and a direct dev/build/preview verification loop.
 
 ## 9.2. Webpack/Rspack Integration
 
-Use this path if your organization already standardizes on Webpack/Rspack.
-
-Key points:
-
-- Keep JSX factory aligned with `v`/`v.fragment`.
-- Keep docs examples and runtime behavior aligned with the same component APIs.
+* File: [./9.2-webpack-rspack-integration.md](./9.2-webpack-rspack-integration.md)
+* Use this when your organization standardizes on Webpack or Rspack and you need explicit TSX transform control.
 
 ## 9.3. Express/Fastify SSR
 
-Use `valyrian.js/node` for request-scoped rendering on the server and mount the same app state on the client.
+* File: [./9.3-express-fastify-ssr.md](./9.3-express-fastify-ssr.md)
+* End-to-end SSR recipe with request-scoped isolation and hydration continuity.
+
+## 9.4. API Client Composition
+
+* File: [./9.4-api-client-composition.md](./9.4-api-client-composition.md)
+* Shows how to structure per-domain request clients.
+
+## 9.5. Offline-First Commands
+
+* File: [./9.5-offline-first-commands.md](./9.5-offline-first-commands.md)
+* Practical mutation queueing and retry flows for flaky networks.
+
+## 9.6. Production Checklist
+
+* File: [./9.6-production-checklist.md](./9.6-production-checklist.md)
+* Pre-release checks to validate runtime behavior and docs/runtime alignment.
+
+## Architecture Reference Patterns
+
+## 9.7. Counter Variants by Component Shape
+
+* File: [./9.7-counter-variants-by-component-shape.md](./9.7-counter-variants-by-component-shape.md)
+* Exhaustive shared and per-instance counter variants.
+
+## 9.8. Reactive Counter Variants
+
+* File: [./9.8-reactive-counter-variants.md](./9.8-reactive-counter-variants.md)
+* Equivalent counter variants with `createPulse`, `createPulseStore`, and `FluxStore`.
+
+## Suggested Reading Order
+
+1. Choose your build/runtime integration path first (`9.1`, `9.2`, or `9.3`).
+   Pick one bundler path first; do not optimize both in parallel on day one.
+2. Add reliability patterns (`9.4`, `9.5`).
+3. Run the release checks in `9.6`.
+4. Use `9.7` and `9.8` as architecture reference patterns.
+
+
+____________________________________________
+# Source: docs/9.1-vite-integration.md
+
+# 9.1. Vite Integration (Client App)
+
+Use this recipe when you want fast local feedback (`vite dev`) and a straightforward production bundle (`vite build`).
+
+Prerequisite:
+
+- [./3.1-runtime-core.md](./3.1-runtime-core.md)
+
+## Goal
+
+1. Run Valyrian with TSX in Vite.
+2. Keep JSX transform aligned with Valyrian (`v` / `v.fragment`).
+3. Verify dev + build + preview flow.
+
+## Install
+
+```bash
+npm create vite@latest my-valyrian-vite -- --template vanilla-ts
+cd my-valyrian-vite
+npm i valyrian.js
+```
+
+## Configure JSX Transform (Required)
+
+Set TypeScript JSX settings in your app tsconfig:
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react",
+    "jsxFactory": "v",
+    "jsxFragmentFactory": "v.fragment"
+  }
+}
+```
+
+Set matching Vite esbuild JSX settings:
+
+```ts
+// vite.config.ts
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  esbuild: {
+    jsxFactory: "v",
+    jsxFragment: "v.fragment"
+  }
+});
+```
+
+## App Entry
+
+Create `src/main.tsx`:
 
 ```tsx
-import { v } from "valyrian.js";
-import { render, ServerStorage } from "valyrian.js/node";
-import { App } from "./app";
+import { mount, v } from "valyrian.js";
 
-function AppShell({ initialState }, children) {
-  const serializedState = JSON.stringify(initialState).replace(/</g, "\\u003c");
+function App() {
+  return (
+    <main style="font-family: sans-serif; padding: 2rem;">
+      <h1>Valyrian + Vite</h1>
+      <p>HMR and production bundling are now configured.</p>
+    </main>
+  );
+}
+
+mount("#app", App);
+```
+
+## Verify
+
+```bash
+npm run dev
+npm run build
+npm run preview
+```
+
+Expected outcomes:
+
+1. `dev`: page renders and updates on file save.
+2. `build`: production bundle completes without JSX transform errors.
+3. `preview`: built app renders the same output as dev.
+
+## Integration Notes
+
+Required for correctness:
+
+1. Keep `jsxFactory`/`jsxFragmentFactory` aligned with `v`/`v.fragment`.
+2. Keep `v` in scope in TSX files (for classic JSX factory mode).
+
+Recommended practice:
+
+1. Keep one stable mount root (`#app` or `body`) across your app.
+2. Use the same JSX transform settings in local and CI builds.
+
+
+____________________________________________
+# Source: docs/9.2-webpack-rspack-integration.md
+
+# 9.2. Webpack/Rspack Integration
+
+Use this path when your organization already standardizes on Webpack or Rspack.
+
+Prerequisite:
+
+- [./3.1-runtime-core.md](./3.1-runtime-core.md)
+
+## Goal
+
+1. Compile TSX with Valyrian JSX factories (`v` / `v.fragment`).
+2. Run local dev server.
+3. Build a production bundle with the same transform assumptions.
+
+## Install
+
+```bash
+npm i valyrian.js
+npm i -D typescript
+```
+
+Create `src/main.tsx`:
+
+```tsx
+import { mount, v } from "valyrian.js";
+
+function App() {
+  return (
+    <main style="font-family: sans-serif; padding: 2rem;">
+      <h1>Valyrian Bundled App</h1>
+      <p>Webpack/Rspack integration is working.</p>
+    </main>
+  );
+}
+
+mount("#app", App);
+```
+
+## TypeScript JSX Settings (Required)
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react",
+    "jsxFactory": "v",
+    "jsxFragmentFactory": "v.fragment"
+  }
+}
+```
+
+## Webpack Recipe
+
+Install:
+
+```bash
+npm i -D webpack webpack-cli webpack-dev-server ts-loader html-webpack-plugin
+```
+
+`webpack.config.cjs`:
+
+```js
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+
+module.exports = {
+  mode: process.env.NODE_ENV || "development",
+  entry: "./src/main.tsx",
+  devtool: "source-map",
+  resolve: {
+    extensions: [".tsx", ".ts", ".js"]
+  },
+  module: {
+    rules: [
+      {
+        test: /\.[tj]sx?$/,
+        exclude: /node_modules/,
+        use: {
+          loader: "ts-loader",
+          options: {
+            transpileOnly: true
+          }
+        }
+      }
+    ]
+  },
+  plugins: [new HtmlWebpackPlugin({ template: "./index.html" })],
+  devServer: {
+    port: 5173,
+    historyApiFallback: true
+  },
+  output: {
+    clean: true,
+    filename: "assets/app.js"
+  }
+};
+```
+
+Scripts:
+
+```json
+{
+  "scripts": {
+    "dev:webpack": "webpack serve",
+    "build:webpack": "webpack --mode production"
+  }
+}
+```
+
+## Rspack Recipe
+
+Install:
+
+```bash
+npm i -D @rspack/core @rspack/cli @rspack/dev-server
+```
+
+`rspack.config.cjs`:
+
+```js
+const { rspack } = require("@rspack/core");
+
+module.exports = {
+  mode: process.env.NODE_ENV || "development",
+  entry: "./src/main.tsx",
+  resolve: {
+    extensions: [".tsx", ".ts", ".js"]
+  },
+  module: {
+    rules: [
+      {
+        test: /\.[tj]sx?$/,
+        exclude: /node_modules/,
+        loader: "builtin:swc-loader",
+        options: {
+          jsc: {
+            parser: {
+              syntax: "typescript",
+              tsx: true
+            },
+            transform: {
+              react: {
+                runtime: "classic",
+                pragma: "v",
+                pragmaFrag: "v.fragment"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  plugins: [new rspack.HtmlRspackPlugin({ template: "./index.html" })],
+  devServer: {
+    port: 5174,
+    historyApiFallback: true
+  },
+  output: {
+    clean: true,
+    filename: "assets/app.js"
+  }
+};
+```
+
+Scripts:
+
+```json
+{
+  "scripts": {
+    "dev:rspack": "rspack serve",
+    "build:rspack": "rspack build --mode production"
+  }
+}
+```
+
+## Verify
+
+```bash
+npm run dev:webpack
+npm run build:webpack
+npm run dev:rspack
+npm run build:rspack
+```
+
+Expected outcome: both bundlers render the same app and complete production builds without JSX factory errors.
+
+## Key Points
+
+Required for correctness:
+
+1. Keep JSX transform in classic mode with `v` / `v.fragment`.
+2. Keep `v` in scope in TSX modules.
+
+Recommended practice:
+
+1. Keep one stable mount root (`#app` or `body`) across bundler targets.
+2. Keep parity checks between Webpack and Rspack output behavior before release.
+
+## Practical Baseline
+
+Start with one entry file and one render target, then add code-splitting or advanced plugin chains after first render works.
+
+
+____________________________________________
+# Source: docs/9.3-express-fastify-ssr.md
+
+# 9.3. Express/Fastify SSR (Request-Scoped Isolation)
+
+This recipe shows a request-scoped SSR flow for Express/Fastify with hydration continuity and no cross-request state leaks.
+
+Goal:
+
+1. SSR prefetch for `/users/:id/edit` so first paint already has form data.
+2. Hydrate in browser with the same data shape.
+3. Do a client freshness refetch after hydration.
+4. Avoid leaking headers/storage/state between concurrent requests.
+
+---
+
+## Client
+
+### 1) `app/views/edit-user.page.tsx`
+
+Instance-scoped page factory:
+
+- Creates one `PulseStore` per navigation.
+- Creates one `FormStore` per page instance.
+- Keeps `load()` and `refresh()` public methods while sharing one internal fetch cycle.
+- If SSR provided `initialUser`, the form renders immediately.
+- On client mount, it refetches for freshness.
+- If form is dirty, server refresh does not overwrite local edits.
+
+```tsx
+// app/views/edit-user.page.tsx
+import { isNodeJs, onCreate } from "valyrian.js";
+import { FormStore } from "valyrian.js/forms";
+import { createPulseStore } from "valyrian.js/pulses";
+
+type User = { id: string; name: string; email: string };
+type EditUserValues = { name: string; email: string };
+type EditUserState = {
+  user: User | null;
+  loading: boolean;
+  refreshing: boolean;
+  error: Error | null;
+  serverUpdatedWhileDirty: boolean;
+};
+type ReadMode = "load" | "refresh";
+
+type EditUserDeps = {
+  api: any; // request.new(...)
+  userId: string;
+  initialUser?: User | null;
+};
+
+export function createEditUserPage({ api, userId, initialUser = null }: EditUserDeps) {
+  let form: FormStore<EditUserValues> | null = null;
+
+  function toError(error: unknown) {
+    return error instanceof Error ? error : new Error(String(error));
+  }
+
+  function applyServerUserToForm(state: EditUserState, user: User) {
+    state.user = user;
+
+    if (!form) {
+      form = createForm(user);
+      return;
+    }
+
+    if (form.isDirty) {
+      state.serverUpdatedWhileDirty = true;
+      return;
+    }
+
+    form = createForm(user);
+  }
+
+  async function runFetchCycle(state: EditUserState, mode: ReadMode, flush: () => void) {
+    const isLoad = mode === "load";
+
+    if (isLoad) {
+      state.loading = true;
+    } else {
+      state.refreshing = true;
+    }
+
+    state.error = null;
+    state.serverUpdatedWhileDirty = false;
+    flush();
+
+    try {
+      const user = (await api.get(`/api/users/${userId}`)) as User;
+      applyServerUserToForm(state, user);
+    } catch (error) {
+      state.error = toError(error);
+    } finally {
+      if (isLoad) {
+        state.loading = false;
+      } else {
+        state.refreshing = false;
+      }
+    }
+  }
+
+  const store = createPulseStore(
+    {
+      user: initialUser as User | null,
+      loading: initialUser ? false : true,
+      refreshing: false,
+      error: null as Error | null,
+      serverUpdatedWhileDirty: false
+    },
+    {
+      async load(state) {
+        await runFetchCycle(state, "load", this.$flush);
+      },
+
+      async refresh(state) {
+        const mode: ReadMode = state.user ? "refresh" : "load";
+        await runFetchCycle(state, mode, this.$flush);
+      },
+
+      async save(state, values: EditUserValues) {
+        state.error = null;
+        this.$flush();
+
+        try {
+          await api.put(`/api/users/${userId}`, values);
+          if (state.user) {
+            state.user = { ...state.user, ...values };
+          }
+        } catch (error) {
+          state.error = toError(error);
+          throw state.error;
+        }
+      }
+    }
+  );
+
+  function createForm(user: User) {
+    return new FormStore<EditUserValues>({
+      state: {
+        name: user.name || "",
+        email: user.email || ""
+      },
+      schema: {
+        type: "object",
+        properties: {
+          name: { type: "string", minLength: 1 },
+          email: { type: "string", format: "email" }
+        },
+        required: ["name", "email"]
+      },
+      clean: {
+        name: (value: unknown) => String(value).trim(),
+        email: (value: unknown) => String(value).trim().toLowerCase()
+      },
+      onSubmit: async (values) => {
+        await store.save(values);
+      }
+    });
+  }
+
+  if (initialUser) {
+    form = createForm(initialUser);
+  }
+
+  function EditUserPage() {
+    onCreate(() => {
+      if (isNodeJs) {
+        return;
+      }
+
+      void store.refresh();
+    });
+
+    if (store.state.loading || !store.state.user || !form) {
+      return (
+        <main>
+          <p>Loading...</p>
+        </main>
+      );
+    }
+
+    return (
+      <main>
+        <header style="display:flex; gap:1rem; align-items:center;">
+          <h1>Edit user {userId}</h1>
+          <span v-if={store.state.refreshing} style="opacity:0.7;">
+            Refreshing...
+          </span>
+        </header>
+
+        <p v-if={store.state.serverUpdatedWhileDirty} style="opacity:0.8;">
+          Newer server data exists but was not applied because the form is already dirty.
+        </p>
+
+        <p v-if={store.state.error} style="color:crimson;">
+          {store.state.error.message}
+        </p>
+
+        <form v-form={form}>
+          <label>Name</label>
+          <input name="name" v-field={form} />
+          <p v-if={form.errors.name} style="color:crimson;">
+            {form.errors.name}
+          </p>
+
+          <label>Email</label>
+          <input name="email" type="email" v-field={form} />
+          <p v-if={form.errors.email} style="color:crimson;">
+            {form.errors.email}
+          </p>
+
+          <div style="display:flex; gap:0.75rem; margin-top:1rem;">
+            <button type="submit" disabled={form.isInflight}>
+              {form.isInflight ? "Saving..." : "Save"}
+            </button>
+
+            <button type="button" onclick={() => store.refresh()} disabled={store.state.refreshing}>
+              {store.state.refreshing ? "Refreshing..." : "Refetch"}
+            </button>
+          </div>
+        </form>
+      </main>
+    );
+  }
+
+  return EditUserPage;
+}
+```
+
+### 2) `app/router.tsx`
+
+Creates one page instance per route navigation. If hydration state matches route id, it reuses that user as `initialUser`.
+
+```tsx
+// app/router.tsx
+import { Router } from "valyrian.js/router";
+import { createEditUserPage } from "./views/edit-user.page";
+
+type User = { id: string; name: string; email: string };
+
+export type ClientAppContext = {
+  api: any; // request.new(...)
+  initialState: {
+    userId?: string;
+    user?: User | null;
+  };
+};
+
+export function createClientRouter(ctx: ClientAppContext) {
+  const router = new Router();
+
+  router.add("/", () => <h1>Home</h1>);
+
+  router.add("/users/:id/edit", (req) => {
+    const id = req.params.id as string;
+
+    const initialUser =
+      ctx.initialState.user && ctx.initialState.userId === id ? (ctx.initialState.user as User) : null;
+
+    return createEditUserPage({
+      api: ctx.api,
+      userId: id,
+      initialUser
+    });
+  });
+
+  router.catch(404, () => <h1>Not found</h1>);
+
+  return router;
+}
+```
+
+### 3) `client-entry.tsx`
+
+Hydrates from server-provided state and mounts router on the same container (`body`) used in server shell.
+
+```tsx
+// client-entry.tsx
+import { mountRouter } from "valyrian.js/router";
+import { request } from "valyrian.js/request";
+import { createClientRouter } from "./app/router";
+
+declare global {
+  interface Window {
+    __INITIAL_STATE__?: any;
+  }
+}
+
+const initialState = window.__INITIAL_STATE__ || {};
+
+const api = request.new("", {
+  headers: { "Content-Type": "application/json" }
+});
+
+const router = createClientRouter({ api, initialState });
+mountRouter("body", router);
+```
+
+Why pass `api` explicitly?
+
+- It keeps request boundaries visible in the example.
+- In Node request context (`ServerStorage.run(...)`), the exported `request` singleton can also resolve the contextual scoped client automatically.
+
+---
+
+## Server
+
+### 1) `app/app-shell.tsx`
+
+Renders full HTML document into `body` and safely serializes hydration state.
+
+```tsx
+// app/app-shell.tsx
+export function AppShell({ routeHtml, initialState }: { routeHtml: string; initialState: any }) {
+  const serialized = JSON.stringify(initialState)
+    .replace(/</g, "\\u003c")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+
+  const full = `${routeHtml}<script>window.__INITIAL_STATE__=${serialized};</script><script type="module" src="/client-entry.js"></script>`;
 
   return (
     <>
       {"<!doctype html>"}
-      <html>
+      <html lang="en">
         <head>
-          <meta charset="utf-8" />
+          <meta charSet="utf-8" />
           <meta name="viewport" content="width=device-width,initial-scale=1" />
-          <title>Valyrian App</title>
+          <title>Valyrian SSR</title>
         </head>
-        <body>
-          {children}
-          <script>{`window.__INITIAL_STATE__=${serializedState};`}</script>
-          <script type="module" src="/client-entry.js"></script>
-        </body>
+        <body v-html={full} />
       </html>
     </>
   );
 }
+```
 
-app.get("*", (req, res) => {
+### 2) `app/server-router.tsx`
+
+Creates a per-request router, prefetches user for SSR route, and writes hydration data into per-request `initialState`.
+
+```tsx
+// app/server-router.tsx
+import { Router } from "valyrian.js/router";
+import { createEditUserPage } from "./views/edit-user.page";
+
+type User = { id: string; name: string; email: string };
+
+export type ServerAppContext = {
+  api: any; // request.new(...) per request
+  initialState: {
+    path: string;
+    userId?: string;
+    user?: User | null;
+  };
+};
+
+export function createServerRouter(ctx: ServerAppContext) {
+  const router = new Router();
+
+  router.add("/", () => <h1>Home</h1>);
+
+  router.add("/users/:id/edit", async (req) => {
+    const id = req.params.id as string;
+
+    const user = (await ctx.api.get(`/api/users/${id}`)) as User;
+
+    ctx.initialState.userId = id;
+    ctx.initialState.user = user;
+
+    return createEditUserPage({
+      api: ctx.api,
+      userId: id,
+      initialUser: user
+    });
+  });
+
+  router.catch(404, () => <h1>Not found</h1>);
+
+  return router;
+}
+```
+
+### 3) `server.ts`
+
+Per-request isolation:
+
+- `ServerStorage.run(...)` per incoming request.
+- `initialState` created per request.
+- `request.new(...)` created per request with request-scoped headers.
+- `createServerRouter(...)` created per request.
+
+```tsx
+// server.ts
+import express from "express";
+
+// Import node runtime before SSR/storage-dependent logic.
+import "valyrian.js/node";
+
+import { render, ServerStorage } from "valyrian.js/node";
+import { request } from "valyrian.js/request";
+
+import { AppShell } from "./app/app-shell";
+import { createServerRouter } from "./app/server-router";
+
+const app = express();
+
+app.use(express.static("public"));
+
+app.get("*", (req, res, next) => {
   ServerStorage.run(() => {
-    const initialState = { path: req.url };
-    const html = render(
-      <AppShell initialState={initialState}>
-        <App initialState={initialState} />
-      </AppShell>
-    );
-    res.type("html").send(html);
+    void (async () => {
+      const initialState = {
+        path: req.url,
+        userId: undefined as string | undefined,
+        user: null as any
+      };
+
+      const nodeOrigin = `${req.protocol}://${req.get("host")}`;
+
+      const api = request.new("", {
+        headers: {
+          Cookie: req.headers.cookie || "",
+          Authorization: req.headers.authorization || "",
+          "Content-Type": "application/json"
+        },
+        urls: {
+          base: "",
+          node: nodeOrigin
+        }
+      });
+
+      const router = createServerRouter({ api, initialState });
+
+      const routeHtml = (await router.go(req.url)) || "";
+      const html = render(<AppShell routeHtml={routeHtml} initialState={initialState} />);
+
+      res.type("html").send(html);
+    })().catch(next);
+  });
+});
+
+app.listen(3000, () => {
+  console.log("SSR on http://localhost:3000");
+});
+```
+
+Fastify variant (short):
+
+Use the same per-request flow (`ServerStorage.run` -> `request.new` -> `createServerRouter` -> `render`) with Fastify.
+
+```tsx
+import fastify from "fastify";
+import "valyrian.js/node";
+import { render, ServerStorage } from "valyrian.js/node";
+import { request as requestClient } from "valyrian.js/request";
+
+const app = fastify();
+
+app.get("/*", async (httpRequest, reply) => {
+  return ServerStorage.run(async () => {
+    const initialState = { path: httpRequest.url, userId: undefined as string | undefined, user: null as any };
+    const nodeOrigin = `${httpRequest.protocol}://${String(httpRequest.headers.host || "localhost")}`;
+
+    const api = requestClient.new("", {
+      headers: {
+        Cookie: String(httpRequest.headers.cookie || ""),
+        Authorization: String(httpRequest.headers.authorization || ""),
+        "Content-Type": "application/json"
+      },
+      urls: {
+        base: "",
+        node: nodeOrigin
+      }
+    });
+
+    const router = createServerRouter({ api, initialState });
+    const routeHtml = (await router.go(httpRequest.url)) || "";
+    const html = render(<AppShell routeHtml={routeHtml} initialState={initialState} />);
+
+    return reply.type("text/html").send(html);
   });
 });
 ```
 
-This recipe assumes the Valyrian app owns the full `body`.
+Note: Keep the same isolation rules as the Express example - one `ServerStorage.run(...)`, one `request.new(...)`, and one router instance per incoming request.
 
-Client entry:
+---
 
-```tsx
-import { mount } from "valyrian.js";
-import { App } from "./app";
+## Why this avoids cross-request leakage
 
-declare global {
-  interface Window {
-    __INITIAL_STATE__?: Record<string, unknown>;
+1. No shared mutable `initialState` singleton.
+2. No shared request client with mutable headers.
+3. No shared router instance for server requests.
+4. Storage context isolated by `ServerStorage.run(...)`.
+5. Client hydration uses only serialized state from that specific response.
+
+Container note:
+
+- In Node.js SSR, `router.go(...)` falls back to `mount("body", ...)` when no router container is explicitly set.
+- The core runtime checks `isNodeJs` and creates a fresh element for that string container instead of querying a global DOM node.
+- That keeps concurrent SSR requests from overwriting the same shared element.
+
+## Two-stage UX behavior
+
+1. **SSR/first paint:** route prefetch fills `initialUser`, form renders immediately.
+2. **Client freshness pass:** `onCreate` runs `refresh()` on browser only.
+3. **Dirty protection:** if user already edited fields, refresh does not overwrite form values.
+
+## Production Hardening Note
+
+If `refresh()` can run concurrently (for example, auto-refresh + manual refetch), guard against stale responses overwriting newer state. A simple request-id/token check per fetch cycle is usually enough.
+
+
+____________________________________________
+# Source: docs/9.4-api-client-composition.md
+
+# 9.4. API Client Composition
+
+Use this recipe when your app talks to multiple backend domains (auth, billing, users) and you want shared policies without shared mutable leakage.
+
+Prerequisites:
+
+- [./4.2.1-request.md](./4.2.1-request.md)
+- [./7.2-isomorphic-networking-and-storage.md](./7.2-isomorphic-networking-and-storage.md)
+
+## Goal
+
+1. Define one per-request root client.
+2. Derive domain clients from that root.
+3. Keep common headers/plugins centralized.
+4. Keep domain-specific behavior isolated.
+
+## Browser or Single-Context Composition
+
+```ts
+import { request } from "valyrian.js/request";
+
+function createApiClients(token: string) {
+  const rootApi = request.new("", {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    }
+  });
+
+  const requestIdPlugin = rootApi.use({
+    request(ctx) {
+      ctx.options.headers["X-Request-Id"] = crypto.randomUUID();
+      return ctx;
+    }
+  });
+
+  const authApi = rootApi.new("/api/auth");
+  const usersApi = rootApi.new("/api/users");
+  const billingApi = rootApi.new("/api/billing");
+
+  return {
+    authApi,
+    usersApi,
+    billingApi,
+    destroy() {
+      rootApi.eject(requestIdPlugin);
+    }
+  };
+}
+```
+
+Notes:
+
+- Clients created with `new(...)` inherit parent plugins/options.
+- Domain-specific settings can still be applied per client with `setOption(...)`.
+
+## Per-Request SSR Composition
+
+In Node.js SSR, create clients inside each `ServerStorage.run(...)` request scope.
+
+```ts
+import "valyrian.js/node";
+import { ServerStorage } from "valyrian.js/node";
+import { request } from "valyrian.js/request";
+
+app.get("*", (req, res, next) => {
+  ServerStorage.run(() => {
+    void (async () => {
+      const nodeOrigin = `${req.protocol}://${req.get("host")}`;
+
+      const rootApi = request.new("", {
+        headers: {
+          Cookie: req.headers.cookie || "",
+          Authorization: req.headers.authorization || "",
+          "Content-Type": "application/json"
+        },
+        urls: {
+          base: "",
+          node: nodeOrigin
+        }
+      });
+
+      const usersApi = rootApi.new("/api/users");
+      const billingApi = rootApi.new("/api/billing");
+
+      const user = await usersApi.get("/me");
+      const invoice = await billingApi.get("/latest");
+
+      res.json({ user, invoice });
+    })().catch(next);
+  });
+});
+```
+
+## Guardrails
+
+1. Do not keep request-scoped clients in module-level singletons on the server.
+2. Keep auth/session headers at the request root client, not hardcoded in domain clients.
+3. Prefer one root per incoming request, then branch with `new(...)`.
+
+
+____________________________________________
+# Source: docs/9.5-offline-first-commands.md
+
+# 9.5. Offline-First Commands
+
+Use this recipe when users must be able to submit commands while offline (for example, creating orders or saving drafts).
+
+Prerequisite:
+
+- [./4.2.6-offline.md](./4.2.6-offline.md)
+
+## Goal
+
+1. Accept commands immediately in UI.
+2. Queue commands when offline.
+3. Sync automatically when online.
+4. Surface pending/failed status and recovery controls.
+
+## Command Queue Setup
+
+```ts
+import { OfflineQueue } from "valyrian.js/offline";
+import { NetworkManager } from "valyrian.js/network";
+import { request } from "valyrian.js/request";
+
+const api = request.new("", {
+  headers: { "Content-Type": "application/json" }
+});
+
+const queue = new OfflineQueue({
+  id: "checkout-commands",
+  network: new NetworkManager(),
+  handler: (operation) =>
+    api.post(`/api/commands/${operation.type}`, {
+      ...operation.payload,
+      commandId: operation.id
+    }),
+  isRetryable: (error) => {
+    const status = (error as any)?.response?.status;
+    return status === 429 || (status >= 500 && status < 600);
+  },
+  backoff: {
+    strategy: "exponential",
+    baseMs: 300,
+    maxMs: 5000
+  },
+  maxRetries: 5
+});
+```
+
+Why `commandId` in payload?
+
+- It lets your backend dedupe retries safely.
+- It keeps command handling idempotent under flaky connections.
+
+## Submit Flow (UI Action)
+
+```ts
+async function submitCreateOrder(order: { sku: string; qty: number }) {
+  queue.enqueue({
+    type: "create-order",
+    payload: order
+  });
+
+  // Optional immediate attempt. If offline, queue sync exits early.
+  await queue.sync();
+}
+```
+
+## Status + Recovery Hooks
+
+```ts
+queue.on("change", (state) => {
+  // Render badges/counters from state.pending, state.failed, state.syncing
+  console.log("pending", state.pending, "failed", state.failed, "syncing", state.syncing);
+});
+
+queue.on("sync:error", ({ operation, error }) => {
+  console.error("command failed", operation.id, error);
+});
+
+async function retryFirstFailed() {
+  const failed = queue.failed();
+  if (!failed.length) return;
+  await queue.retryOne(failed[0].id);
+}
+```
+
+## Operational Rules
+
+1. Keep command payloads deterministic and schema-stable.
+2. Make server handlers idempotent by `commandId`.
+3. Expose pending/failed/syncing in UI so users understand eventual consistency.
+4. Call `queue.destroy()` when the queue is no longer needed.
+
+
+____________________________________________
+# Source: docs/9.6-production-checklist.md
+
+# 9.6. Production Checklist
+
+Use this checklist before release. It is split into app runtime checks and docs quality checks.
+
+## A) App Release Checklist
+
+Run these in staging with realistic traffic/concurrency:
+
+1. Confirm SSR route rendering + error handlers for success/failure paths ([./7.1-ssr.md](./7.1-ssr.md)).
+2. Confirm Node URL rewriting and request-scoped headers per incoming request ([./7.2-isomorphic-networking-and-storage.md](./7.2-isomorphic-networking-and-storage.md)).
+3. Confirm request-scoped context isolation under concurrent SSR requests ([./7.4-server-context.md](./7.4-server-context.md)).
+4. Confirm route-level lazy chunks resolve on direct URL access and refresh.
+5. Confirm service worker update strategy (`prompt-user`, `auto`, `manual`) matches product behavior ([./7.3.1-sw-runtime.md](./7.3.1-sw-runtime.md)).
+6. If using offline queue, verify retry/backoff and recovery actions (`retryOne`, `retryAll`, `discardFailed`) ([./4.2.6-offline.md](./4.2.6-offline.md)).
+7. If using native store in Node, confirm `valyrian.js/node` is imported before store creation ([./8.3-native-store.md](./8.3-native-store.md)).
+8. If using translations in Node SSR, confirm request language isolation under concurrency ([./8.1-translate.md](./8.1-translate.md), [./7.4-server-context.md](./7.4-server-context.md)).
+
+## B) Documentation QA Checklist
+
+1. Confirm docs links resolve and point to current `n.m` files.
+2. Confirm code snippets reflect tested runtime behavior (no stale APIs/options).
+3. Confirm contract vs guidance wording is explicit (hard guarantees vs recommended patterns).
+4. Confirm chapter hubs and subpages do not duplicate full mechanics already covered elsewhere.
+5. Confirm SSR examples keep request isolation visible (`ServerStorage.run`, per-request `request.new`, per-request router).
+
+Run both sections before release to keep runtime and documentation quality aligned.
+
+
+____________________________________________
+# Source: docs/9.7-counter-variants-by-component-shape.md
+
+# 9.7. Counter Variants by Component Shape (Exhaustive)
+
+This page shows equivalent counters with shared/global state and per-instance state.
+
+## 9.7.1. Shared/Global State
+
+Function + shared module variable:
+
+```jsx
+let count = 0;
+
+function Counter() {
+  return (
+    <>
+      <span>{count}</span>
+      <button onclick={() => count++}>Increment</button>
+    </>
+  );
+}
+
+mount("body", Counter);
+```
+
+Function + static property on the function object:
+
+```jsx
+function Counter() {
+  return (
+    <>
+      <span>{Counter.count}</span>
+      <button onclick={() => Counter.count++}>Increment</button>
+    </>
+  );
+}
+
+Counter.count = 0;
+
+mount("body", Counter);
+```
+
+Props-only pure function with shared state container:
+
+```jsx
+const sharedCounter = {
+  count: 0,
+  inc() {
+    sharedCounter.count += 1;
+  }
+};
+
+function Counter(props) {
+  return (
+    <>
+      <span>{props.count}</span>
+      <button onclick={() => props.inc()}>Increment</button>
+    </>
+  );
+}
+
+mount("body", () => <Counter count={sharedCounter.count} inc={() => sharedCounter.inc()} />);
+```
+
+Class with static state and static view:
+
+```jsx
+class Counter {
+  static count = 0;
+
+  static view() {
+    return (
+      <>
+        <span>{Counter.count}</span>
+        <button onclick={() => Counter.count++}>Increment</button>
+      </>
+    );
   }
 }
 
-mount("body", <App initialState={window.__INITIAL_STATE__ || {}} />);
+mount("body", () => Counter.view());
 ```
 
-For Fastify, use the same pattern and replace `res.type("html").send(...)` with `reply.type("text/html").send(...)`.
+POJO singleton:
 
-If you want to register Express/Fastify routes automatically from `router.routes()`, see [./7-ssr.md](./7-ssr.md) (Automatic Route Registration for Express/Fastify).
+```jsx
+const Counter = {
+  count: 0,
+  view() {
+    return (
+      <>
+        <span>{Counter.count}</span>
+        <button onclick={() => Counter.count++}>Increment</button>
+      </>
+    );
+  }
+};
 
-If you want router-level SSR prefetch with a client freshness refetch, see [./7-ssr.md](./7-ssr.md) (SSR + Router Prefetch + Client Refetch).
-
-## 9.4. API Client Composition
-
-Create per-domain clients with `request.new()` and attach plugins once.
-
-```ts
-const authApi = request.new("/api/auth");
-const billingApi = request.new("/api/billing");
+mount("body", Counter);
 ```
 
-## 9.5. Offline-First Commands
+## 9.7.2. Per-Instance State
 
-Wrap mutating calls with `OfflineQueue` in flaky network contexts:
+Factory returning function component with closure state:
 
-- enqueue operations while offline
-- retry with backoff
-- inspect failed queue and recover with `retryOne`/`retryAll`
+```jsx
+function createCounter() {
+  let count = 0;
 
-## 9.6. Production Checklist
+  return function Counter() {
+    return (
+      <>
+        <span>{count}</span>
+        <button onclick={() => count++}>Increment</button>
+      </>
+    );
+  };
+}
 
-1. Confirm SSR route rendering and error handlers.
-2. Confirm request URL rewriting for Node runtime.
-3. Confirm route-level lazy loading chunks resolve correctly on direct URL access.
-4. Confirm service worker update strategy (`prompt-user`, `auto`, `manual`).
-5. Confirm docs examples match tested module behavior.
+const CounterA = createCounter();
+const CounterB = createCounter();
+```
+
+Factory returning function component with per-instance static property:
+
+```jsx
+function createCounter() {
+  function Counter() {
+    return (
+      <>
+        <span>{Counter.count}</span>
+        <button onclick={() => Counter.count++}>Increment</button>
+      </>
+    );
+  }
+
+  Counter.count = 0;
+  return Counter;
+}
+
+const CounterA = createCounter();
+const CounterB = createCounter();
+```
+
+Props-only pure function with state factory:
+
+```jsx
+function Counter(props) {
+  return (
+    <>
+      <span>{props.count}</span>
+      <button onclick={() => props.inc()}>Increment</button>
+    </>
+  );
+}
+
+function createCounterModel() {
+  const state = { count: 0 };
+  return {
+    read() {
+      return state.count;
+    },
+    inc() {
+      state.count += 1;
+    }
+  };
+}
+
+const counterA = createCounterModel();
+const counterB = createCounterModel();
+```
+
+Class instances:
+
+```jsx
+class Counter {
+  count = 0;
+
+  view() {
+    return (
+      <>
+        <span>{this.count}</span>
+        <button onclick={() => this.count++}>Increment</button>
+      </>
+    );
+  }
+}
+
+const CounterA = new Counter();
+const CounterB = new Counter();
+```
+
+POJO factory:
+
+```jsx
+function createCounter() {
+  const Counter = {
+    count: 0,
+    view() {
+      return (
+        <>
+          <span>{Counter.count}</span>
+          <button onclick={() => Counter.count++}>Increment</button>
+        </>
+      );
+    }
+  };
+
+  return Counter;
+}
+
+const CounterA = createCounter();
+const CounterB = createCounter();
+```
+
+
+____________________________________________
+# Source: docs/9.8-reactive-counter-variants.md
+
+# 9.8. Reactive Counter Variants (`createPulse`, `createPulseStore`, `FluxStore`)
+
+## 9.8.1. Shared/Global Reactive State
+
+`createPulse` shared across all usages:
+
+```tsx
+import { createPulse } from "valyrian.js/pulses";
+
+const [count, setCount] = createPulse(0);
+
+function CounterWithPulse() {
+  return (
+    <>
+      <span>{count()}</span>
+      <button onclick={() => setCount((current) => current + 1)}>Increment</button>
+    </>
+  );
+}
+```
+
+`createPulseStore` shared store:
+
+```tsx
+import { createPulseStore } from "valyrian.js/pulses";
+
+const counterStore = createPulseStore(
+  { count: 0 },
+  {
+    increment(state) {
+      state.count += 1;
+    }
+  }
+);
+
+function CounterWithPulseStore() {
+  return (
+    <>
+      <span>{counterStore.state.count}</span>
+      <button onclick={() => counterStore.increment()}>Increment</button>
+    </>
+  );
+}
+```
+
+`FluxStore` shared store:
+
+```tsx
+import { FluxStore } from "valyrian.js/flux-store";
+
+const counterFlux = new FluxStore({
+  state: { count: 0 },
+  mutations: {
+    INCREMENT(state) {
+      state.count += 1;
+    }
+  }
+});
+
+function CounterWithFluxStore() {
+  return (
+    <>
+      <span>{counterFlux.state.count}</span>
+      <button onclick={() => counterFlux.commit("INCREMENT")}>Increment</button>
+    </>
+  );
+}
+```
+
+## 9.8.2. Per-Instance Reactive State
+
+Per-instance `createPulse`:
+
+```tsx
+import { createPulse } from "valyrian.js/pulses";
+
+function createCounterWithPulse() {
+  const [count, setCount] = createPulse(0);
+
+  return function Counter() {
+    return (
+      <>
+        <span>{count()}</span>
+        <button onclick={() => setCount((current) => current + 1)}>Increment</button>
+      </>
+    );
+  };
+}
+
+const CounterA = createCounterWithPulse();
+const CounterB = createCounterWithPulse();
+```
+
+Per-instance `createPulseStore`:
+
+```tsx
+import { createPulseStore } from "valyrian.js/pulses";
+
+function createCounterWithPulseStore() {
+  const store = createPulseStore(
+    { count: 0 },
+    {
+      increment(state) {
+        state.count += 1;
+      }
+    }
+  );
+
+  return {
+    store,
+    view() {
+      return (
+        <>
+          <span>{store.state.count}</span>
+          <button onclick={() => store.increment()}>Increment</button>
+        </>
+      );
+    }
+  };
+}
+
+const CounterA = createCounterWithPulseStore();
+const CounterB = createCounterWithPulseStore();
+```
+
+Per-instance `FluxStore`:
+
+```tsx
+import { FluxStore } from "valyrian.js/flux-store";
+
+function createCounterWithFluxStore() {
+  const store = new FluxStore({
+    state: { count: 0 },
+    mutations: {
+      INCREMENT(state) {
+        state.count += 1;
+      }
+    }
+  });
+
+  return {
+    store,
+    view() {
+      return (
+        <>
+          <span>{store.state.count}</span>
+          <button onclick={() => store.commit("INCREMENT")}>Increment</button>
+        </>
+      );
+    }
+  };
+}
+
+const CounterA = createCounterWithFluxStore();
+const CounterB = createCounterWithFluxStore();
+```
 
 
 ____________________________________________

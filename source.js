@@ -220,6 +220,7 @@ async function copy({ entryPoint, outfileName }) {
     "network",
     "query",
     "offline",
+    "context",
     "flux-store",
     "pulses",
     "router",

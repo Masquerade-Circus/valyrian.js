@@ -8,32 +8,38 @@ This chapter is a hub split into focused pages:
 
 ## 7.1. Server-Side Rendering
 
-* File: [./7-ssr.md](./7-ssr.md)
+* File: [./7.1-ssr.md](./7.1-ssr.md)
 * Covers SSR render flow and browser hydration behavior.
 
 ### 7.1.1. Node Runtime APIs
 
-* File: [./7-node-runtime-apis.md](./7-node-runtime-apis.md)
+* File: [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md)
 * Covers `render`, DOM utilities, runtime side effects, and node exports.
 
 ## 7.2. Isomorphic Networking and Storage
 
-* File: [./7-isomorphic-networking-and-storage.md](./7-isomorphic-networking-and-storage.md)
+* File: [./7.2-isomorphic-networking-and-storage.md](./7.2-isomorphic-networking-and-storage.md)
 * Covers environment-aware request URLs and request-scoped storage with `ServerStorage`.
 
 ## 7.3. PWA and Build Tooling
 
-* File: [./7-pwa-and-build-tooling.md](./7-pwa-and-build-tooling.md)
+* File: [./7.3-pwa-and-build-tooling.md](./7.3-pwa-and-build-tooling.md)
 * Covers icons, service worker file generation, JS/CSS bundling, and `inline.uncss`.
 
 ### 7.3.1. Service Worker Runtime
 
-* File: [./7-sw-runtime.md](./7-sw-runtime.md)
+* File: [./7.3.1-sw-runtime.md](./7.3.1-sw-runtime.md)
 * Covers `SwRuntimeManager`, update strategies, lifecycle events, and update application.
+
+## 7.4. Server Execution Context
+
+* File: [./7.4-server-context.md](./7.4-server-context.md)
+* Covers request-scoped server context and how core modules infer context automatically in Node.js.
 
 ## Read This If You Are Starting SSR
 
-1. Start with [./7-ssr.md](./7-ssr.md).
-2. Use [./7-node-runtime-apis.md](./7-node-runtime-apis.md) for runtime-level server APIs.
-3. Configure request URL rewriting and storage isolation with [./7-isomorphic-networking-and-storage.md](./7-isomorphic-networking-and-storage.md).
-4. Add PWA/build tooling and service worker runtime only after SSR flow is stable.
+1. Start with [./7.1-ssr.md](./7.1-ssr.md).
+2. Use [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md) for runtime-level server APIs.
+3. Configure request URL rewriting and storage isolation with [./7.2-isomorphic-networking-and-storage.md](./7.2-isomorphic-networking-and-storage.md).
+4. Review request-scoped context behavior with [./7.4-server-context.md](./7.4-server-context.md).
+5. Add PWA/build tooling and service worker runtime only after SSR flow is stable.

@@ -2,6 +2,7 @@ import "valyrian.js/node";
 
 import { expect, describe, test as it } from "bun:test";
 import { request as exportedRequest } from "valyrian.js/request";
+import { ServerStorage } from "valyrian.js/node";
 import fastify from "fastify";
 
 const posts: any = [];
@@ -42,7 +43,14 @@ const createServer = async () => {
       )
     )
     .delete("/posts/:id", (req, res) => res.send(JSON.stringify({})))
-    .get("/hello", (req, res) => res.send("Hello world"));
+    .get("/hello", (req, res) => res.send("Hello world"))
+    .get("/request-id", (req, res) =>
+      res.send(
+        JSON.stringify({
+          requestId: ((req.headers as any)["x-rid"] || null) as string | null
+        })
+      )
+    );
 
   (server as any).baseUrl = await server.listen();
 
@@ -265,6 +273,39 @@ describe("Request", () => {
         const res = await request2.get("/hello", null, { headers: { Accept: "text/html" } });
 
         expect(res).toEqual("Hello world");
+
+        await server.close();
+      });
+
+      it("should infer contextual request in concurrent ServerStorage scopes", async () => {
+        const server = await createServer();
+        const baseUrl = `${(server as any).baseUrl}`;
+
+        const runRequest = (requestId: string, waitMs: number) =>
+          new Promise<any>((resolve, reject) => {
+            ServerStorage.run(() => {
+              request.new("", {
+                urls: {
+                  node: baseUrl
+                },
+                headers: {
+                  "x-rid": requestId
+                }
+              });
+
+              setTimeout(() => {
+                void request
+                  .get("/request-id")
+                  .then((response: any) => resolve(response))
+                  .catch(reject);
+              }, waitMs);
+            });
+          });
+
+        const [slow, fast] = await Promise.all([runRequest("slow", 20), runRequest("fast", 5)]);
+
+        expect(slow).toEqual({ requestId: "slow" });
+        expect(fast).toEqual({ requestId: "fast" });
 
         await server.close();
       });

@@ -92,7 +92,7 @@ If this works, you already have the core Valyrian mental model.
 * Introduction: [docs/1-introduction.md](docs/1-introduction.md)
 * Getting Started (No-Build First): [docs/2-getting-started.md](docs/2-getting-started.md)
 * The Essentials: [docs/3-the-essentials.md](docs/3-the-essentials.md)
-* Runtime core API reference: [docs/3-runtime-core.md](docs/3-runtime-core.md)
+* Runtime core API reference: [docs/3.1-runtime-core.md](docs/3.1-runtime-core.md)
 * Building Single Page Applications (SPA Hub): [docs/4-building-spa.md](docs/4-building-spa.md)
 * Advanced State Management (Hub): [docs/5-advanced-state-management.md](docs/5-advanced-state-management.md)
 * The Full-Stack Capability (Isomorphism Hub): [docs/7-full-stack-capability.md](docs/7-full-stack-capability.md)

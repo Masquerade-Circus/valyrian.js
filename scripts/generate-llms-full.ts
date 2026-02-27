@@ -2,9 +2,28 @@
 import fs from "node:fs";
 import path from "node:path";
 
-function getOrderNumber(fileName: string): number {
-  const match = fileName.match(/^(\d+)-/);
-  return match ? Number(match[1]) : Number.POSITIVE_INFINITY;
+function getOrderKey(fileName: string): number[] {
+  const match = fileName.match(/^(\d+(?:\.\d+)*)-/);
+  if (!match) {
+    return [Number.POSITIVE_INFINITY];
+  }
+
+  return match[1].split(".").map((segment) => Number(segment));
+}
+
+function compareOrderKeys(a: number[], b: number[]): number {
+  const maxLen = Math.max(a.length, b.length);
+
+  for (let index = 0; index < maxLen; index += 1) {
+    const left = a[index] ?? -1;
+    const right = b[index] ?? -1;
+
+    if (left !== right) {
+      return left - right;
+    }
+  }
+
+  return 0;
 }
 
 function sortDocs(a: string, b: string): number {
@@ -16,11 +35,12 @@ function sortDocs(a: string, b: string): number {
     return 1;
   }
 
-  const aNum = getOrderNumber(a);
-  const bNum = getOrderNumber(b);
+  const aKey = getOrderKey(a);
+  const bKey = getOrderKey(b);
+  const orderDiff = compareOrderKeys(aKey, bKey);
 
-  if (aNum !== bNum) {
-    return aNum - bNum;
+  if (orderDiff !== 0) {
+    return orderDiff;
   }
 
   return a.localeCompare(b);

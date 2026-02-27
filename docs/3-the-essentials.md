@@ -9,7 +9,7 @@ By the end of this page, you should be able to:
 - Use built-in directives
 - Control async UI updates
 
-If you need full API contracts for `mount/update/unmount`, lifecycle helpers, `debouncedUpdate`, `trust`, and `v-model`, see [./3-runtime-core.md](./3-runtime-core.md).
+If you need full API contracts for `mount/update/unmount`, lifecycle helpers, `debouncedUpdate`, `trust`, and `v-model`, see [./3.1-runtime-core.md](./3.1-runtime-core.md).
 
 ## 3.1. Hello World
 
@@ -57,14 +57,87 @@ const Counter = {
     return (
       <div>
         <span>Count: {this.count}</span>
-        <button onclick={this.increment}>+</button>
+        <button onclick={() => this.increment()}>+</button>
       </div>
     );
   }
 };
 
-mount("body", Counter.view);
+mount("body", Counter);
 ```
+
+### Intentional Versatility: Component Shape and State Model
+
+Valyrian separates two independent decisions:
+
+1. **Component shape** (function, POJO, class instance, props-only pure function).
+2. **State model** (local/shared state, `createPulse`, `createPulseStore`, `FluxStore`).
+
+These choices are combinable. Component shape does not force a single state model.
+
+| Component shape | Where state lives | Strengths | Tradeoffs |
+| --- | --- | --- | --- |
+| Function | Closure, module variables, or stores | Simple and flexible syntax | Can mix concerns if boundaries are not explicit |
+| POJO (`{ view() {} }`) | Object properties | State and methods grouped in one unit | If it uses `this`, mount the full object |
+| Class instance (`new X()`) | Instance/static fields | Reuses OO patterns and supports multiple instances | Can add ceremony for simple cases |
+| Props-only pure function | External state (container/store) | Deterministic render and easy testing | Needs a container to create state and handlers |
+
+Compact counter examples with the three main reactive models:
+
+```tsx
+import { createPulse } from "valyrian.js/pulses";
+
+const [count, setCount] = createPulse(0);
+
+const CounterWithPulse = () => (
+  <div>
+    <span>{count()}</span>
+    <button onclick={() => setCount((current) => current + 1)}>Increment</button>
+  </div>
+);
+```
+
+```tsx
+import { createPulseStore } from "valyrian.js/pulses";
+
+const counterStore = createPulseStore(
+  { count: 0 },
+  {
+    increment(state) {
+      state.count += 1;
+    }
+  }
+);
+
+const CounterWithPulseStore = () => (
+  <div>
+    <span>{counterStore.state.count}</span>
+    <button onclick={() => counterStore.increment()}>Increment</button>
+  </div>
+);
+```
+
+```tsx
+import { FluxStore } from "valyrian.js/flux-store";
+
+const counterFlux = new FluxStore({
+  state: { count: 0 },
+  mutations: {
+    INCREMENT(state) {
+      state.count += 1;
+    }
+  }
+});
+
+const CounterWithFluxStore = () => (
+  <div>
+    <span>{counterFlux.state.count}</span>
+    <button onclick={() => counterFlux.commit("INCREMENT")}>Increment</button>
+  </div>
+);
+```
+
+For exhaustive counter variants (shared/per-instance component shape patterns), see [./9.7-counter-variants-by-component-shape.md](./9.7-counter-variants-by-component-shape.md). For reactive equivalents, see [./9.8-reactive-counter-variants.md](./9.8-reactive-counter-variants.md).
 
 ## 3.3. Events and Update Cycle
 
@@ -180,7 +253,7 @@ const UserProfile = {
 
   view() {
     if (this.loading) return <p>Loading...</p>;
-    if (!this.user) return <button onclick={this.load}>Load user</button>;
+    if (!this.user) return <button onclick={() => this.load()}>Load user</button>;
     return <p>Hello {this.user.name}</p>;
   }
 };

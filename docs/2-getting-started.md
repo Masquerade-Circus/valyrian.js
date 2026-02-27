@@ -151,5 +151,5 @@ If you are testing locally, use any static server (for example `npx serve .`) an
 ## Next Steps
 
 1. Continue with [./3-the-essentials.md](./3-the-essentials.md) for components, directives, and update flow.
-2. Move to [./4-routing-and-navigation.md](./4-routing-and-navigation.md) to build your first SPA route.
+2. Move to [./4.1-routing-and-navigation.md](./4.1-routing-and-navigation.md) to build your first SPA route.
 3. Use [./9-recipes-and-integrations.md](./9-recipes-and-integrations.md) when you are ready for Vite/Webpack and backend integration patterns.

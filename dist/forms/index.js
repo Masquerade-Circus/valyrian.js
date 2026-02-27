@@ -20,7 +20,8 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // lib/forms/index.ts
 var index_exports = {};
 __export(index_exports, {
-  FormStore: () => FormStore
+  FormStore: () => FormStore,
+  formSchemaShield: () => formSchemaShield
 });
 module.exports = __toCommonJS(index_exports);
 var import_valyrian = require("valyrian.js");
@@ -1679,10 +1680,6 @@ function getRootError(error) {
   }
   return current;
 }
-function cloneStateShallow(state) {
-  const clone = Object.create(Object.getPrototypeOf(state));
-  return Object.assign(clone, state);
-}
 function walkElements(root, visitor) {
   const children = root.childNodes || [];
   for (const child of children) {
@@ -1730,11 +1727,15 @@ var FormStore = class _FormStore {
   #onSubmit;
   #clean;
   #format;
+  #validationMode;
   #pulseStore;
+  static get schemaShield() {
+    return this.#schemaShield;
+  }
   static createSchemaShield() {
     const schemaShield = new SchemaShield({
       failFast: false,
-      immutable: true
+      immutable: false
     });
     schemaShield.addFormat(
       "url",
@@ -1758,27 +1759,35 @@ var FormStore = class _FormStore {
     this.#onSubmit = options.onSubmit || null;
     this.#clean = options.clean || {};
     this.#format = options.format || {};
-    const initialValues = cloneStateShallow(options.state);
+    this.#validationMode = options.validationMode || "safe";
+    const getValidationErrors = (values) => {
+      const valuesToValidate = this.#validationMode === "safe" ? (0, import_utils.deepCloneUnfreeze)(values) : values;
+      const result = this.#validator(valuesToValidate);
+      return result.valid ? {} : this.#mapValidationError(result.error);
+    };
+    const initialValues = (0, import_utils.deepCloneUnfreeze)(options.state);
     this.#pulseStore = (0, import_pulses.createPulseStore)(
       {
-        values: cloneStateShallow(initialValues),
+        values: (0, import_utils.deepCloneUnfreeze)(initialValues),
         errors: {},
         isInflight: false,
         isDirty: false
       },
       {
-        setValue(state, name, value) {
+        setField(state, name, value) {
           state.values[name] = value;
           state.isDirty = true;
+          state.errors = getValidationErrors(state.values);
         },
-        setErrors(state, errors) {
-          state.errors = errors;
+        validate(state) {
+          state.errors = getValidationErrors(state.values);
+          return Object.keys(state.errors).length === 0;
         },
         setInflight(state, inflight) {
           state.isInflight = inflight;
         },
         reset(state) {
-          state.values = cloneStateShallow(initialValues);
+          state.values = (0, import_utils.deepCloneUnfreeze)(initialValues);
           state.errors = {};
           state.isInflight = false;
           state.isDirty = false;
@@ -1815,8 +1824,7 @@ var FormStore = class _FormStore {
   }
   setField(name, rawValue, control = null, event) {
     const cleanedValue = this.#runTransform(this.#clean, name, rawValue, control, event);
-    this.#pulseStore.setValue(name, cleanedValue);
-    this.validate();
+    this.#pulseStore.setField(name, cleanedValue);
   }
   #mapValidationError(error) {
     if (!error) {
@@ -1834,10 +1842,7 @@ var FormStore = class _FormStore {
     return { [fieldName]: message };
   }
   validate() {
-    const result = this.#validator(this.state);
-    const errors = result.valid ? {} : this.#mapValidationError(result.error);
-    this.#pulseStore.setErrors(errors);
-    return Object.keys(errors).length === 0;
+    return this.#pulseStore.validate();
   }
   async submit(event) {
     event?.preventDefault();
@@ -1861,6 +1866,7 @@ var FormStore = class _FormStore {
     this.#pulseStore.reset();
   }
 };
+var formSchemaShield = FormStore.schemaShield;
 function bindControl(formStore, control) {
   const name = getNodeName(control);
   if (name.length === 0) {

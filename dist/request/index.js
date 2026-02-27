@@ -24,6 +24,7 @@ __export(index_exports, {
 });
 module.exports = __toCommonJS(index_exports);
 var import_valyrian = require("valyrian.js");
+var import_context = require("valyrian.js/context");
 var import_utils = require("valyrian.js/utils");
 function serialize(obj, prefix) {
   if (obj === null || obj === void 0) {
@@ -77,8 +78,9 @@ function parseUrl(url, options) {
 var defaultOptions = {
   allowedMethods: ["get", "post", "put", "patch", "delete", "head", "options"]
 };
+var requestContextScope = (0, import_context.createContextScope)("request");
 var isNativeBody = (data) => data instanceof FormData || data instanceof URLSearchParams || data instanceof Blob || data instanceof ArrayBuffer || typeof DataView !== "undefined" && data instanceof DataView || typeof ReadableStream !== "undefined" && data instanceof ReadableStream;
-function Requester(baseUrl = "", options = defaultOptions) {
+function Requester(baseUrl = "", options = defaultOptions, isRoot = false) {
   const url = baseUrl.replace(/\/$/gi, "").trim();
   if (!options.urls) {
     options.urls = {
@@ -100,6 +102,16 @@ function Requester(baseUrl = "", options = defaultOptions) {
   };
   const plugins = /* @__PURE__ */ new Map();
   let pluginId = 0;
+  function getContextualRequest() {
+    if (!isRoot || !import_valyrian.isNodeJs) {
+      return null;
+    }
+    const contextual = (0, import_context.getContext)(requestContextScope);
+    if (!contextual || contextual === request2) {
+      return null;
+    }
+    return contextual;
+  }
   const applyRequestPlugins = async (ctx) => {
     let nextCtx = ctx;
     for (const plugin of plugins.values()) {
@@ -140,6 +152,10 @@ function Requester(baseUrl = "", options = defaultOptions) {
     return nextCtx;
   };
   const request2 = async function request3(method, url2, data, options2 = {}) {
+    const contextualRequest = getContextualRequest();
+    if (contextualRequest) {
+      return contextualRequest(method, url2, data, options2);
+    }
     const innerOptions = {
       method: method.toUpperCase(),
       headers: {},
@@ -250,30 +266,64 @@ function Requester(baseUrl = "", options = defaultOptions) {
     }
   };
   request2.new = (baseUrl2, options2) => {
+    const contextualRequest = getContextualRequest();
+    if (contextualRequest) {
+      return contextualRequest.new(baseUrl2, options2);
+    }
     const next = Requester(baseUrl2, { ...opts, ...options2 || {} });
     plugins.forEach((plugin) => next.use(plugin));
+    if (isRoot && (0, import_context.isServerContextActive)()) {
+      (0, import_context.setContext)(requestContextScope, next);
+    }
     return next;
   };
   request2.use = (plugin) => {
+    const contextualRequest = getContextualRequest();
+    if (contextualRequest) {
+      return contextualRequest.use(plugin);
+    }
     pluginId += 1;
     plugins.set(pluginId, plugin);
     return pluginId;
   };
   request2.eject = (id) => {
+    const contextualRequest = getContextualRequest();
+    if (contextualRequest) {
+      contextualRequest.eject(id);
+      return;
+    }
     plugins.delete(id);
   };
   request2.setOption = (key, value) => {
+    const contextualRequest = getContextualRequest();
+    if (contextualRequest) {
+      return contextualRequest.setOption(key, value);
+    }
     (0, import_utils.set)(opts, key, value);
     return opts;
   };
   request2.setOptions = (values) => {
+    const contextualRequest = getContextualRequest();
+    if (contextualRequest) {
+      return contextualRequest.setOptions(values);
+    }
     for (const key of Object.keys(values)) {
       (0, import_utils.set)(opts, key, values[key]);
     }
     return opts;
   };
-  request2.getOption = (key) => (0, import_utils.get)(opts, key);
+  request2.getOption = (key) => {
+    const contextualRequest = getContextualRequest();
+    if (contextualRequest) {
+      return contextualRequest.getOption(key);
+    }
+    return (0, import_utils.get)(opts, key);
+  };
   request2.getOptions = (key) => {
+    const contextualRequest = getContextualRequest();
+    if (contextualRequest) {
+      return contextualRequest.getOptions(key);
+    }
     if (key) {
       return (0, import_utils.get)(opts, key);
     }
@@ -288,4 +338,4 @@ function Requester(baseUrl = "", options = defaultOptions) {
   );
   return request2;
 }
-var request = Requester();
+var request = Requester("", defaultOptions, true);

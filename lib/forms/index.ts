@@ -1,6 +1,6 @@
 import { directive, VnodeWithDom } from "valyrian.js";
 import { createPulseStore } from "valyrian.js/pulses";
-import { isFunction, isString } from "valyrian.js/utils";
+import { deepCloneUnfreeze, isFunction, isString } from "valyrian.js/utils";
 import { SchemaShield, ValidationError, Validator } from "schema-shield";
 
 type JsonSchema = Record<string, unknown>;
@@ -48,12 +48,15 @@ export type FormTransformMap<TState extends FormState> = Partial<
   Record<keyof TState | string, FormTransform<TState>>
 >;
 
+export type FormValidationMode = "safe" | "fast";
+
 export type FormOptions<TState extends FormState> = {
   state: TState;
   schema: JsonSchema;
   clean?: FormTransformMap<TState>;
   format?: FormTransformMap<TState>;
   onSubmit?: (values: TState) => Promise<void> | void;
+  validationMode?: FormValidationMode;
 };
 
 type FormInternalState<TState extends FormState> = {
@@ -64,16 +67,16 @@ type FormInternalState<TState extends FormState> = {
 };
 
 type FormInternalPulses<TState extends FormState> = {
-  setValue: (state: FormInternalState<TState>, name: string, value: unknown) => void;
-  setErrors: (state: FormInternalState<TState>, errors: Record<string, string>) => void;
+  setField: (state: FormInternalState<TState>, name: string, value: unknown) => void;
+  validate: (state: FormInternalState<TState>) => boolean;
   setInflight: (state: FormInternalState<TState>, inflight: boolean) => void;
   reset: (state: FormInternalState<TState>) => void;
 };
 
 type FormPulseStore<TState extends FormState> = {
   state: FormInternalState<TState>;
-  setValue: (name: string, value: unknown) => void;
-  setErrors: (errors: Record<string, string>) => void;
+  setField: (name: string, value: unknown) => void;
+  validate: () => boolean;
   setInflight: (inflight: boolean) => void;
   reset: () => void;
 };
@@ -163,11 +166,6 @@ function getRootError(error: ValidationError) {
   return current;
 }
 
-function cloneStateShallow<TState extends FormState>(state: TState): TState {
-  const clone = Object.create(Object.getPrototypeOf(state)) as TState;
-  return Object.assign(clone, state);
-}
-
 function walkElements(root: FormNode, visitor: (node: FormNode) => void) {
   const children = root.childNodes || [];
   for (const child of children) {
@@ -226,12 +224,17 @@ export class FormStore<TState extends FormState> {
   #onSubmit: ((values: TState) => Promise<void> | void) | null;
   #clean: FormTransformMap<TState>;
   #format: FormTransformMap<TState>;
+  #validationMode: FormValidationMode;
   #pulseStore: FormPulseStore<TState>;
+
+  static get schemaShield() {
+    return this.#schemaShield;
+  }
 
   static createSchemaShield() {
     const schemaShield = new SchemaShield({
       failFast: false,
-      immutable: true
+      immutable: false
     });
 
     schemaShield.addFormat(
@@ -259,29 +262,40 @@ export class FormStore<TState extends FormState> {
     this.#onSubmit = options.onSubmit || null;
     this.#clean = options.clean || {};
     this.#format = options.format || {};
+    this.#validationMode = options.validationMode || "safe";
 
-    const initialValues = cloneStateShallow(options.state);
+    const getValidationErrors = (values: TState) => {
+      const valuesToValidate =
+        this.#validationMode === "safe" ? deepCloneUnfreeze(values) : (values as unknown as Record<string, unknown>);
+
+      const result = this.#validator(valuesToValidate);
+      return result.valid ? {} : this.#mapValidationError(result.error);
+    };
+
+    const initialValues = deepCloneUnfreeze(options.state);
 
     this.#pulseStore = createPulseStore<FormInternalState<TState>, FormInternalPulses<TState>>(
       {
-        values: cloneStateShallow(initialValues),
+        values: deepCloneUnfreeze(initialValues),
         errors: {},
         isInflight: false,
         isDirty: false
       },
       {
-        setValue(state, name, value) {
+        setField(state, name, value) {
           (state.values as FormState)[name] = value;
           state.isDirty = true;
+          state.errors = getValidationErrors(state.values);
         },
-        setErrors(state, errors) {
-          state.errors = errors;
+        validate(state) {
+          state.errors = getValidationErrors(state.values);
+          return Object.keys(state.errors).length === 0;
         },
         setInflight(state, inflight) {
           state.isInflight = inflight;
         },
         reset(state) {
-          state.values = cloneStateShallow(initialValues);
+          state.values = deepCloneUnfreeze(initialValues);
           state.errors = {};
           state.isInflight = false;
           state.isDirty = false;
@@ -332,8 +346,7 @@ export class FormStore<TState extends FormState> {
 
   setField(name: string, rawValue: unknown, control: FormControl | null = null, event?: Event) {
     const cleanedValue = this.#runTransform(this.#clean, name, rawValue, control, event);
-    this.#pulseStore.setValue(name, cleanedValue);
-    this.validate();
+    this.#pulseStore.setField(name, cleanedValue);
   }
 
   #mapValidationError(error: ValidationError | true | null) {
@@ -357,10 +370,7 @@ export class FormStore<TState extends FormState> {
   }
 
   validate() {
-    const result = this.#validator(this.state);
-    const errors = result.valid ? {} : this.#mapValidationError(result.error);
-    this.#pulseStore.setErrors(errors);
-    return Object.keys(errors).length === 0;
+    return this.#pulseStore.validate();
   }
 
   async submit(event?: Event) {
@@ -390,6 +400,8 @@ export class FormStore<TState extends FormState> {
     this.#pulseStore.reset();
   }
 }
+
+export const formSchemaShield = FormStore.schemaShield;
 
 function bindControl(formStore: FormStore<FormState>, control: FormControl) {
   const name = getNodeName(control);

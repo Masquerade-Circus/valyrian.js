@@ -1,11 +1,24 @@
 // lib/native-store/index.ts
 import { isNodeJs } from "valyrian.js";
+import { createContextScope, getContext, isServerContextActive, setContext } from "valyrian.js/context";
 var StorageType = /* @__PURE__ */ ((StorageType2) => {
   StorageType2["Session"] = "session";
   StorageType2["Local"] = "local";
   return StorageType2;
 })(StorageType || {});
 var stores = /* @__PURE__ */ new Map();
+var nativeStoreRegistryScope = createContextScope("native-store.registry");
+function getStoreRegistry() {
+  if (!isNodeJs || !isServerContextActive()) {
+    return stores;
+  }
+  let scopedStores = getContext(nativeStoreRegistryScope);
+  if (!scopedStores) {
+    scopedStores = /* @__PURE__ */ new Map();
+    setContext(nativeStoreRegistryScope, scopedStores);
+  }
+  return scopedStores;
+}
 function getStorage(storageType) {
   if (isNodeJs && typeof localStorage === "undefined") {
     throw new Error(
@@ -16,10 +29,11 @@ function getStorage(storageType) {
 }
 function createNativeStore(id, definition = {}, storageType = "local" /* Local */, reuseIfExist = false) {
   const nativeStore = getStorage(storageType);
-  if (stores.has(id)) {
+  const storeRegistry = getStoreRegistry();
+  if (storeRegistry.has(id)) {
     if (reuseIfExist) {
       console.warn(`Store with key ${id} already exists and will be reused`);
-      return stores.get(id);
+      return storeRegistry.get(id);
     } else {
       throw new Error(`Store with key ${id} already exists`);
     }
@@ -86,7 +100,7 @@ function createNativeStore(id, definition = {}, storageType = "local" /* Local *
     window.addEventListener("storage", storageListener2);
   }
   Store.load();
-  stores.set(id, Store);
+  storeRegistry.set(id, Store);
   return Store;
 }
 export {

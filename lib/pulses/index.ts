@@ -6,7 +6,7 @@ import { deepCloneUnfreeze, deepFreeze, hasChanged } from "valyrian.js/utils";
 type State = Record<string, any>;
 
 export type PulseContext = {
-  $flush: () => Promise<void>;
+  $flush: () => void;
 };
 
 export type Pulse<StateType, TReturn = unknown> = (state: StateType, ...args: any[]) => TReturn | Promise<TReturn>;
@@ -165,13 +165,13 @@ function createStore<StateType extends State, PulsesType extends Record<string, 
 
       const context = Object.create(pulses);
 
-      context.$flush = async () => {
+      context.$flush = () => {
         if (currentState) {
           setState(currentState, true);
         }
       };
 
-      const emptyFlush = async () => {};
+      const emptyFlush = () => {};
 
       const handleError = (error: any) => {
         console.error(`Error in pulse '${key}':`, error);

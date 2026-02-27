@@ -400,6 +400,29 @@ describe("PulseStore", () => {
     expect(renderCount).toEqual(1); // Should not re-render
   });
 
+  it('should emit the "pulse" event even when state does not change', () => {
+    const initialState = { count: 0 };
+    const pulses = {
+      noop() {
+        return "ok";
+      }
+    };
+
+    const pulseStore = createPulseStore(initialState, pulses);
+    const pulseEvents: Array<{ name: string; args: any[] }> = [];
+
+    const listener = (pulseName: string, args: any[]) => {
+      pulseEvents.push({ name: pulseName, args });
+    };
+
+    pulseStore.on("pulse", listener);
+    const result = pulseStore.noop();
+    pulseStore.off("pulse", listener);
+
+    expect(result).toEqual("ok");
+    expect(pulseEvents).toEqual([{ name: "noop", args: [] }]);
+  });
+
   it('should notify subscribers only once if multiple pulses are called in the same "tick"', async () => {
     const initialState = { count: 0 };
     const pulses = {

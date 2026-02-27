@@ -1,4 +1,5 @@
 import { isNodeJs } from "valyrian.js";
+import { createContextScope, getContext, isServerContextActive, setContext } from "valyrian.js/context";
 import { get, isObject, isString, set } from "valyrian.js/utils";
 
 interface UrlOptions {
@@ -145,6 +146,8 @@ const defaultOptions: RequestOptions = {
   allowedMethods: ["get", "post", "put", "patch", "delete", "head", "options"]
 };
 
+const requestContextScope = createContextScope<RequestInterface>("request");
+
 const isNativeBody = (data: any) =>
   data instanceof FormData ||
   data instanceof URLSearchParams ||
@@ -153,7 +156,7 @@ const isNativeBody = (data: any) =>
   (typeof DataView !== "undefined" && data instanceof DataView) ||
   (typeof ReadableStream !== "undefined" && data instanceof ReadableStream);
 
-function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
+function Requester(baseUrl = "", options: RequestOptions = defaultOptions, isRoot = false) {
   const url = baseUrl.replace(/\/$/gi, "").trim();
   if (!options.urls) {
     options.urls = {
@@ -178,6 +181,19 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
 
   const plugins = new Map<number, RequestPlugin>();
   let pluginId = 0;
+
+  function getContextualRequest() {
+    if (!isRoot || !isNodeJs) {
+      return null;
+    }
+
+    const contextual = getContext(requestContextScope);
+    if (!contextual || contextual === request) {
+      return null;
+    }
+
+    return contextual;
+  }
 
   const applyRequestPlugins = async (ctx: RequestContext) => {
     let nextCtx = ctx;
@@ -227,6 +243,11 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
     data?: Record<string, any> | null,
     options: Record<string, any> = {}
   ) {
+    const contextualRequest = getContextualRequest();
+    if (contextualRequest) {
+      return contextualRequest(method, url, data, options);
+    }
+
     const innerOptions: SendOptions = {
       method: method.toUpperCase(),
       headers: {},
@@ -359,36 +380,78 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
   } as unknown as RequestInterface;
 
   request.new = (baseUrl: string, options?: RequestOptions) => {
+    const contextualRequest = getContextualRequest();
+    if (contextualRequest) {
+      return contextualRequest.new(baseUrl, options);
+    }
+
     const next = Requester(baseUrl, { ...opts, ...(options || {}) });
     plugins.forEach((plugin) => next.use(plugin));
+
+    if (isRoot && isServerContextActive()) {
+      setContext(requestContextScope, next);
+    }
+
     return next;
   };
 
   request.use = (plugin: RequestPlugin) => {
+    const contextualRequest = getContextualRequest();
+    if (contextualRequest) {
+      return contextualRequest.use(plugin);
+    }
+
     pluginId += 1;
     plugins.set(pluginId, plugin);
     return pluginId;
   };
 
   request.eject = (id: number) => {
+    const contextualRequest = getContextualRequest();
+    if (contextualRequest) {
+      contextualRequest.eject(id);
+      return;
+    }
+
     plugins.delete(id);
   };
 
   request.setOption = (key: string, value: any) => {
+    const contextualRequest = getContextualRequest();
+    if (contextualRequest) {
+      return contextualRequest.setOption(key, value);
+    }
+
     set(opts, key, value);
     return opts;
   };
 
   request.setOptions = (values: Record<string, any>) => {
+    const contextualRequest = getContextualRequest();
+    if (contextualRequest) {
+      return contextualRequest.setOptions(values);
+    }
+
     for (const key of Object.keys(values)) {
       set(opts, key, values[key]);
     }
     return opts;
   };
 
-  request.getOption = (key: string) => get(opts, key);
+  request.getOption = (key: string) => {
+    const contextualRequest = getContextualRequest();
+    if (contextualRequest) {
+      return contextualRequest.getOption(key);
+    }
+    return get(opts, key);
+  };
 
   request.getOptions = (key?: string) => {
+    const contextualRequest = getContextualRequest();
+    if (contextualRequest) {
+      return contextualRequest.getOptions(key);
+    }
+
     if (key) {
       return get(opts, key);
     }
@@ -407,4 +470,4 @@ function Requester(baseUrl = "", options: RequestOptions = defaultOptions) {
   return request;
 }
 
-export const request = Requester();
+export const request = Requester("", defaultOptions, true);

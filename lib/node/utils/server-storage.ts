@@ -4,6 +4,10 @@ const storageContext = new AsyncLocalStorage<Record<string, string>>();
 let globalStore: Record<string, string> = {};
 
 export class ServerStorage implements Storage {
+  isContextActive(): boolean {
+    return Boolean(storageContext.getStore());
+  }
+
   get store(): Record<string, string> {
     return storageContext.getStore() || globalStore;
   }
@@ -48,6 +52,10 @@ export class ServerStorage implements Storage {
 
   static run(callback: () => void) {
     storageContext.run({}, callback);
+  }
+
+  static isContextActive(): boolean {
+    return Boolean(storageContext.getStore());
   }
 
   toJSON(): Record<string, string> {

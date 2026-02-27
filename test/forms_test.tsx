@@ -2,7 +2,7 @@ import "valyrian.js/node";
 
 import { describe, expect, test as it } from "bun:test";
 import { mount, v } from "valyrian.js";
-import { FormStore } from "valyrian.js/forms";
+import { FormStore, formSchemaShield } from "valyrian.js/forms";
 import { Money, formatMoney, parseMoneyInput } from "valyrian.js/money";
 import { wait } from "./utils/helpers";
 
@@ -219,5 +219,160 @@ describe("Forms", () => {
 
     form.setField("website", "https://example.com");
     expect(form.validate()).toBeTrue();
+  });
+
+  it("should use shared schema shield formats across form instances", () => {
+    const formatName = `starts-with-a-${Math.random().toString(36).slice(2)}`;
+
+    formSchemaShield.addFormat(formatName, (value: unknown) => {
+      return typeof value === "string" && value.startsWith("A");
+    });
+
+    const schema = {
+      type: "object",
+      properties: {
+        code: { type: "string", format: formatName }
+      },
+      required: ["code"]
+    };
+
+    const formA = new FormStore({
+      state: { code: "" },
+      schema
+    });
+
+    const formB = new FormStore({
+      state: { code: "" },
+      schema
+    });
+
+    formA.setField("code", "B-001");
+    expect(formA.validate()).toBeFalse();
+    expect(formA.errors.code).toBeTruthy();
+
+    formB.setField("code", "A-001");
+    expect(formB.validate()).toBeTrue();
+  });
+
+  it("should support safe and fast validation modes", () => {
+    const schema = {
+      type: "object",
+      properties: {
+        role: { type: "string", default: "guest" }
+      },
+      required: ["role"]
+    };
+
+    const safeForm = new FormStore({
+      state: {} as { role?: string },
+      schema,
+      validationMode: "safe"
+    });
+
+    const fastForm = new FormStore({
+      state: {} as { role?: string },
+      schema,
+      validationMode: "fast"
+    });
+
+    expect(safeForm.validate()).toBeTrue();
+    expect(safeForm.state.role).toBeUndefined();
+
+    expect(fastForm.validate()).toBeTrue();
+    expect(fastForm.state.role).toEqual("guest");
+  });
+
+  it("should not freeze or share nested references from external initial state", () => {
+    const externalState = {
+      profile: {
+        name: "Alice"
+      }
+    };
+
+    const form = new FormStore({
+      state: externalState,
+      schema: {
+        type: "object",
+        properties: {
+          profile: {
+            type: "object",
+            properties: {
+              name: { type: "string" }
+            },
+            required: ["name"]
+          }
+        },
+        required: ["profile"]
+      }
+    });
+
+    expect(() => {
+      externalState.profile.name = "Bob";
+    }).not.toThrow();
+
+    expect(externalState.profile.name).toEqual("Bob");
+    expect((form.state.profile as { name: string }).name).toEqual("Alice");
+  });
+
+  it("benchmark: fast validation mode should outperform safe mode on large state", () => {
+    const schema = {
+      type: "object",
+      properties: {
+        email: { type: "string", format: "email" }
+      },
+      required: ["email"]
+    };
+
+    const createLargeState = () => ({
+      email: "",
+      metadata: {
+        rows: Array.from({ length: 400 }, (_, index) => ({
+          id: index,
+          name: `row-${index}`,
+          tags: ["alpha", "beta", "gamma"],
+          nested: {
+            a: index,
+            b: `value-${index}`,
+            c: {
+              active: index % 2 === 0,
+              score: index * 3
+            }
+          }
+        }))
+      }
+    });
+
+    const runMode = (mode: "safe" | "fast") => {
+      const rounds: number[] = [];
+
+      for (let round = 0; round < 5; round += 1) {
+        const form = new FormStore({
+          state: createLargeState(),
+          schema,
+          validationMode: mode
+        });
+
+        const start = performance.now();
+        for (let index = 0; index < 40; index += 1) {
+          form.setField("email", `user-${round}-${index}@example.com`);
+        }
+        const end = performance.now();
+
+        expect(form.validate()).toBeTrue();
+        rounds.push(end - start);
+      }
+
+      const sorted = rounds.slice(1).sort((a, b) => a - b);
+      return sorted[Math.floor(sorted.length / 2)];
+    };
+
+    const safeMedianMs = runMode("safe");
+    const fastMedianMs = runMode("fast");
+
+    console.log(
+      `[forms benchmark] safe median: ${safeMedianMs.toFixed(2)}ms, fast median: ${fastMedianMs.toFixed(2)}ms`
+    );
+
+    expect(fastMedianMs).toBeLessThan(safeMedianMs);
   });
 });

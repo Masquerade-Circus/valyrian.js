@@ -1,4 +1,5 @@
 import { isNodeJs } from "valyrian.js";
+import { createContextScope, getContext, isServerContextActive, setContext } from "valyrian.js/context";
 
 /* eslint-disable no-console */
 export enum StorageType {
@@ -21,6 +22,21 @@ export interface NativeStorageInterface {
 }
 
 const stores = new Map<string, NativeStorageInterface>();
+const nativeStoreRegistryScope = createContextScope<Map<string, NativeStorageInterface>>("native-store.registry");
+
+function getStoreRegistry() {
+  if (!isNodeJs || !isServerContextActive()) {
+    return stores;
+  }
+
+  let scopedStores = getContext(nativeStoreRegistryScope);
+  if (!scopedStores) {
+    scopedStores = new Map<string, NativeStorageInterface>();
+    setContext(nativeStoreRegistryScope, scopedStores);
+  }
+
+  return scopedStores;
+}
 
 function getStorage(storageType: StorageType) {
   if (isNodeJs && typeof localStorage === "undefined") {
@@ -38,12 +54,13 @@ export function createNativeStore<T>(
   reuseIfExist = false
 ): NativeStorageInterface & T {
   const nativeStore = getStorage(storageType);
+  const storeRegistry = getStoreRegistry();
 
-  if (stores.has(id)) {
+  if (storeRegistry.has(id)) {
     if (reuseIfExist) {
       // eslint-disable-next-line no-console
       console.warn(`Store with key ${id} already exists and will be reused`);
-      return stores.get(id) as NativeStorageInterface & T;
+      return storeRegistry.get(id) as NativeStorageInterface & T;
     } else {
       throw new Error(`Store with key ${id} already exists`);
     }
@@ -114,7 +131,7 @@ export function createNativeStore<T>(
 
   Store.load();
 
-  stores.set(id, Store);
+  storeRegistry.set(id, Store);
 
   return Store as NativeStorageInterface & T;
 }

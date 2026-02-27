@@ -30,21 +30,23 @@ flowchart TD
 
 ## 5.2. Pulses
 
-* File: [./5-pulses.md](./5-pulses.md)
+* File: [./5.2-pulses.md](./5.2-pulses.md)
 * Covers `createPulse`, `createEffect`, `createPulseStore`, `createMutableStore`, and store pulse events.
 
 ## 5.3. FluxStore
 
-* File: [./5-flux-store.md](./5-flux-store.md)
+* File: [./5.3-flux-store.md](./5.3-flux-store.md)
 * Covers commit/dispatch/getters, namespaced modules, event hooks, and plugin behavior.
 
 ## 5.4. Redux DevTools Bridge
 
-* File: [./5-redux-devtools.md](./5-redux-devtools.md)
+* File: [./5.4-redux-devtools.md](./5.4-redux-devtools.md)
 * Covers `connectFluxStore`, `connectPulseStore`, `connectPulse`, and safe no-op behavior when extension is missing.
 
 ## Suggested Reading Order
 
-1. [./5-pulses.md](./5-pulses.md)
-2. [./5-flux-store.md](./5-flux-store.md)
-3. [./5-redux-devtools.md](./5-redux-devtools.md)
+1. [./5.2-pulses.md](./5.2-pulses.md)
+2. [./5.3-flux-store.md](./5.3-flux-store.md)
+3. [./5.4-redux-devtools.md](./5.4-redux-devtools.md)
+4. [./9.7-counter-variants-by-component-shape.md](./9.7-counter-variants-by-component-shape.md) (component-shape counter variants)
+5. [./9.8-reactive-counter-variants.md](./9.8-reactive-counter-variants.md) (reactive counter variants)

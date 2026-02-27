@@ -1,6 +1,6 @@
 type State = Record<string, any>;
 export type PulseContext = {
-    $flush: () => Promise<void>;
+    $flush: () => void;
 };
 export type Pulse<StateType, TReturn = unknown> = (state: StateType, ...args: any[]) => TReturn | Promise<TReturn>;
 type ProxyState<StateType> = StateType & {

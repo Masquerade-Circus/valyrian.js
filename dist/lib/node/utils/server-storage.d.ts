@@ -1,4 +1,5 @@
 export declare class ServerStorage implements Storage {
+    isContextActive(): boolean;
     get store(): Record<string, string>;
     get length(): number;
     clear(): void;
@@ -7,6 +8,7 @@ export declare class ServerStorage implements Storage {
     removeItem(key: string): void;
     setItem(key: string, value: string): void;
     static run(callback: () => void): void;
+    static isContextActive(): boolean;
     toJSON(): Record<string, string>;
 }
 //# sourceMappingURL=server-storage.d.ts.map

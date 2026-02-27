@@ -55,8 +55,8 @@ Recommended order:
 
 1. [./2-getting-started.md](./2-getting-started.md)
 2. [./3-the-essentials.md](./3-the-essentials.md)
-3. [./4-routing-and-navigation.md](./4-routing-and-navigation.md)
-4. [./4-data-fetching-and-async.md](./4-data-fetching-and-async.md)
-5. [./4-forms.md](./4-forms.md)
+3. [./4.1-routing-and-navigation.md](./4.1-routing-and-navigation.md)
+4. [./4.2-data-fetching-and-async.md](./4.2-data-fetching-and-async.md)
+5. [./4.3-forms.md](./4.3-forms.md)
 
 If your goal is first success only, complete chapters 2 and 3 first, then return for chapter 4 when you need routing and async workflows.

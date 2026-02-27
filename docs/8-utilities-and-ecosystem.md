@@ -8,27 +8,27 @@ Reader-first advice: start with the module closest to your current task, then co
 
 ## 8.1. Internationalization
 
-* File: [./8-translate.md](./8-translate.md)
+* File: [./8.1-translate.md](./8.1-translate.md)
 * Covers language dictionaries, interpolation, `v-t`, language persistence strategies, and missing-key logs.
 
 ## 8.2. Money and Number Formatting
 
-* File: [./8-money.md](./8-money.md)
+* File: [./8.2-money.md](./8.2-money.md)
 * Covers `Money`, `NumberFormatter`, parsing/formatting helpers, and `v-money`.
 
 ## 8.3. Native Persistence
 
-* File: [./8-native-store.md](./8-native-store.md)
+* File: [./8.3-native-store.md](./8.3-native-store.md)
 * Covers `createNativeStore`, storage types, duplicate-id behavior, sync semantics, and Node runtime requirements.
 
 ## 8.4. Helpers
 
-* File: [./8-utils.md](./8-utils.md)
+* File: [./8.4-utils.md](./8.4-utils.md)
 * Covers object path helpers, deep clone/freeze helpers, change detection, and validators/guards.
 
 ## Suggested Reading Order
 
-1. [./8-translate.md](./8-translate.md)
-2. [./8-money.md](./8-money.md)
-3. [./8-native-store.md](./8-native-store.md)
-4. [./8-utils.md](./8-utils.md)
+1. [./8.1-translate.md](./8.1-translate.md)
+2. [./8.2-money.md](./8.2-money.md)
+3. [./8.3-native-store.md](./8.3-native-store.md)
+4. [./8.4-utils.md](./8.4-utils.md)

@@ -29,6 +29,7 @@ __export(index_exports, {
 });
 module.exports = __toCommonJS(index_exports);
 var import_valyrian = require("valyrian.js");
+var import_context = require("valyrian.js/context");
 var import_utils = require("valyrian.js/utils");
 function flat(array) {
   return Array.isArray(array) ? array.flat(Infinity) : [array];
@@ -60,6 +61,25 @@ function createRouteCallbackCollection() {
     before: /* @__PURE__ */ new Set(),
     after: /* @__PURE__ */ new Set()
   };
+}
+var activeRouter = null;
+var routeDirectiveRegistered = false;
+var routerContextScope = (0, import_context.createContextScope)("router");
+function resolveRouterFromContext() {
+  return (0, import_context.getContext)(routerContextScope) || activeRouter;
+}
+function ensureRouteDirective() {
+  if (routeDirectiveRegistered) {
+    return;
+  }
+  (0, import_valyrian.directive)("route", (url, vnode) => {
+    (0, import_valyrian.setAttribute)("href", url, vnode);
+    const router = resolveRouterFromContext();
+    if (router) {
+      (0, import_valyrian.setAttribute)("onclick", router.getOnClickHandler(url), vnode);
+    }
+  });
+  routeDirectiveRegistered = true;
 }
 function areEqualShallow(a, b) {
   const aKeys = Object.keys(a);
@@ -269,71 +289,77 @@ var Router = class _Router {
       }
     }
     const { middlewares, params } = route;
-    const nextRoute = {
-      path: getPathWithoutLastSlash(path),
-      query: nextQuery,
-      params
-    };
-    const routeChanged = hasRouteChanged(nextRoute, this.currentRoute);
-    if (routeChanged) {
-      for (const callback of this.activeRouteCallbacks.before) {
-        const result = await callback(nextRoute, this.currentRoute);
-        if (result === false) {
+    return (0, import_context.runWithContext)(routerContextScope, this, async () => {
+      const nextRoute = {
+        path: getPathWithoutLastSlash(path),
+        query: nextQuery,
+        params
+      };
+      const routeChanged = hasRouteChanged(nextRoute, this.currentRoute);
+      if (routeChanged) {
+        for (const callback of this.activeRouteCallbacks.before) {
+          const result = await callback(nextRoute, this.currentRoute);
+          if (result === false) {
+            return;
+          }
+        }
+        this.beginPendingRouteCallbacksCollection();
+      } else {
+        this.callbackRegistrationTarget = "active";
+      }
+      let routeTransitionCompleted = false;
+      try {
+        this.url = constructedPath;
+        this.query = nextQuery;
+        this.path = path;
+        this.params = params;
+        let component = await this.searchComponent(middlewares, parentComponent);
+        if (component === false) {
           return;
         }
-      }
-      this.beginPendingRouteCallbacksCollection();
-    } else {
-      this.callbackRegistrationTarget = "active";
-    }
-    let routeTransitionCompleted = false;
-    try {
-      this.url = constructedPath;
-      this.query = nextQuery;
-      this.path = path;
-      this.params = params;
-      let component = await this.searchComponent(middlewares, parentComponent);
-      if (component === false) {
-        return;
-      }
-      if (!component) {
-        return this.handleError(
-          new RouterError(`The URL ${constructedPath} did not return a valid component.`),
-          parentComponent
-        );
-      }
-      if ((0, import_valyrian.isComponent)(parentComponent) || (0, import_valyrian.isVnodeComponent)(parentComponent)) {
-        const childComponent = (0, import_valyrian.isVnodeComponent)(component) ? component : (0, import_valyrian.v)(component, {});
-        if ((0, import_valyrian.isVnodeComponent)(parentComponent)) {
-          parentComponent.children.push(childComponent);
-          component = parentComponent;
+        if (!component) {
+          return this.handleError(
+            new RouterError(`The URL ${constructedPath} did not return a valid component.`),
+            parentComponent
+          );
+        }
+        if ((0, import_valyrian.isComponent)(parentComponent) || (0, import_valyrian.isVnodeComponent)(parentComponent)) {
+          const childComponent = (0, import_valyrian.isVnodeComponent)(component) ? component : (0, import_valyrian.v)(component, {});
+          if ((0, import_valyrian.isVnodeComponent)(parentComponent)) {
+            parentComponent.children.push(childComponent);
+            component = parentComponent;
+          } else {
+            component = (0, import_valyrian.v)(parentComponent, {}, childComponent);
+          }
+        }
+        if (!import_valyrian.isNodeJs && window.location.pathname + window.location.search !== constructedPath) {
+          window.history.pushState(null, "", constructedPath);
+        }
+        let mountedResult = void 0;
+        if (this.container) {
+          mountedResult = (0, import_valyrian.mount)(this.container, component);
+        } else if (import_valyrian.isNodeJs) {
+          mountedResult = (0, import_valyrian.mount)("body", component);
         } else {
-          component = (0, import_valyrian.v)(parentComponent, {}, childComponent);
+          return this.handleError(new RouterError("No container found for mounting the component."), parentComponent);
+        }
+        if (routeChanged) {
+          const previousRoute = this.currentRoute;
+          const previousAfterCallbacks = this.activeRouteCallbacks.after;
+          this.currentRoute = nextRoute;
+          this.commitPendingRouteCallbacksCollection();
+          routeTransitionCompleted = true;
+          for (const callback of previousAfterCallbacks) {
+            await callback(nextRoute, previousRoute);
+          }
+        }
+        return mountedResult;
+      } finally {
+        if (routeChanged && !routeTransitionCompleted) {
+          this.rollbackPendingRouteCallbacksCollection();
         }
       }
-      if (!import_valyrian.isNodeJs && window.location.pathname + window.location.search !== constructedPath) {
-        window.history.pushState(null, "", constructedPath);
-      }
-      let mountedResult = void 0;
-      if (this.container) {
-        mountedResult = await (0, import_valyrian.mount)(this.container, component);
-      }
-      if (routeChanged) {
-        const previousRoute = this.currentRoute;
-        const previousAfterCallbacks = this.activeRouteCallbacks.after;
-        this.currentRoute = nextRoute;
-        this.commitPendingRouteCallbacksCollection();
-        routeTransitionCompleted = true;
-        for (const callback of previousAfterCallbacks) {
-          await callback(nextRoute, previousRoute);
-        }
-      }
-      return mountedResult;
-    } finally {
-      if (routeChanged && !routeTransitionCompleted) {
-        this.rollbackPendingRouteCallbacksCollection();
-      }
-    }
+    });
   }
   getOnClickHandler(url) {
     return (e) => {
@@ -467,36 +493,37 @@ var Router = class _Router {
     return response;
   }
 };
-var localRedirect;
-var activeRouter = null;
 function beforeRoute(callback) {
-  if (!activeRouter) {
+  const router = resolveRouterFromContext();
+  if (!router) {
     throw new RouterError("Router is not mounted. Call mountRouter(...) before registering route callbacks.");
   }
   if (!import_valyrian.current.vnode) {
     throw new RouterError("beforeRoute must be called inside a component context.");
   }
-  return activeRouter.beforeRoute(callback);
+  return router.beforeRoute(callback);
 }
 function afterRoute(callback) {
-  if (!activeRouter) {
+  const router = resolveRouterFromContext();
+  if (!router) {
     throw new RouterError("Router is not mounted. Call mountRouter(...) before registering route callbacks.");
   }
   if (!import_valyrian.current.vnode) {
     throw new RouterError("afterRoute must be called inside a component context.");
   }
-  return activeRouter.afterRoute(callback);
+  return router.afterRoute(callback);
 }
 async function redirect(url, parentComponent, preventPushState = false) {
-  if (!localRedirect) {
+  const router = resolveRouterFromContext();
+  if (!router) {
     console.warn("Redirect function is not initialized. Please mount the router first.");
     return;
   }
-  return localRedirect(url, parentComponent, preventPushState);
+  return router.go(url, parentComponent);
 }
 function mountRouter(elementContainer, router) {
+  ensureRouteDirective();
   router.container = elementContainer;
-  localRedirect = router.go.bind(router);
   activeRouter = router;
   if (!import_valyrian.isNodeJs) {
     let onPopStateGoToRoute2 = function() {
@@ -507,8 +534,5 @@ function mountRouter(elementContainer, router) {
     window.addEventListener("popstate", onPopStateGoToRoute2, false);
     onPopStateGoToRoute2();
   }
-  (0, import_valyrian.directive)("route", (url, vnode) => {
-    (0, import_valyrian.setAttribute)("href", url, vnode);
-    (0, import_valyrian.setAttribute)("onclick", router.getOnClickHandler(url), vnode);
-  });
 }
+ensureRouteDirective();

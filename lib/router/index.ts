@@ -14,6 +14,7 @@ import {
   setAttribute,
   v
 } from "valyrian.js";
+import { createContextScope, getContext, runWithContext } from "valyrian.js/context";
 import { isFunction, isNumber, isString } from "valyrian.js/utils";
 
 export interface Request {
@@ -40,17 +41,6 @@ export interface Middleware {
 }
 
 interface Middlewares extends Array<Middleware> {}
-
-interface RedirectFunction {
-  (
-    // eslint-disable-next-line no-unused-vars
-    path: string,
-    // eslint-disable-next-line no-unused-vars
-    parentComponent?: Component | POJOComponent | VnodeComponentInterface,
-    // eslint-disable-next-line no-unused-vars
-    preventPushState?: boolean
-  ): Promise<string | void>;
-}
 
 function flat(array: any) {
   return Array.isArray(array) ? array.flat(Infinity) : [array];
@@ -107,6 +97,31 @@ function createRouteCallbackCollection(): RouteCallbackCollection {
     before: new Set<RouteCallback>(),
     after: new Set<RouteCallback>()
   };
+}
+
+let activeRouter: Router | null = null;
+let routeDirectiveRegistered = false;
+const routerContextScope = createContextScope<Router>("router");
+
+function resolveRouterFromContext(): Router | null {
+  return getContext(routerContextScope) || activeRouter;
+}
+
+function ensureRouteDirective() {
+  if (routeDirectiveRegistered) {
+    return;
+  }
+
+  directive("route", (url: string, vnode: VnodeWithDom): void => {
+    setAttribute("href", url, vnode);
+
+    const router = resolveRouterFromContext();
+    if (router) {
+      setAttribute("onclick", router.getOnClickHandler(url), vnode);
+    }
+  });
+
+  routeDirectiveRegistered = true;
 }
 
 function areEqualShallow(a: Record<string, any>, b: Record<string, any>) {
@@ -399,85 +414,91 @@ export class Router {
 
     const { middlewares, params } = route;
 
-    const nextRoute: RouteSnapshot = {
-      path: getPathWithoutLastSlash(path),
-      query: nextQuery,
-      params
-    };
+    return runWithContext(routerContextScope, this, async () => {
+      const nextRoute: RouteSnapshot = {
+        path: getPathWithoutLastSlash(path),
+        query: nextQuery,
+        params
+      };
 
-    const routeChanged = hasRouteChanged(nextRoute, this.currentRoute);
-
-    if (routeChanged) {
-      for (const callback of this.activeRouteCallbacks.before) {
-        const result = await callback(nextRoute, this.currentRoute);
-        if (result === false) {
-          return;
-        }
-      }
-      this.beginPendingRouteCallbacksCollection();
-    } else {
-      this.callbackRegistrationTarget = "active";
-    }
-
-    let routeTransitionCompleted = false;
-
-    try {
-      this.url = constructedPath;
-      this.query = nextQuery;
-      this.path = path;
-      this.params = params;
-
-      let component = await this.searchComponent(middlewares, parentComponent);
-
-      if (component === false) {
-        return;
-      }
-
-      if (!component) {
-        return this.handleError(
-          new RouterError(`The URL ${constructedPath} did not return a valid component.`),
-          parentComponent
-        );
-      }
-
-      if (isComponent(parentComponent) || isVnodeComponent(parentComponent)) {
-        const childComponent = isVnodeComponent(component) ? component : v(component as Component, {});
-        if (isVnodeComponent(parentComponent)) {
-          parentComponent.children.push(childComponent);
-          component = parentComponent;
-        } else {
-          component = v(parentComponent, {}, childComponent) as VnodeComponentInterface;
-        }
-      }
-
-      if (!isNodeJs && window.location.pathname + window.location.search !== constructedPath) {
-        window.history.pushState(null, "", constructedPath);
-      }
-
-      let mountedResult: string | void = undefined;
-      if (this.container) {
-        mountedResult = await mount(this.container, component);
-      }
+      const routeChanged = hasRouteChanged(nextRoute, this.currentRoute);
 
       if (routeChanged) {
-        const previousRoute = this.currentRoute;
-        const previousAfterCallbacks = this.activeRouteCallbacks.after;
+        for (const callback of this.activeRouteCallbacks.before) {
+          const result = await callback(nextRoute, this.currentRoute);
+          if (result === false) {
+            return;
+          }
+        }
+        this.beginPendingRouteCallbacksCollection();
+      } else {
+        this.callbackRegistrationTarget = "active";
+      }
 
-        this.currentRoute = nextRoute;
-        this.commitPendingRouteCallbacksCollection();
-        routeTransitionCompleted = true;
+      let routeTransitionCompleted = false;
 
-        for (const callback of previousAfterCallbacks) {
-          await callback(nextRoute, previousRoute);
+      try {
+        this.url = constructedPath;
+        this.query = nextQuery;
+        this.path = path;
+        this.params = params;
+
+        let component = await this.searchComponent(middlewares, parentComponent);
+
+        if (component === false) {
+          return;
+        }
+
+        if (!component) {
+          return this.handleError(
+            new RouterError(`The URL ${constructedPath} did not return a valid component.`),
+            parentComponent
+          );
+        }
+
+        if (isComponent(parentComponent) || isVnodeComponent(parentComponent)) {
+          const childComponent = isVnodeComponent(component) ? component : v(component as Component, {});
+          if (isVnodeComponent(parentComponent)) {
+            parentComponent.children.push(childComponent);
+            component = parentComponent;
+          } else {
+            component = v(parentComponent, {}, childComponent) as VnodeComponentInterface;
+          }
+        }
+
+        if (!isNodeJs && window.location.pathname + window.location.search !== constructedPath) {
+          window.history.pushState(null, "", constructedPath);
+        }
+
+        let mountedResult: string | void = undefined;
+        if (this.container) {
+          mountedResult = mount(this.container, component);
+        } else if (isNodeJs) {
+          mountedResult = mount("body", component) as string;
+        } else {
+          return this.handleError(new RouterError("No container found for mounting the component."), parentComponent);
+        }
+
+        if (routeChanged) {
+          const previousRoute = this.currentRoute;
+          const previousAfterCallbacks = this.activeRouteCallbacks.after;
+
+          this.currentRoute = nextRoute;
+          this.commitPendingRouteCallbacksCollection();
+          routeTransitionCompleted = true;
+
+          for (const callback of previousAfterCallbacks) {
+            await callback(nextRoute, previousRoute);
+          }
+        }
+
+        return mountedResult;
+      } finally {
+        if (routeChanged && !routeTransitionCompleted) {
+          this.rollbackPendingRouteCallbacksCollection();
         }
       }
-
-      return mountedResult;
-    } finally {
-      if (routeChanged && !routeTransitionCompleted) {
-        this.rollbackPendingRouteCallbacksCollection();
-      }
-    }
+    });
   }
 
   getOnClickHandler(url: string) {
@@ -670,11 +691,9 @@ export class Router {
   }
 }
 
-let localRedirect: RedirectFunction;
-let activeRouter: Router | null = null;
-
 export function beforeRoute(callback: RouteCallback) {
-  if (!activeRouter) {
+  const router = resolveRouterFromContext();
+  if (!router) {
     throw new RouterError("Router is not mounted. Call mountRouter(...) before registering route callbacks.");
   }
 
@@ -682,11 +701,12 @@ export function beforeRoute(callback: RouteCallback) {
     throw new RouterError("beforeRoute must be called inside a component context.");
   }
 
-  return activeRouter.beforeRoute(callback);
+  return router.beforeRoute(callback);
 }
 
 export function afterRoute(callback: RouteCallback) {
-  if (!activeRouter) {
+  const router = resolveRouterFromContext();
+  if (!router) {
     throw new RouterError("Router is not mounted. Call mountRouter(...) before registering route callbacks.");
   }
 
@@ -694,7 +714,7 @@ export function afterRoute(callback: RouteCallback) {
     throw new RouterError("afterRoute must be called inside a component context.");
   }
 
-  return activeRouter.afterRoute(callback);
+  return router.afterRoute(callback);
 }
 
 export async function redirect(
@@ -702,17 +722,18 @@ export async function redirect(
   parentComponent?: Component | POJOComponent | VnodeComponentInterface,
   preventPushState = false
 ): Promise<string | void> {
-  if (!localRedirect) {
+  const router = resolveRouterFromContext();
+  if (!router) {
     // eslint-disable-next-line no-console
     console.warn("Redirect function is not initialized. Please mount the router first.");
     return;
   }
-  return localRedirect(url, parentComponent, preventPushState);
+  return router.go(url, parentComponent);
 }
 
 export function mountRouter(elementContainer: string | any, router: Router): void {
+  ensureRouteDirective();
   router.container = elementContainer;
-  localRedirect = router.go.bind(router);
   activeRouter = router;
 
   if (!isNodeJs) {
@@ -724,8 +745,6 @@ export function mountRouter(elementContainer: string | any, router: Router): voi
     onPopStateGoToRoute();
   }
 
-  directive("route", (url: string, vnode: VnodeWithDom): void => {
-    setAttribute("href", url, vnode);
-    setAttribute("onclick", router.getOnClickHandler(url), vnode);
-  });
 }
+
+ensureRouteDirective();

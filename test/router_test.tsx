@@ -1,7 +1,8 @@
 import "valyrian.js/node";
+import { ServerStorage } from "valyrian.js/node";
 
 /* eslint-disable no-console */
-import { Request, Router, afterRoute, beforeRoute, mountRouter } from "valyrian.js/router";
+import { Request, Router, afterRoute, beforeRoute, mountRouter, redirect } from "valyrian.js/router";
 import { Children, Properties, onCreate, update, v } from "valyrian.js";
 
 import { expect, describe, test as it } from "bun:test";
@@ -1072,6 +1073,120 @@ describe("Router", () => {
     await router.go("/child");
 
     expect(logs).toEqual(["Parent middleware", "Child middleware"]);
+  });
+
+  it("should isolate router context across concurrent ServerStorage requests without mountRouter", async () => {
+    const originalCreateElement = document.createElement.bind(document);
+    const createdBodiesByRequest = new Map<string, Set<Element>>();
+
+    (document as any).createElement = ((tagName: string) => {
+      const element = originalCreateElement(tagName as any);
+      if (String(tagName).toLowerCase() === "body") {
+        const requestId = sessionStorage.getItem("request-id") || "unknown";
+        if (!createdBodiesByRequest.has(requestId)) {
+          createdBodiesByRequest.set(requestId, new Set());
+        }
+        createdBodiesByRequest.get(requestId)!.add(element as Element);
+      }
+      return element;
+    }) as any;
+
+    const runRequest = (requestId: string, delayMs: number) =>
+      new Promise<{
+        requestId: string;
+        redirectResult: string | void;
+        linkResult: string | void;
+        beforeEvents: string[];
+        afterEvents: string[];
+        finalPath: string;
+      }>((resolve, reject) => {
+        ServerStorage.run(() => {
+          sessionStorage.setItem("request-id", requestId);
+
+          const beforeEvents: string[] = [];
+          const afterEvents: string[] = [];
+          const router = new Router();
+
+          const HooksComponent = () => {
+            onCreate(() => {
+              beforeRoute((next, currentRoute) => {
+                beforeEvents.push(`${sessionStorage.getItem("request-id")}:${currentRoute?.path || "none"}->${next.path}`);
+              });
+
+              afterRoute((next, currentRoute) => {
+                afterEvents.push(`${sessionStorage.getItem("request-id")}:${currentRoute?.path || "none"}->${next.path}`);
+              });
+            });
+
+            return <div>Hooks {requestId}</div>;
+          };
+
+          router.add("/hooks", () => HooksComponent);
+
+          router.add("/target", (req) => (
+            <div>
+              target-{requestId}-{sessionStorage.getItem("request-id")}-{String(req.query.rid)}
+            </div>
+          ));
+
+          router.add("/redirect", async (req) => {
+            await new Promise((done) => setTimeout(done, delayMs));
+            return redirect(`/target?rid=${String(req.query.rid)}`);
+          });
+
+          router.add("/link", () => <a v-route={`/target?rid=${requestId}`}>Go</a>);
+
+          void (async () => {
+            await router.go("/hooks");
+            const redirectResult = await router.go(`/redirect?rid=${requestId}`);
+            const linkResult = await router.go("/link");
+
+            resolve({
+              requestId,
+              redirectResult,
+              linkResult,
+              beforeEvents,
+              afterEvents,
+              finalPath: router.path
+            });
+          })().catch(reject);
+        });
+      });
+
+    try {
+      const [slow, fast] = await Promise.all([runRequest("slow", 25), runRequest("fast", 5)]);
+
+      expect(String(slow.redirectResult)).toContain("target-slow-slow-slow");
+      expect(String(fast.redirectResult)).toContain("target-fast-fast-fast");
+
+      expect(String(slow.linkResult)).toContain('href="/target?rid=slow"');
+      expect(String(fast.linkResult)).toContain('href="/target?rid=fast"');
+
+      expect(slow.beforeEvents.length).toBeGreaterThan(0);
+      expect(fast.beforeEvents.length).toBeGreaterThan(0);
+      expect(slow.afterEvents.length).toBeGreaterThan(0);
+      expect(fast.afterEvents.length).toBeGreaterThan(0);
+
+      expect(slow.beforeEvents.every((event) => event.startsWith("slow:"))).toBeTrue();
+      expect(slow.afterEvents.every((event) => event.startsWith("slow:"))).toBeTrue();
+      expect(fast.beforeEvents.every((event) => event.startsWith("fast:"))).toBeTrue();
+      expect(fast.afterEvents.every((event) => event.startsWith("fast:"))).toBeTrue();
+
+      expect(slow.finalPath).toContain("/link");
+      expect(fast.finalPath).toContain("/link");
+
+      const slowBodies = Array.from(createdBodiesByRequest.get("slow") || []);
+      const fastBodies = Array.from(createdBodiesByRequest.get("fast") || []);
+
+      expect(slowBodies.length).toBeGreaterThan(0);
+      expect(fastBodies.length).toBeGreaterThan(0);
+
+      for (const body of slowBodies) {
+        expect(fastBodies.includes(body)).toBeFalse();
+      }
+    } finally {
+      (document as any).createElement = originalCreateElement as any;
+    }
   });
 
   it("Error handlers", async () => {

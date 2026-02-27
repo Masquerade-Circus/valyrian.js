@@ -1,5 +1,6 @@
 // lib/translate/index.ts
-import { directive, setPropNameReserved, update } from "valyrian.js";
+import { directive, isNodeJs, setPropNameReserved, update } from "valyrian.js";
+import { createContextScope, getContext, isServerContextActive, setContext } from "valyrian.js/context";
 import { get, isString } from "valyrian.js/utils";
 var translations = {};
 var currentLang = "en";
@@ -9,6 +10,7 @@ var storeStrategy = {
     currentLang = lang;
   }
 };
+var langContextScope = createContextScope("translate.lang");
 var log = false;
 function setLog(value) {
   log = value;
@@ -17,6 +19,12 @@ function setStoreStrategy(strategy) {
   storeStrategy = strategy;
 }
 function getLang() {
+  if (isNodeJs && isServerContextActive()) {
+    const contextLang = getContext(langContextScope);
+    if (isString(contextLang)) {
+      return contextLang;
+    }
+  }
   return storeStrategy.get();
 }
 function setLang(newLang) {
@@ -30,7 +38,11 @@ function setLang(newLang) {
   if (!translations[parsedLang]) {
     throw new Error(`Language ${newLang} not found`);
   }
-  storeStrategy.set(parsedLang);
+  if (isNodeJs && isServerContextActive()) {
+    setContext(langContextScope, parsedLang);
+  } else {
+    storeStrategy.set(parsedLang);
+  }
   update();
 }
 function t(path, params) {

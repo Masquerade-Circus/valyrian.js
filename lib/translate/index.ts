@@ -1,4 +1,5 @@
-import { directive, setPropNameReserved, update, VnodeWithDom } from "valyrian.js";
+import { directive, isNodeJs, setPropNameReserved, update, VnodeWithDom } from "valyrian.js";
+import { createContextScope, getContext, isServerContextActive, setContext } from "valyrian.js/context";
 import { get, isString } from "valyrian.js/utils";
 
 const translations: Record<string, Record<string, any>> = {};
@@ -11,6 +12,8 @@ let storeStrategy = {
   }
 };
 
+const langContextScope = createContextScope<string>("translate.lang");
+
 let log = false;
 
 export function setLog(value: boolean) {
@@ -22,6 +25,13 @@ export function setStoreStrategy(strategy: { get: () => string; set: (lang: stri
 }
 
 export function getLang(): string {
+  if (isNodeJs && isServerContextActive()) {
+    const contextLang = getContext(langContextScope);
+    if (isString(contextLang)) {
+      return contextLang;
+    }
+  }
+
   return storeStrategy.get();
 }
 
@@ -40,7 +50,11 @@ export function setLang(newLang: string): void {
     throw new Error(`Language ${newLang} not found`);
   }
 
-  storeStrategy.set(parsedLang);
+  if (isNodeJs && isServerContextActive()) {
+    setContext(langContextScope, parsedLang);
+  } else {
+    storeStrategy.set(parsedLang);
+  }
   update();
 }
 

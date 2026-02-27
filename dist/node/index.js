@@ -1019,6 +1019,9 @@ var import_node_async_hooks = require("node:async_hooks");
 var storageContext = new import_node_async_hooks.AsyncLocalStorage();
 var globalStore = {};
 var ServerStorage = class {
+  isContextActive() {
+    return Boolean(storageContext.getStore());
+  }
   get store() {
     return storageContext.getStore() || globalStore;
   }
@@ -1056,6 +1059,9 @@ var ServerStorage = class {
   }
   static run(callback) {
     storageContext.run({}, callback);
+  }
+  static isContextActive() {
+    return Boolean(storageContext.getStore());
   }
   toJSON() {
     const store = this.store;

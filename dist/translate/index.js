@@ -30,6 +30,7 @@ __export(index_exports, {
 });
 module.exports = __toCommonJS(index_exports);
 var import_valyrian = require("valyrian.js");
+var import_context = require("valyrian.js/context");
 var import_utils = require("valyrian.js/utils");
 var translations = {};
 var currentLang = "en";
@@ -39,6 +40,7 @@ var storeStrategy = {
     currentLang = lang;
   }
 };
+var langContextScope = (0, import_context.createContextScope)("translate.lang");
 var log = false;
 function setLog(value) {
   log = value;
@@ -47,6 +49,12 @@ function setStoreStrategy(strategy) {
   storeStrategy = strategy;
 }
 function getLang() {
+  if (import_valyrian.isNodeJs && (0, import_context.isServerContextActive)()) {
+    const contextLang = (0, import_context.getContext)(langContextScope);
+    if ((0, import_utils.isString)(contextLang)) {
+      return contextLang;
+    }
+  }
   return storeStrategy.get();
 }
 function setLang(newLang) {
@@ -60,7 +68,11 @@ function setLang(newLang) {
   if (!translations[parsedLang]) {
     throw new Error(`Language ${newLang} not found`);
   }
-  storeStrategy.set(parsedLang);
+  if (import_valyrian.isNodeJs && (0, import_context.isServerContextActive)()) {
+    (0, import_context.setContext)(langContextScope, parsedLang);
+  } else {
+    storeStrategy.set(parsedLang);
+  }
   (0, import_valyrian.update)();
 }
 function t(path, params) {

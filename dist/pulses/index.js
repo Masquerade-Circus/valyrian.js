@@ -140,12 +140,12 @@ function createStore(initialState, pulses, immutable = false) {
       pulseCallCount++;
       const state = unfreezeState();
       const context = Object.create(pulses);
-      context.$flush = async () => {
+      context.$flush = () => {
         if (currentState) {
           setState(currentState, true);
         }
       };
-      const emptyFlush = async () => {
+      const emptyFlush = () => {
       };
       const handleError = (error) => {
         console.error(`Error in pulse '${key}':`, error);

@@ -178,6 +178,25 @@ Agent-side value:
 | `valyrian.js/money` | Money-safe parsing/formatting and `v-money` | Safer currency handling and formatting | Currency correctness matters | Basic numeric formatting is enough | `[SOURCE]` |
 | `valyrian.js/native-store` | Typed wrappers around local/session persistence | Lightweight client persistence model | Persistence semantics are needed | Persistence requirements are unknown | `[SOURCE]` |
 | `valyrian.js/utils` | Object path helpers, clone/freeze, validators | Shared utility consistency | Repeated utility logic appears | Utility scope is tiny/local | `[SOURCE]` |
+| `valyrian.js/context` | Request-scoped server execution context primitives | Safer concurrent SSR isolation for internal module behavior and advanced server workflows | Node.js request-scoped values must not leak across concurrent requests | You only need browser-only UI tree context from another framework | `[SOURCE]` |
+
+### 5.1 Component shape vs state model (orthogonal choices)
+
+Valyrian component shape and state model are independent choices. `[SOURCE]`
+
+Component shape options include function components, POJO components (`{ view() {} }`), class instances with `view()`, vnode components, and plain values wrapped for render. `[SOURCE]`
+
+State model options include POJO/local state, pulses, pulse stores, and FluxStore. `[SOURCE]`
+
+Important contract for object/instance components:
+
+- If component logic uses `this`, mount the component object/instance itself (for example `mount("body", counterObject)`), not a detached method reference. `[SOURCE]`
+- In event handlers, call instance/object methods via explicit invocation to preserve component context (for example `onclick={() => this.increment()}`). `[SOURCE]` + `[INFERRED]`
+
+Implication for agent guidance:
+
+- Do not infer state scope from component syntax alone; determine whether the user wants shared/global state or per-instance isolation. `[INFERRED]`
+- When showing counters/examples, keep shape and state dimensions explicit to avoid accidental scope changes. `[INFERRED]`
 
 ---
 
