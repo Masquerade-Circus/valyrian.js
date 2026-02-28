@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.1.1](https://github.com/Masquerade-Circus/valyrian/compare/9.1.0...9.1.1) (2026-02-28)
+
+### Bug Fixes
+
+* forms event delegation, tree-adapter events, and multiple memory leaks ([4b1e32b](https://github.com/Masquerade-Circus/valyrian/commit/4b1e32b8c49b0333dc43d5c2d5f17997f8a9f019))
+
 ## [9.1.0](https://github.com/Masquerade-Circus/valyrian/compare/9.0.1...9.1.0) (2026-02-27)
 
 ### Features
