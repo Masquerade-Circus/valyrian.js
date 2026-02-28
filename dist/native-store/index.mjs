@@ -84,10 +84,13 @@ function createNativeStore(id, definition = {}, storageType = "local" /* Local *
         console.error("Error clearing storage:", e);
       }
     },
+    cleanup() {
+    },
     ...definition
   };
+  let storageListener = null;
   if (!isNodeJs && storageType === "local" /* Local */) {
-    let storageListener2 = function(e) {
+    storageListener = (e) => {
       if (e.key === id) {
         try {
           Store.state = e.newValue === null ? {} : JSON.parse(e.newValue);
@@ -96,11 +99,17 @@ function createNativeStore(id, definition = {}, storageType = "local" /* Local *
         }
       }
     };
-    var storageListener = storageListener2;
-    window.addEventListener("storage", storageListener2);
+    window.addEventListener("storage", storageListener);
   }
   Store.load();
   storeRegistry.set(id, Store);
+  Store.cleanup = () => {
+    if (storageListener) {
+      window.removeEventListener("storage", storageListener);
+      storageListener = null;
+    }
+    storeRegistry.delete(id);
+  };
   return Store;
 }
 export {

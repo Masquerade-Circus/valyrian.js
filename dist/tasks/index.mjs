@@ -15,6 +15,7 @@ var Task = class {
   #activeAbortController = null;
   #activeExecutionId = 0;
   #queue = Promise.resolve(null);
+  #abortCause = null;
   #listeners = {
     state: /* @__PURE__ */ new Set(),
     success: /* @__PURE__ */ new Set(),
@@ -63,6 +64,11 @@ var Task = class {
     try {
       const result = await this.#handler(args, { signal });
       if (signal.aborted) {
+        if (executionId === this.#activeExecutionId && this.#abortCause !== "reset") {
+          this.#setState({ status: "cancelled", running: false });
+          this.#emit("cancel", args);
+        }
+        this.#abortCause = null;
         return this.#state.result;
       }
       if (this.#strategy === "takeLatest" && executionId !== this.#activeExecutionId) {
@@ -71,18 +77,21 @@ var Task = class {
       this.#setState({ status: "success", running: false, result });
       this.#options.onSuccess?.(result, args);
       this.#emit("success", result);
+      this.#abortCause = null;
       return result;
     } catch (error) {
       if (signal.aborted) {
-        if (executionId === this.#activeExecutionId) {
+        if (executionId === this.#activeExecutionId && this.#abortCause !== "reset") {
           this.#setState({ status: "cancelled", running: false });
           this.#emit("cancel", args);
         }
+        this.#abortCause = null;
         return this.#state.result;
       }
       this.#setState({ status: "error", running: false, error });
       this.#options.onError?.(error, args);
       this.#emit("error", error);
+      this.#abortCause = null;
       throw error;
     }
   }
@@ -100,11 +109,15 @@ var Task = class {
     if (!this.#activeAbortController) {
       return;
     }
+    if (!this.#abortCause) {
+      this.#abortCause = "cancel";
+    }
     this.#activeAbortController.abort();
     this.#setState({ status: "cancelled", running: false });
   }
   reset() {
     this.cancel();
+    this.#abortCause = "reset";
     this.#setState({
       status: "idle",
       running: false,

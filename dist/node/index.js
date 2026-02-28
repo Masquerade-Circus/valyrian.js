@@ -30,7 +30,9 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 // lib/node/index.ts
 var index_exports = {};
 __export(index_exports, {
+  Event: () => Event,
   ServerStorage: () => ServerStorage,
+  document: () => document,
   domToHtml: () => domToHtml,
   domToHyperscript: () => domToHyperscript,
   htmlToDom: () => htmlToDom,
@@ -63,11 +65,61 @@ function isString(value) {
 }
 
 // lib/node/utils/tree-adapter.ts
+var Event = class {
+  constructor(type, options = {}) {
+    this.type = type;
+    this.options = options;
+    this.bubbles = options.bubbles ?? false;
+    this.cancelable = options.cancelable ?? false;
+  }
+  bubbles = false;
+  cancelable = false;
+  defaultPrevented = false;
+  propagationStopped = false;
+  target = null;
+  currentTarget = null;
+  preventDefault() {
+    if (this.cancelable) {
+      this.defaultPrevented = true;
+    }
+  }
+  stopPropagation() {
+    this.propagationStopped = true;
+  }
+  stopImmediatePropagation() {
+    this.propagationStopped = true;
+  }
+};
 var Node = class _Node {
   // eslint-disable-next-line no-use-before-define
   childNodes = [];
   baseURI = "";
   tag_name;
+  dispatchEvent(event) {
+    if (!(event instanceof Event)) {
+      return true;
+    }
+    if (!event.target) {
+      event.target = this;
+    }
+    event.currentTarget = this;
+    if (this instanceof Element) {
+      const listeners = this._listeners?.get(event.type);
+      if (listeners) {
+        for (const handler of listeners) {
+          if (event.propagationStopped) break;
+          handler.call(this, event);
+        }
+      }
+      if (event.bubbles && !event.propagationStopped && this.parentNode) {
+        this.parentNode.dispatchEvent(event);
+      }
+    }
+    return !event.defaultPrevented;
+  }
+  _dispatchEvent(event) {
+    return this.dispatchEvent(event);
+  }
   get nodeName() {
     return this.tag_name.toLowerCase();
   }
@@ -330,11 +382,61 @@ function updateElementStyles(element, state) {
   }
 }
 var Element = class extends Node {
+  #listeners = /* @__PURE__ */ new Map();
+  get _listeners() {
+    return this.#listeners;
+  }
+  #value = "";
+  #checked = false;
   constructor() {
     super();
     this.nodeType = 1;
     this.attributes = [];
     this.childNodes = [];
+  }
+  get value() {
+    if (this.#value.length > 0) {
+      return this.#value;
+    }
+    const attributeValue = this.getAttribute("value");
+    return attributeValue == null ? "" : String(attributeValue);
+  }
+  set value(val) {
+    this.#value = String(val);
+    if (this.#value.length === 0) {
+      this.removeAttribute("value");
+      return;
+    }
+    this.setAttribute("value", this.#value);
+  }
+  get checked() {
+    return this.#checked || Boolean(this.getAttribute("checked"));
+  }
+  set checked(val) {
+    this.#checked = Boolean(val);
+    if (this.#checked) {
+      this.setAttribute("checked", true);
+    } else {
+      this.removeAttribute("checked");
+    }
+  }
+  addEventListener(type, callback, _options) {
+    if (!callback) return;
+    const handler = typeof callback === "function" ? callback : callback.handleEvent?.bind(callback);
+    if (!handler) return;
+    if (!this.#listeners.has(type)) {
+      this.#listeners.set(type, /* @__PURE__ */ new Set());
+    }
+    this.#listeners.get(type).add(handler);
+  }
+  removeEventListener(type, callback, _options) {
+    if (!callback) return;
+    const handler = typeof callback === "function" ? callback : callback.handleEvent?.bind(callback);
+    if (!handler) return;
+    this.#listeners.get(type)?.delete(handler);
+  }
+  _dispatchEvent(event) {
+    return this.dispatchEvent(event);
   }
   _style = new Proxy(
     {},
@@ -430,8 +532,9 @@ var Element = class extends Node {
     this.textContent = "";
     const result = htmlToDom(html2);
     if (result instanceof DocumentFragment) {
-      for (let i = 0, l = result.childNodes.length; i < l; i++) {
-        this.appendChild(result.childNodes[i]);
+      const children = Array.from(result.childNodes);
+      for (const child of children) {
+        this.appendChild(child);
       }
     } else {
       this.appendChild(result);
@@ -1039,7 +1142,7 @@ var ServerStorage = class {
   }
   getItem(key) {
     const store = this.store;
-    return store ? store[key] || null : null;
+    return store ? key in store ? store[key] : null : null;
   }
   key(index) {
     const store = this.store;
@@ -1072,6 +1175,7 @@ var ServerStorage = class {
 // lib/node/index.ts
 global.FormData = import_form_data.default;
 global.document = document;
+global.Event = Event;
 global.sessionStorage = new ServerStorage();
 global.localStorage = new ServerStorage();
 function render(...args) {

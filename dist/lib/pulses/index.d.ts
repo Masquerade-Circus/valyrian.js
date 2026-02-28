@@ -19,7 +19,7 @@ export declare function createMutableStore<StateType extends State, PulsesType e
     on: (event: string, callback: Function) => void;
     off: (event: string, callback: Function) => void;
 };
-export declare function createEffect(effect: Function): void;
+export declare function createEffect(effect: Function): () => void;
 export declare function createPulse<T>(initialValue: T): [() => T, (newValue: T | ((current: T) => T)) => void, () => void];
 export {};
 //# sourceMappingURL=index.d.ts.map

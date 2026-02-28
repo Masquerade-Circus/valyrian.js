@@ -4,7 +4,7 @@ Purpose
 This file aggregates the official documentation sources from the `docs/` directory as a single reference for AI agents and tooling.
 
 Generated
-- Date (UTC): 2026-02-27
+- Date (UTC): 2026-02-28
 - Source root: `docs/`
 - File count: 43
 

@@ -19,6 +19,7 @@ export interface NativeStorageInterface {
   delete(key: string): void;
   load(): void;
   clear(): void;
+  cleanup(): void;
 }
 
 const stores = new Map<string, NativeStorageInterface>();
@@ -112,11 +113,14 @@ export function createNativeStore<T>(
         console.error("Error clearing storage:", e);
       }
     },
+    cleanup() {},
     ...definition
   };
 
+  let storageListener: ((e: StorageEvent) => void) | null = null;
+
   if (!isNodeJs && storageType === StorageType.Local) {
-    function storageListener(e: StorageEvent) {
+    storageListener = (e: StorageEvent) => {
       if (e.key === id) {
         try {
           Store.state = e.newValue === null ? {} : JSON.parse(e.newValue);
@@ -124,7 +128,7 @@ export function createNativeStore<T>(
           console.error(`Error syncing store ${id} from storage event`, err);
         }
       }
-    }
+    };
 
     window.addEventListener("storage", storageListener);
   }
@@ -132,6 +136,14 @@ export function createNativeStore<T>(
   Store.load();
 
   storeRegistry.set(id, Store);
+
+  Store.cleanup = () => {
+    if (storageListener) {
+      window.removeEventListener("storage", storageListener);
+      storageListener = null;
+    }
+    storeRegistry.delete(id);
+  };
 
   return Store as NativeStorageInterface & T;
 }

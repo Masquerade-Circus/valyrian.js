@@ -762,14 +762,20 @@ function debouncedUpdate(timeout = 42) {
   clearTimeout(debouncedUpdateTimeout);
   debouncedUpdateTimeout = setTimeout(debouncedUpdateMethod, timeout);
 }
+function removeEventListeners() {
+  if (!mainVnode) {
+    return;
+  }
+  for (const name of eventListenerNames) {
+    mainVnode.dom.removeEventListener(name.slice(2), eventListener);
+  }
+  eventListenerNames.clear();
+}
 function unmount() {
   if (mainVnode) {
     mainComponent = v(() => null, {});
     const result = update();
-    for (const name of eventListenerNames) {
-      mainVnode.dom.removeEventListener(name.slice(2), eventListener);
-    }
-    eventListenerNames.clear();
+    removeEventListeners();
     mainComponent = null;
     mainVnode = null;
     isMounted = false;
@@ -782,6 +788,9 @@ function unmount() {
 }
 function mount(dom, component) {
   const container = typeof dom === "string" ? isNodeJs ? createElement(dom, dom === "svg") : document.querySelector(dom) : dom;
+  if (mainVnode && mainVnode.dom !== container) {
+    removeEventListeners();
+  }
   if (isComponent(component)) {
     mainComponent = v(component, {}, []);
   } else if (isVnodeComponent(component)) {

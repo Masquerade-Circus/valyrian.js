@@ -57,6 +57,7 @@ var SwRuntimeManager = class {
     updated: /* @__PURE__ */ new Set(),
     error: /* @__PURE__ */ new Set()
   };
+  #initialized = false;
   #controllerChangeHandler = () => {
     this.#state.updateAvailable = false;
     this.#state.waiting = null;
@@ -93,9 +94,10 @@ var SwRuntimeManager = class {
     return !this.#isNodeRuntime && hasServiceWorker(this.#navigator);
   }
   async init() {
-    if (!this.#isSupported()) {
+    if (this.#initialized || !this.#isSupported()) {
       return this;
     }
+    this.#initialized = true;
     try {
       const registration = await registerSw(this.#swUrl, { scope: this.#scope }, this.#navigator);
       if (!registration) {

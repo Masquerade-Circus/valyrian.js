@@ -61,6 +61,7 @@ var OfflineQueue = class {
   #pending;
   #failed;
   #state;
+  #destroyed = false;
   #listeners = {
     change: /* @__PURE__ */ new Set(),
     "sync:success": /* @__PURE__ */ new Set(),
@@ -147,7 +148,7 @@ var OfflineQueue = class {
     this.#emit("change", cloneState(this.#state));
   }
   async sync() {
-    if (this.#state.syncing) {
+    if (this.#destroyed || this.#state.syncing) {
       return;
     }
     if (!this.#network.getNetworkStatus().online) {
@@ -156,7 +157,7 @@ var OfflineQueue = class {
     this.#state.syncing = true;
     this.#emit("change", cloneState(this.#state));
     try {
-      while (this.#pending.length > 0) {
+      while (this.#pending.length > 0 && !this.#destroyed) {
         const operation = this.#pending[0];
         const result = await this.#syncOne(operation);
         if (result.ok) {
@@ -221,6 +222,7 @@ var OfflineQueue = class {
     this.#listeners[event].delete(callback);
   }
   destroy() {
+    this.#destroyed = true;
     this.#offOnline?.();
     this.#offOnline = null;
     this.#listeners.change.clear();

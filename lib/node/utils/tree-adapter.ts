@@ -4,12 +4,81 @@ import { isString } from "../../utils";
 
 interface ChildNodes extends Array<Node | Element | Text | DocumentFragment> {}
 
-export class Node implements Node {
+declare global {
+  interface Node {
+    dispatchEvent(event: Event): boolean;
+  }
+}
+
+interface NodeWithDispatch extends Node {
+  dispatchEvent(event: Event): boolean;
+  _dispatchEvent(event: Event): boolean;
+}
+
+export class Event {
+  constructor(public type: string, public options: EventInit = {}) {
+    this.bubbles = options.bubbles ?? false;
+    this.cancelable = options.cancelable ?? false;
+  }
+  bubbles: boolean = false;
+  cancelable: boolean = false;
+  defaultPrevented: boolean = false;
+  propagationStopped: boolean = false;
+  target: any = null;
+  currentTarget: any = null;
+
+  preventDefault() {
+    if (this.cancelable) {
+      this.defaultPrevented = true;
+    }
+  }
+
+  stopPropagation() {
+    this.propagationStopped = true;
+  }
+
+  stopImmediatePropagation() {
+    this.propagationStopped = true;
+  }
+}
+
+export class Node implements NodeWithDispatch {
   // eslint-disable-next-line no-use-before-define
   childNodes: ChildNodes = [];
   baseURI: string = "";
 
   tag_name!: string;
+  dispatchEvent(event: Event): boolean {
+    if (!(event instanceof Event)) {
+      return true;
+    }
+
+    if (!event.target) {
+      event.target = this;
+    }
+    event.currentTarget = this;
+
+    if (this instanceof Element) {
+      const listeners = (this as unknown as { _listeners: Map<string, Set<Function>> })._listeners?.get(event.type);
+      if (listeners) {
+        for (const handler of listeners) {
+          if (event.propagationStopped) break;
+          handler.call(this, event);
+        }
+      }
+
+      if (event.bubbles && !event.propagationStopped && this.parentNode) {
+        this.parentNode.dispatchEvent(event);
+      }
+    }
+
+    return !event.defaultPrevented;
+  }
+
+  _dispatchEvent(event: Event): boolean {
+    return this.dispatchEvent(event);
+  }
+
   get nodeName(): string {
     return this.tag_name.toLowerCase();
   }
@@ -313,11 +382,71 @@ function updateElementStyles(element: Element, state: Record<string, any>) {
 }
 
 export class Element extends Node {
+  #listeners: Map<string, Set<Function>> = new Map();
+  protected get _listeners() {
+    return this.#listeners;
+  }
+  #value: string = "";
+  #checked: boolean = false;
+
   constructor() {
     super();
     this.nodeType = 1;
     this.attributes = [];
     this.childNodes = [];
+  }
+
+  get value(): string {
+    if (this.#value.length > 0) {
+      return this.#value;
+    }
+    const attributeValue = this.getAttribute("value");
+    return attributeValue == null ? "" : String(attributeValue);
+  }
+
+  set value(val: string) {
+    this.#value = String(val);
+    if (this.#value.length === 0) {
+      this.removeAttribute("value");
+      return;
+    }
+    this.setAttribute("value", this.#value);
+  }
+
+  get checked(): boolean {
+    return this.#checked || Boolean(this.getAttribute("checked"));
+  }
+
+  set checked(val: boolean) {
+    this.#checked = Boolean(val);
+    if (this.#checked) {
+      this.setAttribute("checked", true);
+    } else {
+      this.removeAttribute("checked");
+    }
+  }
+
+  addEventListener(type: string, callback: EventListenerOrEventListenerObject | null, _options?: boolean | AddEventListenerOptions | undefined): void {
+    if (!callback) return;
+    const handler = typeof callback === "function" ? callback : (callback as EventListenerObject).handleEvent?.bind(callback);
+    if (!handler) return;
+    
+    if (!this.#listeners.has(type)) {
+      this.#listeners.set(type, new Set());
+    }
+    this.#listeners.get(type)!.add(handler);
+  }
+
+  removeEventListener(type: string, callback: EventListenerOrEventListenerObject | null, _options?: boolean | EventListenerOptions | undefined): void {
+    if (!callback) return;
+    const handler = typeof callback === "function" ? callback : (callback as EventListenerObject).handleEvent?.bind(callback);
+    if (!handler) return;
+    
+    this.#listeners.get(type)?.delete(handler);
+  }
+
+  _dispatchEvent(event: Event): boolean {
+    return (this as unknown as { dispatchEvent(event: Event): boolean }).dispatchEvent(event);
   }
 
   _style = new Proxy(
@@ -433,8 +562,9 @@ export class Element extends Node {
     this.textContent = "";
     const result = htmlToDom(html);
     if (result instanceof DocumentFragment) {
-      for (let i = 0, l = result.childNodes.length; i < l; i++) {
-        this.appendChild(result.childNodes[i]);
+      const children = Array.from(result.childNodes);
+      for (const child of children) {
+        this.appendChild(child);
       }
     } else {
       this.appendChild(result);

@@ -305,6 +305,7 @@ export class QueryClient {
           state: cloneState(entry.state)
         });
         this.#persist();
+        this.#scheduleGc(entry as unknown as CacheEntry<unknown>);
         throw error;
       })
       .finally(() => {
@@ -321,7 +322,7 @@ export class QueryClient {
     const staleTime = config.staleTime ?? this.#staleTimeDefault;
 
     if (!this.#cache.has(hash)) {
-      this.#cache.set(hash, {
+      const entry: CacheEntry<unknown> = {
         key,
         hash,
         fetcher: config.fetcher,
@@ -336,7 +337,9 @@ export class QueryClient {
           data: null,
           updatedAt: 0
         }
-      } as CacheEntry<unknown>);
+      };
+      this.#cache.set(hash, entry);
+      this.#scheduleGc(entry);
     } else {
       const entry = this.#cache.get(hash)! as CacheEntry<TData>;
       entry.fetcher = config.fetcher;

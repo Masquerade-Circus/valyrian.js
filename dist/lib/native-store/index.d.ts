@@ -9,6 +9,7 @@ export interface NativeStorageInterface {
     delete(key: string): void;
     load(): void;
     clear(): void;
+    cleanup(): void;
 }
 export declare function createNativeStore<T>(id: string, definition?: Record<string, any>, storageType?: StorageType, reuseIfExist?: boolean): NativeStorageInterface & T;
 //# sourceMappingURL=index.d.ts.map

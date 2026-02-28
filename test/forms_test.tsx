@@ -92,7 +92,7 @@ describe("Forms", () => {
     expect(input.value).toEqual("$1,234.56");
 
     input.value = "$2,000.00";
-    input.oninput({ target: input } as Event);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
 
     expect(form.state.amountInCents).toEqual(200000);
     expect(input.value).toEqual("$2,000.00");
@@ -146,23 +146,20 @@ describe("Forms", () => {
     const passwordInput = formDom.childNodes[1] as any;
 
     emailInput.value = "nested@example.com";
-    emailInput.oninput({ target: emailInput } as Event);
+    emailInput.dispatchEvent(new Event("input", { bubbles: true }));
 
     passwordInput.value = "superpass";
-    passwordInput.oninput({ target: passwordInput } as Event);
+    passwordInput.dispatchEvent(new Event("input", { bubbles: true }));
 
     expect(form.state.email).toEqual("nested@example.com");
     expect(form.state.password).toEqual("superpass");
 
+    const submitEvent = new Event("submit", { bubbles: true, cancelable: true });
     let preventDefaultCalled = false;
-    const submitEvent = {
-      preventDefault: () => {
-        preventDefaultCalled = true;
-      },
-      target: formDom
-    } as unknown as Event;
-
-    await formDom.onsubmit(submitEvent);
+    submitEvent.preventDefault = () => {
+      preventDefaultCalled = true;
+    };
+    formDom.dispatchEvent(submitEvent);
 
     expect(preventDefaultCalled).toBeTrue();
     expect(submissions).toEqual([

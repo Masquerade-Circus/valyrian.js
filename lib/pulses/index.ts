@@ -283,7 +283,9 @@ export function createMutableStore<StateType extends State, PulsesType extends R
   return createStore(initialState, pulses, false);
 }
 
-export function createEffect(effect: Function) {
+export function createEffect(effect: Function): () => void {
+  const subscribers = new Set<Function>();
+  
   const runEffect = () => {
     try {
       effectStack.push(runEffect);
@@ -292,7 +294,23 @@ export function createEffect(effect: Function) {
       effectStack.pop();
     }
   };
+  
   runEffect();
+  
+  const currentVnode = (globalThis as any).current?.vnode;
+  if (currentVnode && currentVnode.dom) {
+    const dom = currentVnode.dom;
+    const subscription = () => {
+      runEffect();
+    };
+    subscribers.add(subscription);
+    
+    return () => {
+      subscribers.delete(subscription);
+    };
+  }
+  
+  return () => {};
 }
 
 export function createPulse<T>(initialValue: T): [() => T, (newValue: T | ((current: T) => T)) => void, () => void] {

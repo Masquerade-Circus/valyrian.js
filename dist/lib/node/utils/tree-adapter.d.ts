@@ -1,10 +1,35 @@
 interface ChildNodes extends Array<Node | Element | Text | DocumentFragment> {
 }
-export declare class Node implements Node {
+declare global {
+    interface Node {
+        dispatchEvent(event: Event): boolean;
+    }
+}
+interface NodeWithDispatch extends Node {
+    dispatchEvent(event: Event): boolean;
+    _dispatchEvent(event: Event): boolean;
+}
+export declare class Event {
+    type: string;
+    options: EventInit;
+    constructor(type: string, options?: EventInit);
+    bubbles: boolean;
+    cancelable: boolean;
+    defaultPrevented: boolean;
+    propagationStopped: boolean;
+    target: any;
+    currentTarget: any;
+    preventDefault(): void;
+    stopPropagation(): void;
+    stopImmediatePropagation(): void;
+}
+export declare class Node implements NodeWithDispatch {
     #private;
     childNodes: ChildNodes;
     baseURI: string;
     tag_name: string;
+    dispatchEvent(event: Event): boolean;
+    _dispatchEvent(event: Event): boolean;
     get nodeName(): string;
     set nodeName(name: string);
     get tagName(): string;
@@ -43,7 +68,16 @@ export declare class Text extends Node {
     constructor(text: any);
 }
 export declare class Element extends Node {
+    #private;
+    protected get _listeners(): Map<string, Set<Function>>;
     constructor();
+    get value(): string;
+    set value(val: string);
+    get checked(): boolean;
+    set checked(val: boolean);
+    addEventListener(type: string, callback: EventListenerOrEventListenerObject | null, _options?: boolean | AddEventListenerOptions | undefined): void;
+    removeEventListener(type: string, callback: EventListenerOrEventListenerObject | null, _options?: boolean | EventListenerOptions | undefined): void;
+    _dispatchEvent(event: Event): boolean;
     _style: Record<string, any>;
     get style(): string;
     set style(value: string);

@@ -366,7 +366,7 @@ export const directives: Record<string, Directive> = {
     let event = "oninput";
 
     // This function updates the model property when the input element's value changes
-    let handler = (e: Event) => (model[property] = (e.target as DomElement & Record<string, any>).value);
+    let handler = (e: Event) => (model[property] = (e.target as unknown as DomElement & Record<string, any>).value);
     if (vnode.tag === "input") {
       // Depending on the type of input element, use a different handler function
       switch (vnode.props.type) {
@@ -374,7 +374,7 @@ export const directives: Record<string, Directive> = {
           if (Array.isArray(model[property])) {
             // If the model property is an array, add or remove the value from the array when the checkbox is checked or unchecked
             handler = (e: Event) => {
-              const val = (e.target as DomElement & Record<string, any>).value;
+              const val = (e.target as unknown as DomElement & Record<string, any>).value;
               const idx = model[property].indexOf(val);
               if (idx === -1) {
                 model[property].push(val);
@@ -422,7 +422,7 @@ export const directives: Record<string, Directive> = {
       if (vnode.props.multiple) {
         // If the select element allows multiple selections, update the model property with an array of selected values
         handler = (e: Event & Record<string, any>) => {
-          const val = (e.target as DomElement & Record<string, any>).value;
+          const val = (e.target as unknown as DomElement & Record<string, any>).value;
           if (e.ctrlKey) {
             // If the Ctrl key is pressed, add or remove the value from the array
             const idx = model[property].indexOf(val);
@@ -551,7 +551,7 @@ const eventListenerNames = new Set<string>();
 
 function eventListener(e: Event) {
   current.event = e;
-  let dom = e.target as DomElement;
+  let dom = e.target as unknown as DomElement;
   const name = `on${e.type}`;
 
   while (dom) {
@@ -932,14 +932,21 @@ export function debouncedUpdate(timeout = 42) {
   debouncedUpdateTimeout = setTimeout(debouncedUpdateMethod, timeout);
 }
 
+function removeEventListeners() {
+  if (!mainVnode) {
+    return;
+  }
+  for (const name of eventListenerNames) {
+    mainVnode.dom.removeEventListener(name.slice(2), eventListener);
+  }
+  eventListenerNames.clear();
+}
+
 export function unmount() {
   if (mainVnode) {
     mainComponent = v(() => null, {}) as VnodeComponentInterface;
     const result = update();
-    for (const name of eventListenerNames) {
-      mainVnode.dom.removeEventListener(name.slice(2), eventListener);
-    }
-    eventListenerNames.clear();
+    removeEventListeners();
 
     mainComponent = null;
     mainVnode = null;
@@ -956,6 +963,10 @@ export function unmount() {
 export function mount(dom: string | DomElement, component: ValyrianComponent | VnodeComponentInterface | any) {
   const container =
     typeof dom === "string" ? (isNodeJs ? createElement(dom, dom === "svg") : document.querySelector(dom)) : dom;
+
+  if (mainVnode && mainVnode.dom !== container) {
+    removeEventListeners();
+  }
 
   if (isComponent(component)) {
     mainComponent = v(component, {}, []) as VnodeComponentInterface;

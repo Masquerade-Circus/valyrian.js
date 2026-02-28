@@ -1,7 +1,6 @@
 import { SchemaShield } from "schema-shield";
 type JsonSchema = Record<string, unknown>;
 export type FormState = Record<string, unknown>;
-type EventHandler = ((event: Event) => void) | null;
 type FormControl = {
     name?: string;
     type?: string;
@@ -9,8 +8,6 @@ type FormControl = {
     value?: unknown;
     checked?: boolean;
     disabled?: boolean;
-    oninput?: EventHandler;
-    onchange?: EventHandler;
     getAttribute?: (name: string) => string | null;
     vnode?: {
         props?: Record<string, unknown>;

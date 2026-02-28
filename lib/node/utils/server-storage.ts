@@ -28,7 +28,7 @@ export class ServerStorage implements Storage {
 
   getItem(key: string): string | null {
     const store = this.store;
-    return store ? store[key] || null : null;
+    return store ? (key in store ? store[key] : null) : null;
   }
 
   key(index: number): string | null {

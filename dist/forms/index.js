@@ -1867,7 +1867,7 @@ var FormStore = class _FormStore {
   }
 };
 var formSchemaShield = FormStore.schemaShield;
-function bindControl(formStore, control) {
+function bindControl(formStore, control, vnode) {
   const name = getNodeName(control);
   if (name.length === 0) {
     return;
@@ -1885,22 +1885,15 @@ function bindControl(formStore, control) {
     setControlValue(control, formattedValue);
   }
   const withBinding = control;
-  if (!withBinding[controlBindingKey]) {
-    const binding = {
-      formStore,
-      name,
-      type,
-      onInput: control.oninput || null,
-      onChange: control.onchange || null
-    };
-    withBinding[controlBindingKey] = binding;
-    control.oninput = (event) => {
+  const existingBinding = withBinding[controlBindingKey];
+  if (!existingBinding) {
+    const onInputHandler = (event) => {
+      const target = event.target;
       const currentBinding = withBinding[controlBindingKey];
       if (!currentBinding) {
         return;
       }
       if (currentBinding.type !== "checkbox" && currentBinding.type !== "radio") {
-        const target = event.target;
         currentBinding.formStore.setField(currentBinding.name, target.value, target, event);
         const formattedValue = currentBinding.formStore.formatValue(
           currentBinding.name,
@@ -1909,11 +1902,8 @@ function bindControl(formStore, control) {
         );
         setControlValue(target, formattedValue);
       }
-      if (currentBinding.onInput) {
-        currentBinding.onInput(event);
-      }
     };
-    control.onchange = (event) => {
+    const onChangeHandler = (event) => {
       const currentBinding = withBinding[controlBindingKey];
       if (!currentBinding) {
         return;
@@ -1924,14 +1914,23 @@ function bindControl(formStore, control) {
       } else if (currentBinding.type === "radio") {
         currentBinding.formStore.setField(currentBinding.name, target.value, target, event);
       }
-      if (currentBinding.onChange) {
-        currentBinding.onChange(event);
-      }
     };
+    const binding2 = {
+      formStore,
+      name,
+      type,
+      onInputHandler,
+      onChangeHandler
+    };
+    withBinding[controlBindingKey] = binding2;
+  } else {
+    withBinding[controlBindingKey].formStore = formStore;
+    withBinding[controlBindingKey].name = name;
+    withBinding[controlBindingKey].type = type;
   }
-  withBinding[controlBindingKey].formStore = formStore;
-  withBinding[controlBindingKey].name = name;
-  withBinding[controlBindingKey].type = type;
+  const binding = withBinding[controlBindingKey];
+  (0, import_valyrian.setAttribute)("oninput", binding.onInputHandler, vnode);
+  (0, import_valyrian.setAttribute)("onchange", binding.onChangeHandler, vnode);
 }
 function syncSubmitButtons(formDom, formStore) {
   const submitters = getSubmitters(formDom);
@@ -1945,13 +1944,9 @@ function syncSubmitButtons(formDom, formStore) {
     return;
   }
   const withBinding = formDom;
-  if (!withBinding[formBindingKey]) {
-    const binding = {
-      formStore,
-      onSubmit: formDom.onsubmit || null
-    };
-    withBinding[formBindingKey] = binding;
-    formDom.onsubmit = async (event) => {
+  const existingBinding = withBinding[formBindingKey];
+  if (!existingBinding) {
+    const onSubmitHandler = async (event) => {
       const currentBinding = withBinding[formBindingKey];
       if (!currentBinding) {
         return;
@@ -1960,19 +1955,27 @@ function syncSubmitButtons(formDom, formStore) {
       if (!success) {
         event.preventDefault();
       }
-      if (currentBinding.onSubmit) {
-        await currentBinding.onSubmit(event);
-      }
     };
+    const binding2 = {
+      formStore,
+      onSubmitHandler
+    };
+    withBinding[formBindingKey] = binding2;
+  } else {
+    withBinding[formBindingKey].formStore = formStore;
   }
-  withBinding[formBindingKey].formStore = formStore;
+  const binding = withBinding[formBindingKey];
+  (0, import_valyrian.setAttribute)("onsubmit", binding.onSubmitHandler, vnode);
   const controls = getControls(formDom);
   for (const control of controls) {
-    bindControl(formStore, control);
+    const controlVnode = control.vnode;
+    if (controlVnode) {
+      bindControl(formStore, control, controlVnode);
+    }
   }
   syncSubmitButtons(formDom, formStore);
 });
 (0, import_valyrian.directive)("field", (formStore, vnode) => {
   const control = vnode.dom;
-  bindControl(formStore, control);
+  bindControl(formStore, control, vnode);
 });

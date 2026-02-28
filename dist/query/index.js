@@ -218,6 +218,7 @@ var QueryClient = class {
         state: cloneState(entry.state)
       });
       this.#persist();
+      this.#scheduleGc(entry);
       throw error;
     }).finally(() => {
       entry.promise = null;
@@ -230,7 +231,7 @@ var QueryClient = class {
     const hash = hashKey(key);
     const staleTime = config.staleTime ?? this.#staleTimeDefault;
     if (!this.#cache.has(hash)) {
-      this.#cache.set(hash, {
+      const entry2 = {
         key,
         hash,
         fetcher: config.fetcher,
@@ -245,7 +246,9 @@ var QueryClient = class {
           data: null,
           updatedAt: 0
         }
-      });
+      };
+      this.#cache.set(hash, entry2);
+      this.#scheduleGc(entry2);
     } else {
       const entry2 = this.#cache.get(hash);
       entry2.fetcher = config.fetcher;

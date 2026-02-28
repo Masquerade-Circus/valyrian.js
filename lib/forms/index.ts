@@ -1,12 +1,10 @@
-import { directive, VnodeWithDom } from "valyrian.js";
+import { directive, setAttribute, VnodeWithDom } from "valyrian.js";
 import { createPulseStore } from "valyrian.js/pulses";
 import { deepCloneUnfreeze, isFunction, isString } from "valyrian.js/utils";
 import { SchemaShield, ValidationError, Validator } from "schema-shield";
 
 type JsonSchema = Record<string, unknown>;
 export type FormState = Record<string, unknown>;
-
-type EventHandler = ((event: Event) => void) | null;
 
 type FormControl = {
   name?: string;
@@ -15,8 +13,6 @@ type FormControl = {
   value?: unknown;
   checked?: boolean;
   disabled?: boolean;
-  oninput?: EventHandler;
-  onchange?: EventHandler;
   getAttribute?: (name: string) => string | null;
   vnode?: { props?: Record<string, unknown> };
 };
@@ -27,7 +23,6 @@ type FormNode = {
   tagName?: string;
   type?: string;
   disabled?: boolean;
-  onsubmit?: ((event: Event) => Promise<void> | void) | null;
   getAttribute?: (name: string) => string | null;
   vnode?: { props?: Record<string, unknown> };
 };
@@ -85,13 +80,13 @@ type ControlBinding = {
   formStore: FormStore<FormState>;
   name: string;
   type: string;
-  onInput: EventHandler;
-  onChange: EventHandler;
+  onInputHandler: (event: Event) => void;
+  onChangeHandler: (event: Event) => void;
 };
 
 type FormBinding = {
   formStore: FormStore<FormState>;
-  onSubmit: ((event: Event) => Promise<void> | void) | null;
+  onSubmitHandler: (event: Event) => Promise<void>;
 };
 
 const controlBindingKey = Symbol("forms-control-binding");
@@ -403,7 +398,7 @@ export class FormStore<TState extends FormState> {
 
 export const formSchemaShield = FormStore.schemaShield;
 
-function bindControl(formStore: FormStore<FormState>, control: FormControl) {
+function bindControl(formStore: FormStore<FormState>, control: FormControl, vnode: VnodeWithDom) {
   const name = getNodeName(control);
   if (name.length === 0) {
     return;
@@ -425,25 +420,17 @@ function bindControl(formStore: FormStore<FormState>, control: FormControl) {
   }
 
   const withBinding = control as FormControl & { [controlBindingKey]?: ControlBinding };
-  if (!withBinding[controlBindingKey]) {
-    const binding: ControlBinding = {
-      formStore,
-      name,
-      type,
-      onInput: control.oninput || null,
-      onChange: control.onchange || null
-    };
+  const existingBinding = withBinding[controlBindingKey];
 
-    withBinding[controlBindingKey] = binding;
-
-    control.oninput = (event: Event) => {
+  if (!existingBinding) {
+    const onInputHandler = (event: Event) => {
+      const target = event.target as FormControl;
       const currentBinding = withBinding[controlBindingKey];
       if (!currentBinding) {
         return;
       }
 
       if (currentBinding.type !== "checkbox" && currentBinding.type !== "radio") {
-        const target = event.target as FormControl;
         currentBinding.formStore.setField(currentBinding.name, target.value, target, event);
         const formattedValue = currentBinding.formStore.formatValue(
           currentBinding.name,
@@ -452,13 +439,9 @@ function bindControl(formStore: FormStore<FormState>, control: FormControl) {
         );
         setControlValue(target, formattedValue);
       }
-
-      if (currentBinding.onInput) {
-        currentBinding.onInput(event);
-      }
     };
 
-    control.onchange = (event: Event) => {
+    const onChangeHandler = (event: Event) => {
       const currentBinding = withBinding[controlBindingKey];
       if (!currentBinding) {
         return;
@@ -470,16 +453,26 @@ function bindControl(formStore: FormStore<FormState>, control: FormControl) {
       } else if (currentBinding.type === "radio") {
         currentBinding.formStore.setField(currentBinding.name, target.value, target, event);
       }
-
-      if (currentBinding.onChange) {
-        currentBinding.onChange(event);
-      }
     };
+
+    const binding: ControlBinding = {
+      formStore,
+      name,
+      type,
+      onInputHandler,
+      onChangeHandler
+    };
+
+    withBinding[controlBindingKey] = binding;
+  } else {
+    withBinding[controlBindingKey]!.formStore = formStore;
+    withBinding[controlBindingKey]!.name = name;
+    withBinding[controlBindingKey]!.type = type;
   }
 
-  withBinding[controlBindingKey]!.formStore = formStore;
-  withBinding[controlBindingKey]!.name = name;
-  withBinding[controlBindingKey]!.type = type;
+  const binding = withBinding[controlBindingKey] as ControlBinding;
+  setAttribute("oninput", binding.onInputHandler, vnode);
+  setAttribute("onchange", binding.onChangeHandler, vnode);
 }
 
 function syncSubmitButtons(formDom: FormNode, formStore: FormStore<FormState>) {
@@ -496,15 +489,10 @@ directive("form", (formStore: FormStore<FormState>, vnode: VnodeWithDom) => {
   }
 
   const withBinding = formDom as FormNode & { [formBindingKey]?: FormBinding };
-  if (!withBinding[formBindingKey]) {
-    const binding: FormBinding = {
-      formStore,
-      onSubmit: formDom.onsubmit || null
-    };
+  const existingBinding = withBinding[formBindingKey];
 
-    withBinding[formBindingKey] = binding;
-
-    formDom.onsubmit = async (event: Event) => {
+  if (!existingBinding) {
+    const onSubmitHandler = async (event: Event) => {
       const currentBinding = withBinding[formBindingKey];
       if (!currentBinding) {
         return;
@@ -514,18 +502,27 @@ directive("form", (formStore: FormStore<FormState>, vnode: VnodeWithDom) => {
       if (!success) {
         event.preventDefault();
       }
-
-      if (currentBinding.onSubmit) {
-        await currentBinding.onSubmit(event);
-      }
     };
+
+    const binding: FormBinding = {
+      formStore,
+      onSubmitHandler
+    };
+
+    withBinding[formBindingKey] = binding;
+  } else {
+    withBinding[formBindingKey]!.formStore = formStore;
   }
 
-  withBinding[formBindingKey]!.formStore = formStore;
+  const binding = withBinding[formBindingKey] as FormBinding;
+  setAttribute("onsubmit", binding.onSubmitHandler, vnode);
 
   const controls = getControls(formDom);
   for (const control of controls) {
-    bindControl(formStore, control);
+    const controlVnode = (control as any).vnode as VnodeWithDom | undefined;
+    if (controlVnode) {
+      bindControl(formStore, control, controlVnode);
+    }
   }
 
   syncSubmitButtons(formDom, formStore);
@@ -533,5 +530,5 @@ directive("form", (formStore: FormStore<FormState>, vnode: VnodeWithDom) => {
 
 directive("field", (formStore: FormStore<FormState>, vnode: VnodeWithDom) => {
   const control = vnode.dom as unknown as FormControl;
-  bindControl(formStore, control);
+  bindControl(formStore, control, vnode);
 });

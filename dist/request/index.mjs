@@ -169,7 +169,9 @@ function Requester(baseUrl = "", options = defaultOptions, isRoot = false) {
     const contentType = requestContext.options.headers["Content-Type"] || requestContext.options.headers["content-type"] || "";
     if (requestContext.data) {
       if (requestContext.options.method === "GET" && typeof requestContext.data === "object") {
-        finalUrl.search = serialize(requestContext.data).toString();
+        const params = new URLSearchParams(finalUrl.search);
+        serialize(requestContext.data).forEach((value, key) => params.append(key, value));
+        finalUrl.search = params.toString();
       } else if (isNativeBody(requestContext.data) || isString(requestContext.data)) {
         requestContext.options.body = requestContext.data;
       } else {

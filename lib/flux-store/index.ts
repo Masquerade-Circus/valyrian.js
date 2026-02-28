@@ -206,9 +206,12 @@ export class FluxStore {
     this.keyExists("mutation", store.init.mutations!, key);
     store.init.frozen = false;
     this.trigger("beforecommit", mutation, ...args);
-    store.init.mutations![key](store.state, ...args);
-    this.trigger("commit", mutation, ...args);
-    store.init.frozen = true;
+    try {
+      store.init.mutations![key](store.state, ...args);
+      this.trigger("commit", mutation, ...args);
+    } finally {
+      store.init.frozen = true;
+    }
 
     // We call the debounced update to notify the changes
     debouncedUpdate();

@@ -81,6 +81,8 @@ export class SwRuntimeManager implements SwRuntime {
     error: new Set()
   };
 
+  #initialized = false;
+
   #controllerChangeHandler = () => {
     this.#state.updateAvailable = false;
     this.#state.waiting = null;
@@ -127,9 +129,11 @@ export class SwRuntimeManager implements SwRuntime {
   }
 
   async init() {
-    if (!this.#isSupported()) {
+    if (this.#initialized || !this.#isSupported()) {
       return this;
     }
+
+    this.#initialized = true;
 
     try {
       const registration = await registerSw(this.#swUrl, { scope: this.#scope }, this.#navigator);

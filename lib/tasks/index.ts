@@ -50,6 +50,7 @@ export class Task<TArgs = void, TResult = unknown> {
   #activeAbortController: AbortController | null = null;
   #activeExecutionId = 0;
   #queue: Promise<TResult | null> = Promise.resolve(null);
+  #abortCause: "cancel" | "reset" | null = null;
 
   #listeners: TaskListeners<TArgs, TResult> = {
     state: new Set(),
@@ -119,6 +120,11 @@ export class Task<TArgs = void, TResult = unknown> {
       const result = await this.#handler(args, { signal });
 
       if (signal.aborted) {
+        if (executionId === this.#activeExecutionId && this.#abortCause !== "reset") {
+          this.#setState({ status: "cancelled", running: false });
+          this.#emit("cancel", args);
+        }
+        this.#abortCause = null;
         return this.#state.result;
       }
 
@@ -129,19 +135,22 @@ export class Task<TArgs = void, TResult = unknown> {
       this.#setState({ status: "success", running: false, result });
       this.#options.onSuccess?.(result, args);
       this.#emit("success", result);
+      this.#abortCause = null;
       return result;
     } catch (error) {
       if (signal.aborted) {
-        if (executionId === this.#activeExecutionId) {
+        if (executionId === this.#activeExecutionId && this.#abortCause !== "reset") {
           this.#setState({ status: "cancelled", running: false });
           this.#emit("cancel", args);
         }
+        this.#abortCause = null;
         return this.#state.result;
       }
 
       this.#setState({ status: "error", running: false, error });
       this.#options.onError?.(error, args);
       this.#emit("error", error);
+      this.#abortCause = null;
       throw error;
     }
   }
@@ -164,12 +173,16 @@ export class Task<TArgs = void, TResult = unknown> {
       return;
     }
 
+    if (!this.#abortCause) {
+      this.#abortCause = "cancel";
+    }
     this.#activeAbortController.abort();
     this.#setState({ status: "cancelled", running: false });
   }
 
   reset() {
     this.cancel();
+    this.#abortCause = "reset";
     this.#setState({
       status: "idle",
       running: false,

@@ -88,6 +88,8 @@ export class OfflineQueue {
   #failed: OfflineOperation[];
   #state: QueueState;
 
+  #destroyed = false;
+
   #listeners: {
     [K in keyof OfflineQueueEventMap]: Set<(payload: OfflineQueueEventMap[K]) => void>;
   } = {
@@ -196,7 +198,7 @@ export class OfflineQueue {
   }
 
   async sync() {
-    if (this.#state.syncing) {
+    if (this.#destroyed || this.#state.syncing) {
       return;
     }
 
@@ -208,7 +210,7 @@ export class OfflineQueue {
     this.#emit("change", cloneState(this.#state));
 
     try {
-      while (this.#pending.length > 0) {
+      while (this.#pending.length > 0 && !this.#destroyed) {
         const operation = this.#pending[0];
         const result = await this.#syncOne(operation);
 
@@ -291,6 +293,7 @@ export class OfflineQueue {
   }
 
   destroy() {
+    this.#destroyed = true;
     this.#offOnline?.();
     this.#offOnline = null;
 

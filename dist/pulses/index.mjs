@@ -208,6 +208,7 @@ function createMutableStore(initialState, pulses) {
   return createStore(initialState, pulses, false);
 }
 function createEffect(effect) {
+  const subscribers = /* @__PURE__ */ new Set();
   const runEffect = () => {
     try {
       effectStack.push(runEffect);
@@ -217,6 +218,19 @@ function createEffect(effect) {
     }
   };
   runEffect();
+  const currentVnode = globalThis.current?.vnode;
+  if (currentVnode && currentVnode.dom) {
+    const dom = currentVnode.dom;
+    const subscription = () => {
+      runEffect();
+    };
+    subscribers.add(subscription);
+    return () => {
+      subscribers.delete(subscription);
+    };
+  }
+  return () => {
+  };
 }
 function createPulse(initialValue) {
   let value = initialValue;
