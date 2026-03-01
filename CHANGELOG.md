@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.1.2](https://github.com/Masquerade-Circus/valyrian/compare/9.1.1...9.1.2) (2026-03-01)
+
+### Bug Fixes
+
+* **forms:** fix forms not respecting the users on* handlers on inputs and buttons ([ccd3e59](https://github.com/Masquerade-Circus/valyrian/commit/ccd3e59022f5711338a022088be541b6f111f525))
+
 ## [9.1.1](https://github.com/Masquerade-Circus/valyrian/compare/9.1.0...9.1.1) (2026-02-28)
 
 ### Bug Fixes
