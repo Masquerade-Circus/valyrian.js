@@ -36,7 +36,7 @@ export type FormTransformContext<TState extends FormState> = {
 
 export type FormTransform<TState extends FormState> = (
   value: unknown,
-  context: FormTransformContext<TState>
+  context: FormTransformContext<TState>,
 ) => unknown;
 
 export type FormTransformMap<TState extends FormState> = Partial<
@@ -62,7 +62,11 @@ type FormInternalState<TState extends FormState> = {
 };
 
 type FormInternalPulses<TState extends FormState> = {
-  setField: (state: FormInternalState<TState>, name: string, value: unknown) => void;
+  setField: (
+    state: FormInternalState<TState>,
+    name: string,
+    value: unknown,
+  ) => void;
   validate: (state: FormInternalState<TState>) => boolean;
   setInflight: (state: FormInternalState<TState>, inflight: boolean) => void;
   reset: (state: FormInternalState<TState>) => void;
@@ -82,11 +86,14 @@ type ControlBinding = {
   type: string;
   onInputHandler: (event: Event) => void;
   onChangeHandler: (event: Event) => void;
+  userOnInput?: (event: Event) => void;
+  userOnChange?: (event: Event) => void;
 };
 
 type FormBinding = {
   formStore: FormStore<FormState>;
   onSubmitHandler: (event: Event) => Promise<void>;
+  userOnSubmit?: (event: Event) => void;
 };
 
 const controlBindingKey = Symbol("forms-control-binding");
@@ -118,7 +125,9 @@ function getNodeName(node: FormControl) {
 }
 
 function getNodeType(node: FormControl) {
-  return String(node.type || getNodeAttribute(node, "type") || "").toLowerCase();
+  return String(
+    node.type || getNodeAttribute(node, "type") || "",
+  ).toLowerCase();
 }
 
 function decodeJsonPointerToken(token: string) {
@@ -199,8 +208,13 @@ function getSubmitters(formDom: FormNode) {
 
   walkElements(formDom, (node) => {
     const tagName = getTagName(node);
-    const nodeType = String(node.type || getNodeAttribute(node, "type") || "").toLowerCase();
-    if ((tagName === "BUTTON" || tagName === "INPUT") && nodeType === "submit") {
+    const nodeType = String(
+      node.type || getNodeAttribute(node, "type") || "",
+    ).toLowerCase();
+    if (
+      (tagName === "BUTTON" || tagName === "INPUT") &&
+      nodeType === "submit"
+    ) {
       submitters.push(node);
     }
   });
@@ -229,7 +243,7 @@ export class FormStore<TState extends FormState> {
   static createSchemaShield() {
     const schemaShield = new SchemaShield({
       failFast: false,
-      immutable: false
+      immutable: false,
     });
 
     schemaShield.addFormat(
@@ -246,7 +260,7 @@ export class FormStore<TState extends FormState> {
           return false;
         }
       },
-      true
+      true,
     );
 
     return schemaShield;
@@ -261,7 +275,9 @@ export class FormStore<TState extends FormState> {
 
     const getValidationErrors = (values: TState) => {
       const valuesToValidate =
-        this.#validationMode === "safe" ? deepCloneUnfreeze(values) : (values as unknown as Record<string, unknown>);
+        this.#validationMode === "safe"
+          ? deepCloneUnfreeze(values)
+          : (values as unknown as Record<string, unknown>);
 
       const result = this.#validator(valuesToValidate);
       return result.valid ? {} : this.#mapValidationError(result.error);
@@ -269,12 +285,15 @@ export class FormStore<TState extends FormState> {
 
     const initialValues = deepCloneUnfreeze(options.state);
 
-    this.#pulseStore = createPulseStore<FormInternalState<TState>, FormInternalPulses<TState>>(
+    this.#pulseStore = createPulseStore<
+      FormInternalState<TState>,
+      FormInternalPulses<TState>
+    >(
       {
         values: deepCloneUnfreeze(initialValues),
         errors: {},
         isInflight: false,
-        isDirty: false
+        isDirty: false,
       },
       {
         setField(state, name, value) {
@@ -294,8 +313,8 @@ export class FormStore<TState extends FormState> {
           state.errors = {};
           state.isInflight = false;
           state.isDirty = false;
-        }
-      }
+        },
+      },
     ) as unknown as FormPulseStore<TState>;
   }
 
@@ -320,7 +339,7 @@ export class FormStore<TState extends FormState> {
     name: string,
     value: unknown,
     control: FormControl | null,
-    event?: Event
+    event?: Event,
   ) {
     const transform = map[name];
     if (!transform) {
@@ -331,16 +350,31 @@ export class FormStore<TState extends FormState> {
       name,
       state: this.state,
       control,
-      event
+      event,
     });
   }
 
-  formatValue(name: string, value: unknown, control: FormControl | null = null) {
+  formatValue(
+    name: string,
+    value: unknown,
+    control: FormControl | null = null,
+  ) {
     return this.#runTransform(this.#format, name, value, control);
   }
 
-  setField(name: string, rawValue: unknown, control: FormControl | null = null, event?: Event) {
-    const cleanedValue = this.#runTransform(this.#clean, name, rawValue, control, event);
+  setField(
+    name: string,
+    rawValue: unknown,
+    control: FormControl | null = null,
+    event?: Event,
+  ) {
+    const cleanedValue = this.#runTransform(
+      this.#clean,
+      name,
+      rawValue,
+      control,
+      event,
+    );
     this.#pulseStore.setField(name, cleanedValue);
   }
 
@@ -398,7 +432,11 @@ export class FormStore<TState extends FormState> {
 
 export const formSchemaShield = FormStore.schemaShield;
 
-function bindControl(formStore: FormStore<FormState>, control: FormControl, vnode: VnodeWithDom) {
+function bindControl(
+  formStore: FormStore<FormState>,
+  control: FormControl,
+  vnode: VnodeWithDom,
+) {
   const name = getNodeName(control);
   if (name.length === 0) {
     return;
@@ -414,13 +452,26 @@ function bindControl(formStore: FormStore<FormState>, control: FormControl, vnod
     control.checked = Boolean(stateValue);
   } else if (type === "radio") {
     control.checked = String(stateValue) === String(control.value || "");
-  } else if (tagName === "SELECT" || tagName === "TEXTAREA" || tagName === "INPUT") {
+  } else if (
+    tagName === "SELECT" ||
+    tagName === "TEXTAREA" ||
+    tagName === "INPUT"
+  ) {
     const formattedValue = formStore.formatValue(name, stateValue, control);
     setControlValue(control, formattedValue);
   }
 
-  const withBinding = control as FormControl & { [controlBindingKey]?: ControlBinding };
+  const withBinding = control as FormControl & {
+    [controlBindingKey]?: ControlBinding;
+  };
   const existingBinding = withBinding[controlBindingKey];
+
+  const userOnInput = vnode.props.oninput as
+    | ((event: Event) => void)
+    | undefined;
+  const userOnChange = vnode.props.onchange as
+    | ((event: Event) => void)
+    | undefined;
 
   if (!existingBinding) {
     const onInputHandler = (event: Event) => {
@@ -430,14 +481,26 @@ function bindControl(formStore: FormStore<FormState>, control: FormControl, vnod
         return;
       }
 
-      if (currentBinding.type !== "checkbox" && currentBinding.type !== "radio") {
-        currentBinding.formStore.setField(currentBinding.name, target.value, target, event);
+      if (
+        currentBinding.type !== "checkbox" &&
+        currentBinding.type !== "radio"
+      ) {
+        currentBinding.formStore.setField(
+          currentBinding.name,
+          target.value,
+          target,
+          event,
+        );
         const formattedValue = currentBinding.formStore.formatValue(
           currentBinding.name,
           currentBinding.formStore.state[currentBinding.name],
-          target
+          target,
         );
         setControlValue(target, formattedValue);
+      }
+
+      if (currentBinding.userOnInput) {
+        currentBinding.userOnInput(event);
       }
     };
 
@@ -449,9 +512,23 @@ function bindControl(formStore: FormStore<FormState>, control: FormControl, vnod
 
       const target = event.target as FormControl;
       if (currentBinding.type === "checkbox") {
-        currentBinding.formStore.setField(currentBinding.name, Boolean(target.checked), target, event);
+        currentBinding.formStore.setField(
+          currentBinding.name,
+          Boolean(target.checked),
+          target,
+          event,
+        );
       } else if (currentBinding.type === "radio") {
-        currentBinding.formStore.setField(currentBinding.name, target.value, target, event);
+        currentBinding.formStore.setField(
+          currentBinding.name,
+          target.value,
+          target,
+          event,
+        );
+      }
+
+      if (currentBinding.userOnChange) {
+        currentBinding.userOnChange(event);
       }
     };
 
@@ -460,7 +537,9 @@ function bindControl(formStore: FormStore<FormState>, control: FormControl, vnod
       name,
       type,
       onInputHandler,
-      onChangeHandler
+      onChangeHandler,
+      userOnInput,
+      userOnChange,
     };
 
     withBinding[controlBindingKey] = binding;
@@ -468,6 +547,8 @@ function bindControl(formStore: FormStore<FormState>, control: FormControl, vnod
     withBinding[controlBindingKey]!.formStore = formStore;
     withBinding[controlBindingKey]!.name = name;
     withBinding[controlBindingKey]!.type = type;
+    withBinding[controlBindingKey]!.userOnInput = userOnInput;
+    withBinding[controlBindingKey]!.userOnChange = userOnChange;
   }
 
   const binding = withBinding[controlBindingKey] as ControlBinding;
@@ -491,6 +572,10 @@ directive("form", (formStore: FormStore<FormState>, vnode: VnodeWithDom) => {
   const withBinding = formDom as FormNode & { [formBindingKey]?: FormBinding };
   const existingBinding = withBinding[formBindingKey];
 
+  const userOnSubmit = vnode.props.onsubmit as
+    | ((event: Event) => void)
+    | undefined;
+
   if (!existingBinding) {
     const onSubmitHandler = async (event: Event) => {
       const currentBinding = withBinding[formBindingKey];
@@ -502,16 +587,22 @@ directive("form", (formStore: FormStore<FormState>, vnode: VnodeWithDom) => {
       if (!success) {
         event.preventDefault();
       }
+
+      if (currentBinding.userOnSubmit) {
+        currentBinding.userOnSubmit(event);
+      }
     };
 
     const binding: FormBinding = {
       formStore,
-      onSubmitHandler
+      onSubmitHandler,
+      userOnSubmit,
     };
 
     withBinding[formBindingKey] = binding;
   } else {
     withBinding[formBindingKey]!.formStore = formStore;
+    withBinding[formBindingKey]!.userOnSubmit = userOnSubmit;
   }
 
   const binding = withBinding[formBindingKey] as FormBinding;

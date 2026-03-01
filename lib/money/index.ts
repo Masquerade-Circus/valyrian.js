@@ -121,7 +121,10 @@ export class Money {
   }
 }
 
-export function parseMoneyInput(value: string, options: { locale?: Intl.LocalesArgument; decimalPlaces?: number } = {}) {
+export function parseMoneyInput(
+  value: string,
+  options: { locale?: Intl.LocalesArgument; decimalPlaces?: number } = {}
+) {
   const decimalPlaces = options.decimalPlaces ?? 2;
   const clean = String(value)
     .replace(/\s/g, "")
@@ -173,7 +176,7 @@ directive("money", (config: MoneyDirectiveOptions, vnode: VnodeWithDom) => {
   setAttribute(
     "oninput",
     (event: Event) => {
-      const target = event.target as HTMLInputElement;
+      const target = event.target as unknown as HTMLInputElement;
       const money = parseMoneyInput(target.value, { locale, decimalPlaces });
       config.model[config.field] = money.toCents();
 

@@ -1644,7 +1644,9 @@ function getNodeName(node) {
   return (0, import_utils.isString)(attributeName) ? attributeName : "";
 }
 function getNodeType(node) {
-  return String(node.type || getNodeAttribute(node, "type") || "").toLowerCase();
+  return String(
+    node.type || getNodeAttribute(node, "type") || ""
+  ).toLowerCase();
 }
 function decodeJsonPointerToken(token) {
   return token.replace(/~1/g, "/").replace(/~0/g, "~");
@@ -1711,7 +1713,9 @@ function getSubmitters(formDom) {
   const submitters = [];
   walkElements(formDom, (node) => {
     const tagName = getTagName(node);
-    const nodeType = String(node.type || getNodeAttribute(node, "type") || "").toLowerCase();
+    const nodeType = String(
+      node.type || getNodeAttribute(node, "type") || ""
+    ).toLowerCase();
     if ((tagName === "BUTTON" || tagName === "INPUT") && nodeType === "submit") {
       submitters.push(node);
     }
@@ -1823,7 +1827,13 @@ var FormStore = class _FormStore {
     return this.#runTransform(this.#format, name, value, control);
   }
   setField(name, rawValue, control = null, event) {
-    const cleanedValue = this.#runTransform(this.#clean, name, rawValue, control, event);
+    const cleanedValue = this.#runTransform(
+      this.#clean,
+      name,
+      rawValue,
+      control,
+      event
+    );
     this.#pulseStore.setField(name, cleanedValue);
   }
   #mapValidationError(error) {
@@ -1886,6 +1896,8 @@ function bindControl(formStore, control, vnode) {
   }
   const withBinding = control;
   const existingBinding = withBinding[controlBindingKey];
+  const userOnInput = vnode.props.oninput;
+  const userOnChange = vnode.props.onchange;
   if (!existingBinding) {
     const onInputHandler = (event) => {
       const target = event.target;
@@ -1894,13 +1906,21 @@ function bindControl(formStore, control, vnode) {
         return;
       }
       if (currentBinding.type !== "checkbox" && currentBinding.type !== "radio") {
-        currentBinding.formStore.setField(currentBinding.name, target.value, target, event);
+        currentBinding.formStore.setField(
+          currentBinding.name,
+          target.value,
+          target,
+          event
+        );
         const formattedValue = currentBinding.formStore.formatValue(
           currentBinding.name,
           currentBinding.formStore.state[currentBinding.name],
           target
         );
         setControlValue(target, formattedValue);
+      }
+      if (currentBinding.userOnInput) {
+        currentBinding.userOnInput(event);
       }
     };
     const onChangeHandler = (event) => {
@@ -1910,9 +1930,22 @@ function bindControl(formStore, control, vnode) {
       }
       const target = event.target;
       if (currentBinding.type === "checkbox") {
-        currentBinding.formStore.setField(currentBinding.name, Boolean(target.checked), target, event);
+        currentBinding.formStore.setField(
+          currentBinding.name,
+          Boolean(target.checked),
+          target,
+          event
+        );
       } else if (currentBinding.type === "radio") {
-        currentBinding.formStore.setField(currentBinding.name, target.value, target, event);
+        currentBinding.formStore.setField(
+          currentBinding.name,
+          target.value,
+          target,
+          event
+        );
+      }
+      if (currentBinding.userOnChange) {
+        currentBinding.userOnChange(event);
       }
     };
     const binding2 = {
@@ -1920,13 +1953,17 @@ function bindControl(formStore, control, vnode) {
       name,
       type,
       onInputHandler,
-      onChangeHandler
+      onChangeHandler,
+      userOnInput,
+      userOnChange
     };
     withBinding[controlBindingKey] = binding2;
   } else {
     withBinding[controlBindingKey].formStore = formStore;
     withBinding[controlBindingKey].name = name;
     withBinding[controlBindingKey].type = type;
+    withBinding[controlBindingKey].userOnInput = userOnInput;
+    withBinding[controlBindingKey].userOnChange = userOnChange;
   }
   const binding = withBinding[controlBindingKey];
   (0, import_valyrian.setAttribute)("oninput", binding.onInputHandler, vnode);
@@ -1945,6 +1982,7 @@ function syncSubmitButtons(formDom, formStore) {
   }
   const withBinding = formDom;
   const existingBinding = withBinding[formBindingKey];
+  const userOnSubmit = vnode.props.onsubmit;
   if (!existingBinding) {
     const onSubmitHandler = async (event) => {
       const currentBinding = withBinding[formBindingKey];
@@ -1955,14 +1993,19 @@ function syncSubmitButtons(formDom, formStore) {
       if (!success) {
         event.preventDefault();
       }
+      if (currentBinding.userOnSubmit) {
+        currentBinding.userOnSubmit(event);
+      }
     };
     const binding2 = {
       formStore,
-      onSubmitHandler
+      onSubmitHandler,
+      userOnSubmit
     };
     withBinding[formBindingKey] = binding2;
   } else {
     withBinding[formBindingKey].formStore = formStore;
+    withBinding[formBindingKey].userOnSubmit = userOnSubmit;
   }
   const binding = withBinding[formBindingKey];
   (0, import_valyrian.setAttribute)("onsubmit", binding.onSubmitHandler, vnode);
