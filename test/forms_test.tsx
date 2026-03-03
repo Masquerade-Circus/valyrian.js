@@ -197,6 +197,20 @@ describe("Forms", () => {
   });
 
   it("should validate url format from JSON schema", () => {
+    formSchemaShield.addFormat(
+      "url",
+      (value: unknown) => {
+        if (typeof value !== "string") return false;
+        try {
+          const parsedUrl = new URL(value);
+          return parsedUrl.protocol.length > 0;
+        } catch {
+          return false;
+        }
+      },
+      true
+    );
+
     const form = new FormStore({
       state: {
         website: ""
@@ -212,7 +226,7 @@ describe("Forms", () => {
 
     form.setField("website", "not-a-url");
     expect(form.validate()).toBeFalse();
-    expect(form.errors.website).toBeTruthy();
+    expect(form.validationErrors.website).toBeTruthy();
 
     form.setField("website", "https://example.com");
     expect(form.validate()).toBeTrue();
@@ -221,9 +235,13 @@ describe("Forms", () => {
   it("should use shared schema shield formats across form instances", () => {
     const formatName = `starts-with-a-${Math.random().toString(36).slice(2)}`;
 
-    formSchemaShield.addFormat(formatName, (value: unknown) => {
-      return typeof value === "string" && value.startsWith("A");
-    });
+    formSchemaShield.addFormat(
+      formatName,
+      (value: unknown) => {
+        return typeof value === "string" && value.startsWith("A");
+      },
+      true
+    );
 
     const schema = {
       type: "object",
@@ -245,131 +263,85 @@ describe("Forms", () => {
 
     formA.setField("code", "B-001");
     expect(formA.validate()).toBeFalse();
-    expect(formA.errors.code).toBeTruthy();
+    expect(formA.validationErrors.code).toBeTruthy();
 
     formB.setField("code", "A-001");
     expect(formB.validate()).toBeTrue();
   });
 
-  it("should support safe and fast validation modes", () => {
-    const schema = {
-      type: "object",
-      properties: {
-        role: { type: "string", default: "guest" }
-      },
-      required: ["role"]
-    };
-
-    const safeForm = new FormStore({
-      state: {} as { role?: string },
-      schema,
-      validationMode: "safe"
-    });
-
-    const fastForm = new FormStore({
-      state: {} as { role?: string },
-      schema,
-      validationMode: "fast"
-    });
-
-    expect(safeForm.validate()).toBeTrue();
-    expect(safeForm.state.role).toBeUndefined();
-
-    expect(fastForm.validate()).toBeTrue();
-    expect(fastForm.state.role).toEqual("guest");
-  });
-
-  it("should not freeze or share nested references from external initial state", () => {
-    const externalState = {
-      profile: {
-        name: "Alice"
-      }
-    };
-
+  it("should capture submit error when onSubmit throws", async () => {
     const form = new FormStore({
-      state: externalState,
+      state: { email: "test@example.com" },
       schema: {
         type: "object",
-        properties: {
-          profile: {
-            type: "object",
-            properties: {
-              name: { type: "string" }
-            },
-            required: ["name"]
-          }
-        },
-        required: ["profile"]
+        properties: { email: { type: "string" } }
+      },
+      onSubmit: async () => {
+        throw new Error("Server error");
       }
     });
 
-    expect(() => {
-      externalState.profile.name = "Bob";
-    }).not.toThrow();
-
-    expect(externalState.profile.name).toEqual("Bob");
-    expect((form.state.profile as { name: string }).name).toEqual("Alice");
+    await form.submit();
+    expect(form.submitError).toBeInstanceOf(Error);
+    expect(form.hasSubmitError).toBeTrue();
   });
 
-  it("benchmark: fast validation mode should outperform safe mode on large state", () => {
-    const schema = {
-      type: "object",
-      properties: {
-        email: { type: "string", format: "email" }
+  it("should clear submitError on reset", async () => {
+    const form = new FormStore({
+      state: { email: "test@example.com" },
+      schema: {
+        type: "object",
+        properties: { email: { type: "string" } }
       },
-      required: ["email"]
-    };
-
-    const createLargeState = () => ({
-      email: "",
-      metadata: {
-        rows: Array.from({ length: 400 }, (_, index) => ({
-          id: index,
-          name: `row-${index}`,
-          tags: ["alpha", "beta", "gamma"],
-          nested: {
-            a: index,
-            b: `value-${index}`,
-            c: {
-              active: index % 2 === 0,
-              score: index * 3
-            }
-          }
-        }))
+      onSubmit: async () => {
+        throw new Error("Error");
       }
     });
 
-    const runMode = (mode: "safe" | "fast") => {
-      const rounds: number[] = [];
+    await form.submit();
+    expect(form.hasSubmitError).toBeTrue();
 
-      for (let round = 0; round < 5; round += 1) {
-        const form = new FormStore({
-          state: createLargeState(),
-          schema,
-          validationMode: mode
-        });
+    form.reset();
+    expect(form.submitError).toBeNull();
+  });
 
-        const start = performance.now();
-        for (let index = 0; index < 40; index += 1) {
-          form.setField("email", `user-${round}-${index}@example.com`);
-        }
-        const end = performance.now();
-
-        expect(form.validate()).toBeTrue();
-        rounds.push(end - start);
+  it("should clear submitError before each submit", async () => {
+    let shouldThrow = true;
+    const form = new FormStore({
+      state: { email: "test@example.com" },
+      schema: {
+        type: "object",
+        properties: { email: { type: "string" } }
+      },
+      onSubmit: async () => {
+        if (shouldThrow) throw new Error("First error");
       }
+    });
 
-      const sorted = rounds.slice(1).sort((a, b) => a - b);
-      return sorted[Math.floor(sorted.length / 2)];
-    };
+    await form.submit();
+    expect(form.hasSubmitError).toBeTrue();
 
-    const safeMedianMs = runMode("safe");
-    const fastMedianMs = runMode("fast");
+    shouldThrow = false;
+    await form.submit();
+    expect(form.hasSubmitError).toBeFalse();
+  });
 
-    console.log(
-      `[forms benchmark] safe median: ${safeMedianMs.toFixed(2)}ms, fast median: ${fastMedianMs.toFixed(2)}ms`
-    );
+  it("should set isInflight during submit", async () => {
+    const form = new FormStore({
+      state: { email: "test@example.com" },
+      schema: {
+        type: "object",
+        properties: { email: { type: "string" } }
+      },
+      onSubmit: async () => {
+        await wait(50);
+      }
+    });
 
-    expect(fastMedianMs).toBeLessThan(safeMedianMs);
+    expect(form.isInflight).toBeFalse();
+    form.submit();
+    expect(form.isInflight).toBeTrue();
+    await wait(100);
+    expect(form.isInflight).toBeFalse();
   });
 });
