@@ -224,19 +224,23 @@ const Content = () => (
 
 For synchronous user interactions, mutating plain objects in delegated event handlers is usually enough because updates are event-driven.
 
-For async delegated handlers, Valyrian runs one automatic render after the handler returns.
+For async delegated handlers, Valyrian can run one automatic render right after the handler starts and another when the returned promise settles.
 
 Practical rule:
 
-- Without `event.preventDefault()`, state changes before the first `await` are included in the automatic render.
-- State changes after `await` need `update()`.
-- If you call `event.preventDefault()` before the first `await`, automatic rendering is skipped and you must call `update()` for each transition.
+- Without `event.preventDefault()`, state changes before the first `await` are included in the immediate automatic render.
+- If the handler returns a promise, state changes after `await` are included in a second automatic render when that promise settles.
+- If you call `event.preventDefault()`, automatic rendering is skipped and you must call `update()` manually for each transition you want to show.
+
+Timing note:
+
+- If `preventDefault()` happens after an `await`, the first automatic render may have already happened.
+- In that case, `preventDefault()` still skips the final automatic render that would normally happen when the promise settles.
+- It does not retroactively undo native browser behavior that already continued before the async boundary.
 
 Default async handler pattern (no `preventDefault`):
 
 ```tsx
-import { update } from "valyrian.js";
-
 const UserProfile = {
   loading: false,
   user: null,
@@ -248,7 +252,6 @@ const UserProfile = {
     this.user = await response.json();
 
     this.loading = false;
-    update();
   },
 
   view() {

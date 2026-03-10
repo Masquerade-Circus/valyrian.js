@@ -2,7 +2,7 @@
 
 Use this page as your map for the docs set.
 
-If you are new to Valyrian.js, follow the recommended path first. It gives the fastest route to productive usage.
+If you are new to Valyrian.js, follow the recommended path first. It introduces the web-first runtime model, then expands it from browser rendering into browser/server runtime usage.
 
 ## Recommended Path (First-Time Readers)
 
@@ -34,10 +34,10 @@ If you are new to Valyrian.js, follow the recommended path first. It gives the f
    * [5.3. FluxStore](./5.3-flux-store.md)
    * [5.4. Redux DevTools Bridge](./5.4-redux-devtools.md)
 6. [Optimization and Performance](./6-optimization-and-performance.md)
-7. [The Full-Stack Capability (Isomorphism Hub)](./7-full-stack-capability.md)
-   * [7.1. Server-Side Rendering](./7.1-ssr.md)
+7. [Browser/Server Runtime in Practice](./7-full-stack-capability.md)
+   * [7.1. Server-Side Rendering and Hydration](./7.1-ssr.md)
       * [7.1.1. Node Runtime APIs](./7.1.1-node-runtime-apis.md)
-   * [7.2. Isomorphic Networking and Storage](./7.2-isomorphic-networking-and-storage.md)
+   * [7.2. Isomorphic Request and Storage Runtime](./7.2-isomorphic-networking-and-storage.md)
    * [7.3. PWA and Build Tooling](./7.3-pwa-and-build-tooling.md)
       * [7.3.1. Service Worker Runtime](./7.3.1-sw-runtime.md)
    * [7.4. Server Execution Context](./7.4-server-context.md)
@@ -55,9 +55,9 @@ If you are new to Valyrian.js, follow the recommended path first. It gives the f
    * [9.6. Production Checklist](./9.6-production-checklist.md)
    * [9.7. Counter Variants by Component Shape](./9.7-counter-variants-by-component-shape.md)
    * [9.8. Reactive Counter Variants](./9.8-reactive-counter-variants.md)
-10. [Meta-Framework and CLI](./10-meta-framework-cli.md)
+10. [Meta-Framework and CLI (Downstream / Planned)](./10-meta-framework-cli.md)
 11. [Roadmap and Contribution](./11-roadmap-and-contribution.md)
 
 ## Notes
 
-* New readers should complete the recommended path before jumping to advanced chapters.
+* New readers should complete the recommended path before jumping to browser/server runtime chapters.

@@ -203,7 +203,7 @@ describe("Mount and update", () => {
     expect(update()).toEqual("<button>2</button>");
   });
 
-  it("should require manual update for async state changes after await in delegated events", async () => {
+  it("should auto-update delegated events after async state changes resolve", async () => {
     unmount();
 
     const listeners: Record<string, (event: Event) => void> = {};
@@ -221,6 +221,105 @@ describe("Mount and update", () => {
         onclick={async () => {
           state.phase = "loading";
           await wait(5);
+          state.phase = "done";
+        }}
+      >
+        {state.phase}
+      </button>
+    );
+
+    mount(dom, Component);
+
+    const event: {
+      type: string;
+      target: Element;
+      defaultPrevented: boolean;
+      preventDefault?: () => void;
+    } = {
+      type: "click",
+      target: dom.childNodes[0] as unknown as Element,
+      defaultPrevented: false
+    };
+    event.preventDefault = () => {
+      event.defaultPrevented = true;
+    };
+
+    listeners.click(event as unknown as Event);
+    expect(dom.innerHTML).toEqual("<button>loading</button>");
+
+    await wait(15);
+    expect(dom.innerHTML).toEqual("<button>done</button>");
+  });
+
+  it("should skip both automatic async updates when preventDefault is called in delegated events", async () => {
+    unmount();
+
+    const listeners: Record<string, (event: Event) => void> = {};
+    const dom = document.createElement("div");
+    (dom as any).addEventListener = (type: string, callback: EventListenerOrEventListenerObject | null) => {
+      listeners[type] = callback as (event: Event) => void;
+    };
+    (dom as any).removeEventListener = () => {};
+
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const state = { phase: "idle" };
+
+    const Component = () => (
+      <button
+        onclick={async (event: Event) => {
+          event.preventDefault();
+          state.phase = "loading";
+          await wait(5);
+          state.phase = "done";
+        }}
+      >
+        {state.phase}
+      </button>
+    );
+
+    mount(dom, Component);
+
+    const event: {
+      type: string;
+      target: Element;
+      defaultPrevented: boolean;
+      preventDefault?: () => void;
+    } = {
+      type: "click",
+      target: dom.childNodes[0] as unknown as Element,
+      defaultPrevented: false
+    };
+    event.preventDefault = () => {
+      event.defaultPrevented = true;
+    };
+
+    listeners.click(event as unknown as Event);
+    expect(dom.innerHTML).toEqual("<button>idle</button>");
+
+    await wait(15);
+    expect(dom.innerHTML).toEqual("<button>idle</button>");
+    expect(update()).toEqual("<button>done</button>");
+  });
+
+  it("should keep the first async auto-update if preventDefault is called after await in delegated events", async () => {
+    unmount();
+
+    const listeners: Record<string, (event: Event) => void> = {};
+    const dom = document.createElement("div");
+    (dom as any).addEventListener = (type: string, callback: EventListenerOrEventListenerObject | null) => {
+      listeners[type] = callback as (event: Event) => void;
+    };
+    (dom as any).removeEventListener = () => {};
+
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const state = { phase: "idle" };
+
+    const Component = () => (
+      <button
+        onclick={async (event: Event) => {
+          state.phase = "loading";
+          await wait(5);
+          event.preventDefault();
           state.phase = "done";
         }}
       >

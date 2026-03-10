@@ -5,6 +5,8 @@ This chapter contains two tracks:
 1. Integration and operations recipes (`9.1`-`9.6`).
 2. Architecture reference patterns (`9.7`-`9.8`).
 
+These pages show optional integration choices around the Valyrian runtime. They are not a separate framework layer, not a required app shell, and not a replacement for the web-first browser/server model described in earlier chapters.
+
 Pick one recipe at a time. Keep the first integration path stable before combining strategies.
 
 ## Integration and Operations Recipes
@@ -58,3 +60,5 @@ Pick one recipe at a time. Keep the first integration path stable before combini
 2. Add reliability patterns (`9.4`, `9.5`).
 3. Run the release checks in `9.6`.
 4. Use `9.7` and `9.8` as architecture reference patterns.
+
+If you need opinionated generators, file-based routing conventions, or scaffolded app shells, treat those as downstream tooling concerns rather than the core responsibility of this repo.

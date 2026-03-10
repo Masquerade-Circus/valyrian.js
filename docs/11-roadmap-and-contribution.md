@@ -1,6 +1,6 @@
 # 11. Roadmap and Contribution
 
-This chapter keeps contribution expectations explicit and predictable.
+This chapter keeps contribution expectations explicit and predictable for a web-first repository centered on one runtime model across browser and server.
 
 ## 11.1. Documentation Roadmap
 
@@ -16,9 +16,22 @@ Mid-term priorities:
 2. Add troubleshooting pages for common integration pitfalls.
 3. Add deeper SSR and PWA deployment guides.
 
+## 11.1.1. Repo Direction and Boundaries
+
+This repository positions Valyrian.js as an isomorphic runtime framework for web apps.
+
+Contribution decisions should preserve these boundaries:
+
+1. Keep core direction focused on browser/server continuity, SSR, hydration, request isolation, and related web runtime behavior.
+2. Keep documentation category language consistent with that positioning across README and `docs/`.
+3. Do not reframe the project as a host-agnostic core or a generic runtime toolkit.
+4. Treat terminal UIs, native targets, and meta-framework generators as downstream or external repos unless the project direction explicitly changes.
+
 ## 11.2. Contribution Workflow
 
 If you change behavior in `lib/`, update both docs and tests.
+
+If you change runtime behavior that affects browser/server continuity, update the relevant chapter 7 docs and any reference pages that define the same contract.
 
 Recommended order:
 
@@ -32,6 +45,8 @@ Recommended order:
 - Prefer short, runnable examples.
 - Clearly mark planned features as planned.
 - Keep terminology consistent across pages.
+- Keep `isomorphic runtime framework`, `browser/server`, `SSR`, and request-isolation wording aligned with the repo's documented positioning.
+- Do not introduce docs language that recenters the repo around non-web hosts or downstream tooling categories.
 
 ## 11.4. Useful Commands
 

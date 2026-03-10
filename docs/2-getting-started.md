@@ -2,16 +2,16 @@
 
 Valyrian.js can run directly in the browser with ES modules, or from a Node.js project with the built-in `inline` utility.
 
-Use this page to get a first working screen quickly, then continue with [./3-the-essentials.md](./3-the-essentials.md).
+Use this page to meet the runtime model in stages: first in the browser render/update loop, then in local Node tooling, and later in SSR as the same model expanded to the server.
 
 ## Goal and Time
 
-* **Goal:** render your first component.
+* **Goal:** render your first component and understand the first proof points of the runtime model.
 * **Time:** 2-5 minutes (CDN path) or 10-15 minutes (Node path).
 
 ## Choose One Path
 
-If this is your first time with the framework, start with the CDN path. It gives the fastest feedback loop and avoids setup friction.
+If this is your first time with the framework, start with the CDN path. It gives the fastest feedback loop, shows the render/update loop directly in the browser, and avoids setup friction.
 
 ## Path Selection Flow
 
@@ -35,6 +35,8 @@ flowchart TD
 ## 2.1. Browser Method (Recommended First)
 
 This is the fastest way to confirm the runtime and your environment are working.
+
+Treat this as the first proof of the model: render a component, change state or output, and watch the browser update through explicit runtime behavior.
 
 Create `index.html`:
 
@@ -72,9 +74,13 @@ What happens here:
 
 If you see the heading and paragraph rendered, your core setup is done.
 
+At this point you have already verified the browser side of the runtime model.
+
 ## 2.2. Node.js Method (Built-in Tooling)
 
 If you want TSX/JSX without a complex bundler setup, use `valyrian.js/node` and `inline`.
+
+This path proves a second point: the same runtime model can move into local Node tooling without changing how you think about components, mounting, or output.
 
 ### 1. Install
 
@@ -148,8 +154,11 @@ Then load `dist.js` from a minimal HTML page:
 
 If you are testing locally, use any static server (for example `npx serve .`) and open that HTML page in the browser.
 
+The important part is not the server choice. It is that Node becomes a practical runtime surface for authoring, transforming, and preparing the same browser-facing application model.
+
 ## Next Steps
 
 1. Continue with [./3-the-essentials.md](./3-the-essentials.md) for components, directives, and update flow.
 2. Move to [./4.1-routing-and-navigation.md](./4.1-routing-and-navigation.md) to build your first SPA route.
-3. Use [./9-recipes-and-integrations.md](./9-recipes-and-integrations.md) when you are ready for Vite/Webpack and backend integration patterns.
+3. Continue to [./7.1-ssr.md](./7.1-ssr.md) when you are ready to see SSR as the next expansion of the same runtime model.
+4. Use [./9-recipes-and-integrations.md](./9-recipes-and-integrations.md) when you are ready for Vite/Webpack and backend integration patterns.

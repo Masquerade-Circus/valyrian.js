@@ -549,6 +549,14 @@ export function setPropNameReserved(name: string) {
 
 const eventListenerNames = new Set<string>();
 
+function isThenable(value: unknown): value is PromiseLike<unknown> {
+  return (
+    value !== null
+    && (typeof value === "object" || typeof value === "function")
+    && typeof Reflect.get(value, "then") === "function"
+  );
+}
+
 function eventListener(e: Event) {
   current.event = e;
   let dom = e.target as unknown as DomElement;
@@ -557,8 +565,9 @@ function eventListener(e: Event) {
   while (dom) {
     const oldVnode = dom.vnode as VnodeWithDom;
     if (oldVnode && oldVnode.props[name]) {
+      let result: unknown;
       try {
-        oldVnode.props[name](e, oldVnode);
+        result = oldVnode.props[name](e, oldVnode);
       } finally {
         current.event = null;
       }
@@ -567,6 +576,22 @@ function eventListener(e: Event) {
         // eslint-disable-next-line no-use-before-define
         update();
       }
+
+      if (isThenable(result)) {
+        void Promise.resolve(result).then(
+          () => {
+            if (!e.defaultPrevented) {
+              update();
+            }
+          },
+          () => {
+            if (!e.defaultPrevented) {
+              update();
+            }
+          }
+        );
+      }
+
       return;
     }
     dom = dom.parentNode as DomElement;

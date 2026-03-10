@@ -28,9 +28,13 @@
 
 # Valyrian.js
 
-Lightweight steel to forge modern web apps.
+An isomorphic runtime framework for web apps.
 
-Valyrian.js is a runtime-first, isomorphic micro-framework. Render UI, add routing, manage state, and ship SSR with one mental model and minimal stack glue.
+Valyrian.js gives you one runtime model across browser and server so the way you render, update, route, fetch, and hydrate stays consistent as your app expands.
+
+It is for teams that want explicit runtime behavior, deterministic updates, JSX/TSX authoring, and SSR without splitting their app into disconnected client and server mental models.
+
+Here, "isomorphic" means the browser runtime and server runtime follow the same model: SSR, hydration, request isolation, and Node runtime APIs are extensions of the same web-first system, not separate product modes.
 
 ## Table of Contents
 
@@ -49,7 +53,7 @@ Valyrian.js is a runtime-first, isomorphic micro-framework. Render UI, add routi
 
 ## Quick Start
 
-Get a working screen first. Start with the CDN path for the fastest feedback loop.
+Get a working screen first. Start with the CDN path to see the render/update loop in the browser before expanding into Node tooling or SSR.
 
 ### Browser (CDN)
 
@@ -74,8 +78,9 @@ Then follow [docs/2-getting-started.md](docs/2-getting-started.md) for the `inli
 ## Choose Your Path
 
 * **Try it now (no install):** use the CDN snippet above.
-* **Build with TSX/JSX:** start at [docs/2-getting-started.md](docs/2-getting-started.md) (Node path).
-* **Ship SSR/isomorphic behavior:** complete chapters 1-3, then go to [docs/7-full-stack-capability.md](docs/7-full-stack-capability.md).
+* **Prove the runtime loop in the browser:** start with [docs/2-getting-started.md](docs/2-getting-started.md) (browser path).
+* **Add local TSX/JSX tooling in Node:** continue with [docs/2-getting-started.md](docs/2-getting-started.md) (Node path).
+* **Expand the same model to SSR and request-scoped runtime behavior:** complete chapters 1-3, then go to [docs/7-full-stack-capability.md](docs/7-full-stack-capability.md).
 
 ## First 5 Minutes (Recommended)
 
@@ -95,27 +100,30 @@ If this works, you already have the core Valyrian mental model.
 * Runtime core API reference: [docs/3.1-runtime-core.md](docs/3.1-runtime-core.md)
 * Building Single Page Applications (SPA Hub): [docs/4-building-spa.md](docs/4-building-spa.md)
 * Advanced State Management (Hub): [docs/5-advanced-state-management.md](docs/5-advanced-state-management.md)
-* The Full-Stack Capability (Isomorphism Hub): [docs/7-full-stack-capability.md](docs/7-full-stack-capability.md)
+* Browser/Server Runtime in Practice: [docs/7-full-stack-capability.md](docs/7-full-stack-capability.md)
 * Utilities and Ecosystem (Hub): [docs/8-utilities-and-ecosystem.md](docs/8-utilities-and-ecosystem.md)
 * Website: <https://valyrianjs.dev/>
 
 ## Why Valyrian.js
 
 * One runtime model across browser and server.
-* Built-in modules for routing, request, state, forms, offline, and SSR tooling.
-* Minimal dependencies and explicit control of rendering behavior.
-* Can run with or without a traditional bundler workflow.
+* Explicit runtime behavior with deterministic updates.
+* SSR, hydration, routing, request flow, and state fit the same runtime model.
+* Built-in modules for routing, request, state, forms, offline, and server-side rendering.
+* Web-first architecture that can start in the browser and expand into Node tooling without changing the core mental model.
 
 Good fit:
 
 * You want a smaller stack with fewer moving parts.
 * You prefer explicit updates and clear runtime behavior.
 * You want browser and server flows with a shared mental model.
+* You want SSR and hydration without adopting a separate meta-framework as the core of your app architecture.
 
 Not the best fit:
 
 * You need a huge plugin ecosystem as your primary decision factor.
 * You require a fully opinionated meta-framework workflow out of the box.
+* You are looking for this repo to be a host-agnostic core for terminal, native, or non-web runtimes.
 
 ## Testing Philosophy
 
@@ -139,7 +147,7 @@ For app usage, keep following [docs/2-getting-started.md](docs/2-getting-started
 ## More Guides
 
 * Recipes and integrations: [docs/9-recipes-and-integrations.md](docs/9-recipes-and-integrations.md)
-* Meta-framework CLI: [docs/10-meta-framework-cli.md](docs/10-meta-framework-cli.md)
+* Meta-framework CLI (downstream workflow): [docs/10-meta-framework-cli.md](docs/10-meta-framework-cli.md)
 * Roadmap and contribution model: [docs/11-roadmap-and-contribution.md](docs/11-roadmap-and-contribution.md)
 
 ## Contributing

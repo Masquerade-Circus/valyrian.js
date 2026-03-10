@@ -405,6 +405,9 @@ function setPropNameReserved(name) {
   reservedProps.add(name);
 }
 var eventListenerNames = /* @__PURE__ */ new Set();
+function isThenable(value) {
+  return value !== null && (typeof value === "object" || typeof value === "function") && typeof Reflect.get(value, "then") === "function";
+}
 function eventListener(e) {
   current.event = e;
   let dom = e.target;
@@ -412,13 +415,28 @@ function eventListener(e) {
   while (dom) {
     const oldVnode = dom.vnode;
     if (oldVnode && oldVnode.props[name]) {
+      let result;
       try {
-        oldVnode.props[name](e, oldVnode);
+        result = oldVnode.props[name](e, oldVnode);
       } finally {
         current.event = null;
       }
       if (!e.defaultPrevented) {
         update();
+      }
+      if (isThenable(result)) {
+        void Promise.resolve(result).then(
+          () => {
+            if (!e.defaultPrevented) {
+              update();
+            }
+          },
+          () => {
+            if (!e.defaultPrevented) {
+              update();
+            }
+          }
+        );
       }
       return;
     }

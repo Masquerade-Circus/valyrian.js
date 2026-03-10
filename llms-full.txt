@@ -4,7 +4,7 @@ Purpose
 This file aggregates the official documentation sources from the `docs/` directory as a single reference for AI agents and tooling.
 
 Generated
-- Date (UTC): 2026-03-03
+- Date (UTC): 2026-03-10
 - Source root: `docs/`
 - File count: 43
 
@@ -61,7 +61,7 @@ ____________________________________________
 
 Use this page as your map for the docs set.
 
-If you are new to Valyrian.js, follow the recommended path first. It gives the fastest route to productive usage.
+If you are new to Valyrian.js, follow the recommended path first. It introduces the web-first runtime model, then expands it from browser rendering into browser/server runtime usage.
 
 ## Recommended Path (First-Time Readers)
 
@@ -93,10 +93,10 @@ If you are new to Valyrian.js, follow the recommended path first. It gives the f
    * [5.3. FluxStore](./5.3-flux-store.md)
    * [5.4. Redux DevTools Bridge](./5.4-redux-devtools.md)
 6. [Optimization and Performance](./6-optimization-and-performance.md)
-7. [The Full-Stack Capability (Isomorphism Hub)](./7-full-stack-capability.md)
-   * [7.1. Server-Side Rendering](./7.1-ssr.md)
+7. [Browser/Server Runtime in Practice](./7-full-stack-capability.md)
+   * [7.1. Server-Side Rendering and Hydration](./7.1-ssr.md)
       * [7.1.1. Node Runtime APIs](./7.1.1-node-runtime-apis.md)
-   * [7.2. Isomorphic Networking and Storage](./7.2-isomorphic-networking-and-storage.md)
+   * [7.2. Isomorphic Request and Storage Runtime](./7.2-isomorphic-networking-and-storage.md)
    * [7.3. PWA and Build Tooling](./7.3-pwa-and-build-tooling.md)
       * [7.3.1. Service Worker Runtime](./7.3.1-sw-runtime.md)
    * [7.4. Server Execution Context](./7.4-server-context.md)
@@ -114,12 +114,12 @@ If you are new to Valyrian.js, follow the recommended path first. It gives the f
    * [9.6. Production Checklist](./9.6-production-checklist.md)
    * [9.7. Counter Variants by Component Shape](./9.7-counter-variants-by-component-shape.md)
    * [9.8. Reactive Counter Variants](./9.8-reactive-counter-variants.md)
-10. [Meta-Framework and CLI](./10-meta-framework-cli.md)
+10. [Meta-Framework and CLI (Downstream / Planned)](./10-meta-framework-cli.md)
 11. [Roadmap and Contribution](./11-roadmap-and-contribution.md)
 
 ## Notes
 
-* New readers should complete the recommended path before jumping to advanced chapters.
+* New readers should complete the recommended path before jumping to browser/server runtime chapters.
 
 
 ____________________________________________
@@ -127,9 +127,11 @@ ____________________________________________
 
 # 1. Introduction
 
-Valyrian.js is an isomorphic micro-framework for building web apps with one runtime model across browser and server.
+Valyrian.js is an isomorphic runtime framework for web apps with one runtime model across browser and server.
 
-The goal is simple: ship fast, keep control, and add complexity only when your app needs it.
+It is for teams that want browser/server continuity, explicit runtime behavior, and deterministic updates without hiding app behavior behind framework ceremony.
+
+The goal is simple: ship fast, keep control, and expand from browser rendering into SSR, hydration, and request-scoped server behavior without switching mental models.
 
 ## What this guide gives you
 
@@ -144,7 +146,7 @@ The goal is simple: ship fast, keep control, and add complexity only when your a
 
 ## 1.1. What Valyrian.js Is
 
-Valyrian is designed around one mental model that works in both runtime contexts.
+Valyrian is designed around one runtime model that works in both browser and server contexts.
 
 Core areas:
 
@@ -152,7 +154,7 @@ Core areas:
 * Router and navigation lifecycle.
 * State options (`POJO`, `pulse`, `pulse store`, `flux store`).
 * Request and async orchestration modules.
-* Node-side SSR and build utilities.
+* Node-side SSR, hydration entry points, and build utilities.
 
 ## 1.2. Philosophy
 
@@ -161,7 +163,7 @@ The project emphasizes:
 1. **Simplicity first**: complexity should come from product logic, not framework ceremony.
 2. **Platform-native APIs**: lean on Web/JS primitives whenever practical.
 3. **Deterministic updates**: avoid hidden schedulers where explicit control is clearer.
-4. **Unified behavior**: keep runtime semantics consistent between client and server.
+4. **Unified behavior**: keep runtime semantics consistent between browser and server.
 
 ## 1.3. Architecture Overview
 
@@ -175,6 +177,8 @@ flowchart LR
     target --> dom[Interactive DOM]
     target --> html[HTML String]
 ```
+
+`Render Target` is the key architectural bridge. In the browser, the runtime resolves to interactive DOM updates. On the server, the same component and routing model can resolve to HTML output, then hydrate back into interactive behavior on the client. That continuity is why SSR, hydration, and request-scoped execution belong to the same runtime story instead of separate feature buckets.
 
 ## 1.4. Reading Path
 
@@ -196,16 +200,16 @@ ____________________________________________
 
 Valyrian.js can run directly in the browser with ES modules, or from a Node.js project with the built-in `inline` utility.
 
-Use this page to get a first working screen quickly, then continue with [./3-the-essentials.md](./3-the-essentials.md).
+Use this page to meet the runtime model in stages: first in the browser render/update loop, then in local Node tooling, and later in SSR as the same model expanded to the server.
 
 ## Goal and Time
 
-* **Goal:** render your first component.
+* **Goal:** render your first component and understand the first proof points of the runtime model.
 * **Time:** 2-5 minutes (CDN path) or 10-15 minutes (Node path).
 
 ## Choose One Path
 
-If this is your first time with the framework, start with the CDN path. It gives the fastest feedback loop and avoids setup friction.
+If this is your first time with the framework, start with the CDN path. It gives the fastest feedback loop, shows the render/update loop directly in the browser, and avoids setup friction.
 
 ## Path Selection Flow
 
@@ -229,6 +233,8 @@ flowchart TD
 ## 2.1. Browser Method (Recommended First)
 
 This is the fastest way to confirm the runtime and your environment are working.
+
+Treat this as the first proof of the model: render a component, change state or output, and watch the browser update through explicit runtime behavior.
 
 Create `index.html`:
 
@@ -266,9 +272,13 @@ What happens here:
 
 If you see the heading and paragraph rendered, your core setup is done.
 
+At this point you have already verified the browser side of the runtime model.
+
 ## 2.2. Node.js Method (Built-in Tooling)
 
 If you want TSX/JSX without a complex bundler setup, use `valyrian.js/node` and `inline`.
+
+This path proves a second point: the same runtime model can move into local Node tooling without changing how you think about components, mounting, or output.
 
 ### 1. Install
 
@@ -342,11 +352,14 @@ Then load `dist.js` from a minimal HTML page:
 
 If you are testing locally, use any static server (for example `npx serve .`) and open that HTML page in the browser.
 
+The important part is not the server choice. It is that Node becomes a practical runtime surface for authoring, transforming, and preparing the same browser-facing application model.
+
 ## Next Steps
 
 1. Continue with [./3-the-essentials.md](./3-the-essentials.md) for components, directives, and update flow.
 2. Move to [./4.1-routing-and-navigation.md](./4.1-routing-and-navigation.md) to build your first SPA route.
-3. Use [./9-recipes-and-integrations.md](./9-recipes-and-integrations.md) when you are ready for Vite/Webpack and backend integration patterns.
+3. Continue to [./7.1-ssr.md](./7.1-ssr.md) when you are ready to see SSR as the next expansion of the same runtime model.
+4. Use [./9-recipes-and-integrations.md](./9-recipes-and-integrations.md) when you are ready for Vite/Webpack and backend integration patterns.
 
 
 ____________________________________________
@@ -578,19 +591,23 @@ const Content = () => (
 
 For synchronous user interactions, mutating plain objects in delegated event handlers is usually enough because updates are event-driven.
 
-For async delegated handlers, Valyrian runs one automatic render after the handler returns.
+For async delegated handlers, Valyrian can run one automatic render right after the handler starts and another when the returned promise settles.
 
 Practical rule:
 
-- Without `event.preventDefault()`, state changes before the first `await` are included in the automatic render.
-- State changes after `await` need `update()`.
-- If you call `event.preventDefault()` before the first `await`, automatic rendering is skipped and you must call `update()` for each transition.
+- Without `event.preventDefault()`, state changes before the first `await` are included in the immediate automatic render.
+- If the handler returns a promise, state changes after `await` are included in a second automatic render when that promise settles.
+- If you call `event.preventDefault()`, automatic rendering is skipped and you must call `update()` manually for each transition you want to show.
+
+Timing note:
+
+- If `preventDefault()` happens after an `await`, the first automatic render may have already happened.
+- In that case, `preventDefault()` still skips the final automatic render that would normally happen when the promise settles.
+- It does not retroactively undo native browser behavior that already continued before the async boundary.
 
 Default async handler pattern (no `preventDefault`):
 
 ```tsx
-import { update } from "valyrian.js";
-
 const UserProfile = {
   loading: false,
   user: null,
@@ -602,7 +619,6 @@ const UserProfile = {
     this.user = await response.json();
 
     this.loading = false;
-    update();
   },
 
   view() {
@@ -717,7 +733,9 @@ ____________________________________________
 
 # 3.1. Runtime Core API (`valyrian.js`)
 
-This page is the runtime reference for the base `valyrian.js` package.
+This page documents the runtime core behind the base `valyrian.js` package.
+
+The same mount, update, lifecycle, and hydration rules described here power both browser execution and server-side rendering in Node.js. Read this page as the reference for the shared runtime model, then layer server-specific behavior from chapter 7 on top of it.
 
 Use [./3-the-essentials.md](./3-the-essentials.md) for the learning path, then use this page for exact API behavior.
 
@@ -755,9 +773,11 @@ Mounting by selector or element is still supported for partial integration scena
 
 Runs a patch pass for the mounted app.
 
-Use it when state changes happen outside delegated event handlers, when async changes happen after an `await`, or when you want to show an intermediate state before an `await`.
+Use it when state changes happen outside delegated event handlers, when you call `event.preventDefault()` and want manual control of renders, or when you want to force an intermediate state at a specific time.
 
-If a delegated handler calls `event.preventDefault()` before the first `await`, the automatic event-driven update is skipped and you must call `update()` manually for each UI transition.
+If a delegated handler returns a promise, Valyrian runs an automatic update after the synchronous part of the handler and another one when the promise settles. If the handler calls `event.preventDefault()`, those automatic updates are skipped and you must call `update()` manually for each UI transition.
+
+If `event.preventDefault()` is called only after an `await`, the first automatic update may already have happened, but the final update on promise settlement is still skipped.
 
 ### `unmount()`
 
@@ -2317,28 +2337,30 @@ Rules:
 ____________________________________________
 # Source: docs/7-full-stack-capability.md
 
-# 7. The Full-Stack Capability (Isomorphism Hub)
+# 7. Browser/Server Runtime Model in Practice
 
-Valyrian can run with one mental model across browser and server runtimes.
+Valyrian's full-stack story is the same runtime model expressed across browser and server, not a collection of optional extras.
 
-If you are new to SSR, do not start with all features at once. Ship a minimal render first, then add networking/storage, then PWA tooling.
+SSR, hydration, request-scoped context, and isomorphic networking all extend the same explicit runtime behavior and deterministic update model described in the core chapters.
+
+If you are new to server rendering, start with one SSR render path first, then add request isolation and networking continuity, then layer PWA tooling after the runtime flow is stable.
 
 This chapter is a hub split into focused pages:
 
 ## 7.1. Server-Side Rendering
 
 * File: [./7.1-ssr.md](./7.1-ssr.md)
-* Covers SSR render flow and browser hydration behavior.
+* Covers the server-side expression of the same runtime model, including SSR render flow and browser hydration.
 
 ### 7.1.1. Node Runtime APIs
 
 * File: [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md)
-* Covers `render`, DOM utilities, runtime side effects, and node exports.
+* Covers the Node server runtime surface: `render`, DOM setup, request-scoped storage, and runtime-side exports.
 
 ## 7.2. Isomorphic Networking and Storage
 
 * File: [./7.2-isomorphic-networking-and-storage.md](./7.2-isomorphic-networking-and-storage.md)
-* Covers environment-aware request URLs and request-scoped storage with `ServerStorage`.
+* Covers runtime continuity for network calls plus request-scoped storage isolation with `ServerStorage`.
 
 ## 7.3. PWA and Build Tooling
 
@@ -2353,15 +2375,15 @@ This chapter is a hub split into focused pages:
 ## 7.4. Server Execution Context
 
 * File: [./7.4-server-context.md](./7.4-server-context.md)
-* Covers request-scoped server context and how core modules infer context automatically in Node.js.
+* Covers request-scoped server context and how core modules keep per-request runtime behavior isolated in Node.js.
 
 ## Read This If You Are Starting SSR
 
 1. Start with [./7.1-ssr.md](./7.1-ssr.md).
-2. Use [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md) for runtime-level server APIs.
+2. Use [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md) for the Node server runtime surface.
 3. Configure request URL rewriting and storage isolation with [./7.2-isomorphic-networking-and-storage.md](./7.2-isomorphic-networking-and-storage.md).
 4. Review request-scoped context behavior with [./7.4-server-context.md](./7.4-server-context.md).
-5. Add PWA/build tooling and service worker runtime only after SSR flow is stable.
+5. Add PWA/build tooling and service worker runtime only after the browser/server runtime flow is stable.
 
 
 ____________________________________________
@@ -2369,7 +2391,9 @@ ____________________________________________
 
 # 7.1. Server-Side Rendering
 
-Server rendering in Valyrian is built around `render` from `valyrian.js/node`.
+Server-side rendering in Valyrian is not a separate product mode bolted onto a client framework. It is the server-side expression of the same runtime model used in the browser: render the same component tree, preserve the same state shape, and continue with the same patch and hydration rules after the HTML reaches the client.
+
+In practice, SSR means running the Valyrian runtime through `valyrian.js/node` for each request, producing deterministic HTML, and then mounting the same app on the same container in the browser so hydration can continue from that existing DOM.
 
 For full node runtime exports (`render`, DOM helpers, `ServerStorage`, build helpers), see [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md).
 
@@ -2399,7 +2423,7 @@ const html = render(<App initialState={{ path: "/" }} />);
 
 ## End-to-End HTTP + Hydration Recipe
 
-Use this pattern to ship one full SSR request cycle (server render + browser hydration).
+Use this pattern to ship one full browser/server runtime cycle (server render + browser hydration).
 
 ```tsx
 import { v } from "valyrian.js";
@@ -2463,7 +2487,7 @@ Hydration safety checklist:
 2. Reuse the same initial state shape on server and browser.
 3. Keep first-render markup deterministic for the same props/state.
 
-## Router-Driven SSR (Optional)
+## Router-Driven SSR
 
 For route-first rendering, keep route definitions in the app, export the router, and reuse it in Node.
 
@@ -2654,11 +2678,13 @@ ____________________________________________
 
 # 7.1.1. Node Runtime APIs (`valyrian.js/node`)
 
-`valyrian.js/node` provides server runtime setup plus SSR/build utility exports.
+`valyrian.js/node` is the Node-facing server runtime surface of Valyrian.
+
+It prepares the runtime environment that SSR and request-scoped server execution need, then exposes the rendering, DOM, and storage APIs that keep browser/server behavior aligned under one runtime model.
 
 ## Runtime Setup Side Effects
 
-Importing `valyrian.js/node` initializes:
+Importing `valyrian.js/node` initializes the Node runtime surface:
 
 * `global.document` (lightweight DOM adapter)
 * `global.FormData`
@@ -2668,7 +2694,7 @@ Import it before using server-side modules that expect these globals.
 
 ## `render(...nodes)`
 
-`render` mounts content into a server DOM container, serializes HTML, and unmounts internally.
+`render` is the server render entry point for the shared runtime model. It mounts content into a server DOM container, serializes HTML, and unmounts internally.
 
 ```tsx
 import { render } from "valyrian.js/node";
@@ -2678,7 +2704,7 @@ const html = render(<main><h1>Hello SSR</h1></main>);
 
 You can pass multiple nodes; they are rendered in order.
 
-Reader note: because `render` unmounts internally, each call is isolated and does not reuse DOM state from previous calls.
+Reader note: because `render` unmounts internally, each call is isolated and does not reuse DOM state from previous calls. That per-call isolation is what makes request-by-request SSR safe.
 
 ## DOM Transform Utilities
 
@@ -2698,7 +2724,7 @@ const html = domToHtml(dom);
 
 ## Build Helpers Also Exported Here
 
-`valyrian.js/node` also exports build helpers:
+`valyrian.js/node` also exports build helpers from the same package surface:
 
 * `inline`
 * `icons`
@@ -2708,7 +2734,7 @@ Use them from tooling scripts (see [./7.3-pwa-and-build-tooling.md](./7.3-pwa-an
 
 ## Request-Scoped Storage
 
-`ServerStorage` is exported for per-request storage isolation patterns.
+`ServerStorage` is part of the server runtime surface for per-request storage isolation.
 
 Use `ServerStorage.run(() => { ... })` per incoming request to avoid storage leakage between concurrent SSR requests.
 
@@ -2720,11 +2746,13 @@ ____________________________________________
 
 # 7.2. Isomorphic Networking and Storage
 
-Start with one endpoint first. Confirm URL rewriting works in Node.js, then expand to the rest of your API surface.
+Networking and storage are part of runtime continuity in Valyrian: the same application code should keep working across browser and server without leaking request state between concurrent renders.
+
+Start with one endpoint first. Confirm URL rewriting and request isolation work in Node.js, then expand to the rest of your API surface.
 
 ## Request URL Rewriting (`valyrian.js/request`)
 
-Server runtime often needs different API hosts than browser runtime. Configure `request` with `urls`.
+Server runtime often needs different API hosts than browser runtime. Configure `request` with `urls` so network behavior stays explicit while the application code stays shared.
 
 ```ts
 import { request } from "valyrian.js/request";
@@ -2755,7 +2783,7 @@ flowchart TD
 
 ## Scoped Request Instances per Incoming Request
 
-`request` is a singleton. For SSR, create scoped instances to avoid cross-request header leakage.
+`request` is a singleton. For SSR, create scoped instances to preserve per-request runtime behavior and avoid cross-request header leakage.
 
 ```ts
 import { request } from "valyrian.js/request";
@@ -2778,6 +2806,7 @@ Context note:
 
 - In Node.js request context (`ServerStorage.run(...)`), calling `request.new(...)` sets that scoped client as the active request context for the current async request.
 - Calls through the exported singleton `request` inside that same request context resolve to the contextual scoped client.
+- This is what lets shared app code keep one request API while still isolating headers and request-specific state per incoming SSR render.
 
 ## End-to-End Isomorphic Prefetch Flow
 
@@ -2874,7 +2903,7 @@ const api = request.new("", {
 mount("body", <App api={api} initialState={window.__INITIAL_STATE__ || {}} />);
 ```
 
-This keeps one fetch path while avoiding duplicate first-load requests when SSR already provided the data.
+This keeps one fetch path across browser and server while avoiding duplicate first-load requests when SSR already provided the data.
 
 ## Request-Scoped Storage (`ServerStorage`)
 
@@ -2893,7 +2922,7 @@ app.use((req, _res, next) => {
 });
 ```
 
-Inside this context, code can read/write storage with the same APIs used in browser code.
+Inside this context, code can read/write storage with the same APIs used in browser code, while each incoming request keeps its own isolated storage state.
 
 Reader tip: wrap the full request lifecycle in `ServerStorage.run(...)` so async work in that request keeps the same isolated storage context.
 
@@ -3412,6 +3441,8 @@ This chapter contains two tracks:
 1. Integration and operations recipes (`9.1`-`9.6`).
 2. Architecture reference patterns (`9.7`-`9.8`).
 
+These pages show optional integration choices around the Valyrian runtime. They are not a separate framework layer, not a required app shell, and not a replacement for the web-first browser/server model described in earlier chapters.
+
 Pick one recipe at a time. Keep the first integration path stable before combining strategies.
 
 ## Integration and Operations Recipes
@@ -3466,6 +3497,8 @@ Pick one recipe at a time. Keep the first integration path stable before combini
 3. Run the release checks in `9.6`.
 4. Use `9.7` and `9.8` as architecture reference patterns.
 
+If you need opinionated generators, file-based routing conventions, or scaffolded app shells, treat those as downstream tooling concerns rather than the core responsibility of this repo.
+
 
 ____________________________________________
 # Source: docs/9.1-vite-integration.md
@@ -3473,6 +3506,8 @@ ____________________________________________
 # 9.1. Vite Integration (Client App)
 
 Use this recipe when you want fast local feedback (`vite dev`) and a straightforward production bundle (`vite build`).
+
+This is an integration recipe for a Valyrian app, not a prescribed meta-framework workflow.
 
 Prerequisite:
 
@@ -3572,6 +3607,8 @@ ____________________________________________
 # 9.2. Webpack/Rspack Integration
 
 Use this path when your organization already standardizes on Webpack or Rspack.
+
+This page documents bundler integration choices around the Valyrian runtime, not a separate framework layer.
 
 Prerequisite:
 
@@ -3776,6 +3813,8 @@ ____________________________________________
 # 9.3. Express/Fastify SSR (Request-Scoped Isolation)
 
 This recipe shows a request-scoped SSR flow for Express/Fastify with hydration continuity and no cross-request state leaks.
+
+Use it as an integration pattern for the browser/server runtime model, not as evidence that this repository ships a fully opinionated server meta-framework.
 
 Goal:
 
@@ -4897,11 +4936,13 @@ const CounterB = createCounterWithFluxStore();
 ____________________________________________
 # Source: docs/10-meta-framework-cli.md
 
-# 10. Meta-Framework and CLI
+# 10. Meta-Framework and CLI (Downstream / Planned)
 
-Status: **planned direction**.
+Status: **planned downstream direction**.
 
-This page documents intended architecture concepts so users can track roadmap direction without guessing.
+This page documents architecture concepts that can be built on top of Valyrian.js without changing the core direction of this repository.
+
+Valyrian.js stays focused here on a web-first isomorphic runtime framework for browser/server apps. A dedicated meta-framework or generator CLI should be treated as downstream or external tooling layered on top of that runtime, not as the primary identity of this repo.
 
 ## 10.1. CLI Goals
 
@@ -4911,6 +4952,8 @@ Potential CLI responsibilities:
 * enforce directory conventions
 * automate build targets (SPA, SSR, static)
 
+These are workflow goals for downstream tooling, not required runtime capabilities of `valyrian.js` itself.
+
 ## 10.2. File-Based Routing Goals
 
 Potential conventions:
@@ -4919,7 +4962,11 @@ Potential conventions:
 * support nested layouts
 * support dynamic segments and catch-all routes
 
+If implemented, these conventions should compose on top of the existing router instead of redefining the runtime model described in chapters 1-7.
+
 ## 10.3. Target Architectures
+
+These are downstream app-shaping patterns that a future CLI or external meta-framework could scaffold around the runtime:
 
 * **SSG**: static output for content-first sites
 * **SAG**: static app shell + runtime API interaction
@@ -4933,7 +4980,9 @@ Today, core runtime capabilities already available in this repository include:
 * SSR and build utilities (`valyrian.js/node`)
 * service worker runtime (`valyrian.js/sw`)
 
-This means teams can implement many meta-framework patterns now, even before a dedicated CLI flow is finalized.
+This means teams can implement many meta-framework patterns now, even before a dedicated downstream CLI flow is finalized.
+
+The important boundary is that these runtime primitives belong in this repository, while higher-level generators, file conventions, and opinionated app shells belong in downstream tooling unless the project direction explicitly changes.
 
 
 ____________________________________________
@@ -4941,7 +4990,7 @@ ____________________________________________
 
 # 11. Roadmap and Contribution
 
-This chapter keeps contribution expectations explicit and predictable.
+This chapter keeps contribution expectations explicit and predictable for a web-first repository centered on one runtime model across browser and server.
 
 ## 11.1. Documentation Roadmap
 
@@ -4957,9 +5006,22 @@ Mid-term priorities:
 2. Add troubleshooting pages for common integration pitfalls.
 3. Add deeper SSR and PWA deployment guides.
 
+## 11.1.1. Repo Direction and Boundaries
+
+This repository positions Valyrian.js as an isomorphic runtime framework for web apps.
+
+Contribution decisions should preserve these boundaries:
+
+1. Keep core direction focused on browser/server continuity, SSR, hydration, request isolation, and related web runtime behavior.
+2. Keep documentation category language consistent with that positioning across README and `docs/`.
+3. Do not reframe the project as a host-agnostic core or a generic runtime toolkit.
+4. Treat terminal UIs, native targets, and meta-framework generators as downstream or external repos unless the project direction explicitly changes.
+
 ## 11.2. Contribution Workflow
 
 If you change behavior in `lib/`, update both docs and tests.
+
+If you change runtime behavior that affects browser/server continuity, update the relevant chapter 7 docs and any reference pages that define the same contract.
 
 Recommended order:
 
@@ -4973,6 +5035,8 @@ Recommended order:
 - Prefer short, runnable examples.
 - Clearly mark planned features as planned.
 - Keep terminology consistent across pages.
+- Keep `isomorphic runtime framework`, `browser/server`, `SSR`, and request-isolation wording aligned with the repo's documented positioning.
+- Do not introduce docs language that recenters the repo around non-web hosts or downstream tooling categories.
 
 ## 11.4. Useful Commands
 

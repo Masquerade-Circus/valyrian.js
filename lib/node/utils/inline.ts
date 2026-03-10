@@ -23,8 +23,8 @@ export async function inline(
           basePath: process.cwd(), // always required, used for relative paths
           configFilePath: "tsconfig.json", // config to inherit from (optional)
           files: [file],
-          include: ["**/*.ts", "**/*.js", "**/*.tsx", "**/*.jsx", "**/*.mjs"],
-          exclude: ["test*/**/*", "**/*.test.ts", "**/*.spec.ts", "dist/**"],
+          include: [file],
+          exclude: [],
           pretty: true,
           copyOtherToOutDir: false,
           clean: emitDeclaration ? [declarationDir] : [],
@@ -35,6 +35,7 @@ export async function inline(
             noEmitOnError: true,
             noEmit: !emitDeclaration,
             declaration: emitDeclaration,
+            composite: emitDeclaration,
             declarationDir,
             emitDeclarationOnly: emitDeclaration,
             allowJs: true,

@@ -24,6 +24,7 @@
     "allowSyntheticDefaultImports": true,
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
+    "types": ["bun", "node"],
 
     "rootDir": "./",
     "paths": {
