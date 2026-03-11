@@ -53,19 +53,27 @@ Here, "isomorphic" means the browser runtime and server runtime follow the same 
 
 ## Quick Start
 
-Get a working screen first. Start with the CDN path to see the render/update loop in the browser before expanding into Node tooling or SSR.
+Get a working screen first. Start with the CDN path to prove the mount-and-render path in the browser before expanding into Node tooling or SSR.
 
 ### Browser (CDN)
 
 ```html
 <script type="module">
   import "https://unpkg.com/valyrian.js";
+
   const { mount } = Valyrian;
-  mount("body", () => "Hello from Valyrian.js");
+
+  function App() {
+    return "Hello from Valyrian.js";
+  }
+
+  mount("body", App);
 </script>
 ```
 
 Expected result: the text appears in the page body.
+
+This snippet proves the runtime can mount component output into a root. `docs/2-getting-started.md` starts from this same example, then expands it into explicit VNodes and local TSX/JSX tooling.
 
 ### Node (npm)
 
@@ -78,7 +86,7 @@ Then follow [docs/2-getting-started.md](docs/2-getting-started.md) for the `inli
 ## Choose Your Path
 
 * **Try it now (no install):** use the CDN snippet above.
-* **Prove the runtime loop in the browser:** start with [docs/2-getting-started.md](docs/2-getting-started.md) (browser path).
+* **Understand the same example in more detail:** read [docs/1-introduction.md](docs/1-introduction.md), then continue with [docs/2-getting-started.md](docs/2-getting-started.md).
 * **Add local TSX/JSX tooling in Node:** continue with [docs/2-getting-started.md](docs/2-getting-started.md) (Node path).
 * **Expand the same model to SSR and request-scoped runtime behavior:** complete chapters 1-3, then go to [docs/7-full-stack-capability.md](docs/7-full-stack-capability.md).
 
@@ -86,8 +94,9 @@ Then follow [docs/2-getting-started.md](docs/2-getting-started.md) for the `inli
 
 1. Copy the CDN snippet into an `index.html` file.
 2. Open it in your browser and confirm the UI renders.
-3. Change the mounted text to verify the update loop.
-4. Continue with [docs/3-the-essentials.md](docs/3-the-essentials.md).
+3. Read [docs/1-introduction.md](docs/1-introduction.md) for the browser/server mental model behind that snippet.
+4. Continue with [docs/2-getting-started.md](docs/2-getting-started.md) to expand the same example.
+5. Continue with [docs/3-the-essentials.md](docs/3-the-essentials.md).
 
 If this works, you already have the core Valyrian mental model.
 

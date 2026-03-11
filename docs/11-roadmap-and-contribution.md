@@ -42,6 +42,7 @@ Recommended order:
 ## 11.3. Documentation Quality Rules
 
 - Avoid claims that are not backed by code or tests.
+- Keep one normative source per behavior contract; recipe/comparison pages should link back instead of redefining the same semantics.
 - Prefer short, runnable examples.
 - Clearly mark planned features as planned.
 - Keep terminology consistent across pages.

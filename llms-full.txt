@@ -4,7 +4,7 @@ Purpose
 This file aggregates the official documentation sources from the `docs/` directory as a single reference for AI agents and tooling.
 
 Generated
-- Date (UTC): 2026-03-10
+- Date (UTC): 2026-03-11
 - Source root: `docs/`
 - File count: 43
 
@@ -129,9 +129,13 @@ ____________________________________________
 
 Valyrian.js is an isomorphic runtime framework for web apps with one runtime model across browser and server.
 
+Here, "isomorphic" means you keep the same mental model when you move between browser and server work. The runtime grows from first render, to SSR, to hydration and request-scoped behavior without turning into a separate product mode.
+
 It is for teams that want browser/server continuity, explicit runtime behavior, and deterministic updates without hiding app behavior behind framework ceremony.
 
 The goal is simple: ship fast, keep control, and expand from browser rendering into SSR, hydration, and request-scoped server behavior without switching mental models.
+
+If you started in `README.md`, keep the same picture in mind here: mount one component into a root, confirm it renders, then expand that same model into richer component trees, events, state, and server-side execution.
 
 ## What this guide gives you
 
@@ -152,7 +156,7 @@ Core areas:
 
 * UI rendering and vnode patching.
 * Router and navigation lifecycle.
-* State options (`POJO`, `pulse`, `pulse store`, `flux store`).
+* State options (plain JavaScript objects, called `POJO` in the docs, plus `pulse`, `pulse store`, and `flux store`).
 * Request and async orchestration modules.
 * Node-side SSR, hydration entry points, and build utilities.
 
@@ -192,6 +196,8 @@ Recommended order:
 
 If your goal is first success only, complete chapters 2 and 3 first, then return for chapter 4 when you need routing and async workflows.
 
+The intended onboarding flow is: `README.md` for the first render, this introduction for the mental model, and `2-getting-started.md` for the first fuller example and local tooling path.
+
 
 ____________________________________________
 # Source: docs/2-getting-started.md
@@ -200,16 +206,18 @@ ____________________________________________
 
 Valyrian.js can run directly in the browser with ES modules, or from a Node.js project with the built-in `inline` utility.
 
-Use this page to meet the runtime model in stages: first in the browser render/update loop, then in local Node tooling, and later in SSR as the same model expanded to the server.
+Use this page to meet the runtime model in stages: first in the browser mount-and-render path, then in local Node tooling, and later in SSR as the same model expanded to the server.
 
 ## Goal and Time
 
 * **Goal:** render your first component and understand the first proof points of the runtime model.
 * **Time:** 2-5 minutes (CDN path) or 10-15 minutes (Node path).
 
+If you came from `README.md`, this page starts with the same `mount("body", App)` idea and then expands it into a fuller component tree.
+
 ## Choose One Path
 
-If this is your first time with the framework, start with the CDN path. It gives the fastest feedback loop, shows the render/update loop directly in the browser, and avoids setup friction.
+If this is your first time with the framework, start with the CDN path. It gives the fastest feedback loop, shows the mount/render path directly in the browser, and avoids setup friction.
 
 ## Path Selection Flow
 
@@ -234,9 +242,46 @@ flowchart TD
 
 This is the fastest way to confirm the runtime and your environment are working.
 
-Treat this as the first proof of the model: render a component, change state or output, and watch the browser update through explicit runtime behavior.
+Treat this as the first proof of the model: render one component into one root and confirm the runtime output appears where you mounted it.
 
 Create `index.html`:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Valyrian.js App</title>
+  </head>
+  <body>
+    <script type="module">
+      import "https://unpkg.com/valyrian.js";
+
+      const { mount } = Valyrian;
+
+      function App() {
+        return "Hello from Valyrian.js";
+      }
+
+      mount("body", App);
+    </script>
+  </body>
+</html>
+```
+
+What happens here:
+
+1. The browser loads Valyrian as a standard module.
+2. `App()` returns the output for the root component.
+3. `mount()` renders that output into the selected root.
+
+If you see the text rendered, your core setup is done.
+
+At this point you have verified the first browser-side render of the runtime model.
+
+### Equivalent expanded form
+
+The same example can be written in explicit VNode form when you want to see the structure Valyrian renders:
 
 ```html
 <!DOCTYPE html>
@@ -264,15 +309,7 @@ Create `index.html`:
 </html>
 ```
 
-What happens here:
-
-1. The browser loads Valyrian as a standard module.
-2. `v()` creates VNodes in memory.
-3. `mount()` renders the component tree into the selected root.
-
-If you see the heading and paragraph rendered, your core setup is done.
-
-At this point you have already verified the browser side of the runtime model.
+Use the short string example as the default mental model. Use this expanded form when you want to see how components can return richer trees.
 
 ## 2.2. Node.js Method (Built-in Tooling)
 
@@ -296,13 +333,14 @@ Create `index.tsx`:
 ```tsx
 import { mount } from "valyrian.js";
 
-const App = () => (
-  <main style="font-family: sans-serif; padding: 2rem;">
-    <h1>Hello World</h1>
-    <p>Built with Valyrian internal tooling.</p>
-    <button onclick={() => alert("It works")}>Click me</button>
-  </main>
-);
+function App() {
+  return (
+    <main style="font-family: sans-serif; padding: 2rem;">
+      <h1>Hello from Valyrian.js</h1>
+      <p>The same mount mental model, now with TSX.</p>
+    </main>
+  );
+}
 
 mount("body", App);
 ```
@@ -350,7 +388,13 @@ Then load `dist.js` from a minimal HTML page:
 </html>
 ```
 
-If you are testing locally, use any static server (for example `npx serve .`) and open that HTML page in the browser.
+Then serve that folder with a small static server and open the page in the browser. For example:
+
+```bash
+python3 -m http.server
+```
+
+Then open `http://localhost:8000`.
 
 The important part is not the server choice. It is that Node becomes a practical runtime surface for authoring, transforming, and preparing the same browser-facing application model.
 
@@ -510,16 +554,20 @@ For exhaustive counter variants (shared/per-instance component shape patterns), 
 
 Valyrian uses delegated native events (`onclick`, `oninput`, `onsubmit`, ...).
 
-- After an event handler runs, Valyrian triggers a render update.
-- If `event.preventDefault()` is called, the automatic update is skipped.
+For the exact runtime contract behind delegated listener registration, ancestor walking, async rerender timing, and `preventDefault()` behavior, use [./3.1-runtime-core.md](./3.1-runtime-core.md) as the authoritative reference.
+
+- Events are attached at the mounted root, not one DOM listener per node.
+- When an event fires, Valyrian starts at `event.target` and walks upward until it finds the first matching handler.
+- That first matching handler runs, and plain synchronous state mutation inside it is usually enough to trigger a render.
+- If you call `event.preventDefault()` before Valyrian reaches an automatic render point, that automatic render is skipped.
 
 ### Event Flow
 
 ```mermaid
 flowchart TD
     evt[User event] --> handler[Event handler runs]
-    handler --> prevent{preventDefault called?}
-    prevent -- Yes --> skip[Skip automatic update]
+    handler --> prevent{preventDefault active before auto-update?}
+    prevent -- Yes --> skip[Skip that automatic update]
     prevent -- No --> render[Run update and render cycle]
     render --> synced[UI synced]
 ```
@@ -589,21 +637,28 @@ const Content = () => (
 
 ## 3.5. Reactivity and Async Control
 
+The same delegated event model applies to async handlers, but render timing changes slightly.
+
 For synchronous user interactions, mutating plain objects in delegated event handlers is usually enough because updates are event-driven.
 
-For async delegated handlers, Valyrian can run one automatic render right after the handler starts and another when the returned promise settles.
+For async delegated handlers, Valyrian runs one automatic render right after the synchronous part of the handler finishes and another when the returned promise settles.
 
 Practical rule:
 
 - Without `event.preventDefault()`, state changes before the first `await` are included in the immediate automatic render.
 - If the handler returns a promise, state changes after `await` are included in a second automatic render when that promise settles.
-- If you call `event.preventDefault()`, automatic rendering is skipped and you must call `update()` manually for each transition you want to show.
+- If `event.preventDefault()` is already active before an automatic render point, that automatic render is skipped and you must call `update()` manually for each transition you want to show.
 
-Timing note:
+Timing note: if `preventDefault()` happens only after an `await`, the first automatic render may already have happened, but the final render on promise settlement is still skipped.
 
-- If `preventDefault()` happens after an `await`, the first automatic render may have already happened.
-- In that case, `preventDefault()` still skips the final automatic render that would normally happen when the promise settles.
-- It does not retroactively undo native browser behavior that already continued before the async boundary.
+Quick decision table:
+
+| Handler shape | Automatic render before `await` | Automatic render after promise settles | What to do |
+| --- | --- | --- | --- |
+| Sync handler | Yes, after the handler returns | Not applicable | Usually nothing extra |
+| Async handler without `preventDefault()` | Yes, includes pre-`await` state | Yes, includes post-`await` state | Usually nothing extra |
+| Async handler with `preventDefault()` before `await` | No | No | Call `update()` for each state transition you want to show |
+| Async handler with `preventDefault()` after `await` | Usually yes, because the first render may already have happened | No | Call `update()` for post-`await` transitions you still want to render |
 
 Default async handler pattern (no `preventDefault`):
 
@@ -724,7 +779,7 @@ Use this pattern to avoid duplicate subscriptions and memory leaks.
 ## Common Beginner Mistakes
 
 1. Forgetting `name` in form controls used with directives like `v-model`/`v-field`.
-2. Expecting post-`await` async state changes to render without calling `update()`.
+2. Assuming async handlers always need `update()` after `await`, even when `preventDefault()` was never called.
 3. Calling `event.preventDefault()` in delegated handlers and forgetting manual `update()` calls.
 
 
@@ -753,10 +808,17 @@ Use [./3-the-essentials.md](./3-the-essentials.md) for the learning path, then u
 
 On mount, Valyrian hydrates the current container DOM into a vnode tree and then runs the normal patch cycle.
 
+Returns:
+
+- In Node.js, `mount()` returns the rendered HTML string for the mounted app.
+- In browsers, `mount()` returns `""` after the patch completes.
+
 Container resolution behavior:
 
 - In browsers, a string container (for example `"body"` or `"#app"`) is resolved with `document.querySelector(...)`.
 - In Node.js, a string container creates a fresh element via `createElement(...)` for that mount call.
+
+If a browser selector does not resolve to an element, mounting cannot continue because there is no DOM root to hydrate.
 
 The Node.js behavior is useful in SSR request handlers because each render call works with an isolated container element.
 
@@ -773,15 +835,75 @@ Mounting by selector or element is still supported for partial integration scena
 
 Runs a patch pass for the mounted app.
 
-Use it when state changes happen outside delegated event handlers, when you call `event.preventDefault()` and want manual control of renders, or when you want to force an intermediate state at a specific time.
+Returns:
+
+- In Node.js, `update()` returns the mounted root HTML string after the patch.
+- In browsers, `update()` returns `""`.
+
+Use it when state changes happen outside delegated event handlers, when you call `event.preventDefault()` and want manual control of renders, or when you want to force an intermediate state at a specific time. For the full delegated event timing contract, use the section below.
 
 If a delegated handler returns a promise, Valyrian runs an automatic update after the synchronous part of the handler and another one when the promise settles. If the handler calls `event.preventDefault()`, those automatic updates are skipped and you must call `update()` manually for each UI transition.
 
 If `event.preventDefault()` is called only after an `await`, the first automatic update may already have happened, but the final update on promise settlement is still skipped.
 
+## Delegated Event Runtime Contract
+
+Valyrian uses delegated DOM listeners for function-valued event props such as `onclick`, `oninput`, and `onsubmit`.
+
+### Root listener registration
+
+- Event listeners are registered on the mounted root DOM node (`mainVnode.dom`), not on each matching child element.
+- Registration is lazy per event name: the runtime adds one root listener the first time it patches a function-valued prop for that event name.
+- The listener set is cleared on `unmount()`, and also before switching the mounted app to a different container.
+
+### Dispatch path and handler selection
+
+When a delegated event fires, the runtime:
+
+1. Stores the active event in `current.event`.
+2. Starts at `event.target`.
+3. Walks upward through ancestor DOM nodes.
+4. Checks each vnode for a matching handler name such as `onclick`.
+5. Runs the first matching handler and stops the walk.
+
+Only the first matching delegated handler runs for that event dispatch.
+
+### Update timing for sync and async handlers
+
+- After the matching handler returns, Valyrian runs `update()` immediately if `event.defaultPrevented` is still `false`.
+- If the handler returned a thenable, Valyrian schedules another `update()` when that promise settles, both on resolve and reject.
+- This means async handlers have up to two automatic render points: one after the synchronous phase, and one after promise settlement.
+
+Operationally:
+
+- Synchronous mutations inside the handler are reflected by the immediate update.
+- Mutations that happen after an `await` are reflected by the promise-settlement update, as long as `preventDefault()` was not activated before that second render point.
+
+### `preventDefault()` and render control
+
+`preventDefault()` does not stop the handler itself. It changes whether Valyrian performs automatic updates for that event.
+
+- If `event.preventDefault()` is active before the immediate post-handler check, the immediate automatic `update()` is skipped.
+- If the handler returned a promise and `event.preventDefault()` is active by the time that promise settles, the final automatic `update()` is skipped.
+- If `preventDefault()` is called only after an `await`, the first automatic update may already have happened, but the promise-settlement update is still skipped.
+- Once you opt out of an automatic render point with `preventDefault()`, you are responsible for calling `update()` manually for each UI transition you want to show.
+
+### Operational Notes
+
+- Browser runtime mounting is singleton-style: `mount()`, `update()`, and `unmount()` operate on one global `mainComponent`/`mainVnode` pair at a time.
+- Calling `mount()` again replaces that mounted app reference with the new component/container pair.
+- If the new mount uses a different container, Valyrian removes delegated root listeners from the previous root before continuing.
+- `unmount()` renders a null app, removes delegated listeners, and resets mounted runtime state.
+- Remounting after `unmount()` creates a fresh mounted root contract; previous delegated listeners do not stay attached.
+
 ### `unmount()`
 
 Unmounts the current app, cleans listeners/resources, and clears delegated event bindings.
+
+Returns:
+
+- In Node.js, `unmount()` returns the final HTML string produced by rendering the null app.
+- In browsers, `unmount()` returns `""`.
 
 ## Component Lifecycle Helpers
 
@@ -900,7 +1022,7 @@ At mount time, existing DOM is converted to vnode structure (including text and 
 
 This allows SSR HTML and pre-existing markup to become interactive without replacing the full container tree.
 
-If you need the learning path version (instead of reference style), start at [./3-the-essentials.md](./3-the-essentials.md).
+If you need the learning path version (instead of reference style), start at [./3-the-essentials.md](./3-the-essentials.md). For async/data-flow tooling built on top of this runtime behavior, see [./4.2-data-fetching-and-async.md](./4.2-data-fetching-and-async.md).
 
 
 ____________________________________________
@@ -1193,6 +1315,21 @@ ____________________________________________
 # 4.2. Data Fetching and Async Workflows (Hub)
 
 This chapter is a hub for networked and async modules used in SPA flows.
+
+These modules layer on top of the base runtime. For the exact delegated event semantics that govern automatic rerenders, async handler timing, and `event.preventDefault()` behavior, see [./3.1-runtime-core.md](./3.1-runtime-core.md).
+
+## Choose the Right Async Tool
+
+| Need | Start here | Why |
+| --- | --- | --- |
+| Simple request/response call | [./4.2.1-request.md](./4.2.1-request.md) | Small fetch wrapper with serialization, parsing, plugins, and scoped clients. |
+| Async rendering boundary | [./4.2.2-suspense.md](./4.2.2-suspense.md) | Handles fallback/error UI while async children resolve. |
+| Cancellable user action | [./4.2.3-tasks.md](./4.2.3-tasks.md) | Adds run strategies, cancellation, and task state around async work. |
+| Cached server state | [./4.2.4-query.md](./4.2.4-query.md) | Adds query/mutation handles, cache reuse, dedupe, and invalidation. |
+| Connectivity-aware UI or network listeners | [./4.2.5-network.md](./4.2.5-network.md) | Tracks online/offline state and connection quality signals. |
+| Offline-capable mutation queue | [./4.2.6-offline.md](./4.2.6-offline.md) | Persists operations and retries them when the network returns. |
+
+Choosing an async module is a separate decision from the base delegated event rerender contract. Pick the module by data-flow need, then use [./3.1-runtime-core.md](./3.1-runtime-core.md) for the exact rules behind automatic updates, async handler timing, and `event.preventDefault()`.
 
 Use these pages in order so each layer builds on the previous one.
 
@@ -1828,10 +1965,12 @@ Common runtime properties:
 
 - `form.state`
 - `form.validationErrors`
+- `form.hasValidationErrors`
 - `form.submitError`
 - `form.hasSubmitError`
 - `form.isInflight`
 - `form.isDirty`
+- `form.success`
 
 ## 4.3.2. `v-form` and `v-field`
 
@@ -1925,7 +2064,7 @@ const form = new FormStore({
 });
 ```
 
-## 4.3.6. Submit Errors
+## 4.3.5. Submit Errors
 
 - `form.submitError` - Error thrown by `onSubmit` callback (null if none)
 - `form.hasSubmitError` - Boolean, true if `submitError` is not null
@@ -1947,12 +2086,12 @@ const Login = () => (
 );
 ```
 
-## 4.3.5. Additional FormStore APIs
+## 4.3.6. Additional FormStore APIs
 
 - `validate()` -> updates `validationErrors` and returns boolean.
 - `submit(event?)` -> returns success boolean.
-- `setField(name, value, control?)` -> writes canonical state for one field.
-- `formatValue(name, value, control?)` -> maps canonical value to display value.
+- `setField(name, value)` -> writes canonical state for one field.
+- `formatValue(name, value)` -> maps canonical value to display value.
 - `reset()` -> resets state, errors, and inflight status.
 
 Global schema engine access:
@@ -2037,56 +2176,110 @@ ____________________________________________
 
 # 5.2. Pulses (`valyrian.js/pulses`)
 
-Pulses provide fine-grained reactive state primitives and store helpers.
+Pulses give you fine-grained reactivity with a pulse-specific state model.
 
-## 5.2.1. `createPulse`
+Use this page as a behavior guide first and an API reference second.
+
+## 5.2.1. When to Use What
+
+Choose the smallest tool that keeps update timing obvious:
+
+| Tool               | Use it for                                                                                                                   | Prefer something else when                                                                                    |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `createPulse`      | One value or a small group of independent values, especially when components can subscribe directly by reading inside render | You want one shared object with named actions, immutable external reads, or batched async transitions         |
+| `createPulseStore` | Shared object state with pulse methods, immutable external reads, and debounced subscriber delivery                          | You want a different state model than pulses provide                                                          |
+| `FluxStore`        | If you are comparing pulses with Valyrian's other state module, continue with [./5.3-flux-store.md](./5.3-flux-store.md)     | This page is the one you want when you are working with pulse-style reads, writes, batching, and pulse events |
+
+Rule of thumb:
+
+- Start with `createPulse` when the update story is mostly "read in render, write directly".
+- Move to `createPulseStore` when several values must move together behind named pulse methods.
+- If you are evaluating Valyrian's other state module, continue with [./5.3-flux-store.md](./5.3-flux-store.md); this page stays focused on pulse behavior.
+
+## 5.2.2. What is a Pulse?
+
+In Valyrian, a pulse is a reactive update unit.
+
+That means a pulse does not only hold state. It also defines how that state change is published to subscribers.
+
+- `createPulse` gives you one reactive value with direct reads, writes, and notifications.
+- `createPulseStore` gives you a reactive state object plus named pulse methods that can be synchronous or asynchronous.
+- `createMutableStore` keeps the same pulse method model, but removes the immutability guard from public state.
+
+For plain values, `createPulse` is the closest comparison to signal-style primitives. For grouped state transitions, `createPulseStore` is closer to a unified async update model: mutate state inside the pulse, then let the pulse system publish the result.
+
+## 5.2.3. Comparison with Other Approaches
+
+This table is conceptual. It compares common state-management styles by their usual programming model.
+
+| Concept            | Async Support | Safe Direct Mutation | Manual Clone | Returns New State | Functions Needed |
+| ------------------ | ------------- | -------------------- | ------------ | ----------------- | ---------------- |
+| Reducer            | No            | No                   | Yes          | Yes               | 1-2              |
+| Mutation           | No            | No                   | Yes          | Yes               | 2                |
+| Producer           | No            | Yes                  | No           | No                | 1                |
+| Action + Mutation  | Yes           | No                   | Yes          | Yes               | 2                |
+| Action + Producer  | Yes           | Yes                  | No           | No                | 2                |
+| Signal             | No            | No                   | No           | No                | 1                |
+| `createPulse`      | No            | No                   | No           | No                | 1                |
+| `createPulseStore` | Yes           | Yes                  | No           | No                | 1                |
+
+Read the table this way:
+
+- `createPulse` is the closest Valyrian primitive to a signal: one reactive value, one writer, immediate notification.
+- `createPulseStore` is the more distinctive Valyrian model: one pulse method can handle state mutation, async work, batching, and early publication through `this.$flush()`.
+- Reducer/action-style models usually split one async flow across multiple conceptual pieces; pulse stores keep that flow inside one named method.
+
+Here, `Safe Direct Mutation` means the model is designed for you to mutate working state directly inside its normal update flow without returning a new state object and without side effects.
+
+## 5.2.4. The Runtime Model Behind Pulses
+
+Pulses subscribe by read, not by declaration.
+
+### Reads inside render and effects
+
+When you read a pulse or a pulse store state property:
+
+- inside a render path, the current vnode is subscribed;
+- inside `createEffect(...)`, the current effect is subscribed.
+
+That is why components re-render only when they actually read the pulse, and why effects re-run only after they touch a pulse during execution.
+
+For DOM subscriptions, the runtime records the vnode DOM node and calls `updateVnode(...)` for that subtree when the subscriber fires. The subscription is removed automatically once that DOM node is detached.
+
+### Writes and notification timing
+
+`createPulse` writes are immediate:
 
 ```ts
-import { createPulse } from "valyrian.js/pulses";
-
-const [count, setCount, runSubscribers] = createPulse(0);
+const [count, setCount] = createPulse(0);
 
 setCount((current) => current + 1);
 ```
 
-Returned tuple:
+If the value actually changed, `write(...)` updates the stored value and runs subscribers right away in the same call stack.
 
-1. `read()`
-2. `write(newValue | updater)`
-3. `runSubscribers()`
+`createPulseStore` behaves differently:
 
-`write` only notifies when value actually changes.
+- each pulse method works against a mutable working copy of the store state;
+- the committed public state stays immutable outside pulse methods;
+- subscriber delivery is debounced with `setTimeout(..., 0)`.
 
-## 5.2.2. `createEffect`
+That debounce means several store pulses called in the same tick collapse into one subscriber pass. The tests in `test/pulse-store_test.tsx` cover both the coalesced case and the later flush on the next tick.
 
-```ts
-import { createEffect, createPulse } from "valyrian.js/pulses";
+### Async pulses and intermediate state
 
-const [count, setCount] = createPulse(0);
+Async store pulses keep the same working copy alive until the returned promise settles. By default, subscribers only see the committed result when that async pulse finishes.
 
-createEffect(() => {
-  console.log("count", count());
-});
-
-setCount(1);
-```
-
-Effects subscribe to pulses read during execution.
-
-## 5.2.3. `createPulseStore`
+If you need an intermediate state such as `loading = true` before the async work finishes, call `this.$flush()` from inside the pulse method:
 
 ```ts
-import { createPulseStore } from "valyrian.js/pulses";
-
 const store = createPulseStore(
   { todos: [], loading: false },
   {
-    addTodo(state, text: string) {
-      state.todos.push({ text, done: false });
-    },
     async fetchTodos(state) {
       state.loading = true;
       this.$flush();
+
       const response = await fetch("/api/todos");
       state.todos = await response.json();
       state.loading = false;
@@ -2095,28 +2288,139 @@ const store = createPulseStore(
 );
 ```
 
-Rules:
+`$flush()` commits the current working copy early and schedules the normal debounced subscriber pass. It does not finish the pulse method; later mutations in the same async pulse can still commit again when the promise resolves.
 
-* State is immutable outside pulse methods.
-* Pulse methods run with context including `$flush()`.
-* Updates are coalesced and delivered with a debounced subscriber flush.
+## 5.2.5. `createPulse`
 
-## 5.2.4. Store Events
+```ts
+import { createPulse } from "valyrian.js/pulses";
+
+const [count, setCount, runSubscribers] = createPulse(0);
+```
+
+Returned tuple:
+
+1. `read()`
+2. `write(newValue | updater)`
+3. `runSubscribers()`
+
+Use it this way:
+
+- `read()` registers the current vnode or effect as a subscriber when one exists.
+- `write(...)` only notifies when `hasChanged(...)` reports a real change.
+- `runSubscribers()` is the escape hatch: it runs the current subscribers immediately even if the value did not change.
+
+Use `runSubscribers()` only when you need to force recomputation without a value change. It bypasses the normal "only notify on change" rule and forces subscribed effects or vnode subtree updates to run again.
+
+## 5.2.6. `createEffect`
+
+```ts
+import { createEffect, createPulse } from "valyrian.js/pulses";
+
+const [count, setCount] = createPulse(0);
+
+const dispose = createEffect(() => {
+  console.log("count", count());
+});
+
+setCount(1);
+dispose();
+```
+
+Behavior:
+
+- the effect runs immediately once;
+- any pulse or pulse-store state read during that run subscribes the effect;
+- later notifications re-run the same effect function.
+
+Warning: `createEffect()` does return a function, but the current implementation does not remove pulse subscriptions from the pulse or store that captured the effect. Outside vnode-specific usage it returns a no-op disposer, and even in vnode context it only removes an internal wrapper from a local set. Treat it as a limited disposer, not as a full unsubscribe contract.
+
+If you need teardown tied to component lifecycle, prefer the runtime lifecycle helpers documented in [./3.1-runtime-core.md](./3.1-runtime-core.md).
+
+## 5.2.7. `createPulseStore`
+
+```ts
+import { createPulseStore } from "valyrian.js/pulses";
+
+const store = createPulseStore(
+  { count: 0 },
+  {
+    increment(state) {
+      state.count += 1;
+    }
+  }
+);
+```
+
+Core rules:
+
+- `store.state` is read-only from the outside in the immutable variant.
+- pulse methods receive a mutable working copy as their first argument.
+- nested pulses are batched through the same working copy and do not notify subscribers until the outer pulse commit point.
+- subscriber delivery is debounced, so multiple calls in the same tick typically produce one subscriber pass.
+
+This is why a store pulse is a better fit than multiple loose pulses when several properties should commit as one logical transition.
+
+## 5.2.8. Advanced Store Helpers and Events
+
+### `this.$flush()`
+
+Inside a pulse store method, `this.$flush()`:
+
+- commits the current working state early;
+- keeps the pulse method alive;
+- schedules the same debounced subscriber notification used by normal store commits.
+
+Use it when an async pulse should reveal an intermediate state before it completes.
+
+### `pulse` event timing
 
 Store objects expose:
 
-* `store.on(event, callback)`
-* `store.off(event, callback)`
+- `store.on(event, callback)`
+- `store.off(event, callback)`
 
-Important event:
+The main event documented in the implementation is `pulse`, and the callback receives `(pulseName, args)`.
 
-* `pulse` -> callback receives `(pulseName, args)`.
+Timing matters:
 
-## 5.2.5. `createMutableStore`
+- for sync pulses, the `pulse` event fires after the pulse method returns;
+- for async pulses, it fires after the returned promise resolves;
+- it still fires even when the state did not change.
 
-`createMutableStore` disables immutability protections.
+Because store subscriber updates are debounced, the `pulse` event is emitted before the debounced subscriber pass runs. Use `pulse` events for instrumentation or workflow hooks, not as your primary UI reactivity mechanism.
+
+## 5.2.9. `createMutableStore`
+
+`createMutableStore` keeps the same pulse API but disables the immutability guard on `store.state`.
 
 Warning: changes made outside pulse methods do not trigger re-render notifications.
+
+Use it only when you explicitly want direct mutation semantics. If you want the safer reactive path where public reads stay immutable and UI updates keep flowing through pulses, stay with `createPulseStore`.
+
+## 5.2.10. Interaction with Delegated Events
+
+Pulse stores participate directly in Valyrian's delegated event runtime.
+
+When a pulse store method runs during an active delegated event, the implementation calls `current.event.preventDefault()` and `current.event.stopImmediatePropagation()` before executing the pulse body. In practice, that means the pulse opts out of the runtime's automatic post-handler renders and lets the pulse/store subscription system control when UI updates appear.
+
+Operationally:
+
+- a plain `createPulse` write notifies its subscribers immediately;
+- a `createPulseStore` write schedules a debounced subscriber pass;
+- `this.$flush()` lets an async store pulse expose an intermediate state on that debounced path before the pulse finishes.
+
+This matters when mixing pulses with event handlers:
+
+- if you call a store pulse from a delegated handler, do not expect the runtime's normal automatic rerender timing described in [./3.1-runtime-core.md](./3.1-runtime-core.md) to stay in charge;
+- if you need exact control over what the user sees during an async interaction, decide whether the timing should come from pulse notifications, `this.$flush()`, or an explicit runtime `update()` path;
+- if you combine `preventDefault()`, async handlers, and pulse stores, treat render timing as an explicit design choice, not an implementation detail.
+
+Quick checklist:
+
+- Use `createPulse` when one value can notify immediately on change.
+- Use `createPulseStore` when several fields should move together and you may need debounced commits or `$flush()` for intermediate async state.
+- Use `createMutableStore` only when direct mutation is more important to you than automatic reactive safety.
 
 
 ____________________________________________
@@ -4777,9 +5081,21 @@ ____________________________________________
 
 # 9.8. Reactive Counter Variants (`createPulse`, `createPulseStore`, `FluxStore`)
 
+Use this page as recipe and comparison material.
+
+For the first explanation of Valyrian's reactive state models and starter counter examples, use [./3-the-essentials.md](./3-the-essentials.md). For the detailed runtime behavior of pulse-based state, use [./5.2-pulses.md](./5.2-pulses.md). For the alternative store model, use [./5.3-flux-store.md](./5.3-flux-store.md). This page focuses on one practical question: should this counter be shared across usages or created per instance?
+
+| Need | Prefer | Why |
+| --- | --- | --- |
+| Minimal reactive value | `createPulse` | Smallest API surface |
+| Small shared object with actions | `createPulseStore` | Keeps state and actions together |
+| Mutation-style store contract | `FluxStore` | Fits explicit commit-based flows |
+
 ## 9.8.1. Shared/Global Reactive State
 
-`createPulse` shared across all usages:
+Same counter state reused everywhere the component is mounted.
+
+`createPulse` recipe:
 
 ```tsx
 import { createPulse } from "valyrian.js/pulses";
@@ -4796,7 +5112,7 @@ function CounterWithPulse() {
 }
 ```
 
-`createPulseStore` shared store:
+`createPulseStore` recipe:
 
 ```tsx
 import { createPulseStore } from "valyrian.js/pulses";
@@ -4820,7 +5136,7 @@ function CounterWithPulseStore() {
 }
 ```
 
-`FluxStore` shared store:
+`FluxStore` recipe:
 
 ```tsx
 import { FluxStore } from "valyrian.js/flux-store";
@@ -4846,7 +5162,11 @@ function CounterWithFluxStore() {
 
 ## 9.8.2. Per-Instance Reactive State
 
-Per-instance `createPulse`:
+Create a fresh store/pulse for each instance when counters should not affect each other.
+
+The recipes below use slightly different component shapes because each state API exposes a different construction style. Read them as practical patterns for isolating instances, not as a second source of truth for runtime semantics.
+
+Per-instance `createPulse` recipe:
 
 ```tsx
 import { createPulse } from "valyrian.js/pulses";
@@ -4868,7 +5188,7 @@ const CounterA = createCounterWithPulse();
 const CounterB = createCounterWithPulse();
 ```
 
-Per-instance `createPulseStore`:
+Per-instance `createPulseStore` recipe:
 
 ```tsx
 import { createPulseStore } from "valyrian.js/pulses";
@@ -4900,7 +5220,7 @@ const CounterA = createCounterWithPulseStore();
 const CounterB = createCounterWithPulseStore();
 ```
 
-Per-instance `FluxStore`:
+Per-instance `FluxStore` recipe:
 
 ```tsx
 import { FluxStore } from "valyrian.js/flux-store";
@@ -5032,6 +5352,7 @@ Recommended order:
 ## 11.3. Documentation Quality Rules
 
 - Avoid claims that are not backed by code or tests.
+- Keep one normative source per behavior contract; recipe/comparison pages should link back instead of redefining the same semantics.
 - Prefer short, runnable examples.
 - Clearly mark planned features as planned.
 - Keep terminology consistent across pages.

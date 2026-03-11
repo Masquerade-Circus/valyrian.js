@@ -2,9 +2,13 @@
 
 Valyrian.js is an isomorphic runtime framework for web apps with one runtime model across browser and server.
 
+Here, "isomorphic" means you keep the same mental model when you move between browser and server work. The runtime grows from first render, to SSR, to hydration and request-scoped behavior without turning into a separate product mode.
+
 It is for teams that want browser/server continuity, explicit runtime behavior, and deterministic updates without hiding app behavior behind framework ceremony.
 
 The goal is simple: ship fast, keep control, and expand from browser rendering into SSR, hydration, and request-scoped server behavior without switching mental models.
+
+If you started in `README.md`, keep the same picture in mind here: mount one component into a root, confirm it renders, then expand that same model into richer component trees, events, state, and server-side execution.
 
 ## What this guide gives you
 
@@ -25,7 +29,7 @@ Core areas:
 
 * UI rendering and vnode patching.
 * Router and navigation lifecycle.
-* State options (`POJO`, `pulse`, `pulse store`, `flux store`).
+* State options (plain JavaScript objects, called `POJO` in the docs, plus `pulse`, `pulse store`, and `flux store`).
 * Request and async orchestration modules.
 * Node-side SSR, hydration entry points, and build utilities.
 
@@ -64,3 +68,5 @@ Recommended order:
 5. [./4.3-forms.md](./4.3-forms.md)
 
 If your goal is first success only, complete chapters 2 and 3 first, then return for chapter 4 when you need routing and async workflows.
+
+The intended onboarding flow is: `README.md` for the first render, this introduction for the mental model, and `2-getting-started.md` for the first fuller example and local tooling path.

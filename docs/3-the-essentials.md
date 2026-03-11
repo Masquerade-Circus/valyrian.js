@@ -143,16 +143,20 @@ For exhaustive counter variants (shared/per-instance component shape patterns), 
 
 Valyrian uses delegated native events (`onclick`, `oninput`, `onsubmit`, ...).
 
-- After an event handler runs, Valyrian triggers a render update.
-- If `event.preventDefault()` is called, the automatic update is skipped.
+For the exact runtime contract behind delegated listener registration, ancestor walking, async rerender timing, and `preventDefault()` behavior, use [./3.1-runtime-core.md](./3.1-runtime-core.md) as the authoritative reference.
+
+- Events are attached at the mounted root, not one DOM listener per node.
+- When an event fires, Valyrian starts at `event.target` and walks upward until it finds the first matching handler.
+- That first matching handler runs, and plain synchronous state mutation inside it is usually enough to trigger a render.
+- If you call `event.preventDefault()` before Valyrian reaches an automatic render point, that automatic render is skipped.
 
 ### Event Flow
 
 ```mermaid
 flowchart TD
     evt[User event] --> handler[Event handler runs]
-    handler --> prevent{preventDefault called?}
-    prevent -- Yes --> skip[Skip automatic update]
+    handler --> prevent{preventDefault active before auto-update?}
+    prevent -- Yes --> skip[Skip that automatic update]
     prevent -- No --> render[Run update and render cycle]
     render --> synced[UI synced]
 ```
@@ -222,21 +226,28 @@ const Content = () => (
 
 ## 3.5. Reactivity and Async Control
 
+The same delegated event model applies to async handlers, but render timing changes slightly.
+
 For synchronous user interactions, mutating plain objects in delegated event handlers is usually enough because updates are event-driven.
 
-For async delegated handlers, Valyrian can run one automatic render right after the handler starts and another when the returned promise settles.
+For async delegated handlers, Valyrian runs one automatic render right after the synchronous part of the handler finishes and another when the returned promise settles.
 
 Practical rule:
 
 - Without `event.preventDefault()`, state changes before the first `await` are included in the immediate automatic render.
 - If the handler returns a promise, state changes after `await` are included in a second automatic render when that promise settles.
-- If you call `event.preventDefault()`, automatic rendering is skipped and you must call `update()` manually for each transition you want to show.
+- If `event.preventDefault()` is already active before an automatic render point, that automatic render is skipped and you must call `update()` manually for each transition you want to show.
 
-Timing note:
+Timing note: if `preventDefault()` happens only after an `await`, the first automatic render may already have happened, but the final render on promise settlement is still skipped.
 
-- If `preventDefault()` happens after an `await`, the first automatic render may have already happened.
-- In that case, `preventDefault()` still skips the final automatic render that would normally happen when the promise settles.
-- It does not retroactively undo native browser behavior that already continued before the async boundary.
+Quick decision table:
+
+| Handler shape | Automatic render before `await` | Automatic render after promise settles | What to do |
+| --- | --- | --- | --- |
+| Sync handler | Yes, after the handler returns | Not applicable | Usually nothing extra |
+| Async handler without `preventDefault()` | Yes, includes pre-`await` state | Yes, includes post-`await` state | Usually nothing extra |
+| Async handler with `preventDefault()` before `await` | No | No | Call `update()` for each state transition you want to show |
+| Async handler with `preventDefault()` after `await` | Usually yes, because the first render may already have happened | No | Call `update()` for post-`await` transitions you still want to render |
 
 Default async handler pattern (no `preventDefault`):
 
@@ -357,5 +368,5 @@ Use this pattern to avoid duplicate subscriptions and memory leaks.
 ## Common Beginner Mistakes
 
 1. Forgetting `name` in form controls used with directives like `v-model`/`v-field`.
-2. Expecting post-`await` async state changes to render without calling `update()`.
+2. Assuming async handlers always need `update()` after `await`, even when `preventDefault()` was never called.
 3. Calling `event.preventDefault()` in delegated handlers and forgetting manual `update()` calls.

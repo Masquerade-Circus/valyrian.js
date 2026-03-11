@@ -2,16 +2,18 @@
 
 Valyrian.js can run directly in the browser with ES modules, or from a Node.js project with the built-in `inline` utility.
 
-Use this page to meet the runtime model in stages: first in the browser render/update loop, then in local Node tooling, and later in SSR as the same model expanded to the server.
+Use this page to meet the runtime model in stages: first in the browser mount-and-render path, then in local Node tooling, and later in SSR as the same model expanded to the server.
 
 ## Goal and Time
 
 * **Goal:** render your first component and understand the first proof points of the runtime model.
 * **Time:** 2-5 minutes (CDN path) or 10-15 minutes (Node path).
 
+If you came from `README.md`, this page starts with the same `mount("body", App)` idea and then expands it into a fuller component tree.
+
 ## Choose One Path
 
-If this is your first time with the framework, start with the CDN path. It gives the fastest feedback loop, shows the render/update loop directly in the browser, and avoids setup friction.
+If this is your first time with the framework, start with the CDN path. It gives the fastest feedback loop, shows the mount/render path directly in the browser, and avoids setup friction.
 
 ## Path Selection Flow
 
@@ -36,9 +38,46 @@ flowchart TD
 
 This is the fastest way to confirm the runtime and your environment are working.
 
-Treat this as the first proof of the model: render a component, change state or output, and watch the browser update through explicit runtime behavior.
+Treat this as the first proof of the model: render one component into one root and confirm the runtime output appears where you mounted it.
 
 Create `index.html`:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Valyrian.js App</title>
+  </head>
+  <body>
+    <script type="module">
+      import "https://unpkg.com/valyrian.js";
+
+      const { mount } = Valyrian;
+
+      function App() {
+        return "Hello from Valyrian.js";
+      }
+
+      mount("body", App);
+    </script>
+  </body>
+</html>
+```
+
+What happens here:
+
+1. The browser loads Valyrian as a standard module.
+2. `App()` returns the output for the root component.
+3. `mount()` renders that output into the selected root.
+
+If you see the text rendered, your core setup is done.
+
+At this point you have verified the first browser-side render of the runtime model.
+
+### Equivalent expanded form
+
+The same example can be written in explicit VNode form when you want to see the structure Valyrian renders:
 
 ```html
 <!DOCTYPE html>
@@ -66,15 +105,7 @@ Create `index.html`:
 </html>
 ```
 
-What happens here:
-
-1. The browser loads Valyrian as a standard module.
-2. `v()` creates VNodes in memory.
-3. `mount()` renders the component tree into the selected root.
-
-If you see the heading and paragraph rendered, your core setup is done.
-
-At this point you have already verified the browser side of the runtime model.
+Use the short string example as the default mental model. Use this expanded form when you want to see how components can return richer trees.
 
 ## 2.2. Node.js Method (Built-in Tooling)
 
@@ -98,13 +129,14 @@ Create `index.tsx`:
 ```tsx
 import { mount } from "valyrian.js";
 
-const App = () => (
-  <main style="font-family: sans-serif; padding: 2rem;">
-    <h1>Hello World</h1>
-    <p>Built with Valyrian internal tooling.</p>
-    <button onclick={() => alert("It works")}>Click me</button>
-  </main>
-);
+function App() {
+  return (
+    <main style="font-family: sans-serif; padding: 2rem;">
+      <h1>Hello from Valyrian.js</h1>
+      <p>The same mount mental model, now with TSX.</p>
+    </main>
+  );
+}
 
 mount("body", App);
 ```
@@ -152,7 +184,13 @@ Then load `dist.js` from a minimal HTML page:
 </html>
 ```
 
-If you are testing locally, use any static server (for example `npx serve .`) and open that HTML page in the browser.
+Then serve that folder with a small static server and open the page in the browser. For example:
+
+```bash
+python3 -m http.server
+```
+
+Then open `http://localhost:8000`.
 
 The important part is not the server choice. It is that Node becomes a practical runtime surface for authoring, transforming, and preparing the same browser-facing application model.
 
