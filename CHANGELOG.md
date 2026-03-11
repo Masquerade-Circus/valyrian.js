@@ -1,5 +1,15 @@
 # Changelog
 
+## [9.1.4](https://github.com/Masquerade-Circus/valyrian/compare/9.1.3...9.1.4) (2026-03-11)
+
+### Documentation
+
+* update documentation ([7097ce3](https://github.com/Masquerade-Circus/valyrian/commit/7097ce3c692bee57bcfff9cf3edab756af5fff2b))
+
+### Code Refactoring
+
+* update delegated events handling promises so we don't need to call update manually ([6142ce1](https://github.com/Masquerade-Circus/valyrian/commit/6142ce172f040da7dd7eb4ec3bedcb5ef02b8023))
+
 ## [9.1.3](https://github.com/Masquerade-Circus/valyrian/compare/9.1.2...9.1.3) (2026-03-03)
 
 ### Code Refactoring
