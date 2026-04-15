@@ -2,7 +2,7 @@
 /* eslint-disable max-lines-per-function */
 import "valyrian.js/node";
 import { expect, describe, test as it } from "bun:test";
-import { createPulse, createPulseStore, createMutableStore, createEffect } from "valyrian.js/pulses";
+import { createPulse, createPulseStore, createMutableStore, createEffect } from "../lib/pulses/index.ts";
 import { v, mount, unmount } from "valyrian.js";
 import { wait } from "./utils/helpers";
 
@@ -120,6 +120,54 @@ describe("PulseStore", () => {
     // Component should re-render after increment
     expect(renderCount).toEqual(2);
     expect(dom.innerHTML).toEqual("<div>1</div>");
+  });
+
+  it("should suppress delegated auto-update without calling preventDefault when a pulse runs inside the handler", async () => {
+    const pulseStore = createPulseStore(
+      { count: 0 },
+      {
+        increment(state: any) {
+          state.count += 1;
+        }
+      }
+    );
+
+    const listeners: Record<string, (event: Event) => void> = {};
+    const dom = document.createElement("div");
+    document.body.appendChild(dom);
+    (dom as any).addEventListener = (type: string, callback: EventListenerOrEventListenerObject | null) => {
+      listeners[type] = callback as (event: Event) => void;
+    };
+    (dom as any).removeEventListener = () => {};
+
+    const SubscriberComponent = () => <button onclick={() => pulseStore.increment()}>{pulseStore.state.count}</button>;
+
+    mount(dom, <SubscriberComponent />);
+
+    let stopImmediatePropagationCalls = 0;
+    const clickEvent = {
+      type: "click",
+      target: dom.childNodes[0] as unknown as Element,
+      defaultPrevented: false,
+      preventDefault() {
+        this.defaultPrevented = true;
+      },
+      stopImmediatePropagation() {
+        stopImmediatePropagationCalls += 1;
+      }
+    };
+
+    listeners.click(clickEvent as unknown as Event);
+
+    expect(clickEvent.defaultPrevented).toEqual(false);
+    expect(stopImmediatePropagationCalls).toEqual(1);
+    expect(dom.innerHTML).toEqual("<button>0</button>");
+
+    await wait(0);
+
+    expect(dom.innerHTML).toEqual("<button>1</button>");
+
+    unmount();
   });
 
   it("should register and execute effects correctly", async () => {
@@ -435,7 +483,7 @@ describe("PulseStore", () => {
 
     let renderCount = 0;
     createEffect(() => {
-      console.log("Effect triggered");
+      pulseStore.state.count;
       renderCount += 1;
     });
 
@@ -445,8 +493,55 @@ describe("PulseStore", () => {
     pulseStore.increment();
     pulseStore.increment();
 
-    expect(renderCount).toEqual(1); // Should only re-render once
+    expect(renderCount).toEqual(1); // Should only re-render once in the same tick
     expect(pulseStore.state.count).toEqual(3);
+
+    await wait(0);
+
+    expect(renderCount).toEqual(2); // Should flush a single batched re-run
+  });
+
+  it("should replace dynamic store dependencies when the accessed property changes", async () => {
+    const pulseStore = createPulseStore(
+      { useA: true, a: 1, b: 10 },
+      {
+        setUseA(state: any, value: boolean) {
+          state.useA = value;
+        },
+        setA(state: any, value: number) {
+          state.a = value;
+        },
+        setB(state: any, value: number) {
+          state.b = value;
+        }
+      }
+    );
+
+    let effectExecutionCount = 0;
+    let effectValue = null;
+
+    createEffect(() => {
+      effectExecutionCount++;
+      effectValue = pulseStore.state.useA ? pulseStore.state.a : pulseStore.state.b;
+    });
+
+    expect(effectExecutionCount).toEqual(1);
+    expect(effectValue).toEqual(1 as any);
+
+    pulseStore.setUseA(false);
+    await wait(0);
+    expect(effectExecutionCount).toEqual(2);
+    expect(effectValue).toEqual(10 as any);
+
+    pulseStore.setA(2);
+    await wait(0);
+    expect(effectExecutionCount).toEqual(2);
+    expect(effectValue).toEqual(10 as any);
+
+    pulseStore.setB(20);
+    await wait(0);
+    expect(effectExecutionCount).toEqual(3);
+    expect(effectValue).toEqual(20 as any);
   });
 
   it('should notify subscribers after a while if multiple pulses are called in the same "tick"', async () => {
@@ -482,7 +577,7 @@ describe("PulseStore", () => {
     expect(pulseStore.state.count).toEqual(4);
   });
 
-  it("should notify subscribers only once if a pulse is called in another pulse", async () => {
+  it("should notify subscribers only once when a pulse reuses another pulse implementation with the same draft state", async () => {
     const initialState = { count: 0 };
     const pulses = {
       increment(state: any) {
@@ -510,6 +605,39 @@ describe("PulseStore", () => {
 
     expect(renderCount).toEqual(2); // Should only re-render once
     expect(pulseStore.state.count).toEqual(3);
+  });
+
+  it("should flush intermediate state updates when calling this.$flush() inside an async pulse", async () => {
+    const pulseStore = createPulseStore(
+      { count: 0 },
+      {
+        async incrementWithFlush(state: any) {
+          state.count = 1;
+          this.$flush();
+          await wait(0);
+          state.count = 2;
+        }
+      }
+    );
+
+    const observedCounts: number[] = [];
+
+    createEffect(() => {
+      observedCounts.push(pulseStore.state.count);
+    });
+
+    expect(observedCounts).toEqual([0]);
+
+    const pulsePromise = pulseStore.incrementWithFlush();
+
+    expect(pulseStore.state.count).toEqual(1);
+    expect(observedCounts).toEqual([0]);
+
+    await pulsePromise;
+    await wait(0);
+
+    expect(pulseStore.state.count).toEqual(2);
+    expect(observedCounts).toEqual([0, 1]);
   });
 
   it("should handle array mutations correctly in immutable store", () => {
@@ -691,6 +819,54 @@ describe("Single pulses", () => {
 
       setCount(10);
       expect(effectValue).toEqual(10 as any);
+    });
+
+    it("should stop re-executing after calling the returned disposer", () => {
+      const [count, setCount] = createPulse(0);
+      let effectExecutionCount = 0;
+
+      const dispose = createEffect(() => {
+        effectExecutionCount++;
+        count();
+      });
+
+      expect(effectExecutionCount).toEqual(1);
+
+      setCount(1);
+      expect(effectExecutionCount).toEqual(2);
+
+      dispose();
+      setCount(2);
+
+      expect(effectExecutionCount).toEqual(2);
+    });
+
+    it("should replace dynamic dependencies on each re-run", () => {
+      const [useA, setUseA] = createPulse(true);
+      const [signalA, setSignalA] = createPulse(1);
+      const [signalB, setSignalB] = createPulse(10);
+      let effectExecutionCount = 0;
+      let effectValue = null;
+
+      createEffect(() => {
+        effectExecutionCount++;
+        effectValue = useA() ? signalA() : signalB();
+      });
+
+      expect(effectExecutionCount).toEqual(1);
+      expect(effectValue).toEqual(1 as any);
+
+      setUseA(false);
+      expect(effectExecutionCount).toEqual(2);
+      expect(effectValue).toEqual(10 as any);
+
+      setSignalA(2);
+      expect(effectExecutionCount).toEqual(2);
+      expect(effectValue).toEqual(10 as any);
+
+      setSignalB(20);
+      expect(effectExecutionCount).toEqual(3);
+      expect(effectValue).toEqual(20 as any);
     });
   });
 

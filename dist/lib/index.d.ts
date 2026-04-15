@@ -74,6 +74,7 @@ export declare const onRemove: (callback: Function) => void;
 export declare const directives: Record<string, Directive>;
 export declare function directive(name: string, directive: Directive): void;
 export declare function setPropNameReserved(name: string): void;
+export declare function preventUpdate(): void;
 export declare function setAttribute(name: string, value: any, newVnode: VnodeWithDom): void;
 export declare function updateAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void;
 export declare function createElement(tag: string, isSVG: boolean): DomElement;

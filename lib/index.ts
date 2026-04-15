@@ -548,16 +548,30 @@ export function setPropNameReserved(name: string) {
 }
 
 const eventListenerNames = new Set<string>();
+const preventedUpdates = new WeakMap<Event, boolean>();
+
+function isUpdatePrevented(event: Event) {
+  return preventedUpdates.get(event) === true;
+}
+
+export function preventUpdate() {
+  if (!current.event) {
+    return;
+  }
+
+  preventedUpdates.set(current.event, true);
+}
 
 function isThenable(value: unknown): value is PromiseLike<unknown> {
   return (
-    value !== null
-    && (typeof value === "object" || typeof value === "function")
-    && typeof Reflect.get(value, "then") === "function"
+    value !== null &&
+    (typeof value === "object" || typeof value === "function") &&
+    typeof Reflect.get(value, "then") === "function"
   );
 }
 
 function eventListener(e: Event) {
+  const previousEvent = current.event;
   current.event = e;
   let dom = e.target as unknown as DomElement;
   const name = `on${e.type}`;
@@ -569,27 +583,20 @@ function eventListener(e: Event) {
       try {
         result = oldVnode.props[name](e, oldVnode);
       } finally {
-        current.event = null;
+        current.event = previousEvent;
       }
 
-      if (!e.defaultPrevented) {
+      if (!isUpdatePrevented(e)) {
         // eslint-disable-next-line no-use-before-define
         update();
       }
 
       if (isThenable(result)) {
-        void Promise.resolve(result).then(
-          () => {
-            if (!e.defaultPrevented) {
-              update();
-            }
-          },
-          () => {
-            if (!e.defaultPrevented) {
-              update();
-            }
+        Promise.resolve(result).finally(() => {
+          if (!isUpdatePrevented(e)) {
+            update();
           }
-        );
+        });
       }
 
       return;
@@ -597,7 +604,7 @@ function eventListener(e: Event) {
     dom = dom.parentNode as DomElement;
   }
 
-  current.event = null;
+  current.event = previousEvent;
 }
 
 function sharedSetAttribute(name: string, value: any, newVnode: VnodeWithDom): void | boolean {
@@ -950,9 +957,7 @@ let debouncedUpdateTimeout: any;
 const debouncedUpdateMethod = isNodeJs ? update : () => requestAnimationFrame(update);
 
 export function debouncedUpdate(timeout = 42) {
-  if (current.event) {
-    current.event.preventDefault();
-  }
+  preventUpdate();
   clearTimeout(debouncedUpdateTimeout);
   debouncedUpdateTimeout = setTimeout(debouncedUpdateMethod, timeout);
 }

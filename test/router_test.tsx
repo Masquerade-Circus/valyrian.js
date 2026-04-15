@@ -2,7 +2,7 @@ import "valyrian.js/node";
 import { ServerStorage } from "valyrian.js/node";
 
 /* eslint-disable no-console */
-import { Request, Router, afterRoute, beforeRoute, mountRouter, redirect } from "valyrian.js/router";
+import { Request, Router, afterRoute, beforeRoute, mountRouter, redirect } from "../lib/router/index";
 import { Children, Properties, onCreate, update, v } from "valyrian.js";
 
 import { expect, describe, test as it } from "bun:test";
@@ -462,6 +462,111 @@ describe("Router", () => {
       before: "<div>Hello /world#world</div>",
       after: "<div>Hello /world#Mike</div>"
     });
+  });
+
+  it("should intercept delegated route clicks with preventDefault without an extra rerender", async () => {
+    let sourceRenderCount = 0;
+    let targetRenderCount = 0;
+    const listeners: Record<string, (event: Event) => void> = {};
+
+    const dom = document.createElement("div");
+    (dom as any).addEventListener = (type: string, callback: EventListenerOrEventListenerObject | null) => {
+      listeners[type] = callback as (event: Event) => void;
+    };
+    (dom as any).removeEventListener = () => {};
+
+    const Source = () => {
+      sourceRenderCount += 1;
+      return <a v-route="/target">Go</a>;
+    };
+
+    const Target = () => {
+      targetRenderCount += 1;
+      return <div>Target</div>;
+    };
+
+    const router = new Router();
+    router.add("/source", () => Source);
+    router.add("/target", () => Target);
+    mountRouter(dom, router);
+
+    expect(await router.go("/source")).toEqual('<a href="/target">Go</a>');
+    expect(dom.innerHTML).toEqual('<a href="/target">Go</a>');
+
+    const clickEvent = {
+      type: "click",
+      target: dom.childNodes[0] as unknown as Element,
+      defaultPrevented: false,
+      button: 0,
+      preventDefault() {
+        this.defaultPrevented = true;
+      }
+    } as Event & { button: number; defaultPrevented: boolean; preventDefault: () => void };
+
+    listeners.click(clickEvent);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(clickEvent.defaultPrevented).toBeTrue();
+    expect(dom.innerHTML).toEqual("<div>Target</div>");
+    expect(sourceRenderCount).toEqual(1);
+    expect(targetRenderCount).toEqual(1);
+  });
+
+  it("should keep public route state coherent when delegated navigation fails", async () => {
+    const listeners: Record<string, (event: Event) => void> = {};
+    const unhandledRejections: unknown[] = [];
+
+    const dom = document.createElement("div");
+    (dom as any).addEventListener = (type: string, callback: EventListenerOrEventListenerObject | null) => {
+      listeners[type] = callback as (event: Event) => void;
+    };
+    (dom as any).removeEventListener = () => {};
+
+    const onUnhandledRejection = (reason: unknown) => {
+      unhandledRejections.push(reason);
+    };
+
+    process.on("unhandledRejection", onUnhandledRejection);
+
+    const Source = () => <a v-route="/broken">Broken</a>;
+
+    const router = new Router();
+    router.add("/source", () => Source);
+    router.add("/broken", () => {
+      throw new Error("Delegated navigation failed");
+    });
+    mountRouter(dom, router);
+
+    try {
+      expect(await router.go("/source")).toEqual('<a href="/broken">Broken</a>');
+      expect(dom.innerHTML).toEqual('<a href="/broken">Broken</a>');
+      expect(router.path).toEqual("/source");
+      expect(router.url).toEqual("/source");
+
+      const clickEvent = {
+        type: "click",
+        target: dom.childNodes[0] as unknown as Element,
+        defaultPrevented: false,
+        button: 0,
+        preventDefault() {
+          this.defaultPrevented = true;
+        }
+      } as Event & { button: number; defaultPrevented: boolean; preventDefault: () => void };
+
+      listeners.click(clickEvent);
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(clickEvent.defaultPrevented).toBeTrue();
+      expect(dom.innerHTML).toEqual('<a href="/broken">Broken</a>');
+      expect(update()).toEqual('<a href="/broken">Broken</a>');
+      expect(router.path).toEqual("/source");
+      expect(router.url).toEqual("/source");
+      expect(router.params).toEqual({});
+      expect(router.query).toEqual({});
+      expect(unhandledRejections).toEqual([]);
+    } finally {
+      process.off("unhandledRejection", onUnhandledRejection);
+    }
   });
 
   it("Test the initial prefix", async () => {
@@ -995,6 +1100,44 @@ describe("Router", () => {
 
     expect(beforeHits).toEqual(1);
     expect(afterHits).toEqual(1);
+  });
+
+  it("should preserve committed route state when afterRoute throws after navigation mount", async () => {
+    const dom = document.createElement("div");
+
+    const Users = () => {
+      onCreate(() => {
+        afterRoute(() => {
+          throw new Error("afterRoute failed");
+        });
+      });
+      return <div>Users</div>;
+    };
+
+    const Home = () => <div>Home</div>;
+
+    const router = new Router();
+    router.add("/users", () => Users);
+    router.add("/home", () => Home);
+
+    mountRouter(dom, router);
+
+    await router.go("/users");
+
+    let errorMessage = "";
+    try {
+      await router.go("/home");
+    } catch (error: any) {
+      errorMessage = error.message;
+    }
+
+    expect(errorMessage).toEqual("afterRoute failed");
+    expect(dom.innerHTML).toEqual("<div>Home</div>");
+    expect(update()).toEqual("<div>Home</div>");
+    expect(router.path).toEqual("/home");
+    expect(router.url).toEqual("/home");
+    expect(router.query).toEqual({});
+    expect(router.params).toEqual({});
   });
 
   it("Performance test: 1000 routes with 1000 subroutes with :${[a-z]} param", async () => {

@@ -295,6 +295,12 @@ var Router = class _Router {
         query: nextQuery,
         params
       };
+      const previousPublicState = {
+        url: this.url,
+        query: this.query,
+        path: this.path,
+        params: this.params
+      };
       const routeChanged = hasRouteChanged(nextRoute, this.currentRoute);
       if (routeChanged) {
         for (const callback of this.activeRouteCallbacks.before) {
@@ -354,6 +360,14 @@ var Router = class _Router {
           }
         }
         return mountedResult;
+      } catch (error) {
+        if (!routeTransitionCompleted) {
+          this.url = previousPublicState.url;
+          this.query = previousPublicState.query;
+          this.path = previousPublicState.path;
+          this.params = previousPublicState.params;
+        }
+        throw error;
       } finally {
         if (routeChanged && !routeTransitionCompleted) {
           this.rollbackPendingRouteCallbacksCollection();
@@ -367,7 +381,8 @@ var Router = class _Router {
         return;
       }
       if ((0, import_utils.isString)(url) && url.length > 0) {
-        this.go(url);
+        (0, import_valyrian.preventUpdate)();
+        void this.go(url).catch(() => void 0);
       }
       e.preventDefault();
     };

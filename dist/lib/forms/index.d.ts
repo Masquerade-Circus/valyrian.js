@@ -17,6 +17,7 @@ export declare class FormStore<TState extends FormState> {
     private clean;
     private format;
     private pulseStore;
+    private metaState;
     static get schemaShield(): SchemaShield;
     constructor(options: FormOptions<TState>);
     get state(): TState;
@@ -27,9 +28,13 @@ export declare class FormStore<TState extends FormState> {
     get isDirty(): boolean;
     get hasValidationErrors(): boolean;
     get hasSubmitError(): boolean;
+    private isDelegatedSubmitEvent;
+    private setValidationErrors;
+    private setInflight;
+    private setSubmitError;
     formatValue(name: string, value: unknown): unknown;
     setField(name: string, rawValue: unknown): void;
-    setSuccess(success: boolean): void;
+    setSuccess(success: boolean, event?: Event): void;
     validate(): boolean;
     submit(event?: Event): Promise<boolean>;
     reset(): void;

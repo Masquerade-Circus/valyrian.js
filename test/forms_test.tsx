@@ -1,8 +1,8 @@
 import "valyrian.js/node";
 
 import { describe, expect, test as it } from "bun:test";
-import { mount, v } from "valyrian.js";
-import { FormStore, formSchemaShield } from "valyrian.js/forms";
+import { mount, preventUpdate, update, v } from "valyrian.js";
+import { FormStore, formSchemaShield } from "../lib/forms";
 import { Money, formatMoney, parseMoneyInput } from "valyrian.js/money";
 import { wait } from "./utils/helpers";
 
@@ -103,6 +103,98 @@ describe("Forms", () => {
     expect(input.value).toEqual("$2,500.00");
   });
 
+  it("should preserve radio values and sync checked state with v-field", async () => {
+    const form = new FormStore({
+      state: {
+        choice: "b"
+      },
+      schema: {
+        type: "object",
+        properties: {
+          choice: { type: "string" }
+        },
+        required: ["choice"]
+      }
+    });
+
+    const dom = document.createElement("div");
+
+    mount(dom, () => (
+      <form v-form={form}>
+        <input type="radio" name="choice" value="a" v-field={form} />
+        <input type="radio" name="choice" value="b" v-field={form} />
+      </form>
+    ));
+
+    const formDom = dom.childNodes[0] as any;
+    const radioA = formDom.childNodes[0] as any;
+    const radioB = formDom.childNodes[1] as any;
+
+    expect(radioA.value).toBe("a");
+    expect(radioB.value).toBe("b");
+    expect(radioA.checked).toBeFalse();
+    expect(radioB.checked).toBeTrue();
+    expect(radioA.value).not.toBe("true");
+    expect(radioA.value).not.toBe("false");
+    expect(radioB.value).not.toBe("true");
+    expect(radioB.value).not.toBe("false");
+
+    radioA.checked = true;
+    radioA.dispatchEvent(new Event("change", { bubbles: true }));
+
+    expect(form.state.choice).toBe("a");
+
+    await wait(0);
+
+    expect(radioA.value).toBe("a");
+    expect(radioB.value).toBe("b");
+    expect(radioA.checked).toBeTrue();
+    expect(radioB.checked).toBeFalse();
+  });
+
+  it("should keep radios with falsy values checked when state matches", async () => {
+    const form = new FormStore({
+      state: {
+        choice: 0
+      },
+      schema: {
+        type: "object",
+        properties: {
+          choice: { type: "number" }
+        },
+        required: ["choice"]
+      }
+    });
+
+    const dom = document.createElement("div");
+
+    mount(dom, () => (
+      <form v-form={form}>
+        <input type="radio" name="choice" value={0} v-field={form} />
+        <input type="radio" name="choice" value={1} v-field={form} />
+      </form>
+    ));
+
+    const formDom = dom.childNodes[0] as any;
+    const radioZero = formDom.childNodes[0] as any;
+    const radioOne = formDom.childNodes[1] as any;
+
+    expect(radioZero.value).toBe("0");
+    expect(radioOne.value).toBe("1");
+    expect(radioZero.checked).toBeTrue();
+    expect(radioOne.checked).toBeFalse();
+
+    radioOne.checked = true;
+    radioOne.dispatchEvent(new Event("change", { bubbles: true }));
+
+    expect(form.state.choice).toBe("1");
+
+    await wait(0);
+
+    expect(radioZero.checked).toBeFalse();
+    expect(radioOne.checked).toBeTrue();
+  });
+
   it("should bind and submit when inputs and button are rendered through components", async () => {
     const submissions: Array<Record<string, unknown>> = [];
 
@@ -194,6 +286,96 @@ describe("Forms", () => {
     const results = await Promise.all([first, second]);
     expect(results).toEqual([true, false]);
     expect(submitCalls).toEqual(1);
+  });
+
+  it("should auto-rerender inflight and success states on async submit even when submit preventDefault is used", async () => {
+    let resolveSubmit!: () => void;
+    const submitDone = new Promise<void>((resolve) => {
+      resolveSubmit = resolve;
+    });
+
+    const form = new FormStore({
+      state: { email: "ok@example.com" },
+      schema: {
+        type: "object",
+        properties: {
+          email: { type: "string", format: "email" }
+        },
+        required: ["email"]
+      },
+      onSubmit: async () => {
+        await submitDone;
+      }
+    });
+
+    const dom = document.createElement("div");
+    mount(dom, () => (
+      <form v-form={form}>
+        <button type="submit">{form.isInflight ? "sending" : form.success ? "sent" : "idle"}</button>
+      </form>
+    ));
+
+    const formDom = dom.childNodes[0] as any;
+    const submitEvent = new Event("submit", { bubbles: true, cancelable: true });
+    const originalPreventDefault = submitEvent.preventDefault.bind(submitEvent);
+    let preventDefaultCalls = 0;
+    submitEvent.preventDefault = () => {
+      preventDefaultCalls += 1;
+      originalPreventDefault();
+    };
+
+    formDom.dispatchEvent(submitEvent);
+    expect(submitEvent.defaultPrevented).toBeTrue();
+    expect(preventDefaultCalls).toEqual(1);
+
+    await wait(10);
+    expect(dom.innerHTML).toEqual("<form><button type=\"submit\">sending</button></form>");
+
+    resolveSubmit();
+    await wait(10);
+    expect(preventDefaultCalls).toEqual(1);
+    expect(dom.innerHTML).toEqual("<form><button type=\"submit\">sent</button></form>");
+  });
+
+  it("should let async submit opt out of automatic rerenders with preventUpdate", async () => {
+    let resolveSubmit!: () => void;
+    const submitDone = new Promise<void>((resolve) => {
+      resolveSubmit = resolve;
+    });
+
+    const form = new FormStore({
+      state: { email: "ok@example.com" },
+      schema: {
+        type: "object",
+        properties: {
+          email: { type: "string", format: "email" }
+        },
+        required: ["email"]
+      },
+      onSubmit: async () => {
+        preventUpdate();
+        await submitDone;
+      }
+    });
+
+    const dom = document.createElement("div");
+    mount(dom, () => (
+      <form v-form={form}>
+        <button type="submit">{form.isInflight ? "sending" : form.success ? "sent" : "idle"}</button>
+      </form>
+    ));
+
+    const formDom = dom.childNodes[0] as any;
+    formDom.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    expect(dom.innerHTML).toEqual("<form><button type=\"submit\">idle</button></form>");
+
+    await wait(0);
+    expect(dom.innerHTML).toEqual("<form><button type=\"submit\">idle</button></form>");
+
+    resolveSubmit();
+    await wait(10);
+    expect(dom.innerHTML).toEqual("<form><button type=\"submit\">idle</button></form>");
+    expect(update()).toEqual("<form><button type=\"submit\">sent</button></form>");
   });
 
   it("should validate url format from JSON schema", () => {

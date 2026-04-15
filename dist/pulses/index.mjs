@@ -1,5 +1,5 @@
 // lib/pulses/index.ts
-import { updateVnode, current } from "valyrian.js";
+import { updateVnode, current, preventUpdate } from "valyrian.js";
 import { deepCloneUnfreeze, deepFreeze, hasChanged } from "valyrian.js/utils";
 var effectStack = [];
 function registerDomSubscription(subscribers, domWithVnodesToUpdate) {
@@ -30,8 +30,16 @@ function registerDomSubscription(subscribers, domWithVnodesToUpdate) {
   }
 }
 function createStore(initialState, pulses, immutable = false) {
-  const subscribers = /* @__PURE__ */ new Set();
   const domWithVnodesToUpdate = /* @__PURE__ */ new WeakSet();
+  const propertySubscribers = /* @__PURE__ */ new Map();
+  const getPropertySubscribers = (prop) => {
+    let subscribers = propertySubscribers.get(prop);
+    if (!subscribers) {
+      subscribers = /* @__PURE__ */ new Set();
+      propertySubscribers.set(prop, subscribers);
+    }
+    return subscribers;
+  };
   const boundPulses = {};
   for (const key in pulses) {
     if (typeof pulses[key] !== "function") {
@@ -55,9 +63,10 @@ function createStore(initialState, pulses, immutable = false) {
       if (currentState) {
         return currentState[prop];
       }
+      const subscribers = getPropertySubscribers(prop);
       const currentEffect = effectStack[effectStack.length - 1];
-      if (currentEffect && !subscribers.has(currentEffect)) {
-        subscribers.add(currentEffect);
+      if (currentEffect) {
+        currentEffect.dependencies.add(subscribers);
       }
       registerDomSubscription(subscribers, domWithVnodesToUpdate);
       return state[prop];
@@ -84,11 +93,26 @@ function createStore(initialState, pulses, immutable = false) {
     }
   }
   let debounceTimeout = null;
-  function debouncedUpdate() {
+  const pendingSubscribers = /* @__PURE__ */ new Set();
+  function debouncedUpdate(changedProps) {
+    changedProps.forEach((prop) => {
+      const subscribers = propertySubscribers.get(prop);
+      if (!subscribers) {
+        return;
+      }
+      subscribers.forEach((subscriber) => pendingSubscribers.add(subscriber));
+    });
+    if (pendingSubscribers.size === 0) {
+      return;
+    }
     if (debounceTimeout) {
       clearTimeout(debounceTimeout);
     }
-    debounceTimeout = setTimeout(() => subscribers.forEach((subscriber) => subscriber()), 0);
+    debounceTimeout = setTimeout(() => {
+      const subscribersToNotify = Array.from(pendingSubscribers);
+      pendingSubscribers.clear();
+      subscribersToNotify.forEach((subscriber) => subscriber());
+    }, 0);
   }
   function setState(newState, flush = false) {
     pulseCallCount--;
@@ -99,8 +123,19 @@ function createStore(initialState, pulses, immutable = false) {
     if (pulseCallCount > 0 && !flush || !hasChanged(localState, newState)) {
       return;
     }
+    const changedProps = /* @__PURE__ */ new Set();
+    for (const key in newState) {
+      if (!(key in localState) || hasChanged(localState[key], newState[key])) {
+        changedProps.add(key);
+      }
+    }
+    for (const key in localState) {
+      if (!(key in newState)) {
+        changedProps.add(key);
+      }
+    }
     syncState(newState);
-    debouncedUpdate();
+    debouncedUpdate(changedProps);
   }
   function unfreezeState() {
     if (currentState === null) {
@@ -132,7 +167,7 @@ function createStore(initialState, pulses, immutable = false) {
       };
       try {
         if (current.event) {
-          current.event.preventDefault();
+          preventUpdate();
           current.event.stopImmediatePropagation();
         }
         const pulseResult = pulses[key].apply(context, [state, ...args]);
@@ -208,28 +243,39 @@ function createMutableStore(initialState, pulses) {
   return createStore(initialState, pulses, false);
 }
 function createEffect(effect) {
-  const subscribers = /* @__PURE__ */ new Set();
+  let currentDependencies = /* @__PURE__ */ new Set();
+  let disposed = false;
+  const cleanupDependencies = () => {
+    currentDependencies.forEach((dependency) => dependency.delete(runEffect));
+    currentDependencies.clear();
+  };
   const runEffect = () => {
+    if (disposed) {
+      return;
+    }
+    const nextDependencies = /* @__PURE__ */ new Set();
     try {
-      effectStack.push(runEffect);
+      effectStack.push({ run: runEffect, dependencies: nextDependencies });
       effect();
     } finally {
       effectStack.pop();
     }
+    currentDependencies.forEach((dependency) => {
+      if (!nextDependencies.has(dependency)) {
+        dependency.delete(runEffect);
+      }
+    });
+    nextDependencies.forEach((dependency) => {
+      if (!currentDependencies.has(dependency)) {
+        dependency.add(runEffect);
+      }
+    });
+    currentDependencies = nextDependencies;
   };
   runEffect();
-  const currentVnode = globalThis.current?.vnode;
-  if (currentVnode && currentVnode.dom) {
-    const dom = currentVnode.dom;
-    const subscription = () => {
-      runEffect();
-    };
-    subscribers.add(subscription);
-    return () => {
-      subscribers.delete(subscription);
-    };
-  }
   return () => {
+    disposed = true;
+    cleanupDependencies();
   };
 }
 function createPulse(initialValue) {
@@ -241,8 +287,8 @@ function createPulse(initialValue) {
   };
   const read = () => {
     const currentEffect = effectStack[effectStack.length - 1];
-    if (currentEffect && !subscribers.has(currentEffect)) {
-      subscribers.add(currentEffect);
+    if (currentEffect) {
+      currentEffect.dependencies.add(subscribers);
     }
     registerDomSubscription(subscribers, domWithVnodesToUpdate);
     return value;

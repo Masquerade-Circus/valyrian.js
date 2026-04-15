@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
 
-import { updateVnode, VnodeWithDom, current, DomElement } from "valyrian.js";
+import { updateVnode, VnodeWithDom, current, DomElement, preventUpdate } from "valyrian.js";
 import { deepCloneUnfreeze, deepFreeze, hasChanged } from "valyrian.js/utils";
 
 type State = Record<string, any>;
@@ -13,7 +13,12 @@ export type Pulse<StateType, TReturn = unknown> = (state: StateType, ...args: an
 
 type ProxyState<StateType> = StateType & { [key: string]: any };
 
-const effectStack: Function[] = [];
+type EffectSubscription = {
+  run: Function;
+  dependencies: Set<Set<Function>>;
+};
+
+const effectStack: EffectSubscription[] = [];
 
 type StorePulses<PulsesType> = {
   [K in keyof PulsesType]: PulsesType[K] extends (state: any, ...args: infer Args) => infer R
@@ -60,8 +65,17 @@ function createStore<StateType extends State, PulsesType extends Record<string, 
   on: (event: string, callback: Function) => void;
   off: (event: string, callback: Function) => void;
 } {
-  const subscribers = new Set<Function>();
   const domWithVnodesToUpdate = new WeakSet<DomElement>();
+  const propertySubscribers = new Map<PropertyKey, Set<Function>>();
+
+  const getPropertySubscribers = (prop: PropertyKey) => {
+    let subscribers = propertySubscribers.get(prop);
+    if (!subscribers) {
+      subscribers = new Set<Function>();
+      propertySubscribers.set(prop, subscribers);
+    }
+    return subscribers;
+  };
 
   const boundPulses: Record<string, Function> = {};
   for (const key in pulses) {
@@ -92,9 +106,10 @@ function createStore<StateType extends State, PulsesType extends Record<string, 
         return currentState[prop];
       }
 
+      const subscribers = getPropertySubscribers(prop);
       const currentEffect = effectStack[effectStack.length - 1];
-      if (currentEffect && !subscribers.has(currentEffect)) {
-        subscribers.add(currentEffect);
+      if (currentEffect) {
+        currentEffect.dependencies.add(subscribers);
       }
 
       registerDomSubscription(subscribers, domWithVnodesToUpdate);
@@ -125,11 +140,29 @@ function createStore<StateType extends State, PulsesType extends Record<string, 
   }
 
   let debounceTimeout: ReturnType<typeof setTimeout> | null = null;
-  function debouncedUpdate() {
+  const pendingSubscribers = new Set<Function>();
+
+  function debouncedUpdate(changedProps: Set<PropertyKey>) {
+    changedProps.forEach((prop) => {
+      const subscribers = propertySubscribers.get(prop);
+      if (!subscribers) {
+        return;
+      }
+      subscribers.forEach((subscriber) => pendingSubscribers.add(subscriber));
+    });
+
+    if (pendingSubscribers.size === 0) {
+      return;
+    }
+
     if (debounceTimeout) {
       clearTimeout(debounceTimeout);
     }
-    debounceTimeout = setTimeout(() => subscribers.forEach((subscriber) => subscriber()), 0);
+    debounceTimeout = setTimeout(() => {
+      const subscribersToNotify = Array.from(pendingSubscribers);
+      pendingSubscribers.clear();
+      subscribersToNotify.forEach((subscriber) => subscriber());
+    }, 0);
   }
 
   function setState(newState: StateType, flush = false) {
@@ -146,8 +179,22 @@ function createStore<StateType extends State, PulsesType extends Record<string, 
       return;
     }
 
+    const changedProps = new Set<PropertyKey>();
+
+    for (const key in newState) {
+      if (!(key in localState) || hasChanged(localState[key], newState[key])) {
+        changedProps.add(key);
+      }
+    }
+
+    for (const key in localState) {
+      if (!(key in newState)) {
+        changedProps.add(key);
+      }
+    }
+
     syncState(newState);
-    debouncedUpdate();
+    debouncedUpdate(changedProps);
   }
 
   function unfreezeState() {
@@ -188,7 +235,7 @@ function createStore<StateType extends State, PulsesType extends Record<string, 
 
       try {
         if (current.event) {
-          current.event.preventDefault();
+          preventUpdate();
           current.event.stopImmediatePropagation();
         }
         const pulseResult = pulses[key].apply(context, [state, ...args]);
@@ -284,33 +331,49 @@ export function createMutableStore<StateType extends State, PulsesType extends R
 }
 
 export function createEffect(effect: Function): () => void {
-  const subscribers = new Set<Function>();
-  
+  let currentDependencies = new Set<Set<Function>>();
+  let disposed = false;
+
+  const cleanupDependencies = () => {
+    currentDependencies.forEach((dependency) => dependency.delete(runEffect));
+    currentDependencies.clear();
+  };
+
   const runEffect = () => {
+    if (disposed) {
+      return;
+    }
+
+    const nextDependencies = new Set<Set<Function>>();
+
     try {
-      effectStack.push(runEffect);
+      effectStack.push({ run: runEffect, dependencies: nextDependencies });
       effect();
     } finally {
       effectStack.pop();
     }
+
+    currentDependencies.forEach((dependency) => {
+      if (!nextDependencies.has(dependency)) {
+        dependency.delete(runEffect);
+      }
+    });
+
+    nextDependencies.forEach((dependency) => {
+      if (!currentDependencies.has(dependency)) {
+        dependency.add(runEffect);
+      }
+    });
+
+    currentDependencies = nextDependencies;
   };
-  
+
   runEffect();
-  
-  const currentVnode = (globalThis as any).current?.vnode;
-  if (currentVnode && currentVnode.dom) {
-    const dom = currentVnode.dom;
-    const subscription = () => {
-      runEffect();
-    };
-    subscribers.add(subscription);
-    
-    return () => {
-      subscribers.delete(subscription);
-    };
-  }
-  
-  return () => {};
+
+  return () => {
+    disposed = true;
+    cleanupDependencies();
+  };
 }
 
 export function createPulse<T>(initialValue: T): [() => T, (newValue: T | ((current: T) => T)) => void, () => void] {
@@ -324,8 +387,8 @@ export function createPulse<T>(initialValue: T): [() => T, (newValue: T | ((curr
 
   const read = (): T => {
     const currentEffect = effectStack[effectStack.length - 1];
-    if (currentEffect && !subscribers.has(currentEffect)) {
-      subscribers.add(currentEffect);
+    if (currentEffect) {
+      currentEffect.dependencies.add(subscribers);
     }
     registerDomSubscription(subscribers, domWithVnodesToUpdate);
     return value;

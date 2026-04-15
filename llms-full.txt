@@ -4,7 +4,7 @@ Purpose
 This file aggregates the official documentation sources from the `docs/` directory as a single reference for AI agents and tooling.
 
 Generated
-- Date (UTC): 2026-03-11
+- Date (UTC): 2026-04-15
 - Source root: `docs/`
 - File count: 43
 
@@ -51,7 +51,7 @@ Source Files (in order)
 40. `docs/9.7-counter-variants-by-component-shape.md`
 41. `docs/9.8-reactive-counter-variants.md`
 42. `docs/10-meta-framework-cli.md`
-43. `docs/11-roadmap-and-contribution.md`
+43. `docs/11-contribution.md`
 
 
 ____________________________________________
@@ -115,7 +115,7 @@ If you are new to Valyrian.js, follow the recommended path first. It introduces 
    * [9.7. Counter Variants by Component Shape](./9.7-counter-variants-by-component-shape.md)
    * [9.8. Reactive Counter Variants](./9.8-reactive-counter-variants.md)
 10. [Meta-Framework and CLI (Downstream / Planned)](./10-meta-framework-cli.md)
-11. [Roadmap and Contribution](./11-roadmap-and-contribution.md)
+11. [Contribution](./11-contribution.md)
 
 ## Notes
 
@@ -554,20 +554,20 @@ For exhaustive counter variants (shared/per-instance component shape patterns), 
 
 Valyrian uses delegated native events (`onclick`, `oninput`, `onsubmit`, ...).
 
-For the exact runtime contract behind delegated listener registration, ancestor walking, async rerender timing, and `preventDefault()` behavior, use [./3.1-runtime-core.md](./3.1-runtime-core.md) as the authoritative reference.
+For the exact runtime contract behind delegated listener registration, ancestor walking, async rerender timing, and `preventUpdate()` behavior, use [./3.1-runtime-core.md](./3.1-runtime-core.md) as the authoritative reference.
 
 - Events are attached at the mounted root, not one DOM listener per node.
 - When an event fires, Valyrian starts at `event.target` and walks upward until it finds the first matching handler.
 - That first matching handler runs, and plain synchronous state mutation inside it is usually enough to trigger a render.
-- If you call `event.preventDefault()` before Valyrian reaches an automatic render point, that automatic render is skipped.
+- `preventUpdate()` controls Valyrian's automatic rerender points for the active delegated event.
 
 ### Event Flow
 
 ```mermaid
 flowchart TD
     evt[User event] --> handler[Event handler runs]
-    handler --> prevent{preventDefault active before auto-update?}
-    prevent -- Yes --> skip[Skip that automatic update]
+    handler --> prevent{preventUpdate active for this event?}
+    prevent -- Yes --> skip[Skip Valyrian automatic update]
     prevent -- No --> render[Run update and render cycle]
     render --> synced[UI synced]
 ```
@@ -576,7 +576,7 @@ flowchart TD
 const Form = () => <input oninput={(event) => console.log((event.target as HTMLInputElement).value)} />;
 ```
 
-If your UI does not update after interaction, check if `event.preventDefault()` is being called by mistake.
+If your UI does not update after interaction, check whether `preventUpdate()` or `debouncedUpdate()` is intentionally suppressing the runtime's automatic rerender path.
 
 ## 3.4. Basic Directives
 
@@ -645,22 +645,21 @@ For async delegated handlers, Valyrian runs one automatic render right after the
 
 Practical rule:
 
-- Without `event.preventDefault()`, state changes before the first `await` are included in the immediate automatic render.
 - If the handler returns a promise, state changes after `await` are included in a second automatic render when that promise settles.
-- If `event.preventDefault()` is already active before an automatic render point, that automatic render is skipped and you must call `update()` manually for each transition you want to show.
+- If `preventUpdate()` is active for that delegated event, Valyrian skips its automatic render points and you must call `update()` manually for each transition you want to show.
 
-Timing note: if `preventDefault()` happens only after an `await`, the first automatic render may already have happened, but the final render on promise settlement is still skipped.
+Timing note: `preventUpdate()` is event-scoped. If you call it during the handler's synchronous phase, it suppresses both the immediate render and the later promise-settlement render for that same event.
 
 Quick decision table:
 
 | Handler shape | Automatic render before `await` | Automatic render after promise settles | What to do |
 | --- | --- | --- | --- |
 | Sync handler | Yes, after the handler returns | Not applicable | Usually nothing extra |
-| Async handler without `preventDefault()` | Yes, includes pre-`await` state | Yes, includes post-`await` state | Usually nothing extra |
-| Async handler with `preventDefault()` before `await` | No | No | Call `update()` for each state transition you want to show |
-| Async handler with `preventDefault()` after `await` | Usually yes, because the first render may already have happened | No | Call `update()` for post-`await` transitions you still want to render |
+| Async handler using the default runtime timing | Yes, includes pre-`await` state | Yes, includes post-`await` state | Use this when the built-in render timing already matches the UI flow |
+| Async handler with `preventUpdate()` | No | No | Call `update()` for each state transition you want to show |
+| Async handler with `debouncedUpdate()` | No immediate auto-render | No final auto-render for that event | Let the debounced render path control timing |
 
-Default async handler pattern (no `preventDefault`):
+Default async handler pattern (native browser behavior unchanged):
 
 ```tsx
 const UserProfile = {
@@ -684,17 +683,47 @@ const UserProfile = {
 };
 ```
 
-Manual-control async pattern (with `preventDefault`):
+Automatic async render pattern:
 
 ```tsx
-import { update } from "valyrian.js";
+const SaveProfile = {
+  saving: false,
+  saved: false,
+
+  async save() {
+    this.saving = true;
+    this.saved = false;
+
+    await fetch("/profile", { method: "POST" });
+
+    this.saving = false;
+    this.saved = true;
+  },
+
+  view() {
+    return (
+      <div>
+        <button onclick={() => this.save()} disabled={this.saving}>
+          {this.saving ? "Saving..." : "Save profile"}
+        </button>
+        {this.saved && <p>Saved.</p>}
+      </div>
+    );
+  }
+};
+```
+
+Manual-control async pattern (with `preventUpdate()`):
+
+```tsx
+import { preventUpdate, update } from "valyrian.js";
 
 const UserProfileManual = {
   loading: false,
   user: null,
 
-  async load(event: Event) {
-    event.preventDefault();
+  async load() {
+    preventUpdate();
 
     this.loading = true;
     update();
@@ -708,7 +737,7 @@ const UserProfileManual = {
 
   view() {
     if (this.loading) return <p>Loading...</p>;
-    if (!this.user) return <button onclick={(event) => this.load(event)}>Load user</button>;
+    if (!this.user) return <button onclick={() => this.load()}>Load user</button>;
     return <p>Hello {this.user.name}</p>;
   }
 };
@@ -779,8 +808,8 @@ Use this pattern to avoid duplicate subscriptions and memory leaks.
 ## Common Beginner Mistakes
 
 1. Forgetting `name` in form controls used with directives like `v-model`/`v-field`.
-2. Assuming async handlers always need `update()` after `await`, even when `preventDefault()` was never called.
-3. Calling `event.preventDefault()` in delegated handlers and forgetting manual `update()` calls.
+2. Assuming async handlers always need `update()` after `await`, even when the default delegated-event render timing already covers both phases.
+3. Calling `preventUpdate()` in delegated handlers and forgetting the manual `update()` calls that replace the skipped automatic renders.
 
 
 ____________________________________________
@@ -796,13 +825,13 @@ Use [./3-the-essentials.md](./3-the-essentials.md) for the learning path, then u
 
 ## Render Lifecycle APIs
 
-### `mount(container, component)`
+### `mount(dom, component)`
 
 `mount` accepts:
 
-1. A selector string or a DOM element as `container`.
+1. A selector string or a DOM element as `dom`.
 2. A component function.
-3. A POJO component (`{ view() {} }`).
+3. An object or instance with `view()`.
 4. A vnode component.
 5. A plain value (wrapped into a trivial render function).
 
@@ -840,11 +869,9 @@ Returns:
 - In Node.js, `update()` returns the mounted root HTML string after the patch.
 - In browsers, `update()` returns `""`.
 
-Use it when state changes happen outside delegated event handlers, when you call `event.preventDefault()` and want manual control of renders, or when you want to force an intermediate state at a specific time. For the full delegated event timing contract, use the section below.
+Use it when state changes happen outside delegated event handlers, when you call `preventUpdate()` and want manual control of renders, or when you want to force an intermediate state at a specific time. For the full delegated event timing contract, use the section below.
 
-If a delegated handler returns a promise, Valyrian runs an automatic update after the synchronous part of the handler and another one when the promise settles. If the handler calls `event.preventDefault()`, those automatic updates are skipped and you must call `update()` manually for each UI transition.
-
-If `event.preventDefault()` is called only after an `await`, the first automatic update may already have happened, but the final update on promise settlement is still skipped.
+If a delegated handler returns a promise, Valyrian runs an automatic update after the synchronous part of the handler and another one when the promise settles. If the handler calls `preventUpdate()`, those automatic updates are skipped and you must call `update()` manually for each UI transition.
 
 ## Delegated Event Runtime Contract
 
@@ -870,23 +897,34 @@ Only the first matching delegated handler runs for that event dispatch.
 
 ### Update timing for sync and async handlers
 
-- After the matching handler returns, Valyrian runs `update()` immediately if `event.defaultPrevented` is still `false`.
+- After the matching handler returns, Valyrian runs `update()` immediately unless `preventUpdate()` marked that event as update-prevented.
 - If the handler returned a thenable, Valyrian schedules another `update()` when that promise settles, both on resolve and reject.
 - This means async handlers have up to two automatic render points: one after the synchronous phase, and one after promise settlement.
 
 Operationally:
 
 - Synchronous mutations inside the handler are reflected by the immediate update.
-- Mutations that happen after an `await` are reflected by the promise-settlement update, as long as `preventDefault()` was not activated before that second render point.
+- Mutations that happen after an `await` are reflected by the promise-settlement update, as long as `preventUpdate()` did not mark that event first.
 
-### `preventDefault()` and render control
+### `preventUpdate()`
 
-`preventDefault()` does not stop the handler itself. It changes whether Valyrian performs automatic updates for that event.
+`preventUpdate()` only controls Valyrian's automatic rerender points for the active delegated event.
 
-- If `event.preventDefault()` is active before the immediate post-handler check, the immediate automatic `update()` is skipped.
-- If the handler returned a promise and `event.preventDefault()` is active by the time that promise settles, the final automatic `update()` is skipped.
-- If `preventDefault()` is called only after an `await`, the first automatic update may already have happened, but the promise-settlement update is still skipped.
-- Once you opt out of an automatic render point with `preventDefault()`, you are responsible for calling `update()` manually for each UI transition you want to show.
+- `preventUpdate()` is event-scoped.
+- `preventUpdate()` is a no-op when there is no active delegated event.
+- If you call it during the synchronous phase of a delegated handler, Valyrian skips both the immediate update and the later promise-settlement update for that same event.
+- Once you opt out of the automatic render path with `preventUpdate()`, you are responsible for calling `update()` manually for each UI transition you want to show.
+
+Practical consequence:
+
+- Use `preventUpdate()` when the default render timing is not the timing you want the user to see.
+- Keep the default automatic render path when the built-in sync and promise-settlement updates already match your UI flow.
+
+Pulse-store exception:
+
+- When a `createPulseStore` pulse runs inside an active delegated event, the pulse runtime can take over render timing before the normal delegated-event auto-update path runs.
+- In the current implementation, it does that by calling `preventUpdate()` and `current.event.stopImmediatePropagation()` before executing the pulse body.
+- In that situation, rely on pulse notifications, debounced store delivery, and `this.$flush()` for timing instead of the default delegated-event auto-render sequence.
 
 ### Operational Notes
 
@@ -947,7 +985,7 @@ const Clock = () => {
 
 Debounces rendering. Default timeout is `42ms`.
 
-If called from an active event context, it prevents default on that event before scheduling update.
+If called from an active event context, it calls `preventUpdate()` for that event before scheduling the debounced update.
 
 ```tsx
 import { debouncedUpdate } from "valyrian.js";
@@ -1316,7 +1354,7 @@ ____________________________________________
 
 This chapter is a hub for networked and async modules used in SPA flows.
 
-These modules layer on top of the base runtime. For the exact delegated event semantics that govern automatic rerenders, async handler timing, and `event.preventDefault()` behavior, see [./3.1-runtime-core.md](./3.1-runtime-core.md).
+These modules layer on top of the base runtime. For the exact delegated event semantics that govern automatic rerenders, async handler timing, and `preventUpdate()` behavior, see [./3.1-runtime-core.md](./3.1-runtime-core.md).
 
 ## Choose the Right Async Tool
 
@@ -1329,7 +1367,12 @@ These modules layer on top of the base runtime. For the exact delegated event se
 | Connectivity-aware UI or network listeners | [./4.2.5-network.md](./4.2.5-network.md) | Tracks online/offline state and connection quality signals. |
 | Offline-capable mutation queue | [./4.2.6-offline.md](./4.2.6-offline.md) | Persists operations and retries them when the network returns. |
 
-Choosing an async module is a separate decision from the base delegated event rerender contract. Pick the module by data-flow need, then use [./3.1-runtime-core.md](./3.1-runtime-core.md) for the exact rules behind automatic updates, async handler timing, and `event.preventDefault()`.
+Choosing an async module is a separate decision from the base delegated event rerender contract. Pick the module by data-flow need, then use [./3.1-runtime-core.md](./3.1-runtime-core.md) for the exact rules behind automatic updates, async handler timing, and `preventUpdate()` for manual render control.
+
+## Async event semantics to keep in mind
+
+- Use `preventUpdate()` only when you intentionally want to suppress Valyrian's automatic rerenders for that delegated event.
+- If you do not call `preventUpdate()`, the delegated-event runtime keeps its normal automatic render timing.
 
 Use these pages in order so each layer builds on the previous one.
 
@@ -2244,7 +2287,7 @@ When you read a pulse or a pulse store state property:
 
 That is why components re-render only when they actually read the pulse, and why effects re-run only after they touch a pulse during execution.
 
-For DOM subscriptions, the runtime records the vnode DOM node and calls `updateVnode(...)` for that subtree when the subscriber fires. The subscription is removed automatically once that DOM node is detached.
+For DOM subscriptions, the runtime records the vnode DOM node and calls `updateVnode(...)` for that subtree when the subscriber fires. If that DOM node has already been detached, the subscription is removed on the next notification pass that reaches it; cleanup is not immediate at detach time.
 
 ### Writes and notification timing
 
@@ -2331,9 +2374,9 @@ Behavior:
 
 - the effect runs immediately once;
 - any pulse or pulse-store state read during that run subscribes the effect;
-- later notifications re-run the same effect function.
-
-Warning: `createEffect()` does return a function, but the current implementation does not remove pulse subscriptions from the pulse or store that captured the effect. Outside vnode-specific usage it returns a no-op disposer, and even in vnode context it only removes an internal wrapper from a local set. Treat it as a limited disposer, not as a full unsubscribe contract.
+- later notifications re-run the same effect function;
+- each re-run replaces the previous dependency set with only the pulses or pulse-store reads used by the latest execution;
+- the returned disposer unsubscribes the effect from its current pulse/store dependencies, so later writes no longer re-run it.
 
 If you need teardown tied to component lifecycle, prefer the runtime lifecycle helpers documented in [./3.1-runtime-core.md](./3.1-runtime-core.md).
 
@@ -2402,7 +2445,7 @@ Use it only when you explicitly want direct mutation semantics. If you want the 
 
 Pulse stores participate directly in Valyrian's delegated event runtime.
 
-When a pulse store method runs during an active delegated event, the implementation calls `current.event.preventDefault()` and `current.event.stopImmediatePropagation()` before executing the pulse body. In practice, that means the pulse opts out of the runtime's automatic post-handler renders and lets the pulse/store subscription system control when UI updates appear.
+When a pulse store method runs during an active delegated event, the implementation calls `preventUpdate()` and `current.event.stopImmediatePropagation()` before executing the pulse body. In practice, that means the pulse opts out of the runtime's automatic post-handler renders and lets the pulse/store subscription system control when UI updates appear.
 
 Operationally:
 
@@ -2414,7 +2457,12 @@ This matters when mixing pulses with event handlers:
 
 - if you call a store pulse from a delegated handler, do not expect the runtime's normal automatic rerender timing described in [./3.1-runtime-core.md](./3.1-runtime-core.md) to stay in charge;
 - if you need exact control over what the user sees during an async interaction, decide whether the timing should come from pulse notifications, `this.$flush()`, or an explicit runtime `update()` path;
-- if you combine `preventDefault()`, async handlers, and pulse stores, treat render timing as an explicit design choice, not an implementation detail.
+- if you combine async handlers, `preventUpdate()`, and pulse stores, treat render timing as an explicit design choice, not an implementation detail.
+
+Important timing note:
+
+- `preventUpdate()` is the pulse/runtime hook that suppresses Valyrian's automatic rerender path for the active delegated event.
+- Pulse stores use that render-suppression hook so pulse notifications, debounced delivery, and `this.$flush()` stay in charge of UI timing.
 
 Quick checklist:
 
@@ -5306,38 +5354,13 @@ The important boundary is that these runtime primitives belong in this repositor
 
 
 ____________________________________________
-# Source: docs/11-roadmap-and-contribution.md
+# Source: docs/11-contribution.md
 
-# 11. Roadmap and Contribution
+# 11. Contribution
 
-This chapter keeps contribution expectations explicit and predictable for a web-first repository centered on one runtime model across browser and server.
+This chapter keeps contribution expectations explicit and predictable.
 
-## 11.1. Documentation Roadmap
-
-Short-term priorities:
-
-1. Keep code examples aligned with tested behavior.
-2. Keep cross-links and chapter structure stable.
-3. Expand recipe coverage for common deployment setups.
-
-Mid-term priorities:
-
-1. Add migration guides for major versions.
-2. Add troubleshooting pages for common integration pitfalls.
-3. Add deeper SSR and PWA deployment guides.
-
-## 11.1.1. Repo Direction and Boundaries
-
-This repository positions Valyrian.js as an isomorphic runtime framework for web apps.
-
-Contribution decisions should preserve these boundaries:
-
-1. Keep core direction focused on browser/server continuity, SSR, hydration, request isolation, and related web runtime behavior.
-2. Keep documentation category language consistent with that positioning across README and `docs/`.
-3. Do not reframe the project as a host-agnostic core or a generic runtime toolkit.
-4. Treat terminal UIs, native targets, and meta-framework generators as downstream or external repos unless the project direction explicitly changes.
-
-## 11.2. Contribution Workflow
+## 11.1. Contribution Workflow
 
 If you change behavior in `lib/`, update both docs and tests.
 
@@ -5346,20 +5369,19 @@ If you change runtime behavior that affects browser/server continuity, update th
 Recommended order:
 
 1. Update or add tests in `test/`.
-2. Update docs in `docs/` with matching examples.
+2. Implement the change in `lib/`.
 3. Run checks locally.
+4. Update docs in `docs/`.
 
-## 11.3. Documentation Quality Rules
+## 11.2. Documentation Quality Rules
 
 - Avoid claims that are not backed by code or tests.
 - Keep one normative source per behavior contract; recipe/comparison pages should link back instead of redefining the same semantics.
 - Prefer short, runnable examples.
 - Clearly mark planned features as planned.
 - Keep terminology consistent across pages.
-- Keep `isomorphic runtime framework`, `browser/server`, `SSR`, and request-isolation wording aligned with the repo's documented positioning.
-- Do not introduce docs language that recenters the repo around non-web hosts or downstream tooling categories.
 
-## 11.4. Useful Commands
+## 11.3. Useful Commands
 
 These commands are for framework development in this repository.
 For app usage, follow [./2-getting-started.md](./2-getting-started.md).

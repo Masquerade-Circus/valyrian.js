@@ -11,6 +11,7 @@ import {
   isNodeJs,
   isVnodeComponent,
   mount,
+  preventUpdate,
   setAttribute,
   v
 } from "valyrian.js";
@@ -420,7 +421,12 @@ export class Router {
         query: nextQuery,
         params
       };
-
+      const previousPublicState = {
+        url: this.url,
+        query: this.query,
+        path: this.path,
+        params: this.params
+      };
       const routeChanged = hasRouteChanged(nextRoute, this.currentRoute);
 
       if (routeChanged) {
@@ -493,6 +499,14 @@ export class Router {
         }
 
         return mountedResult;
+      } catch (error) {
+        if (!routeTransitionCompleted) {
+          this.url = previousPublicState.url;
+          this.query = previousPublicState.query;
+          this.path = previousPublicState.path;
+          this.params = previousPublicState.params;
+        }
+        throw error;
       } finally {
         if (routeChanged && !routeTransitionCompleted) {
           this.rollbackPendingRouteCallbacksCollection();
@@ -508,7 +522,8 @@ export class Router {
       }
 
       if (isString(url) && url.length > 0) {
-        this.go(url);
+        preventUpdate();
+        void this.go(url).catch(() => undefined);
       }
       e.preventDefault();
     };

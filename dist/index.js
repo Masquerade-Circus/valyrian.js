@@ -37,6 +37,7 @@ __export(index_exports, {
   onCreate: () => onCreate,
   onRemove: () => onRemove,
   onUpdate: () => onUpdate,
+  preventUpdate: () => preventUpdate,
   reservedProps: () => reservedProps,
   setAttribute: () => setAttribute,
   setPropNameReserved: () => setPropNameReserved,
@@ -454,10 +455,21 @@ function setPropNameReserved(name) {
   reservedProps.add(name);
 }
 var eventListenerNames = /* @__PURE__ */ new Set();
+var preventedUpdates = /* @__PURE__ */ new WeakMap();
+function isUpdatePrevented(event) {
+  return preventedUpdates.get(event) === true;
+}
+function preventUpdate() {
+  if (!current.event) {
+    return;
+  }
+  preventedUpdates.set(current.event, true);
+}
 function isThenable(value) {
   return value !== null && (typeof value === "object" || typeof value === "function") && typeof Reflect.get(value, "then") === "function";
 }
 function eventListener(e) {
+  const previousEvent = current.event;
   current.event = e;
   let dom = e.target;
   const name = `on${e.type}`;
@@ -468,30 +480,23 @@ function eventListener(e) {
       try {
         result = oldVnode.props[name](e, oldVnode);
       } finally {
-        current.event = null;
+        current.event = previousEvent;
       }
-      if (!e.defaultPrevented) {
+      if (!isUpdatePrevented(e)) {
         update();
       }
       if (isThenable(result)) {
-        void Promise.resolve(result).then(
-          () => {
-            if (!e.defaultPrevented) {
-              update();
-            }
-          },
-          () => {
-            if (!e.defaultPrevented) {
-              update();
-            }
+        Promise.resolve(result).finally(() => {
+          if (!isUpdatePrevented(e)) {
+            update();
           }
-        );
+        });
       }
       return;
     }
     dom = dom.parentNode;
   }
-  current.event = null;
+  current.event = previousEvent;
 }
 function sharedSetAttribute(name, value, newVnode) {
   const newVnodeDom = newVnode.dom;
@@ -774,9 +779,7 @@ function update() {
 var debouncedUpdateTimeout;
 var debouncedUpdateMethod = isNodeJs ? update : () => requestAnimationFrame(update);
 function debouncedUpdate(timeout = 42) {
-  if (current.event) {
-    current.event.preventDefault();
-  }
+  preventUpdate();
   clearTimeout(debouncedUpdateTimeout);
   debouncedUpdateTimeout = setTimeout(debouncedUpdateMethod, timeout);
 }

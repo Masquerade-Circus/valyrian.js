@@ -1,4 +1,4 @@
-import { directive, DomElement, setAttribute, VnodeWithDom } from "valyrian.js";
+import { current, directive, DomElement, setAttribute, VnodeWithDom } from "valyrian.js";
 import { createPulseStore } from "valyrian.js/pulses";
 import { hasLength, isString } from "valyrian.js/utils";
 import { SchemaShield, ValidationError, Validator } from "schema-shield";
@@ -104,6 +104,7 @@ export class FormStore<TState extends FormState> {
   private clean: FormTransformMap<TState>;
   private format: FormTransformMap<TState>;
   private pulseStore: FormPulseStore<TState>;
+  private metaState: Omit<FormInternalState<TState>, "values" | "isDirty">;
 
   static get schemaShield() {
     return formSchemaShield;
@@ -114,6 +115,12 @@ export class FormStore<TState extends FormState> {
     this.onSubmit = options.onSubmit || null;
     this.clean = options.clean || {};
     this.format = options.format || {};
+    this.metaState = {
+      validationErrors: {},
+      submitError: null,
+      success: false,
+      isInflight: false
+    };
 
     const getValidationErrors = (values: TState) => {
       const result = this.validator(values);
@@ -167,19 +174,19 @@ export class FormStore<TState extends FormState> {
   }
 
   get validationErrors() {
-    return this.pulseStore.state.validationErrors;
+    return this.metaState.validationErrors;
   }
 
   get submitError() {
-    return this.pulseStore.state.submitError;
+    return this.metaState.submitError;
   }
 
   get success() {
-    return this.pulseStore.state.success;
+    return this.metaState.success;
   }
 
   get isInflight() {
-    return this.pulseStore.state.isInflight;
+    return this.metaState.isInflight;
   }
 
   get isDirty() {
@@ -187,11 +194,41 @@ export class FormStore<TState extends FormState> {
   }
 
   get hasValidationErrors() {
-    return Object.keys(this.pulseStore.state.validationErrors || {}).length > 0;
+    return Object.keys(this.metaState.validationErrors || {}).length > 0;
   }
 
   get hasSubmitError() {
-    return this.pulseStore.state.submitError !== null;
+    return this.metaState.submitError !== null;
+  }
+
+  private isDelegatedSubmitEvent(event?: Event) {
+    return Boolean(current.event && (!event || current.event === event));
+  }
+
+  private setValidationErrors(validationErrors: Record<string, string>, event?: Event) {
+    this.metaState.validationErrors = validationErrors;
+
+    if (!this.isDelegatedSubmitEvent(event)) {
+      this.pulseStore.validate();
+    }
+
+    return Object.keys(validationErrors).length === 0;
+  }
+
+  private setInflight(inflight: boolean, event?: Event) {
+    this.metaState.isInflight = inflight;
+
+    if (!this.isDelegatedSubmitEvent(event)) {
+      this.pulseStore.setInflight(inflight);
+    }
+  }
+
+  private setSubmitError(error: unknown, event?: Event) {
+    this.metaState.submitError = error;
+
+    if (!this.isDelegatedSubmitEvent(event)) {
+      this.pulseStore.setSubmitError(error);
+    }
   }
 
   formatValue(name: string, value: unknown) {
@@ -201,20 +238,28 @@ export class FormStore<TState extends FormState> {
   setField(name: string, rawValue: unknown) {
     const cleanedValue = name in this.clean ? this.clean[name]!(rawValue, this.state) : rawValue;
     this.pulseStore.setField(name, cleanedValue);
+    this.metaState.success = false;
   }
 
-  setSuccess(success: boolean) {
-    this.pulseStore.setSuccess(success);
+  setSuccess(success: boolean, event?: Event) {
+    this.metaState.success = success;
+    if (!this.isDelegatedSubmitEvent(event)) {
+      this.pulseStore.setSuccess(success);
+    }
   }
 
   validate() {
-    return this.pulseStore.validate();
+    const result = this.validator(this.state);
+    return this.setValidationErrors(result.valid ? {} : mapValidationError(result.error));
   }
 
   async submit(event?: Event) {
     event?.preventDefault();
 
-    if (!this.validate()) {
+    const validationErrors = this.validator(this.state);
+    const isValid = this.setValidationErrors(validationErrors.valid ? {} : mapValidationError(validationErrors.error), event);
+
+    if (!isValid) {
       return false;
     }
 
@@ -222,26 +267,30 @@ export class FormStore<TState extends FormState> {
       return false;
     }
 
-    this.pulseStore.setInflight(true);
-    this.setSuccess(false);
-    this.pulseStore.setSubmitError(null);
+    this.setInflight(true, event);
+    this.setSuccess(false, event);
+    this.setSubmitError(null, event);
 
     try {
       if (this.onSubmit) {
         await this.onSubmit(this.state);
       }
-      this.setSuccess(true);
+      this.setSuccess(true, event);
       return true;
     } catch (error) {
-      this.pulseStore.setSubmitError(error);
+      this.setSubmitError(error, event);
       return false;
     } finally {
-      this.pulseStore.setInflight(false);
+      this.setInflight(false, event);
     }
   }
 
   reset() {
     this.pulseStore.reset();
+    this.metaState.validationErrors = {};
+    this.metaState.submitError = null;
+    this.metaState.success = false;
+    this.metaState.isInflight = false;
   }
 }
 
@@ -254,10 +303,7 @@ directive("form", (formStore: FormStore<FormState>, vnode: VnodeWithDom) => {
 
   const onSubmitHandler = async (event: Event) => {
     event.preventDefault();
-    const success = await formStore.submit(event);
-    if (!success) {
-      event.preventDefault();
-    }
+    await formStore.submit();
 
     if (userOnSubmit) {
       userOnSubmit(event);
@@ -284,7 +330,10 @@ directive("field", (formStore: FormStore<FormState>, vnode: VnodeWithDom) => {
     setAttribute("checked", Boolean(stateValue), vnode);
     method = "onchange";
   } else if (type === "radio") {
-    setAttribute("value", String(stateValue === String(dom.value || "")), vnode);
+    const radioValue = vnode.props.value ?? dom.value;
+    const normalizedStateValue = stateValue == null ? "" : stateValue;
+    const normalizedRadioValue = radioValue == null ? "" : radioValue;
+    setAttribute("checked", String(normalizedStateValue) === String(normalizedRadioValue), vnode);
     method = "onchange";
   } else if (tagName === "select" || tagName === "textarea" || tagName === "input") {
     setAttribute("value", formStore.formatValue(name, stateValue), vnode);

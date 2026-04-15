@@ -119,17 +119,17 @@ function resolvePath(root, path) {
   }
   if (path.startsWith("#/")) {
     const parts = path.split("/").slice(1);
-    let current = root;
+    let current2 = root;
     for (const part of parts) {
       const decodedUriPart = decodeURIComponent(part);
       const key = decodedUriPart.replace(/~1/g, "/").replace(/~0/g, "~");
-      if (current && typeof current === "object" && key in current) {
-        current = current[key];
+      if (current2 && typeof current2 === "object" && key in current2) {
+        current2 = current2[key];
       } else {
         return;
       }
     }
-    return current;
+    return current2;
   }
   if (!path.includes("#")) {
     if (root.definitions && root.definitions[path]) {
@@ -577,35 +577,35 @@ var Types = {
   float32: false,
   float64: false
 };
-function hasChanged(prev, current) {
-  if (Object.is(prev, current)) {
+function hasChanged(prev, current2) {
+  if (Object.is(prev, current2)) {
     return false;
   }
   if (Array.isArray(prev)) {
-    if (Array.isArray(current) === false) {
+    if (Array.isArray(current2) === false) {
       return true;
     }
-    if (prev.length !== current.length) {
+    if (prev.length !== current2.length) {
       return true;
     }
-    for (let i = 0; i < current.length; i++) {
-      if (hasChanged(prev[i], current[i])) {
+    for (let i = 0; i < current2.length; i++) {
+      if (hasChanged(prev[i], current2[i])) {
         return true;
       }
     }
     return false;
   }
   if (typeof prev === "object" && prev !== null) {
-    if (typeof current !== "object" || current === null) {
+    if (typeof current2 !== "object" || current2 === null) {
       return true;
     }
-    for (const key in current) {
-      if (hasChanged(prev[key], current[key])) {
+    for (const key in current2) {
+      if (hasChanged(prev[key], current2[key])) {
         return true;
       }
     }
     for (const key in prev) {
-      if (key in current) {
+      if (key in current2) {
         continue;
       }
       if (hasChanged(prev[key], void 0)) {
@@ -2113,16 +2113,16 @@ var SchemaShield = class {
     return out;
   }
   flattenSingleWrapperOneOf(branches) {
-    let current = branches;
-    while (current.length === 1) {
-      const item = current[0];
+    let current2 = branches;
+    while (current2.length === 1) {
+      const item = current2[0];
       if (this.isPlainObject(item) && Object.keys(item).length === 1 && Array.isArray(item.oneOf)) {
-        current = item.oneOf;
+        current2 = item.oneOf;
         continue;
       }
       break;
     }
-    return current;
+    return current2;
   }
   normalizeSchemaForCompile(schema) {
     let normalized = schema;
@@ -2631,22 +2631,22 @@ function getFieldNameFromError(error) {
   return null;
 }
 function getFieldNameFromChain(error) {
-  let current = error;
-  while (current) {
-    const fieldName = getFieldNameFromError(current);
+  let current2 = error;
+  while (current2) {
+    const fieldName = getFieldNameFromError(current2);
     if (fieldName) {
       return fieldName;
     }
-    current = current.cause;
+    current2 = current2.cause;
   }
   return null;
 }
 function getRootError(error) {
-  let current = error;
-  while (current.cause) {
-    current = current.cause;
+  let current2 = error;
+  while (current2.cause) {
+    current2 = current2.cause;
   }
-  return current;
+  return current2;
 }
 var formSchemaShield = new SchemaShield({
   failFast: false,
@@ -2673,6 +2673,7 @@ var FormStore = class {
   clean;
   format;
   pulseStore;
+  metaState;
   static get schemaShield() {
     return formSchemaShield;
   }
@@ -2681,6 +2682,12 @@ var FormStore = class {
     this.onSubmit = options.onSubmit || null;
     this.clean = options.clean || {};
     this.format = options.format || {};
+    this.metaState = {
+      validationErrors: {},
+      submitError: null,
+      success: false,
+      isInflight: false
+    };
     const getValidationErrors = (values) => {
       const result = this.validator(values);
       return result.valid ? {} : mapValidationError(result.error);
@@ -2729,25 +2736,47 @@ var FormStore = class {
     return this.pulseStore.state.values;
   }
   get validationErrors() {
-    return this.pulseStore.state.validationErrors;
+    return this.metaState.validationErrors;
   }
   get submitError() {
-    return this.pulseStore.state.submitError;
+    return this.metaState.submitError;
   }
   get success() {
-    return this.pulseStore.state.success;
+    return this.metaState.success;
   }
   get isInflight() {
-    return this.pulseStore.state.isInflight;
+    return this.metaState.isInflight;
   }
   get isDirty() {
     return this.pulseStore.state.isDirty;
   }
   get hasValidationErrors() {
-    return Object.keys(this.pulseStore.state.validationErrors || {}).length > 0;
+    return Object.keys(this.metaState.validationErrors || {}).length > 0;
   }
   get hasSubmitError() {
-    return this.pulseStore.state.submitError !== null;
+    return this.metaState.submitError !== null;
+  }
+  isDelegatedSubmitEvent(event) {
+    return Boolean(import_valyrian.current.event && (!event || import_valyrian.current.event === event));
+  }
+  setValidationErrors(validationErrors, event) {
+    this.metaState.validationErrors = validationErrors;
+    if (!this.isDelegatedSubmitEvent(event)) {
+      this.pulseStore.validate();
+    }
+    return Object.keys(validationErrors).length === 0;
+  }
+  setInflight(inflight, event) {
+    this.metaState.isInflight = inflight;
+    if (!this.isDelegatedSubmitEvent(event)) {
+      this.pulseStore.setInflight(inflight);
+    }
+  }
+  setSubmitError(error, event) {
+    this.metaState.submitError = error;
+    if (!this.isDelegatedSubmitEvent(event)) {
+      this.pulseStore.setSubmitError(error);
+    }
   }
   formatValue(name, value) {
     return name in this.format ? this.format[name](value, this.state) : value;
@@ -2755,39 +2784,50 @@ var FormStore = class {
   setField(name, rawValue) {
     const cleanedValue = name in this.clean ? this.clean[name](rawValue, this.state) : rawValue;
     this.pulseStore.setField(name, cleanedValue);
+    this.metaState.success = false;
   }
-  setSuccess(success) {
-    this.pulseStore.setSuccess(success);
+  setSuccess(success, event) {
+    this.metaState.success = success;
+    if (!this.isDelegatedSubmitEvent(event)) {
+      this.pulseStore.setSuccess(success);
+    }
   }
   validate() {
-    return this.pulseStore.validate();
+    const result = this.validator(this.state);
+    return this.setValidationErrors(result.valid ? {} : mapValidationError(result.error));
   }
   async submit(event) {
     event?.preventDefault();
-    if (!this.validate()) {
+    const validationErrors = this.validator(this.state);
+    const isValid = this.setValidationErrors(validationErrors.valid ? {} : mapValidationError(validationErrors.error), event);
+    if (!isValid) {
       return false;
     }
     if (this.isInflight) {
       return false;
     }
-    this.pulseStore.setInflight(true);
-    this.setSuccess(false);
-    this.pulseStore.setSubmitError(null);
+    this.setInflight(true, event);
+    this.setSuccess(false, event);
+    this.setSubmitError(null, event);
     try {
       if (this.onSubmit) {
         await this.onSubmit(this.state);
       }
-      this.setSuccess(true);
+      this.setSuccess(true, event);
       return true;
     } catch (error) {
-      this.pulseStore.setSubmitError(error);
+      this.setSubmitError(error, event);
       return false;
     } finally {
-      this.pulseStore.setInflight(false);
+      this.setInflight(false, event);
     }
   }
   reset() {
     this.pulseStore.reset();
+    this.metaState.validationErrors = {};
+    this.metaState.submitError = null;
+    this.metaState.success = false;
+    this.metaState.isInflight = false;
   }
 };
 (0, import_valyrian.directive)("form", (formStore, vnode) => {
@@ -2797,10 +2837,7 @@ var FormStore = class {
   const userOnSubmit = vnode.props.onsubmit;
   const onSubmitHandler = async (event) => {
     event.preventDefault();
-    const success = await formStore.submit(event);
-    if (!success) {
-      event.preventDefault();
-    }
+    await formStore.submit();
     if (userOnSubmit) {
       userOnSubmit(event);
     }
@@ -2821,7 +2858,10 @@ var FormStore = class {
     (0, import_valyrian.setAttribute)("checked", Boolean(stateValue), vnode);
     method = "onchange";
   } else if (type === "radio") {
-    (0, import_valyrian.setAttribute)("value", String(stateValue === String(dom.value || "")), vnode);
+    const radioValue = vnode.props.value ?? dom.value;
+    const normalizedStateValue = stateValue == null ? "" : stateValue;
+    const normalizedRadioValue = radioValue == null ? "" : radioValue;
+    (0, import_valyrian.setAttribute)("checked", String(normalizedStateValue) === String(normalizedRadioValue), vnode);
     method = "onchange";
   } else if (tagName === "select" || tagName === "textarea" || tagName === "input") {
     (0, import_valyrian.setAttribute)("value", formStore.formatValue(name, stateValue), vnode);

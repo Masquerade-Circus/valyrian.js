@@ -1,11 +1,114 @@
 /* eslint-disable max-lines-per-function */
 import "valyrian.js/node";
 
-import { mount, trust, update, v, unmount, Properties, Children, VnodeWithDom, Component } from "valyrian.js";
+import * as Valyrian from "valyrian.js";
+import { mount, trust, update, v, unmount, debouncedUpdate, Properties, Children, VnodeWithDom, Component } from "valyrian.js";
 
 import { expect, describe, test as it, beforeEach, afterEach } from "bun:test";
 
 describe("Mount and update", () => {
+  type DelegatedEventMock = {
+    type: string;
+    target: Element;
+    defaultPrevented: boolean;
+    preventDefault: () => void;
+  };
+
+  function createDeferred() {
+    let resolve!: () => void;
+    const promise = new Promise<void>((nextResolve) => {
+      resolve = nextResolve;
+    });
+
+    return { promise, resolve };
+  }
+
+  function expectPreventUpdateExport() {
+    expect(Reflect.has(Valyrian, "preventUpdate")).toEqual(true);
+
+    const preventUpdate = Reflect.get(Valyrian, "preventUpdate");
+    expect(typeof preventUpdate).toEqual("function");
+
+    return preventUpdate as () => void;
+  }
+
+  async function waitForPostHandlerUpdate(handlerDone: Promise<void>) {
+    await handlerDone;
+    await Promise.resolve();
+  }
+
+  function createDelegatedEvent(target: Element): DelegatedEventMock {
+    return {
+      type: "click",
+      target,
+      defaultPrevented: false,
+      preventDefault() {
+        this.defaultPrevented = true;
+      }
+    };
+  }
+
+  function mountDelegatedComponent(component: () => any) {
+    const listeners: Record<string, (event: Event) => void> = {};
+    const dom = document.createElement("div");
+    (dom as any).addEventListener = (type: string, callback: EventListenerOrEventListenerObject | null) => {
+      listeners[type] = callback as (event: Event) => void;
+    };
+    (dom as any).removeEventListener = () => {};
+
+    mount(dom, component);
+
+    return {
+      dom,
+      dispatchClick(event = createDelegatedEvent(dom.childNodes[0] as unknown as Element)) {
+        listeners.click(event as unknown as Event);
+
+        return event;
+      }
+    };
+  }
+
+  function withControlledTimeouts() {
+    const originalSetTimeout = globalThis.setTimeout;
+    const originalClearTimeout = globalThis.clearTimeout;
+    let nextId = 1;
+    const scheduled = new Map<number, TimerHandler>();
+
+    globalThis.setTimeout = ((handler: TimerHandler) => {
+      const id = nextId++;
+      scheduled.set(id, handler);
+      return id as unknown as Timer;
+    }) as typeof setTimeout;
+
+    globalThis.clearTimeout = ((timeoutId?: Timer) => {
+      if (typeof timeoutId === "number") {
+        scheduled.delete(timeoutId);
+      }
+    }) as typeof clearTimeout;
+
+    return {
+      flushNext() {
+        const nextEntry = scheduled.entries().next();
+        if (nextEntry.done) {
+          throw new Error("No controlled timeout scheduled");
+        }
+
+        const [id, handler] = nextEntry.value;
+        scheduled.delete(id);
+        if (typeof handler === "function") {
+          handler();
+          return;
+        }
+
+        throw new Error("String timeout handlers are not supported in this test");
+      },
+      restore() {
+        globalThis.setTimeout = originalSetTimeout;
+        globalThis.clearTimeout = originalClearTimeout;
+      }
+    };
+  }
+
   it("Mount and update with POJO component", () => {
     const Component = {
       world: "World",
@@ -150,15 +253,8 @@ describe("Mount and update", () => {
     });
   });
 
-  it("should auto-update delegated events unless preventDefault is called", () => {
+  it("should auto-update delegated events even when preventDefault is called", () => {
     unmount();
-
-    const listeners: Record<string, (event: Event) => void> = {};
-    const dom = document.createElement("div");
-    (dom as any).addEventListener = (type: string, callback: EventListenerOrEventListenerObject | null) => {
-      listeners[type] = callback as (event: Event) => void;
-    };
-    (dom as any).removeEventListener = () => {};
 
     const state = { count: 0 };
     const Component = () => (
@@ -174,181 +270,210 @@ describe("Mount and update", () => {
       </button>
     );
 
-    mount(dom, Component);
+    const { dom, dispatchClick } = mountDelegatedComponent(Component);
 
-    const triggerClick = () => {
-      const button = dom.childNodes[0] as unknown as Element;
-      const event: {
-        type: string;
-        target: Element;
-        defaultPrevented: boolean;
-        preventDefault?: () => void;
-      } = {
-        type: "click",
-        target: button,
-        defaultPrevented: false
-      };
-      event.preventDefault = () => {
-        event.defaultPrevented = true;
-      };
+    dispatchClick();
+    expect(dom.innerHTML).toEqual("<button>1</button>");
 
-      listeners.click(event as unknown as Event);
+    const secondEvent = dispatchClick();
+    expect(secondEvent.defaultPrevented).toEqual(true);
+    expect(dom.innerHTML).toEqual("<button>2</button>");
+  });
+
+  it("should expose preventUpdate as a public runtime api", () => {
+    expectPreventUpdateExport();
+  });
+
+  it("should let preventUpdate suppress sync delegated auto-updates until a manual update", () => {
+    unmount();
+
+    const preventUpdate = expectPreventUpdateExport();
+
+    const state = { count: 0 };
+    const Component = () => (
+      <button
+        onclick={() => {
+          state.count += 1;
+          preventUpdate();
+        }}
+      >
+        {state.count}
+      </button>
+    );
+
+    const { dom, dispatchClick } = mountDelegatedComponent(Component);
+    dispatchClick();
+    expect(dom.innerHTML).toEqual("<button>0</button>");
+    expect(update()).toEqual("<button>1</button>");
+  });
+
+  it("should keep the outer delegated event active for preventUpdate after a nested delegated dispatch", () => {
+    unmount();
+
+    const preventUpdate = expectPreventUpdateExport();
+    const state = { outer: 0, inner: 0 };
+    let triggerInnerClick = () => {
+      throw new Error("Inner click dispatcher not initialized");
     };
 
-    triggerClick();
-    expect(dom.innerHTML).toEqual("<button>1</button>");
+    const Component = () => (
+      <div>
+        <button
+          onclick={() => {
+            triggerInnerClick();
+            state.outer += 1;
+            preventUpdate();
+          }}
+        >
+          outer:{state.outer}
+        </button>
+        <button
+          onclick={() => {
+            state.inner += 1;
+          }}
+        >
+          inner:{state.inner}
+        </button>
+      </div>
+    );
 
-    triggerClick();
-    expect(dom.innerHTML).toEqual("<button>1</button>");
-    expect(update()).toEqual("<button>2</button>");
+    const { dom, dispatchClick } = mountDelegatedComponent(Component);
+    triggerInnerClick = () => dispatchClick(createDelegatedEvent(dom.childNodes[0].childNodes[1] as unknown as Element));
+
+    dispatchClick(createDelegatedEvent(dom.childNodes[0].childNodes[0] as unknown as Element));
+    expect(dom.innerHTML).toEqual("<div><button>outer:0</button><button>inner:1</button></div>");
+    expect(update()).toEqual("<div><button>outer:1</button><button>inner:1</button></div>");
   });
 
   it("should auto-update delegated events after async state changes resolve", async () => {
     unmount();
-
-    const listeners: Record<string, (event: Event) => void> = {};
-    const dom = document.createElement("div");
-    (dom as any).addEventListener = (type: string, callback: EventListenerOrEventListenerObject | null) => {
-      listeners[type] = callback as (event: Event) => void;
-    };
-    (dom as any).removeEventListener = () => {};
-
-    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     const state = { phase: "idle" };
+    const settled = createDeferred();
+    const handlerDone = createDeferred();
 
     const Component = () => (
       <button
         onclick={async () => {
           state.phase = "loading";
-          await wait(5);
+          await settled.promise;
           state.phase = "done";
+          handlerDone.resolve();
         }}
       >
         {state.phase}
       </button>
     );
 
-    mount(dom, Component);
+    const { dom, dispatchClick } = mountDelegatedComponent(Component);
 
-    const event: {
-      type: string;
-      target: Element;
-      defaultPrevented: boolean;
-      preventDefault?: () => void;
-    } = {
-      type: "click",
-      target: dom.childNodes[0] as unknown as Element,
-      defaultPrevented: false
-    };
-    event.preventDefault = () => {
-      event.defaultPrevented = true;
-    };
-
-    listeners.click(event as unknown as Event);
+    dispatchClick();
     expect(dom.innerHTML).toEqual("<button>loading</button>");
 
-    await wait(15);
+    settled.resolve();
+    await waitForPostHandlerUpdate(handlerDone.promise);
     expect(dom.innerHTML).toEqual("<button>done</button>");
   });
 
-  it("should skip both automatic async updates when preventDefault is called in delegated events", async () => {
+  it("should keep immediate and settled async auto-updates when preventDefault is called in delegated events", async () => {
     unmount();
-
-    const listeners: Record<string, (event: Event) => void> = {};
-    const dom = document.createElement("div");
-    (dom as any).addEventListener = (type: string, callback: EventListenerOrEventListenerObject | null) => {
-      listeners[type] = callback as (event: Event) => void;
-    };
-    (dom as any).removeEventListener = () => {};
-
-    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     const state = { phase: "idle" };
+    const settled = createDeferred();
+    const handlerDone = createDeferred();
 
     const Component = () => (
       <button
         onclick={async (event: Event) => {
           event.preventDefault();
           state.phase = "loading";
-          await wait(5);
+          await settled.promise;
           state.phase = "done";
+          handlerDone.resolve();
         }}
       >
         {state.phase}
       </button>
     );
 
-    mount(dom, Component);
+    const { dom, dispatchClick } = mountDelegatedComponent(Component);
 
-    const event: {
-      type: string;
-      target: Element;
-      defaultPrevented: boolean;
-      preventDefault?: () => void;
-    } = {
-      type: "click",
-      target: dom.childNodes[0] as unknown as Element,
-      defaultPrevented: false
-    };
-    event.preventDefault = () => {
-      event.defaultPrevented = true;
-    };
+    const event = dispatchClick();
+    expect(event.defaultPrevented).toEqual(true);
+    expect(dom.innerHTML).toEqual("<button>loading</button>");
 
-    listeners.click(event as unknown as Event);
+    settled.resolve();
+    await waitForPostHandlerUpdate(handlerDone.promise);
+    expect(dom.innerHTML).toEqual("<button>done</button>");
+  });
+
+  it("should let preventUpdate skip both automatic async updates in delegated events", async () => {
+    unmount();
+
+    const preventUpdate = expectPreventUpdateExport();
+    const state = { phase: "idle" };
+    const settled = createDeferred();
+    const handlerDone = createDeferred();
+
+    const Component = () => (
+      <button
+        onclick={async () => {
+          preventUpdate();
+          state.phase = "loading";
+          await settled.promise;
+          state.phase = "done";
+          handlerDone.resolve();
+        }}
+      >
+        {state.phase}
+      </button>
+    );
+
+    const { dom, dispatchClick } = mountDelegatedComponent(Component);
+    dispatchClick();
     expect(dom.innerHTML).toEqual("<button>idle</button>");
 
-    await wait(15);
+    settled.resolve();
+    await waitForPostHandlerUpdate(handlerDone.promise);
     expect(dom.innerHTML).toEqual("<button>idle</button>");
     expect(update()).toEqual("<button>done</button>");
   });
 
-  it("should keep the first async auto-update if preventDefault is called after await in delegated events", async () => {
+  it("should let debouncedUpdate suppress the current delegated event auto-updates", async () => {
     unmount();
-
-    const listeners: Record<string, (event: Event) => void> = {};
-    const dom = document.createElement("div");
-    (dom as any).addEventListener = (type: string, callback: EventListenerOrEventListenerObject | null) => {
-      listeners[type] = callback as (event: Event) => void;
-    };
-    (dom as any).removeEventListener = () => {};
-
-    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
     const state = { phase: "idle" };
+    const settled = createDeferred();
+    const handlerDone = createDeferred();
+    const controlledTimeouts = withControlledTimeouts();
 
-    const Component = () => (
-      <button
-        onclick={async (event: Event) => {
-          state.phase = "loading";
-          await wait(5);
-          event.preventDefault();
-          state.phase = "done";
-        }}
-      >
-        {state.phase}
-      </button>
-    );
+    try {
+      const Component = () => (
+        <button
+          onclick={async () => {
+            state.phase = "loading";
+            debouncedUpdate(5);
+            await settled.promise;
+            state.phase = "done";
+            handlerDone.resolve();
+          }}
+        >
+          {state.phase}
+        </button>
+      );
 
-    mount(dom, Component);
+      const { dom, dispatchClick } = mountDelegatedComponent(Component);
 
-    const event: {
-      type: string;
-      target: Element;
-      defaultPrevented: boolean;
-      preventDefault?: () => void;
-    } = {
-      type: "click",
-      target: dom.childNodes[0] as unknown as Element,
-      defaultPrevented: false
-    };
-    event.preventDefault = () => {
-      event.defaultPrevented = true;
-    };
+      dispatchClick();
+      expect(dom.innerHTML).toEqual("<button>idle</button>");
 
-    listeners.click(event as unknown as Event);
-    expect(dom.innerHTML).toEqual("<button>loading</button>");
+      controlledTimeouts.flushNext();
+      expect(dom.innerHTML).toEqual("<button>loading</button>");
 
-    await wait(15);
-    expect(dom.innerHTML).toEqual("<button>loading</button>");
-    expect(update()).toEqual("<button>done</button>");
+      settled.resolve();
+      await waitForPostHandlerUpdate(handlerDone.promise);
+      expect(dom.innerHTML).toEqual("<button>loading</button>");
+      expect(update()).toEqual("<button>done</button>");
+    } finally {
+      controlledTimeouts.restore();
+    }
   });
 
   it("Antipattern: Mount and update with functional stateless component", () => {

@@ -56,7 +56,7 @@ If you are new to Valyrian.js, follow the recommended path first. It introduces 
    * [9.7. Counter Variants by Component Shape](./9.7-counter-variants-by-component-shape.md)
    * [9.8. Reactive Counter Variants](./9.8-reactive-counter-variants.md)
 10. [Meta-Framework and CLI (Downstream / Planned)](./10-meta-framework-cli.md)
-11. [Roadmap and Contribution](./11-roadmap-and-contribution.md)
+11. [Contribution](./11-contribution.md)
 
 ## Notes
 

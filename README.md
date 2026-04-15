@@ -157,7 +157,7 @@ For app usage, keep following [docs/2-getting-started.md](docs/2-getting-started
 
 * Recipes and integrations: [docs/9-recipes-and-integrations.md](docs/9-recipes-and-integrations.md)
 * Meta-framework CLI (downstream workflow): [docs/10-meta-framework-cli.md](docs/10-meta-framework-cli.md)
-* Roadmap and contribution model: [docs/11-roadmap-and-contribution.md](docs/11-roadmap-and-contribution.md)
+* Contribution guide: [docs/11-contribution.md](docs/11-contribution.md)
 
 ## Contributing
 
