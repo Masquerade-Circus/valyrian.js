@@ -9,6 +9,9 @@ declare global {
 }
 interface DefaultRecord extends Record<string | number | symbol, any> {
 }
+type LifecycleCleanup = () => void;
+type OnCreateCallback = () => void | LifecycleCleanup | Promise<void>;
+type OnUpdateCallback = () => void | LifecycleCleanup;
 export interface Properties extends DefaultRecord {
     key?: string | number;
 }
@@ -67,8 +70,8 @@ export declare const current: {
     event: Event | null;
 };
 export declare const reservedProps: Set<string>;
-export declare const onCreate: (callback: Function) => void;
-export declare const onUpdate: (callback: Function) => void;
+export declare const onCreate: (callback: OnCreateCallback) => void;
+export declare const onUpdate: (callback: OnUpdateCallback) => void;
 export declare const onCleanup: (callback: Function) => void;
 export declare const onRemove: (callback: Function) => void;
 export declare const directives: Record<string, Directive>;

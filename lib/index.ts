@@ -12,6 +12,10 @@ declare global {
 
 interface DefaultRecord extends Record<string | number | symbol, any> {}
 
+type LifecycleCleanup = () => void;
+type OnCreateCallback = () => void | LifecycleCleanup | Promise<void>;
+type OnUpdateCallback = () => void | LifecycleCleanup;
+
 export interface Properties extends DefaultRecord {
   key?: string | number;
 }
@@ -165,6 +169,15 @@ function markSubtreeLifecycle(dom: DomElement) {
   }
 }
 
+function registerCleanup(cleanup: Function, vnode: VnodeWithDom) {
+  vnode[SetType.onCleanup] = vnode[SetType.onCleanup] || new Set();
+  vnode[SetType.onCleanup].add(cleanup);
+
+  if (vnode.dom) {
+    markSubtreeLifecycle(vnode.dom);
+  }
+}
+
 function addCallbackToSet(callback: Function, setType: SetType, vnode: VnodeWithDom) {
   vnode[setType] = vnode[setType] || new Set();
 
@@ -175,12 +188,30 @@ function addCallbackToSet(callback: Function, setType: SetType, vnode: VnodeWith
   vnode[setType].add(() => {
     const cleanup = callback();
     if (typeof cleanup === "function") {
-      vnode[SetType.onCleanup] = vnode[SetType.onCleanup] || new Set();
-      vnode[SetType.onCleanup].add(cleanup);
+      registerCleanup(cleanup, vnode);
+    }
+  });
+}
 
-      if (vnode.dom) {
-        markSubtreeLifecycle(vnode.dom);
-      }
+function addAsyncOnCreateCallbackToSet(callback: Function, vnode: VnodeWithDom) {
+  vnode[SetType.onCreate] = vnode[SetType.onCreate] || new Set();
+
+  vnode[SetType.onCreate].add(() => {
+    const cleanup = callback();
+    if (typeof cleanup === "function") {
+      registerCleanup(cleanup, vnode);
+      return;
+    }
+
+    if (isThenable(cleanup)) {
+      Promise.resolve(cleanup)
+        .then(() => undefined)
+        .catch((error) => {
+          console.error("Error in onCreate:", error);
+        })
+        .finally(() => {
+          debouncedUpdate();
+        });
     }
   });
 }
@@ -191,17 +222,17 @@ function validateIsCalledInsideComponent() {
   }
 }
 
-export const onCreate = (callback: Function) => {
+export const onCreate = (callback: OnCreateCallback) => {
   validateIsCalledInsideComponent();
   const parentVnode = current.vnode as VnodeWithDom;
   const component = current.component as ValyrianComponent;
   const hasComponentAsOldChild = parentVnode.oldChildComponents && parentVnode.oldChildComponents.has(component);
 
   if (!hasComponentAsOldChild) {
-    addCallbackToSet(callback, SetType.onCreate, parentVnode);
+    addAsyncOnCreateCallbackToSet(callback, parentVnode);
   }
 };
-export const onUpdate = (callback: Function) => {
+export const onUpdate = (callback: OnUpdateCallback) => {
   validateIsCalledInsideComponent();
   const parentVnode = current.vnode as VnodeWithDom;
   const component = current.component as ValyrianComponent;
@@ -959,7 +990,9 @@ const debouncedUpdateMethod = isNodeJs ? update : () => requestAnimationFrame(up
 export function debouncedUpdate(timeout = 42) {
   preventUpdate();
   clearTimeout(debouncedUpdateTimeout);
-  debouncedUpdateTimeout = setTimeout(debouncedUpdateMethod, timeout);
+  debouncedUpdateTimeout = setTimeout(() => {
+    debouncedUpdateMethod();
+  }, timeout);
 }
 
 function removeEventListeners() {

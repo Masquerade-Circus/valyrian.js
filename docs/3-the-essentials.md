@@ -75,12 +75,12 @@ Valyrian separates two independent decisions:
 
 These choices are combinable. Component shape does not force a single state model.
 
-| Component shape | Where state lives | Strengths | Tradeoffs |
-| --- | --- | --- | --- |
-| Function | Closure, module variables, or stores | Simple and flexible syntax | Can mix concerns if boundaries are not explicit |
-| POJO (`{ view() {} }`) | Object properties | State and methods grouped in one unit | If it uses `this`, mount the full object |
-| Class instance (`new X()`) | Instance/static fields | Reuses OO patterns and supports multiple instances | Can add ceremony for simple cases |
-| Props-only pure function | External state (container/store) | Deterministic render and easy testing | Needs a container to create state and handlers |
+| Component shape            | Where state lives                    | Strengths                                          | Tradeoffs                                       |
+| -------------------------- | ------------------------------------ | -------------------------------------------------- | ----------------------------------------------- |
+| Function                   | Closure, module variables, or stores | Simple and flexible syntax                         | Can mix concerns if boundaries are not explicit |
+| POJO (`{ view() {} }`)     | Object properties                    | State and methods grouped in one unit              | If it uses `this`, mount the full object        |
+| Class instance (`new X()`) | Instance/static fields               | Reuses OO patterns and supports multiple instances | Can add ceremony for simple cases               |
+| Props-only pure function   | External state (container/store)     | Deterministic render and easy testing              | Needs a container to create state and handlers  |
 
 Compact counter examples with the three main reactive models:
 
@@ -232,6 +232,8 @@ For synchronous user interactions, mutating plain objects in delegated event han
 
 For async delegated handlers, Valyrian runs one automatic render right after the synchronous part of the handler finishes and another when the returned promise settles.
 
+`onCreate` can return a promise, and Valyrian will rerender when that promise settles through `debouncedUpdate()`. Synchronous cleanup returned directly from `onCreate(() => cleanup)` is still supported, but return a cleanup after a promise is invalid and will be ignored.
+
 Practical rule:
 
 - If the handler returns a promise, state changes after `await` are included in a second automatic render when that promise settles.
@@ -241,12 +243,12 @@ Timing note: `preventUpdate()` is event-scoped. If you call it during the handle
 
 Quick decision table:
 
-| Handler shape | Automatic render before `await` | Automatic render after promise settles | What to do |
-| --- | --- | --- | --- |
-| Sync handler | Yes, after the handler returns | Not applicable | Usually nothing extra |
-| Async handler using the default runtime timing | Yes, includes pre-`await` state | Yes, includes post-`await` state | Use this when the built-in render timing already matches the UI flow |
-| Async handler with `preventUpdate()` | No | No | Call `update()` for each state transition you want to show |
-| Async handler with `debouncedUpdate()` | No immediate auto-render | No final auto-render for that event | Let the debounced render path control timing |
+| Handler shape                                  | Automatic render before `await` | Automatic render after promise settles | What to do                                                           |
+| ---------------------------------------------- | ------------------------------- | -------------------------------------- | -------------------------------------------------------------------- |
+| Sync handler                                   | Yes, after the handler returns  | Not applicable                         | Usually nothing extra                                                |
+| Async handler using the default runtime timing | Yes, includes pre-`await` state | Yes, includes post-`await` state       | Use this when the built-in render timing already matches the UI flow |
+| Async handler with `preventUpdate()`           | No                              | No                                     | Call `update()` for each state transition you want to show           |
+| Async handler with `debouncedUpdate()`         | No immediate auto-render        | No final auto-render for that event    | Let the debounced render path control timing                         |
 
 Default async handler pattern (native browser behavior unchanged):
 

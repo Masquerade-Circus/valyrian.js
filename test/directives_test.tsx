@@ -6,6 +6,17 @@ import { directive, mount, Properties, setAttribute, trust, unmount, update, v, 
 import dayjs from "dayjs";
 import { expect, describe, test as it } from "bun:test";
 
+function createDeferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((nextResolve) => {
+    resolve = nextResolve;
+  });
+
+  return { promise, resolve };
+}
+
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 describe("Directives", () => {
   describe("Directive creation", () => {
     it("should be able create a directive", () => {
@@ -463,6 +474,82 @@ describe("Directives", () => {
       unmount(); // does nothing because unmounted
       expect(result).toEqual("<div></div>");
       expect(events).toEqual(["create", "cleanup", "update", "cleanup", "update", "cleanup", "update", "cleanup"]);
+    });
+
+    it("keeps v-create sync-only when a Promise is returned", async () => {
+      const deferred = createDeferred<() => void>();
+      const state = { phase: "idle" };
+      const events: string[] = [];
+      const host = document.createElement("div");
+
+      const Component = () => (
+        <div
+          v-create={() =>
+            deferred.promise.then(() => {
+              state.phase = "settled";
+              return () => {
+                events.push("cleanup");
+              };
+            })
+          }
+        >
+          <span>{state.phase}</span>
+        </div>
+      );
+
+      expect(mount(host, Component)).toEqual("<div><span>idle</span></div>");
+
+      deferred.resolve(() => {
+        events.push("cleanup");
+      });
+      await Promise.resolve();
+      await wait(60);
+
+      expect(host.innerHTML).toEqual("<div><span>idle</span></div>");
+      expect(update()).toEqual("<div><span>settled</span></div>");
+
+      expect(unmount()).toEqual("");
+      expect(events).toEqual([]);
+    });
+
+    it("keeps v-update sync-only when a Promise is returned", async () => {
+      const deferred = createDeferred<() => void>();
+      const state = { phase: "idle", version: 0 };
+      const events: string[] = [];
+      const host = document.createElement("div");
+
+      const Component = () => (
+        <div
+          v-update={() =>
+            deferred.promise.then(() => {
+              state.phase = "settled";
+              return () => {
+                events.push("cleanup");
+              };
+            })
+          }
+        >
+          <span>{state.phase}</span>
+          <span>{state.version}</span>
+        </div>
+      );
+
+      expect(mount(host, Component)).toEqual("<div><span>idle</span><span>0</span></div>");
+
+      state.version = 1;
+      expect(update()).toEqual("<div><span>idle</span><span>1</span></div>");
+
+      deferred.resolve(() => {
+        events.push("cleanup");
+      });
+      await Promise.resolve();
+      await wait(60);
+
+      expect(host.innerHTML).toEqual("<div><span>idle</span><span>1</span></div>");
+      expect(update()).toEqual("<div><span>settled</span><span>1</span></div>");
+
+      expect(unmount()).toEqual("");
+      expect(events).toEqual([]);
     });
   });
 });

@@ -143,6 +143,13 @@ function markSubtreeLifecycle(dom) {
     node = node.parentElement;
   }
 }
+function registerCleanup(cleanup, vnode) {
+  vnode["oncleanup" /* onCleanup */] = vnode["oncleanup" /* onCleanup */] || /* @__PURE__ */ new Set();
+  vnode["oncleanup" /* onCleanup */].add(cleanup);
+  if (vnode.dom) {
+    markSubtreeLifecycle(vnode.dom);
+  }
+}
 function addCallbackToSet(callback, setType, vnode) {
   vnode[setType] = vnode[setType] || /* @__PURE__ */ new Set();
   if (vnode.dom && (setType === "oncleanup" /* onCleanup */ || setType === "onremove" /* onRemove */)) {
@@ -151,11 +158,24 @@ function addCallbackToSet(callback, setType, vnode) {
   vnode[setType].add(() => {
     const cleanup = callback();
     if (typeof cleanup === "function") {
-      vnode["oncleanup" /* onCleanup */] = vnode["oncleanup" /* onCleanup */] || /* @__PURE__ */ new Set();
-      vnode["oncleanup" /* onCleanup */].add(cleanup);
-      if (vnode.dom) {
-        markSubtreeLifecycle(vnode.dom);
-      }
+      registerCleanup(cleanup, vnode);
+    }
+  });
+}
+function addAsyncOnCreateCallbackToSet(callback, vnode) {
+  vnode["oncreate" /* onCreate */] = vnode["oncreate" /* onCreate */] || /* @__PURE__ */ new Set();
+  vnode["oncreate" /* onCreate */].add(() => {
+    const cleanup = callback();
+    if (typeof cleanup === "function") {
+      registerCleanup(cleanup, vnode);
+      return;
+    }
+    if (isThenable(cleanup)) {
+      Promise.resolve(cleanup).then(() => void 0).catch((error) => {
+        console.error("Error in onCreate:", error);
+      }).finally(() => {
+        debouncedUpdate();
+      });
     }
   });
 }
@@ -170,7 +190,7 @@ var onCreate = (callback) => {
   const component = current.component;
   const hasComponentAsOldChild = parentVnode.oldChildComponents && parentVnode.oldChildComponents.has(component);
   if (!hasComponentAsOldChild) {
-    addCallbackToSet(callback, "oncreate" /* onCreate */, parentVnode);
+    addAsyncOnCreateCallbackToSet(callback, parentVnode);
   }
 };
 var onUpdate = (callback) => {
@@ -781,7 +801,9 @@ var debouncedUpdateMethod = isNodeJs ? update : () => requestAnimationFrame(upda
 function debouncedUpdate(timeout = 42) {
   preventUpdate();
   clearTimeout(debouncedUpdateTimeout);
-  debouncedUpdateTimeout = setTimeout(debouncedUpdateMethod, timeout);
+  debouncedUpdateTimeout = setTimeout(() => {
+    debouncedUpdateMethod();
+  }, timeout);
 }
 function removeEventListeners() {
   if (!mainVnode) {

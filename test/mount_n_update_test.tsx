@@ -2,7 +2,19 @@
 import "valyrian.js/node";
 
 import * as Valyrian from "valyrian.js";
-import { mount, trust, update, v, unmount, debouncedUpdate, Properties, Children, VnodeWithDom, Component } from "valyrian.js";
+import {
+  mount,
+  trust,
+  update,
+  v,
+  unmount,
+  debouncedUpdate,
+  onCreate,
+  Properties,
+  Children,
+  VnodeWithDom,
+  Component
+} from "valyrian.js";
 
 import { expect, describe, test as it, beforeEach, afterEach } from "bun:test";
 
@@ -37,6 +49,12 @@ describe("Mount and update", () => {
     await Promise.resolve();
   }
 
+  function wait(ms: number) {
+    return new Promise<void>((resolve) => {
+      setTimeout(resolve, ms);
+    });
+  }
+
   function createDelegatedEvent(target: Element): DelegatedEventMock {
     return {
       type: "click",
@@ -64,47 +82,6 @@ describe("Mount and update", () => {
         listeners.click(event as unknown as Event);
 
         return event;
-      }
-    };
-  }
-
-  function withControlledTimeouts() {
-    const originalSetTimeout = globalThis.setTimeout;
-    const originalClearTimeout = globalThis.clearTimeout;
-    let nextId = 1;
-    const scheduled = new Map<number, TimerHandler>();
-
-    globalThis.setTimeout = ((handler: TimerHandler) => {
-      const id = nextId++;
-      scheduled.set(id, handler);
-      return id as unknown as Timer;
-    }) as typeof setTimeout;
-
-    globalThis.clearTimeout = ((timeoutId?: Timer) => {
-      if (typeof timeoutId === "number") {
-        scheduled.delete(timeoutId);
-      }
-    }) as typeof clearTimeout;
-
-    return {
-      flushNext() {
-        const nextEntry = scheduled.entries().next();
-        if (nextEntry.done) {
-          throw new Error("No controlled timeout scheduled");
-        }
-
-        const [id, handler] = nextEntry.value;
-        scheduled.delete(id);
-        if (typeof handler === "function") {
-          handler();
-          return;
-        }
-
-        throw new Error("String timeout handlers are not supported in this test");
-      },
-      restore() {
-        globalThis.setTimeout = originalSetTimeout;
-        globalThis.clearTimeout = originalClearTimeout;
       }
     };
   }
@@ -253,6 +230,39 @@ describe("Mount and update", () => {
     });
   });
 
+  it("should keep onCreate sync cleanup registered for the next relevant patch and unmount", () => {
+    const events: string[] = [];
+    let showChild = true;
+
+    const Child = () => {
+      onCreate(() => {
+        events.push("create");
+
+        return () => {
+          events.push("cleanup");
+        };
+      });
+
+      return <span>child</span>;
+    };
+
+    const Parent = () => <div>{showChild ? <Child /> : <span>empty</span>}</div>;
+
+    expect(mount("body", Parent)).toEqual("<div><span>child</span></div>");
+    expect(events).toEqual(["create"]);
+
+    showChild = false;
+    expect(update()).toEqual("<div><span>empty</span></div>");
+    expect(events).toEqual(["create", "cleanup"]);
+
+    showChild = true;
+    expect(update()).toEqual("<div><span>child</span></div>");
+    expect(events).toEqual(["create", "cleanup", "create"]);
+
+    expect(unmount()).toEqual("");
+    expect(events).toEqual(["create", "cleanup", "create", "cleanup"]);
+  });
+
   it("should auto-update delegated events even when preventDefault is called", () => {
     unmount();
 
@@ -312,7 +322,7 @@ describe("Mount and update", () => {
 
     const preventUpdate = expectPreventUpdateExport();
     const state = { outer: 0, inner: 0 };
-    let triggerInnerClick = () => {
+    let triggerInnerClick: () => void = () => {
       throw new Error("Inner click dispatcher not initialized");
     };
 
@@ -338,7 +348,8 @@ describe("Mount and update", () => {
     );
 
     const { dom, dispatchClick } = mountDelegatedComponent(Component);
-    triggerInnerClick = () => dispatchClick(createDelegatedEvent(dom.childNodes[0].childNodes[1] as unknown as Element));
+    triggerInnerClick = () =>
+      dispatchClick(createDelegatedEvent(dom.childNodes[0].childNodes[1] as unknown as Element) as any);
 
     dispatchClick(createDelegatedEvent(dom.childNodes[0].childNodes[0] as unknown as Element));
     expect(dom.innerHTML).toEqual("<div><button>outer:0</button><button>inner:1</button></div>");
@@ -442,38 +453,33 @@ describe("Mount and update", () => {
     const state = { phase: "idle" };
     const settled = createDeferred();
     const handlerDone = createDeferred();
-    const controlledTimeouts = withControlledTimeouts();
 
-    try {
-      const Component = () => (
-        <button
-          onclick={async () => {
-            state.phase = "loading";
-            debouncedUpdate(5);
-            await settled.promise;
-            state.phase = "done";
-            handlerDone.resolve();
-          }}
-        >
-          {state.phase}
-        </button>
-      );
+    const Component = () => (
+      <button
+        onclick={async () => {
+          state.phase = "loading";
+          debouncedUpdate(5);
+          await settled.promise;
+          state.phase = "done";
+          handlerDone.resolve();
+        }}
+      >
+        {state.phase}
+      </button>
+    );
 
-      const { dom, dispatchClick } = mountDelegatedComponent(Component);
+    const { dom, dispatchClick } = mountDelegatedComponent(Component);
 
-      dispatchClick();
-      expect(dom.innerHTML).toEqual("<button>idle</button>");
+    dispatchClick();
+    expect(dom.innerHTML).toEqual("<button>idle</button>");
 
-      controlledTimeouts.flushNext();
-      expect(dom.innerHTML).toEqual("<button>loading</button>");
+    await wait(20);
+    expect(dom.innerHTML).toEqual("<button>loading</button>");
 
-      settled.resolve();
-      await waitForPostHandlerUpdate(handlerDone.promise);
-      expect(dom.innerHTML).toEqual("<button>loading</button>");
-      expect(update()).toEqual("<button>done</button>");
-    } finally {
-      controlledTimeouts.restore();
-    }
+    settled.resolve();
+    await waitForPostHandlerUpdate(handlerDone.promise);
+    expect(dom.innerHTML).toEqual("<button>loading</button>");
+    expect(update()).toEqual("<button>done</button>");
   });
 
   it("Antipattern: Mount and update with functional stateless component", () => {
