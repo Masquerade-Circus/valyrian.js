@@ -1,5 +1,13 @@
 # Changelog
 
+## [9.1.5](https://github.com/Masquerade-Circus/valyrian/compare/9.1.4...9.1.5) (2026-04-18)
+
+### Code Refactoring
+
+* change event.preventDefault to helper preventUpdate() ([c7e5732](https://github.com/Masquerade-Circus/valyrian/commit/c7e5732bc3c04b16041a9f868f8cabf84ffef2dc))
+* make onCreate capable of handle async initialization methods and rerender when settle ([69921ee](https://github.com/Masquerade-Circus/valyrian/commit/69921ee60e8dcf3e278a3e1dfa0df03272077b7e))
+* migrate to automatic runtime ([3cc6292](https://github.com/Masquerade-Circus/valyrian/commit/3cc6292a56c6f797df2f3c1f138ba43b7dd1b2f6))
+
 ## [9.1.4](https://github.com/Masquerade-Circus/valyrian/compare/9.1.3...9.1.4) (2026-03-11)
 
 ### Documentation
