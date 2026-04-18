@@ -498,10 +498,10 @@ describe("Router", () => {
       target: dom.childNodes[0] as unknown as Element,
       defaultPrevented: false,
       button: 0,
-      preventDefault() {
+      preventDefault(this: { defaultPrevented: boolean }) {
         this.defaultPrevented = true;
       }
-    } as Event & { button: number; defaultPrevented: boolean; preventDefault: () => void };
+    } as unknown as Event & { button: number; defaultPrevented: boolean; preventDefault: () => void };
 
     listeners.click(clickEvent);
     await new Promise((resolve) => setTimeout(resolve, 10));
@@ -548,10 +548,10 @@ describe("Router", () => {
         target: dom.childNodes[0] as unknown as Element,
         defaultPrevented: false,
         button: 0,
-        preventDefault() {
+        preventDefault(this: { defaultPrevented: boolean }) {
           this.defaultPrevented = true;
         }
-      } as Event & { button: number; defaultPrevented: boolean; preventDefault: () => void };
+      } as unknown as Event & { button: number; defaultPrevented: boolean; preventDefault: () => void };
 
       listeners.click(clickEvent);
       await new Promise((resolve) => setTimeout(resolve, 10));

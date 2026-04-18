@@ -4,7 +4,7 @@ Purpose
 This file aggregates the official documentation sources from the `docs/` directory as a single reference for AI agents and tooling.
 
 Generated
-- Date (UTC): 2026-04-16
+- Date (UTC): 2026-04-18
 - Source root: `docs/`
 - File count: 43
 
@@ -326,7 +326,24 @@ npm init -y
 npm install valyrian.js
 ```
 
-### 2. Create your app entry
+### 2. Add the TSX compiler settings
+
+Create `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "valyrian.js"
+  }
+}
+```
+
+This is the supported TSX path in Valyrian: TypeScript emits the automatic runtime and resolves TSX helpers from `valyrian.js`.
+
+That automatic runtime is a first-class vnode surface, equivalent in contract to manual `v(...)` authoring. You do not need `v` in scope for TSX, and `key` stays as structural vnode data instead of becoming component props.
+
+### 3. Create your app entry
 
 Create `index.tsx`:
 
@@ -345,12 +362,12 @@ function App() {
 mount("body", App);
 ```
 
-### 3. Create a build script
+### 4. Create a build script
 
-Create `build.js`:
+Create `build.mjs`:
 
 ```javascript
-import fs from "fs";
+import fs from "node:fs";
 import { inline } from "valyrian.js/node";
 
 async function build() {
@@ -367,10 +384,10 @@ build().catch((error) => {
 });
 ```
 
-### 4. Build and serve
+### 5. Build and serve
 
 ```bash
-node build.js
+node build.mjs
 ```
 
 Then load `dist.js` from a minimal HTML page:
@@ -824,6 +841,15 @@ This page documents the runtime core behind the base `valyrian.js` package.
 The same mount, update, lifecycle, and hydration rules described here power both browser execution and server-side rendering in Node.js. Read this page as the reference for the shared runtime model, then layer server-specific behavior from chapter 7 on top of it.
 
 Use [./3-the-essentials.md](./3-the-essentials.md) for the learning path, then use this page for exact API behavior.
+
+## VNode Construction Contract
+
+Valyrian exposes two first-class vnode authoring surfaces:
+
+- manual hyperscript through `v(...)` from `valyrian.js`
+- automatic TSX/JSX runtime helpers through `valyrian.js/jsx-runtime` and `valyrian.js/jsx-dev-runtime`
+
+Both surfaces build `Vnode` instances directly and share the same runtime contract.
 
 ## Render Lifecycle APIs
 
@@ -3892,8 +3918,7 @@ Prerequisite:
 ## Goal
 
 1. Run Valyrian with TSX in Vite.
-2. Keep JSX transform aligned with Valyrian (`v` / `v.fragment`).
-3. Verify dev + build + preview flow.
+2. Verify dev + build + preview flow.
 
 ## Install
 
@@ -3910,9 +3935,8 @@ Set TypeScript JSX settings in your app tsconfig:
 ```json
 {
   "compilerOptions": {
-    "jsx": "react",
-    "jsxFactory": "v",
-    "jsxFragmentFactory": "v.fragment"
+    "jsx": "react-jsx",
+    "jsxImportSource": "valyrian.js"
   }
 }
 ```
@@ -3925,18 +3949,16 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   esbuild: {
-    jsxFactory: "v",
-    jsxFragment: "v.fragment"
+    jsx: "automatic",
+    jsxImportSource: "valyrian.js"
   }
 });
 ```
 
-## App Entry
-
 Create `src/main.tsx`:
 
 ```tsx
-import { mount, v } from "valyrian.js";
+import { mount } from "valyrian.js";
 
 function App() {
   return (
@@ -3968,8 +3990,8 @@ Expected outcomes:
 
 Required for correctness:
 
-1. Keep `jsxFactory`/`jsxFragmentFactory` aligned with `v`/`v.fragment`.
-2. Keep `v` in scope in TSX files (for classic JSX factory mode).
+1. Keep `jsx`/`jsxImportSource` aligned across TypeScript and Vite.
+2. Keep one TSX story across local dev and CI: automatic runtime with `valyrian.js` as the import source.
 
 Recommended practice:
 
@@ -3992,7 +4014,7 @@ Prerequisite:
 
 ## Goal
 
-1. Compile TSX with Valyrian JSX factories (`v` / `v.fragment`).
+1. Compile TSX with Valyrian runtime.
 2. Run local dev server.
 3. Build a production bundle with the same transform assumptions.
 
@@ -4006,7 +4028,7 @@ npm i -D typescript
 Create `src/main.tsx`:
 
 ```tsx
-import { mount, v } from "valyrian.js";
+import { mount } from "valyrian.js";
 
 function App() {
   return (
@@ -4017,7 +4039,7 @@ function App() {
   );
 }
 
-mount("#app", App);
+mount("body", App);
 ```
 
 ## TypeScript JSX Settings (Required)
@@ -4025,9 +4047,8 @@ mount("#app", App);
 ```json
 {
   "compilerOptions": {
-    "jsx": "react",
-    "jsxFactory": "v",
-    "jsxFragmentFactory": "v.fragment"
+    "jsx": "react-jsx",
+    "jsxImportSource": "valyrian.js"
   }
 }
 ```
@@ -4122,9 +4143,8 @@ module.exports = {
             },
             transform: {
               react: {
-                runtime: "classic",
-                pragma: "v",
-                pragmaFrag: "v.fragment"
+                runtime: "automatic",
+                importSource: "valyrian.js"
               }
             }
           }
@@ -4164,14 +4184,14 @@ npm run dev:rspack
 npm run build:rspack
 ```
 
-Expected outcome: both bundlers render the same app and complete production builds without JSX factory errors.
+Expected outcome: both bundlers render the same app and complete production builds without JSX transform errors.
 
 ## Key Points
 
 Required for correctness:
 
-1. Keep JSX transform in classic mode with `v` / `v.fragment`.
-2. Keep `v` in scope in TSX modules.
+1. Keep `jsxImportSource` / bundler `importSource` aligned with `valyrian.js`.
+2. Keep TypeScript and bundler runtime settings in sync across Webpack and Rspack.
 
 Recommended practice:
 

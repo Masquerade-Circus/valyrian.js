@@ -81,13 +81,21 @@ This snippet proves the runtime can mount component output into a root. `docs/2-
 npm install valyrian.js
 ```
 
-Then follow [docs/2-getting-started.md](docs/2-getting-started.md) for the `inline` build flow and first TSX/JSX setup.
+Then follow [docs/2-getting-started.md](docs/2-getting-started.md) for the `inline` build flow and the automatic TSX runtime setup (`jsx: "react-jsx"` + `jsxImportSource: "valyrian.js"`).
+
+### Runtime authoring surfaces
+
+- `v(...)` and the automatic TSX runtime are both first-class vnode authoring surfaces.
+- `Fragment` in the automatic runtime is the shared fragment sentinel, expanded later by the runtime instead of becoming a special vnode kind.
+- `key` is structural vnode data (`vnode.key`), not component props.
+- `flatTree()` remains the runtime step that expands fragments/components and flattens nested children.
+- `trust()` keeps the same raw-HTML model in this phase.
 
 ## Choose Your Path
 
 * **Try it now (no install):** use the CDN snippet above.
 * **Understand the same example in more detail:** read [docs/1-introduction.md](docs/1-introduction.md), then continue with [docs/2-getting-started.md](docs/2-getting-started.md).
-* **Add local TSX/JSX tooling in Node:** continue with [docs/2-getting-started.md](docs/2-getting-started.md) (Node path).
+* **Add local TSX/JSX tooling in Node:** continue with [docs/2-getting-started.md](docs/2-getting-started.md) (Node path, automatic TSX runtime).
 * **Expand the same model to SSR and request-scoped runtime behavior:** complete chapters 1-3, then go to [docs/7-full-stack-capability.md](docs/7-full-stack-capability.md).
 
 ## First 5 Minutes (Recommended)

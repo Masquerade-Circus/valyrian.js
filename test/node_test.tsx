@@ -5,7 +5,6 @@ import { expect, describe, test as it } from "bun:test";
 import fs from "fs";
 import path from "path";
 import packageJson from "../package.json";
-// eslint-disable-next-line no-unused-vars
 import { v } from "valyrian.js";
 
 describe("Node test", () => {
@@ -291,29 +290,202 @@ span.hello{display: inline-block}
     // console.log(indexOld.length);
   });
 
-  it("should convert tsx to hyperscript by default", async () => {
-    const { raw: component } = await inline("./test/utils/component.tsx", { compact: false, noValidate: true });
-    const { raw: component2 } = await inline("./test/utils/component.tsx", { compact: true });
+  it("should compile tsx with automatic jsx runtime imports by default", async () => {
+    const { raw: component } = await inline("./test/utils/component-automatic.tsx", {
+      compact: false,
+      bundle: false
+    });
 
-    expect(component).toMatch(`
-  function Button() {
-    return /* @__PURE__ */ v("button", null, "Hello");
-  }`);
-
-    expect(component2).toMatch(/function\(\)\{return \w\("button",null,"Hello"\)\}/);
+    expect(component).toMatch(/from\s+"valyrian\.js\/jsx-runtime"/);
+    expect(component).toMatch(/\bjsxs\(Fragment\b/);
+    expect(component).toMatch(/\bjsx\("button",\s*\{\s*children:\s*"Hello"\s*\}\)/);
+    expect(component).toMatch(/\bjsx\("span",\s*\{\s*children:\s*"Automatic runtime"\s*\}\)/);
+    expect(component).not.toContain('import { v } from "valyrian.js"');
+    expect(component).not.toContain("v.fragment");
+    expect(component).not.toMatch(/\bcreateAutomaticVNode\b/);
+    expect(component).not.toMatch(/(?:const|var) Fragment\s*=/);
   });
 
-  it("should convert jsx to hyperscript by default", async () => {
-    const { raw: component } = await inline("./test/utils/component.jsx", { compact: false });
-    const { raw: component2 } = await inline("./test/utils/component.jsx", { compact: true });
+  it("should not log inline tsc debug output during normal execution", async () => {
+    const originalConsoleLog = console.log;
+    const calls: unknown[][] = [];
 
-    expect(component).toMatch(`
-  function Button() {
-    return /* @__PURE__ */ v("button", null, "Hello");
-  }`);
+    console.log = (...args: unknown[]) => {
+      calls.push(args);
+    };
 
-    expect(component2).toMatch(/function\(\)\{return \w\("button",null,"Hello"\)\}/);
+    try {
+      await inline("./test/utils/component-automatic.tsx", {
+        compact: false,
+        bundle: false
+      });
+    } finally {
+      console.log = originalConsoleLog;
+    }
+
+    expect(calls.some((args) => args[0] === "tsc")).toBeFalse();
   });
+
+  it("should compile tsx dev output with jsxDEV from valyrian.js/jsx-dev-runtime", async () => {
+    const { raw: component } = await inline("./test/utils/component-automatic-dev.tsx", {
+      compact: false,
+      bundle: false,
+      esbuild: {
+        jsxDev: true
+      }
+    });
+
+    expect(component).toMatch(/from\s+"valyrian\.js\/jsx-dev-runtime"/);
+    expect(component).toMatch(/\bjsxDEV\(/);
+    expect(component).not.toContain('from "valyrian.js/jsx-runtime"');
+    expect(component).not.toContain("v.fragment");
+    expect(component).not.toMatch(/\bcreateAutomaticVNode\b/);
+  });
+
+  it("should typecheck automatic jsx runtime for an external consumer package", () => {
+    const fixtureRoot = path.join(process.cwd(), ".tmp/external-consumer");
+    const packageTarballRoot = path.join(fixtureRoot, "packed");
+    const packageRoot = path.join(fixtureRoot, "node_modules/valyrian.js");
+    const consumerDistRoot = path.join(fixtureRoot, "dist");
+
+    fs.rmSync(fixtureRoot, { recursive: true, force: true });
+    fs.mkdirSync(packageTarballRoot, { recursive: true });
+    fs.mkdirSync(packageRoot, { recursive: true });
+    const packResult = Bun.spawnSync(["npm", "pack", "--json", "--pack-destination", packageTarballRoot], {
+      cwd: process.cwd(),
+      stdout: "pipe",
+      stderr: "pipe"
+    });
+    const packOutput = `${packResult.stdout.toString()}${packResult.stderr.toString()}`;
+
+    expect(packResult.exitCode).toBe(0);
+
+    const [{ filename }] = JSON.parse(packResult.stdout.toString()) as Array<{ filename: string }>;
+    const tarballPath = path.join(packageTarballRoot, filename);
+    const unpackResult = Bun.spawnSync(["tar", "-xzf", tarballPath, "-C", packageRoot, "--strip-components=1"], {
+      cwd: process.cwd(),
+      stdout: "pipe",
+      stderr: "pipe"
+    });
+
+    expect(unpackResult.exitCode).toBe(0);
+
+    fs.writeFileSync(
+      path.join(fixtureRoot, "tsconfig.json"),
+      JSON.stringify(
+        {
+          compilerOptions: {
+            module: "NodeNext",
+            moduleResolution: "NodeNext",
+            target: "ESNext",
+            jsx: "react-jsx",
+            jsxImportSource: "valyrian.js",
+            strict: true,
+            rootDir: ".",
+            outDir: "./dist",
+            types: []
+          },
+          include: ["./index.tsx"]
+        },
+        null,
+        2
+      )
+    );
+
+    fs.writeFileSync(
+      path.join(fixtureRoot, "index.tsx"),
+      [
+        'import { mount } from "valyrian.js";',
+        'import { Fragment, jsxs } from "valyrian.js/jsx-runtime";',
+        "",
+        'const directFragment = jsxs(Fragment, { children: ["Packed", "consumer"] });',
+        'void directFragment;',
+        "",
+        "function App() {",
+        "  return (",
+        "    <>",
+        '      <main>Hello</main>',
+        '      <footer>Automatic runtime</footer>',
+        "    </>",
+        "  );",
+        "}",
+        "",
+        'mount("#app", App);'
+      ].join("\n")
+    );
+
+    const result = Bun.spawnSync(["bunx", "tsc", "-p", fixtureRoot], {
+      cwd: process.cwd(),
+      stdout: "pipe",
+      stderr: "pipe"
+    });
+
+    const output = `${result.stdout.toString()}${result.stderr.toString()}`;
+    expect(result.exitCode).toBe(0);
+    expect(output).toBe("");
+
+    const emittedConsumerJs = fs.readFileSync(path.join(consumerDistRoot, "index.js"), "utf8");
+    const resolutionResult = Bun.spawnSync(
+      [
+        process.execPath,
+        "-e",
+        [
+          'await import("valyrian.js/jsx-runtime");',
+          'await import("valyrian.js/jsx-dev-runtime");',
+          'console.log("resolved");'
+        ].join("\n")
+      ],
+      {
+        cwd: fixtureRoot,
+        stdout: "pipe",
+        stderr: "pipe"
+      }
+    );
+    const publishedFiles = [
+      "dist/jsx-runtime/index.js",
+      "dist/jsx-runtime/index.mjs",
+      "dist/jsx-dev-runtime/index.js",
+      "dist/jsx-dev-runtime/index.mjs",
+      "dist/lib/jsx-runtime/index.d.ts",
+      "dist/lib/jsx-dev-runtime/index.d.ts"
+    ].map((relativePath) => path.join(packageRoot, relativePath));
+    const jsxRuntimeTypes = fs.readFileSync(path.join(packageRoot, "dist/lib/jsx-runtime/index.d.ts"), "utf8");
+    const jsxDevRuntimeTypes = fs.readFileSync(path.join(packageRoot, "dist/lib/jsx-dev-runtime/index.d.ts"), "utf8");
+    const jsxRuntimeJs = fs.readFileSync(path.join(packageRoot, "dist/jsx-runtime/index.js"), "utf8");
+    const runtimeSurfaceResult = Bun.spawnSync(
+      [
+        process.execPath,
+        "-e",
+        [
+          'const runtime = await import("valyrian.js/jsx-runtime");',
+          'console.log(Object.keys(runtime).sort().join(","));'
+        ].join("\n")
+      ],
+      {
+        cwd: fixtureRoot,
+        stdout: "pipe",
+        stderr: "pipe"
+      }
+    );
+
+    expect(packOutput).toContain(filename);
+    expect(emittedConsumerJs).toMatch(/(?:from|require\()\s*["']valyrian\.js\/jsx-runtime["']/);
+    expect(emittedConsumerJs).not.toContain("v.fragment");
+    expect(emittedConsumerJs).not.toContain("valyrian_js_1.v");
+    expect(emittedConsumerJs).not.toMatch(/\bcreateAutomaticVNode\b/);
+    expect(jsxRuntimeJs).not.toMatch(/\bcreateAutomaticVNode\b/);
+    expect(jsxRuntimeTypes).not.toMatch(/\bcreateAutomaticVNode\b/);
+    expect(resolutionResult.exitCode).toBe(0);
+    expect(resolutionResult.stdout.toString()).toContain("resolved");
+    expect(resolutionResult.stderr.toString()).toBe("");
+    expect(runtimeSurfaceResult.exitCode).toBe(0);
+    expect(runtimeSurfaceResult.stderr.toString()).toBe("");
+    expect(runtimeSurfaceResult.stdout.toString().trim()).toBe("Fragment,jsx,jsxs");
+    for (const publishedFile of publishedFiles) {
+      expect(fs.existsSync(publishedFile)).toBeTrue();
+    }
+    expect(jsxDevRuntimeTypes).toContain("export declare function jsxDEV(");
+  }, 20000);
 });
 
 describe("All lib files", () => {

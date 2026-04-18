@@ -18,7 +18,7 @@ describe("Suspense", () => {
 
     function App() {
       return (
-        <Suspense key="lazy" fallback={<div>Loading...</div>}>
+        <Suspense suspenseKey="lazy" fallback={<div>Loading...</div>}>
           {<LazyComponent />}
         </Suspense>
       );
@@ -39,7 +39,7 @@ describe("Suspense", () => {
 
     function App() {
       return (
-        <Suspense key="lazy" fallback={<div>Loading...</div>}>
+        <Suspense suspenseKey="lazy" fallback={<div>Loading...</div>}>
           <LazyComponent>Hello World</LazyComponent>
         </Suspense>
       );
@@ -62,7 +62,7 @@ describe("Suspense", () => {
 
     function App() {
       return (
-        <Suspense key="lazy" fallback={<div>Loading...</div>} error={(e) => <div>Error: {e.message}</div>}>
+        <Suspense suspenseKey="lazy" fallback={<div>Loading...</div>} error={(e) => <div>Error: {e.message}</div>}>
           <FailingComponent />
         </Suspense>
       );
@@ -92,7 +92,7 @@ describe("Suspense", () => {
 
     function App() {
       return (
-        <Suspense key="lazy" fallback={<div>Cargando...</div>}>
+        <Suspense suspenseKey="lazy" fallback={<div>Cargando...</div>}>
           <FunctionalComponent />
           <POJOComponent />
           Hello World
@@ -115,7 +115,7 @@ describe("Suspense", () => {
 
     function App() {
       return (
-        <Suspense key="lazy" fallback={<div>Loading...</div>}>
+        <Suspense suspenseKey="lazy" fallback={<div>Loading...</div>}>
           <EmptyComponent />
         </Suspense>
       );
@@ -125,5 +125,47 @@ describe("Suspense", () => {
 
     await wait(60);
     expect(dom.innerHTML).toEqual("<div>Empty component</div>");
+  });
+
+  it("should require a non-reserved suspenseKey prop instead of key", () => {
+    const dom = document.createElement("div");
+    const LegacySuspense = Suspense as any;
+
+    function App() {
+      return (
+        <LegacySuspense key="legacy" fallback={<div>Loading...</div>}>
+          <div>Loaded</div>
+        </LegacySuspense>
+      );
+    }
+
+    expect(() => mount(dom, App)).toThrow("Suspense requires a 'suspenseKey' prop");
+  });
+
+  it("manual hyperscript suspense should use suspenseKey instead of props.key", async () => {
+    const dom = document.createElement("div");
+
+    async function LazyComponent() {
+      await wait(5);
+      return <div>Component loaded</div>;
+    }
+
+    function App() {
+      return v(
+        Suspense as any,
+        {
+          suspenseKey: "lazy",
+          fallback: <div>Loading...</div>
+        },
+        v(LazyComponent, null)
+      );
+    }
+
+    mount(dom, App);
+
+    expect(dom.innerHTML).toEqual("<div>Loading...</div>");
+
+    await wait(60);
+    expect(dom.innerHTML).toEqual("<div>Component loaded</div>");
   });
 });

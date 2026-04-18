@@ -16,9 +16,7 @@ type LifecycleCleanup = () => void;
 type OnCreateCallback = () => void | LifecycleCleanup | Promise<void>;
 type OnUpdateCallback = () => void | LifecycleCleanup;
 
-export interface Properties extends DefaultRecord {
-  key?: string | number;
-}
+export interface Properties extends DefaultRecord {}
 
 export interface DomElement extends Element, DefaultRecord {}
 
@@ -43,12 +41,16 @@ export interface Directive {
 }
 
 export const isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
+export const fragment = Symbol.for("valyrian.fragment");
+export type Fragment = typeof fragment;
+export type VnodeTag = string | ValyrianComponent | Fragment;
 
 export class Vnode {
   constructor(
-    public tag: string | Component | POJOComponent,
+    public tag: VnodeTag,
     public props: null | Properties,
     public children: Children,
+    public key?: string | number,
     public dom?: DomElement,
     public isSVG?: boolean,
     public oldChildComponents?: Set<ValyrianComponent>,
@@ -78,11 +80,17 @@ export const isVnodeComponent = (object?: unknown): object is VnodeComponentInte
   return isVnode(object) && isComponent(object.tag);
 };
 
-export function v(tagOrComponent: string | ValyrianComponent, props: Properties | null, ...children: Children) {
-  return new Vnode(tagOrComponent, props, children);
+export function v(tagOrComponent: VnodeTag, props: Properties | null, ...children: Children) {
+  const key = props?.key;
+
+  if (typeof key !== "undefined") {
+    Reflect.deleteProperty(props as Properties, "key");
+  }
+
+  return new Vnode(tagOrComponent, props, children, key);
 }
 
-v.fragment = (_: Properties, ...children: Children) => children;
+v.fragment = (_: any, ...children: Children) => children;
 
 export function hidrateDomToVnode(dom: any): VnodeWithDom | string | null | void {
   if (dom.nodeType === 3) {
@@ -759,6 +767,13 @@ function flatTree(newVnode: VnodeWithDom) {
       newChild.props = newChild.props || {};
       newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
 
+      if (newChild.tag === fragment) {
+        for (let l = newChild.children.length - 1; l >= 0; l--) {
+          children.push(newChild.children[l]);
+        }
+        continue;
+      }
+
       if (typeof newChild.tag !== "string") {
         const component = (current.component = newChild.tag);
         newVnode.childComponents = newVnode.childComponents || new Set();
@@ -771,7 +786,7 @@ function flatTree(newVnode: VnodeWithDom) {
         continue;
       }
 
-      newVnode.hasKeys = newVnode.hasKeys || "key" in newChild.props;
+      newVnode.hasKeys = newVnode.hasKeys || typeof newChild.key !== "undefined";
       out.push(newChild);
       continue;
     }
@@ -857,14 +872,14 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
   }
 
   let oldTree = childNodes as unknown as DomElement[];
-  const oldKeyedList: Record<string, number> = {};
+  const oldKeyedList: Record<string | number, number> = {};
 
   if (newVnode.hasKeys) {
     const newOldTree = [];
     for (let i = 0, l = oldTree.length; i < l; i++) {
       newOldTree[i] = oldTree[i];
       const oldVnode = oldTree[i].vnode as VnodeWithDom;
-      oldKeyedList[!oldVnode || "key" in oldVnode.props === false ? i : (oldVnode.props.key as string)] = i;
+      oldKeyedList[(oldVnode?.key ?? i) as any] = i;
     }
     oldTree = newOldTree;
   }
@@ -891,7 +906,7 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
       continue;
     }
 
-    const oldChild = oldTree[newVnode.hasKeys ? oldKeyedList[(newChild.props.key as any) || i] : i] as DomElement;
+    const oldChild = oldTree[newVnode.hasKeys ? oldKeyedList[(newChild.key ?? i) as any] : i] as DomElement;
 
     if (!oldChild || newChild.tag !== oldChild.nodeName.toLowerCase()) {
       processNewChild(newChild, newVnode, childNodes[i] as DomElement);
@@ -912,8 +927,10 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
         continue;
       }
 
-      const oldProps = childNodes[i + 1]?.vnode?.props;
-      if (oldProps && "key" in oldProps === false && oldProps["v-keep"] === newChild.props["v-keep"]) {
+      const nextOldVnode = childNodes[i + 1]?.vnode as VnodeWithDom | undefined;
+      const oldProps = nextOldVnode?.props;
+      const nextKey = nextOldVnode?.key;
+      if (oldProps && typeof nextKey === "undefined" && oldProps["v-keep"] === newChild.props["v-keep"]) {
         strictRemoveNode(oldChild);
         oldTree.splice(i, 1);
         continue;

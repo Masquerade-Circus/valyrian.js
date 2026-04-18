@@ -13,7 +13,6 @@ type LifecycleCleanup = () => void;
 type OnCreateCallback = () => void | LifecycleCleanup | Promise<void>;
 type OnUpdateCallback = () => void | LifecycleCleanup;
 export interface Properties extends DefaultRecord {
-    key?: string | number;
 }
 export interface DomElement extends Element, DefaultRecord {
 }
@@ -33,10 +32,14 @@ export interface Directive {
     (value: any, vnode: VnodeWithDom, oldProps?: Properties): false | void | any;
 }
 export declare const isNodeJs: boolean;
+export declare const fragment: unique symbol;
+export type Fragment = typeof fragment;
+export type VnodeTag = string | ValyrianComponent | Fragment;
 export declare class Vnode {
-    tag: string | Component | POJOComponent;
+    tag: VnodeTag;
     props: null | Properties;
     children: Children;
+    key?: string | number | undefined;
     dom?: DomElement | undefined;
     isSVG?: boolean | undefined;
     oldChildComponents?: Set<ValyrianComponent> | undefined;
@@ -46,7 +49,7 @@ export declare class Vnode {
     oncleanup?: Set<Function> | undefined;
     onupdate?: Set<Function> | undefined;
     onremove?: Set<Function> | undefined;
-    constructor(tag: string | Component | POJOComponent, props: null | Properties, children: Children, dom?: DomElement | undefined, isSVG?: boolean | undefined, oldChildComponents?: Set<ValyrianComponent> | undefined, childComponents?: Set<ValyrianComponent> | undefined, hasKeys?: boolean | undefined, oncreate?: Set<Function> | undefined, oncleanup?: Set<Function> | undefined, onupdate?: Set<Function> | undefined, onremove?: Set<Function> | undefined);
+    constructor(tag: VnodeTag, props: null | Properties, children: Children, key?: string | number | undefined, dom?: DomElement | undefined, isSVG?: boolean | undefined, oldChildComponents?: Set<ValyrianComponent> | undefined, childComponents?: Set<ValyrianComponent> | undefined, hasKeys?: boolean | undefined, oncreate?: Set<Function> | undefined, oncleanup?: Set<Function> | undefined, onupdate?: Set<Function> | undefined, onremove?: Set<Function> | undefined);
 }
 export interface VnodeWithDom extends Vnode {
     tag: string;
@@ -57,9 +60,9 @@ export declare const isPOJOComponent: (component: unknown) => component is POJOC
 export declare const isComponent: (component: unknown) => component is Component;
 export declare const isVnode: (object?: unknown) => object is Vnode;
 export declare const isVnodeComponent: (object?: unknown) => object is VnodeComponentInterface;
-export declare function v(tagOrComponent: string | ValyrianComponent, props: Properties | null, ...children: Children): Vnode;
+export declare function v(tagOrComponent: VnodeTag, props: Properties | null, ...children: Children): Vnode;
 export declare namespace v {
-    var fragment: (_: Properties, ...children: Children) => Children;
+    var fragment: (_: any, ...children: Children) => Children;
 }
 export declare function hidrateDomToVnode(dom: any): VnodeWithDom | string | null | void;
 export declare function trust(htmlString: string): (string | void | VnodeWithDom | null)[];

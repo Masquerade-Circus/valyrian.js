@@ -235,6 +235,6 @@ function runCli() {
   console.log(`Coverage: ${result.coverage.value}${result.coverage.source ? ` (${result.coverage.source})` : ""}`);
 }
 
-if (import.meta.main) {
+if (typeof require !== "undefined" && require.main === module) {
   runCli();
 }

@@ -22,6 +22,14 @@ type SuspenseStore = {
   promise: Promise<any[]> | null;
 };
 
+type SuspenseProps = {
+  suspenseKey: SuspenseKey;
+  fallback: any | Vnode | ValyrianComponent;
+  error?: (e: Error) => any | Vnode | ValyrianComponent;
+  children?: any;
+  key?: string | number;
+};
+
 const domToSuspenseStores = new WeakMap<DomElement, Map<SuspenseKey, SuspenseStore>>();
 
 function getSuspenseStore(dom: DomElement, key: SuspenseKey): SuspenseStore {
@@ -46,20 +54,9 @@ function getSuspenseStore(dom: DomElement, key: SuspenseKey): SuspenseStore {
   return store;
 }
 
-export function Suspense(
-  {
-    key,
-    fallback,
-    error
-  }: {
-    key: string | number;
-    fallback: any | Vnode | ValyrianComponent;
-    error?: (e: Error) => any | Vnode | ValyrianComponent;
-  },
-  children: Children
-) {
-  if (key === undefined || key === null) {
-    throw new Error("Suspense requires a 'key' prop");
+export function Suspense({ suspenseKey, fallback, error }: SuspenseProps, children: Children) {
+  if (suspenseKey === undefined || suspenseKey === null) {
+    throw new Error("Suspense requires a 'suspenseKey' prop");
   }
 
   return v(() => {
@@ -69,7 +66,7 @@ export function Suspense(
     }
 
     const hostDom = hostVnode.dom as DomElement;
-    const store = getSuspenseStore(hostDom, key);
+    const store = getSuspenseStore(hostDom, suspenseKey);
 
     if (store.status === 2 && store.error) {
       if (error) {

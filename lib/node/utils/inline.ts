@@ -18,8 +18,23 @@ export async function inline(
       if (/(ts|tsx)/.test(ext) && !options.noValidate) {
         const declarationDir = options.declarationDir;
         const emitDeclaration = !!declarationDir;
-
-        const tscProgOptions = {
+        const compilerOptions = {
+          rootDir: "./",
+          outDir: "dist",
+          noEmitOnError: true,
+          noEmit: !emitDeclaration,
+          declaration: emitDeclaration,
+          composite: emitDeclaration,
+          declarationDir,
+          emitDeclarationOnly: emitDeclaration,
+          allowJs: true,
+          esModuleInterop: true,
+          inlineSourceMap: true,
+          resolveJsonModule: true,
+          removeComments: true,
+          ...(options.tsc || {}).compilerOptions
+        };
+        const tscProgOptions: Record<string, any> = {
           basePath: process.cwd(), // always required, used for relative paths
           configFilePath: "tsconfig.json", // config to inherit from (optional)
           files: [file],
@@ -29,30 +44,10 @@ export async function inline(
           copyOtherToOutDir: false,
           clean: emitDeclaration ? [declarationDir] : [],
           ...(options.tsc || {}),
-          compilerOptions: {
-            rootDir: "./",
-            outDir: "dist",
-            noEmitOnError: true,
-            noEmit: !emitDeclaration,
-            declaration: emitDeclaration,
-            composite: emitDeclaration,
-            declarationDir,
-            emitDeclarationOnly: emitDeclaration,
-            allowJs: true,
-            esModuleInterop: true,
-            inlineSourceMap: true,
-            resolveJsonModule: true,
-            removeComments: true,
-            ...(options.tsc || {}).compilerOptions
-          },
-          jsxFactory: "v",
-          jsxFragment: "v.fragment"
+          compilerOptions
         };
 
-        // eslint-disable-next-line no-console
-        console.log("tsc", tscProgOptions);
-
-        tsc.build(tscProgOptions);
+        (tsc as any).build(tscProgOptions);
       }
 
       const esbuildOptions = {
@@ -63,8 +58,8 @@ export async function inline(
         minify: options.compact,
         outdir: "out",
         target: "esnext",
-        jsxFactory: "v",
-        jsxFragment: "v.fragment",
+        jsx: "automatic",
+        jsxImportSource: "valyrian.js",
         loader: {
           ".js": "jsx",
           ".cjs": "jsx",

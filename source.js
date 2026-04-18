@@ -229,7 +229,9 @@ async function copy({ entryPoint, outfileName }) {
     "native-store",
     "translate",
     "money",
-    "redux-devtools"
+    "redux-devtools",
+    "jsx-runtime",
+    "jsx-dev-runtime"
   ];
 
   await build({

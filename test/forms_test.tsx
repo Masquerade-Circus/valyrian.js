@@ -187,7 +187,7 @@ describe("Forms", () => {
     radioOne.checked = true;
     radioOne.dispatchEvent(new Event("change", { bubbles: true }));
 
-    expect(form.state.choice).toBe("1");
+    expect(String(form.state.choice)).toBe("1");
 
     await wait(0);
 

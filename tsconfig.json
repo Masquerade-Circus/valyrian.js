@@ -9,9 +9,8 @@
     "noEmit": true,
     "moduleDetection": "force",
 
-    "jsx": "react", // support JSX
-    "jsxFactory": "v",
-    "jsxFragmentFactory": "v.fragment",
+    "jsx": "react-jsx", // support JSX automatic runtime
+    "jsxImportSource": "valyrian.js",
     "allowJs": true, // allow importing `.js` from `.ts`
     "esModuleInterop": true, // allow default imports for CommonJS modules
 
@@ -28,9 +27,11 @@
 
     "rootDir": "./",
     "paths": {
+      "valyrian.js": ["./lib/index.ts"],
+      "valyrian.js/*": ["./lib/*/index.ts"],
       "node_modules/*": ["./node_modules/*"]
     }
   },
-  "include": ["./", "./lib", "./test"],
+  "include": ["./", "./lib", "./test", "./scripts"],
   "exclude": ["./lib/node/utils/node.sw.js"]
 }

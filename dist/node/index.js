@@ -955,6 +955,22 @@ async function inline(file, options = {}) {
       if (/(ts|tsx)/.test(ext) && !options.noValidate) {
         const declarationDir = options.declarationDir;
         const emitDeclaration = !!declarationDir;
+        const compilerOptions = {
+          rootDir: "./",
+          outDir: "dist",
+          noEmitOnError: true,
+          noEmit: !emitDeclaration,
+          declaration: emitDeclaration,
+          composite: emitDeclaration,
+          declarationDir,
+          emitDeclarationOnly: emitDeclaration,
+          allowJs: true,
+          esModuleInterop: true,
+          inlineSourceMap: true,
+          resolveJsonModule: true,
+          removeComments: true,
+          ...(options.tsc || {}).compilerOptions
+        };
         const tscProgOptions = {
           basePath: process.cwd(),
           // always required, used for relative paths
@@ -967,26 +983,8 @@ async function inline(file, options = {}) {
           copyOtherToOutDir: false,
           clean: emitDeclaration ? [declarationDir] : [],
           ...options.tsc || {},
-          compilerOptions: {
-            rootDir: "./",
-            outDir: "dist",
-            noEmitOnError: true,
-            noEmit: !emitDeclaration,
-            declaration: emitDeclaration,
-            composite: emitDeclaration,
-            declarationDir,
-            emitDeclarationOnly: emitDeclaration,
-            allowJs: true,
-            esModuleInterop: true,
-            inlineSourceMap: true,
-            resolveJsonModule: true,
-            removeComments: true,
-            ...(options.tsc || {}).compilerOptions
-          },
-          jsxFactory: "v",
-          jsxFragment: "v.fragment"
+          compilerOptions
         };
-        console.log("tsc", tscProgOptions);
         tsc.build(tscProgOptions);
       }
       const esbuildOptions = {
@@ -997,8 +995,8 @@ async function inline(file, options = {}) {
         minify: options.compact,
         outdir: "out",
         target: "esnext",
-        jsxFactory: "v",
-        jsxFragment: "v.fragment",
+        jsx: "automatic",
+        jsxImportSource: "valyrian.js",
         loader: {
           ".js": "jsx",
           ".cjs": "jsx",

@@ -122,7 +122,24 @@ npm init -y
 npm install valyrian.js
 ```
 
-### 2. Create your app entry
+### 2. Add the TSX compiler settings
+
+Create `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "valyrian.js"
+  }
+}
+```
+
+This is the supported TSX path in Valyrian: TypeScript emits the automatic runtime and resolves TSX helpers from `valyrian.js`.
+
+That automatic runtime is a first-class vnode surface, equivalent in contract to manual `v(...)` authoring. You do not need `v` in scope for TSX, and `key` stays as structural vnode data instead of becoming component props.
+
+### 3. Create your app entry
 
 Create `index.tsx`:
 
@@ -141,12 +158,12 @@ function App() {
 mount("body", App);
 ```
 
-### 3. Create a build script
+### 4. Create a build script
 
-Create `build.js`:
+Create `build.mjs`:
 
 ```javascript
-import fs from "fs";
+import fs from "node:fs";
 import { inline } from "valyrian.js/node";
 
 async function build() {
@@ -163,10 +180,10 @@ build().catch((error) => {
 });
 ```
 
-### 4. Build and serve
+### 5. Build and serve
 
 ```bash
-node build.js
+node build.mjs
 ```
 
 Then load `dist.js` from a minimal HTML page:

@@ -44,13 +44,9 @@ function getSuspenseStore(dom, key) {
   }
   return store;
 }
-function Suspense({
-  key,
-  fallback,
-  error
-}, children) {
-  if (key === void 0 || key === null) {
-    throw new Error("Suspense requires a 'key' prop");
+function Suspense({ suspenseKey, fallback, error }, children) {
+  if (suspenseKey === void 0 || suspenseKey === null) {
+    throw new Error("Suspense requires a 'suspenseKey' prop");
   }
   return (0, import_valyrian.v)(() => {
     const hostVnode = import_valyrian.current.vnode;
@@ -58,7 +54,7 @@ function Suspense({
       throw new Error("Suspense must be rendered inside a component");
     }
     const hostDom = hostVnode.dom;
-    const store = getSuspenseStore(hostDom, key);
+    const store = getSuspenseStore(hostDom, suspenseKey);
     if (store.status === 2 && store.error) {
       if (error) {
         return error(store.error);

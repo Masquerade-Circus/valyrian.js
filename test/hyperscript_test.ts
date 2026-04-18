@@ -1,10 +1,13 @@
 import "valyrian.js/node";
 
-import { trust, v } from "valyrian.js";
+import { mount, trust, unmount, v } from "valyrian.js";
 
-import { expect, describe, test as it } from "bun:test";
+import { afterEach, beforeEach, expect, describe, test as it } from "bun:test";
 
 describe("Hyperscript", () => {
+  beforeEach(unmount);
+  afterEach(unmount);
+
   it("should create a div element", () => {
     expect(v("div", null)).toEqual({
       tag: "div",
@@ -83,6 +86,43 @@ describe("Hyperscript", () => {
       },
       children: []
     });
+  });
+
+  it("stores key on vnode.key for hyperscript", () => {
+    const vnode = v("li", { key: 7, class: "row" }, "A");
+
+    expect(vnode.key).toBe(7);
+    expect(vnode.props).toEqual({ class: "row" });
+    expect("key" in (vnode.props || {})).toBeFalse();
+    expect(vnode.children).toEqual(["A"]);
+  });
+
+  it("preserves null props when hyperscript receives null", () => {
+    const vnode = v("li", null, "A");
+
+    expect(vnode.props).toBeNull();
+    expect(vnode.key).toBeUndefined();
+    expect(vnode.children).toEqual(["A"]);
+  });
+
+  it("does not pass key inside props to manual components", () => {
+    const dom = document.createElement("div");
+    let receivedProps: any = null;
+
+    function Row(props: any) {
+      receivedProps = props;
+      return v("li", null, props.label);
+    }
+
+    function App() {
+      return v("ul", null, v(Row, { key: "row-1", label: "A" }));
+    }
+
+    mount(dom, App);
+
+    expect(dom.innerHTML).toEqual("<ul><li>A</li></ul>");
+    expect(receivedProps).toEqual({ label: "A" });
+    expect("key" in (receivedProps || {})).toBeFalse();
   });
 
   it("should create a div element from string", () => {

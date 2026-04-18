@@ -1,10 +1,12 @@
 // lib/index.ts
 var isNodeJs = Boolean(typeof process !== "undefined" && process.versions && process.versions.node);
+var fragment = /* @__PURE__ */ Symbol.for("valyrian.fragment");
 var Vnode = class {
-  constructor(tag, props, children, dom, isSVG, oldChildComponents, childComponents, hasKeys, oncreate, oncleanup, onupdate, onremove) {
+  constructor(tag, props, children, key, dom, isSVG, oldChildComponents, childComponents, hasKeys, oncreate, oncleanup, onupdate, onremove) {
     this.tag = tag;
     this.props = props;
     this.children = children;
+    this.key = key;
     this.dom = dom;
     this.isSVG = isSVG;
     this.oldChildComponents = oldChildComponents;
@@ -23,7 +25,11 @@ var isVnodeComponent = (object) => {
   return isVnode(object) && isComponent(object.tag);
 };
 function v(tagOrComponent, props, ...children) {
-  return new Vnode(tagOrComponent, props, children);
+  const key = props?.key;
+  if (typeof key !== "undefined") {
+    Reflect.deleteProperty(props, "key");
+  }
+  return new Vnode(tagOrComponent, props, children, key);
 }
 v.fragment = (_, ...children) => children;
 function hidrateDomToVnode(dom) {
@@ -566,6 +572,12 @@ function flatTree(newVnode) {
     if (newChild instanceof Vnode) {
       newChild.props = newChild.props || {};
       newChild.isSVG = newVnode.isSVG || newChild.tag === "svg";
+      if (newChild.tag === fragment) {
+        for (let l = newChild.children.length - 1; l >= 0; l--) {
+          children.push(newChild.children[l]);
+        }
+        continue;
+      }
       if (typeof newChild.tag !== "string") {
         const component = current.component = newChild.tag;
         newVnode.childComponents = newVnode.childComponents || /* @__PURE__ */ new Set();
@@ -575,7 +587,7 @@ function flatTree(newVnode) {
         );
         continue;
       }
-      newVnode.hasKeys = newVnode.hasKeys || "key" in newChild.props;
+      newVnode.hasKeys = newVnode.hasKeys || typeof newChild.key !== "undefined";
       out.push(newChild);
       continue;
     }
@@ -656,7 +668,7 @@ function patch(newVnode, oldVnode) {
     for (let i = 0, l = oldTree.length; i < l; i++) {
       newOldTree[i] = oldTree[i];
       const oldVnode2 = oldTree[i].vnode;
-      oldKeyedList[!oldVnode2 || "key" in oldVnode2.props === false ? i : oldVnode2.props.key] = i;
+      oldKeyedList[oldVnode2?.key ?? i] = i;
     }
     oldTree = newOldTree;
   }
@@ -677,7 +689,7 @@ function patch(newVnode, oldVnode) {
       }
       continue;
     }
-    const oldChild = oldTree[newVnode.hasKeys ? oldKeyedList[newChild.props.key || i] : i];
+    const oldChild = oldTree[newVnode.hasKeys ? oldKeyedList[newChild.key ?? i] : i];
     if (!oldChild || newChild.tag !== oldChild.nodeName.toLowerCase()) {
       processNewChild(newChild, newVnode, childNodes[i]);
       continue;
@@ -694,8 +706,10 @@ function patch(newVnode, oldVnode) {
       if (oldChildVnode.props["v-keep"] === newChild.props["v-keep"]) {
         continue;
       }
-      const oldProps = childNodes[i + 1]?.vnode?.props;
-      if (oldProps && "key" in oldProps === false && oldProps["v-keep"] === newChild.props["v-keep"]) {
+      const nextOldVnode = childNodes[i + 1]?.vnode;
+      const oldProps = nextOldVnode?.props;
+      const nextKey = nextOldVnode?.key;
+      if (oldProps && typeof nextKey === "undefined" && oldProps["v-keep"] === newChild.props["v-keep"]) {
         strictRemoveNode(oldChild);
         oldTree.splice(i, 1);
         continue;
@@ -801,6 +815,7 @@ export {
   debouncedUpdate,
   directive,
   directives,
+  fragment,
   hidrateDomToVnode,
   isComponent,
   isNodeJs,

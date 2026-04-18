@@ -635,6 +635,34 @@ describe("Mount and update", () => {
     expect(result).toEqual("<span>Hello</span><span>World</span>");
   });
 
+  it("should keep html stable when mounting and updating a direct fragment", () => {
+    const renderDirectFragment = () => (
+      <>
+        <span>Hello</span>
+        <span>World</span>
+      </>
+    );
+
+    expect(mount("body", renderDirectFragment)).toEqual("<span>Hello</span><span>World</span>");
+
+    const beforeNodes = Array.from(document.body.childNodes);
+
+    expect(update()).toEqual("<span>Hello</span><span>World</span>");
+    expect(Array.from(document.body.childNodes)).toEqual(beforeNodes);
+  });
+
+  it("should expand a keyed fragment without introducing wrapper semantics", () => {
+    const renderKeyedFragment = () =>
+      v(
+        "div",
+        null,
+        v(v.fragment, { key: "group-1" }, v("span", null, "Hello"), v("span", null, "World"))
+      );
+
+    expect(mount("body", renderKeyedFragment)).toEqual("<div><span>Hello</span><span>World</span></div>");
+    expect(update()).toEqual("<div><span>Hello</span><span>World</span></div>");
+  });
+
   it("should allow to use fragments in subcomponents", () => {
     const SubComponent = () => (
       <>
