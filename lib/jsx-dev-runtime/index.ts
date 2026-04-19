@@ -4,10 +4,10 @@ import {
   type Fragment as FragmentSentinel,
   type POJOComponent,
   type Properties
-} from "../index";
+} from "valyrian.js";
 
-export { Fragment, jsx, jsxs } from "../jsx-runtime";
-export type { JSX } from "../jsx-runtime";
+export { Fragment, jsx, jsxs } from "valyrian.js/jsx-runtime";
+export type { JSX } from "valyrian.js/jsx-runtime";
 
 type JsxTag = string | Component | POJOComponent | FragmentSentinel;
 type JsxProps = Properties & { children?: any };

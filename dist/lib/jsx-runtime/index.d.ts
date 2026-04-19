@@ -1,4 +1,4 @@
-import { Vnode, type Component, type Fragment as FragmentSentinel, type POJOComponent, type Properties } from "../index";
+import { Vnode, type Component, type Fragment as FragmentSentinel, type POJOComponent, type Properties } from "valyrian.js";
 type JsxTag = string | Component | POJOComponent | FragmentSentinel;
 type JsxProps = Properties & {
     children?: any;

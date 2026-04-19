@@ -6,7 +6,7 @@ import {
   type POJOComponent,
   type Properties,
   Children
-} from "../index";
+} from "valyrian.js";
 
 type JsxTag = string | Component | POJOComponent | FragmentSentinel;
 type JsxProps = Properties & { children?: any };
