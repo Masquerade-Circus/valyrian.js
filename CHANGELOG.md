@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.1.6](https://github.com/Masquerade-Circus/valyrian/compare/9.1.5...9.1.6) (2026-04-19)
+
+### Bug Fixes
+
+* fix make jsx-runtime import entities from main valyrian.js package instead of index.ts ([e1c955a](https://github.com/Masquerade-Circus/valyrian/commit/e1c955a76c6878b1386aaf507f69c88348a50cdb))
+
 ## [9.1.5](https://github.com/Masquerade-Circus/valyrian/compare/9.1.4...9.1.5) (2026-04-18)
 
 ### Code Refactoring

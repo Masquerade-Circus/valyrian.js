@@ -1,6 +1,6 @@
 {
   "name": "valyrian.js",
-  "version": "9.1.5",
+  "version": "9.1.6",
   "description": "Isomorphic runtime framework for web apps with one runtime model across browser and server.",
   "repository": "git@github.com:Masquerade-Circus/valyrian.js.git",
   "author": "Masquerade <christian@masquerade-circus.net>",
