@@ -74,6 +74,7 @@ export declare class Router {
     go(path: string, parentComponent?: Component | POJOComponent | VnodeComponentInterface): Promise<string | void>;
     getOnClickHandler(url: string): (e: MouseEvent) => void;
     private getAllRoutes;
+    private runMiddleware;
     private createRequest;
     private getErrorConditionMiddlewares;
     private handleError;

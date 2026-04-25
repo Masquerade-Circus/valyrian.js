@@ -564,9 +564,10 @@ var selfClosingTags = [
   "wbr",
   "!doctype"
 ];
-function domToHtml(dom) {
+var rawTextTags = ["script", "style"];
+function domToHtml(dom, rawText = false) {
   if (dom.nodeType === 3) {
-    return dom.textContent;
+    return rawText ? dom.textContent : escapeHtml(dom.textContent);
   }
   if (dom.nodeType === 1) {
     const name = dom.nodeName.toLowerCase();
@@ -579,7 +580,7 @@ function domToHtml(dom) {
       str += ">";
       if (dom.childNodes && dom.childNodes.length > 0) {
         for (let i = 0, l = dom.childNodes.length; i < l; i++) {
-          const child = domToHtml(dom.childNodes[i]);
+          const child = domToHtml(dom.childNodes[i], rawTextTags.includes(name));
           if (child) {
             str += child;
           }

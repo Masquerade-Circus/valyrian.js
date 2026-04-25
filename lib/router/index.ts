@@ -63,6 +63,24 @@ function isErrorClassLike(value: any): value is Error | typeof Error {
   return Boolean(value) && isString(value.name) && value.name.includes("Error");
 }
 
+const renderedNavigationResult = Symbol("renderedNavigationResult");
+
+type RenderedNavigationResult = {
+  [renderedNavigationResult]: true;
+  html: string | void;
+};
+
+function createRenderedNavigationResult(html: string | void): RenderedNavigationResult {
+  return {
+    [renderedNavigationResult]: true,
+    html
+  };
+}
+
+function isRenderedNavigationResult(value: any): value is RenderedNavigationResult {
+  return Boolean(value?.[renderedNavigationResult]);
+}
+
 // Parse a query string into an object
 function parseQuery(queryParts?: string): Record<string, any> {
   const parts = queryParts ? queryParts.split("&") : [];
@@ -383,11 +401,13 @@ export class Router {
     parentComponent?: Component | POJOComponent | VnodeComponentInterface
   ): Promise<string | void> {
     if (!path) {
-      return this.handleError(new RouterError("The URL is empty."), parentComponent);
+      const result = await this.handleError(new RouterError("The URL is empty."), parentComponent);
+      return isRenderedNavigationResult(result) ? result.html : result;
     }
 
     if (/%[^0-9A-Fa-f]{2}/.test(path)) {
-      return this.handleError(new RouterError(`The URL ${path} is malformed.`));
+      const result = await this.handleError(new RouterError(`The URL ${path} is malformed.`));
+      return isRenderedNavigationResult(result) ? result.html : result;
     }
 
     const constructedPath = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
@@ -415,7 +435,8 @@ export class Router {
       if (!route || !route.middlewares) {
         const error = new RouterError(`The URL ${constructedPath} was not found in the router's registered paths.`);
         (error as any).status = 404;
-        return this.handleError(error, parentComponent);
+        const result = await this.handleError(error, parentComponent);
+        return isRenderedNavigationResult(result) ? result.html : result;
       }
     }
 
@@ -457,15 +478,20 @@ export class Router {
 
         let component = await this.searchComponent(middlewares, parentComponent);
 
+        if (isRenderedNavigationResult(component)) {
+          return component.html;
+        }
+
         if (component === false) {
           return;
         }
 
         if (!component) {
-          return this.handleError(
+          const result = await this.handleError(
             new RouterError(`The URL ${constructedPath} did not return a valid component.`),
             parentComponent
           );
+          return isRenderedNavigationResult(result) ? result.html : result;
         }
 
         if (isComponent(parentComponent) || isVnodeComponent(parentComponent)) {
@@ -488,7 +514,8 @@ export class Router {
         } else if (isNodeJs) {
           mountedResult = mount("body", component) as string;
         } else {
-          return this.handleError(new RouterError("No container found for mounting the component."), parentComponent);
+          const result = await this.handleError(new RouterError("No container found for mounting the component."), parentComponent);
+          return isRenderedNavigationResult(result) ? result.html : result;
         }
 
         if (routeChanged) {
@@ -550,6 +577,10 @@ export class Router {
     return routes;
   }
 
+  private async runMiddleware(middleware: Middleware, request: Request, error?: Error) {
+    return middleware(request, error);
+  }
+
   private createRequest(): Request {
     return {
       params: this.params,
@@ -557,7 +588,7 @@ export class Router {
       url: this.url,
       path: this.path,
       matches: this.matches,
-      redirect: (path: string) => this.go(path)
+      redirect: async (path: string) => createRenderedNavigationResult(await this.go(path)) as any
     };
   }
 
@@ -596,7 +627,7 @@ export class Router {
   private async handleError(
     error: Error,
     parentComponent?: Component | POJOComponent | VnodeComponentInterface
-  ): Promise<void | string> {
+  ): Promise<void | string | RenderedNavigationResult> {
     const request: Request = this.createRequest();
     let component = null;
     const middlewares = this.getErrorConditionMiddlewares(error);
@@ -609,7 +640,11 @@ export class Router {
     let response;
     try {
       for (const middleware of middlewares) {
-        response = await middleware(request, error);
+        response = await this.runMiddleware(middleware, request, error);
+
+        if (isRenderedNavigationResult(response)) {
+          return response;
+        }
 
         // If the response is a component or vnode, return it for rendering
         if (response !== undefined && (isComponent(response) || isVnodeComponent(response))) {
@@ -674,7 +709,7 @@ export class Router {
 
       // If there is a container, we mount the component
       if (this.container) {
-        return mount(this.container, component);
+        return createRenderedNavigationResult(mount(this.container, component));
       }
     }
 
@@ -692,9 +727,13 @@ export class Router {
 
     for (const middleware of middlewares) {
       try {
-        response = await middleware(request);
+        response = await this.runMiddleware(middleware, request);
       } catch (error) {
         return this.handleError(error as Error, parentComponent);
+      }
+
+      if (isRenderedNavigationResult(response)) {
+        return response;
       }
 
       // If the response is a component or vnode, return it for rendering

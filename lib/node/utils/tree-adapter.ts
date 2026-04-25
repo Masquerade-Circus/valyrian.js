@@ -655,9 +655,11 @@ const selfClosingTags = [
   "!doctype"
 ];
 
-export function domToHtml(dom: Element | Text | DocumentFragment): string {
+const rawTextTags = ["script", "style"];
+
+export function domToHtml(dom: Element | Text | DocumentFragment, rawText = false): string {
   if (dom.nodeType === 3) {
-    return dom.textContent;
+    return rawText ? dom.textContent : escapeHtml(dom.textContent);
   }
 
   if (dom.nodeType === 1) {
@@ -673,7 +675,7 @@ export function domToHtml(dom: Element | Text | DocumentFragment): string {
       str += ">";
       if (dom.childNodes && dom.childNodes.length > 0) {
         for (let i = 0, l = dom.childNodes.length; i < l; i++) {
-          const child = domToHtml(dom.childNodes[i] as Element);
+          const child = domToHtml(dom.childNodes[i] as Element, rawTextTags.includes(name));
           if (child) {
             str += child;
           }

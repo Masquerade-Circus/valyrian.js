@@ -107,7 +107,7 @@ export declare class Document extends Element {
     createElementNS(ns: string, type: string): Element;
     createTextNode(text: any): Text;
 }
-export declare function domToHtml(dom: Element | Text | DocumentFragment): string;
+export declare function domToHtml(dom: Element | Text | DocumentFragment, rawText?: boolean): string;
 export declare function domToHyperscript(childNodes: ChildNodes, depth?: number): string;
 export declare function htmlToDom(html: string): Element | Text | DocumentFragment;
 export declare function htmlToHyperscript(html: string): string;

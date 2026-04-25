@@ -630,6 +630,8 @@ const TodoList = ({ items }) => (
 
 Use these when you want direct text/html assignment semantics.
 
+`v-html` is a raw HTML boundary. Valyrian renders it directly, including during SSR, so pass only trusted or already-sanitized HTML. Use normal children or `v-text` for untrusted text content.
+
 ```tsx
 const state = {
   html: "<strong>Rich text</strong>",
@@ -1043,7 +1045,7 @@ const SearchBox = {
 
 ## Raw HTML: `trust(html)`
 
-`trust` parses an HTML string into vnode-compatible children.
+`trust` parses an HTML string into vnode-compatible children and marks that HTML as intentionally raw.
 
 ```tsx
 import { trust } from "valyrian.js";
@@ -1051,7 +1053,7 @@ import { trust } from "valyrian.js";
 const Rich = ({ html }) => <article>{trust(html)}</article>;
 ```
 
-Only use trusted/sanitized HTML.
+Only use trusted or sanitized HTML. `trust(html)` is an explicit escape hatch from Valyrian's normal text escaping; in SSR it renders the provided HTML directly. Do not pass user-controlled strings unless your application has sanitized them first.
 
 ## `v-model` Contract
 
@@ -2840,6 +2842,17 @@ const html = render(<App initialState={{ path: "/" }} />);
 
 `render()` returns markup as a string.
 
+## SSR Escaping and Raw Boundaries
+
+Valyrian SSR escapes normal text nodes and attribute values by default. This lets ordinary interpolation render as text instead of executable or structural HTML.
+
+Two boundaries are intentionally raw:
+
+- `<script>` and `<style>` are raw-text contexts. Their contents are preserved as written so inline JavaScript and CSS can work.
+- `trust(html)` and `v-html` render raw HTML by design. Only pass trusted or already-sanitized HTML to those APIs.
+
+When interpolating data into an inline `<script>`, HTML escaping is not enough. Serialize that data with JavaScript-safe / JSON-safe rules before writing it into the script body.
+
 ## End-to-End HTTP + Hydration Recipe
 
 Use this pattern to ship one full browser/server runtime cycle (server render + browser hydration).
@@ -2849,8 +2862,14 @@ import { v } from "valyrian.js";
 import { render, ServerStorage } from "valyrian.js/node";
 import { App } from "./app";
 
+const serializeForInlineScript = (value: unknown) =>
+  JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+
 export function AppShell({ initialState }, children) {
-  const serializedState = JSON.stringify(initialState).replace(/</g, "\\u003c");
+  const serializedState = serializeForInlineScript(initialState);
 
   return (
     <>
@@ -2905,6 +2924,7 @@ Hydration safety checklist:
 1. Render and mount on the same container (`body` in this example).
 2. Reuse the same initial state shape on server and browser.
 3. Keep first-render markup deterministic for the same props/state.
+4. Serialize hydration state with JavaScript-safe / JSON-safe rules before placing it inside an inline `<script>`.
 
 ## Router-Driven SSR
 
@@ -3029,7 +3049,10 @@ for (const routePath of allRoutes) {
       void (async () => {
         const initialState = { path: req.url };
         const routeHtml = (await router.go(req.url)) || "";
-        const serializedState = JSON.stringify(initialState).replace(/</g, "\\u003c");
+        const serializedState = JSON.stringify(initialState)
+          .replace(/</g, "\\u003c")
+          .replace(/\u2028/g, "\\u2028")
+          .replace(/\u2029/g, "\\u2029");
         const htmlString = `${routeHtml}<script>window.__INITIAL_STATE__=${serializedState};</script><script type="module" src="/client-entry.js"></script>`;
         const html = render(<AppShell html={htmlString} />);
         res.type("html").send(html);
@@ -3049,7 +3072,10 @@ for (const routePath of allRoutes) {
     return ServerStorage.run(async () => {
       const initialState = { path: request.url };
       const routeHtml = (await router.go(request.url)) || "";
-      const serializedState = JSON.stringify(initialState).replace(/</g, "\\u003c");
+      const serializedState = JSON.stringify(initialState)
+        .replace(/</g, "\\u003c")
+        .replace(/\u2028/g, "\\u2028")
+        .replace(/\u2029/g, "\\u2029");
       const htmlString = `${routeHtml}<script>window.__INITIAL_STATE__=${serializedState};</script><script type="module" src="/client-entry.js"></script>`;
       const html = render(<AppShell html={htmlString} />);
       return reply.type("text/html").send(html);
@@ -3122,6 +3148,8 @@ const html = render(<main><h1>Hello SSR</h1></main>);
 ```
 
 You can pass multiple nodes; they are rendered in order.
+
+Serialization contract: `render(...)` escapes normal text nodes and attribute values. It preserves raw text inside `<script>` and `<style>`, and it renders raw HTML from explicit escape hatches such as `trust(html)` and `v-html`. Use those raw paths only with trusted or sanitized HTML. If you place data inside an inline `<script>`, serialize it with JavaScript-safe / JSON-safe rules before rendering.
 
 Reader note: because `render` unmounts internally, each call is isolated and does not reuse DOM state from previous calls. That per-call isolation is what makes request-by-request SSR safe.
 
@@ -4543,7 +4571,7 @@ Why pass `api` explicitly?
 
 ### 1) `app/app-shell.tsx`
 
-Renders full HTML document into `body` and safely serializes hydration state.
+Renders full HTML document into `body` and serializes hydration state for an inline JavaScript context.
 
 ```tsx
 // app/app-shell.tsx
@@ -4570,6 +4598,8 @@ export function AppShell({ routeHtml, initialState }: { routeHtml: string; initi
   );
 }
 ```
+
+SSR escapes normal text nodes and attribute values by default, but `<script>` is a raw-text context. Keep hydration state serialization JavaScript-safe / JSON-safe before placing it in the script body. The `v-html` shell above is also an explicit raw HTML boundary, so build `full` from Valyrian-rendered route HTML and your own script tags, and review any raw APIs used by those routes.
 
 ### 2) `app/server-router.tsx`
 
@@ -4967,6 +4997,9 @@ Run these in staging with realistic traffic/concurrency:
 6. If using offline queue, verify retry/backoff and recovery actions (`retryOne`, `retryAll`, `discardFailed`) ([./4.2.6-offline.md](./4.2.6-offline.md)).
 7. If using native store in Node, confirm `valyrian.js/node` is imported before store creation ([./8.3-native-store.md](./8.3-native-store.md)).
 8. If using translations in Node SSR, confirm request language isolation under concurrency ([./8.1-translate.md](./8.1-translate.md), [./7.4-server-context.md](./7.4-server-context.md)).
+9. Confirm SSR output relies on default escaping for normal text nodes and attribute values, and review any raw boundaries separately.
+10. Audit `<script>` / `<style>` contents, `trust(html)`, and `v-html` usage so only trusted or sanitized raw content reaches them.
+11. For hydration state inside inline `<script>` tags, confirm serialization is JavaScript-safe / JSON-safe; HTML escaping alone is not sufficient there.
 
 ## B) Documentation QA Checklist
 
@@ -4975,6 +5008,7 @@ Run these in staging with realistic traffic/concurrency:
 3. Confirm contract vs guidance wording is explicit (hard guarantees vs recommended patterns).
 4. Confirm chapter hubs and subpages do not duplicate full mechanics already covered elsewhere.
 5. Confirm SSR examples keep request isolation visible (`ServerStorage.run`, per-request `request.new`, per-request router).
+6. Confirm SSR security notes distinguish default text/attribute escaping from intentional raw contexts and raw HTML APIs.
 
 Run both sections before release to keep runtime and documentation quality aligned.
 

@@ -5,7 +5,7 @@ import { expect, describe, test as it } from "bun:test";
 import fs from "fs";
 import path from "path";
 import packageJson from "../package.json";
-import { v } from "valyrian.js";
+import { trust, v } from "valyrian.js";
 
 describe("Node test", () => {
   it("Get hyperscript string from html", () => {
@@ -79,6 +79,44 @@ describe("Node test", () => {
     const Component = () => <div>Hello world</div>;
 
     expect(render(<Component />)).toEqual("<div>Hello world</div>");
+  });
+
+  it("SSR escapes normal text nodes", () => {
+    const payload = "<img src=x onerror=alert(1)>";
+
+    expect(render(<div>{payload}</div>)).toEqual("<div>&lt;img src=x onerror=alert(1)&gt;</div>");
+  });
+
+  it("SSR escapes attributes", () => {
+    const payload = '"><script>alert(1)</script>';
+
+    expect(render(<div title={payload} />)).toEqual(
+      '<div title="&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;"></div>'
+    );
+  });
+
+  it("SSR preserves inline script text", () => {
+    expect(render(<script>{`if (a < b) mount(myApp)`}</script>)).toEqual(
+      "<script>if (a < b) mount(myApp)</script>"
+    );
+  });
+
+  it("SSR preserves inline style text", () => {
+    expect(render(<style>{`.x > .y { color: red; }`}</style>)).toEqual(
+      "<style>.x > .y { color: red; }</style>"
+    );
+  });
+
+  it("SSR preserves trusted raw HTML", () => {
+    expect(render(<div>{trust("<span>Hello <strong>world</strong></span>")}</div>)).toEqual(
+      "<div><span>Hello <strong>world</strong></span></div>"
+    );
+  });
+
+  it("SSR renders HTML directly when using v-html", () => {
+    const svg = '<svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h10v10H0z"></path></svg>';
+
+    expect(render(<div v-html={svg} />)).toEqual(`<div>${svg}</div>`);
   });
 
   it("should apply styles correctly", () => {

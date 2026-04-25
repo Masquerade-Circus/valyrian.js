@@ -202,6 +202,8 @@ const TodoList = ({ items }) => (
 
 Use these when you want direct text/html assignment semantics.
 
+`v-html` is a raw HTML boundary. Valyrian renders it directly, including during SSR, so pass only trusted or already-sanitized HTML. Use normal children or `v-text` for untrusted text content.
+
 ```tsx
 const state = {
   html: "<strong>Rich text</strong>",

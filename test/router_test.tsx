@@ -215,8 +215,8 @@ describe("Router", () => {
     result.after = await router.go("/hello/Mike/whats/new");
 
     expect(result).toEqual({
-      before: "<div>Hello world, what's up</div>",
-      after: "<div>Hello Mike, what's new</div>"
+      before: "<div>Hello world, what&#39;s up</div>",
+      after: "<div>Hello Mike, what&#39;s new</div>"
     });
   });
 
@@ -643,6 +643,41 @@ describe("Router", () => {
 
     expect(result).toEqual("<div>Final Route</div>");
     expect(dom.innerHTML).toEqual("<div>Final Route</div>");
+  });
+
+  it("public redirect returns html while another middleware is suspended", async () => {
+    let startedSlowMiddleware!: () => void;
+    let releaseSlowMiddleware!: () => void;
+
+    const slowMiddlewareStarted = new Promise<void>((resolve) => {
+      startedSlowMiddleware = resolve;
+    });
+    const releaseSlowMiddlewarePromise = new Promise<void>((resolve) => {
+      releaseSlowMiddleware = resolve;
+    });
+
+    const router = new Router();
+    router.add("/slow", async () => {
+      startedSlowMiddleware();
+      await releaseSlowMiddlewarePromise;
+      return () => <div>Slow Route</div>;
+    });
+    router.add("/public-target", () => () => <div>Public Target</div>);
+
+    mountRouter("body", router);
+
+    const slowNavigation = router.go("/slow");
+    await slowMiddlewareStarted;
+
+    const publicResult = await redirect("/public-target");
+
+    try {
+      expect(typeof publicResult).toEqual("string");
+      expect(publicResult).toEqual("<div>Public Target</div>");
+    } finally {
+      releaseSlowMiddleware();
+      await slowNavigation;
+    }
   });
 
   it("Test nested subrouters", async () => {
@@ -1214,7 +1249,7 @@ describe("Router", () => {
     const wildcardResult = await router.go("/level/some/random/path");
 
     expect(dynamicResult).toEqual("<div>Dynamic Route 123</div>");
-    expect(wildcardResult).toEqual("<div>Wildcard Route /level/some/random/path -> /level/.*</div>");
+    expect(wildcardResult).toEqual("<div>Wildcard Route /level/some/random/path -&gt; /level/.*</div>");
 
     const router2 = new Router();
     router2.add("/level/123", () => <DynamicComponent param="123" />);
@@ -1228,7 +1263,7 @@ describe("Router", () => {
     const wildcardResult2 = await router2.go("/level/some/random/path");
 
     expect(dynamicResult2).toEqual("<div>Dynamic Route 123</div>");
-    expect(wildcardResult2).toEqual("<div>Wildcard Route /level/some/random/path -> /level/.*</div>");
+    expect(wildcardResult2).toEqual("<div>Wildcard Route /level/some/random/path -&gt; /level/.*</div>");
   });
 
   it("Parent middlewares must be executed before child middlewares", async () => {
@@ -1390,7 +1425,7 @@ describe("Router", () => {
     const genericError = await router.go("/simulated"); // Generic console.error(
 
     expect(notFoundError).toEqual(
-      "<div>404 Not Found: The URL /nonexistent was not found in the router's registered paths.</div>"
+      "<div>404 Not Found: The URL /nonexistent was not found in the router&#39;s registered paths.</div>"
     );
     expect(typeError).toEqual("<div>Type Error: Simulated TypeError</div>");
     expect(genericError).toEqual("<div>Generic Error: Simulated Error</div>");
