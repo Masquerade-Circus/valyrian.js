@@ -160,8 +160,13 @@ interface RouteNode {
 
 class RouteTree {
   root: RouteNode = { segment: "", children: new Map(), isDynamic: false };
+  private registeredRoutes = new Set<string>();
 
   addRoute(path: string, middlewares: Middlewares) {
+    if (!path.includes(".*") && this.registeredRoutes.has(path)) {
+      throw new RouterError(`Route ${path} is already registered.`);
+    }
+
     const segments = path === "/" ? [path] : path.split("/").filter(Boolean); // Divide the path into segments
     let currentNode = this.root;
 
@@ -182,6 +187,7 @@ class RouteTree {
     }
 
     currentNode.middlewares = middlewares; // Assign the middlewares to the last node
+    this.registeredRoutes.add(path);
   }
 
   // Search for a route in the tree

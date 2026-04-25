@@ -83,7 +83,11 @@ function hasRouteChanged(nextRoute, currentRoute) {
 }
 var RouteTree = class {
   root = { segment: "", children: /* @__PURE__ */ new Map(), isDynamic: false };
+  registeredRoutes = /* @__PURE__ */ new Set();
   addRoute(path, middlewares) {
+    if (!path.includes(".*") && this.registeredRoutes.has(path)) {
+      throw new RouterError(`Route ${path} is already registered.`);
+    }
     const segments = path === "/" ? [path] : path.split("/").filter(Boolean);
     let currentNode = this.root;
     for (const segment of segments) {
@@ -100,6 +104,7 @@ var RouteTree = class {
       currentNode = currentNode.children.get(key);
     }
     currentNode.middlewares = middlewares;
+    this.registeredRoutes.add(path);
   }
   // Search for a route in the tree
   // eslint-disable-next-line sonarjs/cognitive-complexity

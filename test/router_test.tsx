@@ -19,7 +19,6 @@ describe("Router", () => {
         () => Component
       )
       .add("/hello", [() => console.log("Hello 2"), () => Component])
-      .add("/hello/", [() => console.log("Hello 3"), () => Component])
       .add("/:hello", [() => console.log("Hello 4"), () => Component])
       .add("/hello/.*", [() => console.log("Hello 5"), () => Component])
       .add(
@@ -39,7 +38,6 @@ describe("Router", () => {
         () => Component
       )
       .add("/hello", [() => console.log("Hello 2"), () => Component])
-      .add("/hello/", [() => console.log("Hello 3"), () => Component])
       .add("/:hello", [() => console.log("Hello 4"), () => Component])
       .add("/hello/.*", [() => console.log("Hello 5"), () => Component])
       .add(
@@ -814,6 +812,40 @@ describe("Router", () => {
 
     await router.go("/");
     expect(middlewareLog).toEqual(["Global Middleware", "Local Middleware"]);
+  });
+
+  it("should reject duplicate exact paths", () => {
+    const router = new Router();
+
+    router.add("/admin", () => "Admin");
+
+    expect(() => router.add("/admin", () => "Duplicate admin")).toThrow("Route /admin is already registered.");
+  });
+
+  it("should apply wildcard middleware to child routes", async () => {
+    const middlewareLog: string[] = [];
+
+    const router = new Router();
+    router.add("/admin/.*", () => middlewareLog.push("auth"));
+    router.add("/admin/secret", () => middlewareLog.push("handler"), () => "Secret");
+
+    mountRouter("body", router);
+
+    expect(await router.go("/admin/secret")).toEqual("Secret");
+    expect(middlewareLog).toEqual(["auth", "handler"]);
+  });
+
+  it("should apply global middleware to child routes", async () => {
+    const middlewareLog: string[] = [];
+
+    const router = new Router();
+    router.add(() => middlewareLog.push("global"));
+    router.add("/admin/secret", () => middlewareLog.push("handler"), () => "Secret");
+
+    mountRouter("body", router);
+
+    expect(await router.go("/admin/secret")).toEqual("Secret");
+    expect(middlewareLog).toEqual(["global", "handler"]);
   });
 
   it("Test invalid routes do not corrupt the route tree", async () => {
