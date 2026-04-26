@@ -1,5 +1,22 @@
 # Changelog
 
+## [9.1.7](https://github.com/Masquerade-Circus/valyrian/compare/9.1.6...9.1.7) (2026-04-26)
+
+### Bug Fixes
+
+* **main:** skip reserved raw html dom properties ([5456315](https://github.com/Masquerade-Circus/valyrian/commit/54563153bf21606a9060acf2690089eceafad756))
+* **router:** fix duplicate route registration ([ecce737](https://github.com/Masquerade-Circus/valyrian/commit/ecce73709b1c25d7c2fd8473d8cef3bc1e2cd2d9))
+* **router:** fix SSR text escaping ([2a7cd5e](https://github.com/Masquerade-Circus/valyrian/commit/2a7cd5e2eb0e1e09263f75ed4c9132e258b39528))
+
+### Documentation
+
+* update documentation ([23cee63](https://github.com/Masquerade-Circus/valyrian/commit/23cee6325b44acd9382267066666d7ac278022a6))
+
+### Code Refactoring
+
+* **router:** restrict v-route directive to internal paths ([8d8f168](https://github.com/Masquerade-Circus/valyrian/commit/8d8f1687d945428cfcb42ba693105fd938a8db5c))
+* **tree-adapter:** harden Ssr html parser against deep nesting ([1500fd1](https://github.com/Masquerade-Circus/valyrian/commit/1500fd1cfd6287f14248d11748c11c083b65eb07))
+
 ## [9.1.6](https://github.com/Masquerade-Circus/valyrian/compare/9.1.5...9.1.6) (2026-04-19)
 
 ### Bug Fixes
