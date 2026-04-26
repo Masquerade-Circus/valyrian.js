@@ -632,6 +632,8 @@ Use these when you want direct text/html assignment semantics.
 
 `v-html` is a raw HTML boundary. Valyrian renders it directly, including during SSR, so pass only trusted or already-sanitized HTML. Use normal children or `v-text` for untrusted text content.
 
+`v-html` does not sanitize, filter, rewrite, or strip tags, attributes, event handlers, or URLs. It preserves raw HTML by design. Sanitization, allowlists, and provenance checks belong to application code before calling this API.
+
 ```tsx
 const state = {
   html: "<strong>Rich text</strong>",
@@ -1054,6 +1056,8 @@ const Rich = ({ html }) => <article>{trust(html)}</article>;
 ```
 
 Only use trusted or sanitized HTML. `trust(html)` is an explicit escape hatch from Valyrian's normal text escaping; in SSR it renders the provided HTML directly. Do not pass user-controlled strings unless your application has sanitized them first.
+
+`trust(html)` does not sanitize, filter, rewrite, or strip tags, attributes, event handlers, or URLs. It preserves raw HTML by design. Sanitization, allowlists, and provenance checks belong to application code before calling this API.
 
 ## `v-model` Contract
 
@@ -1518,6 +1522,8 @@ request(method, url, data?, options?)
 ```
 
 Reader-safe default: use helper methods (`request.get`, `request.post`, ...). They pass the expected lowercase method names.
+
+`url` may be relative or absolute. Absolute URLs are supported intentionally for external APIs and SSR/server integrations. Validate user-controlled URLs before passing them to `request`.
 
 Generated helpers depend on `allowedMethods`:
 
@@ -3229,6 +3235,10 @@ flowchart TD
 - In Node.js:
   - relative URLs are resolved against `urls.node`.
   - absolute URLs matching `urls.api` are rewritten to `urls.node`.
+
+Absolute URL support is intentional. `request` is an HTTP client, not an internal router, so it may call external APIs, local services, or server-only endpoints. In Node.js, absolute URLs that match `urls.api` are rewritten to `urls.node`; other absolute URLs are kept unchanged by design.
+
+Do not pass user-controlled URLs to `request` unless your application has validated them first. Host allowlists, SSRF policy, and tenant-specific routing rules belong at the application boundary or in a request plugin.
 
 ## Scoped Request Instances per Incoming Request
 

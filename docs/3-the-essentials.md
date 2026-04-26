@@ -204,6 +204,8 @@ Use these when you want direct text/html assignment semantics.
 
 `v-html` is a raw HTML boundary. Valyrian renders it directly, including during SSR, so pass only trusted or already-sanitized HTML. Use normal children or `v-text` for untrusted text content.
 
+`v-html` does not sanitize, filter, rewrite, or strip tags, attributes, event handlers, or URLs. It preserves raw HTML by design. Sanitization, allowlists, and provenance checks belong to application code before calling this API.
+
 ```tsx
 const state = {
   html: "<strong>Rich text</strong>",
