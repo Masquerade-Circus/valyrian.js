@@ -140,7 +140,11 @@ var reservedProps = /* @__PURE__ */ new Set([
   "v-create",
   "v-update",
   "v-cleanup",
-  "v-remove"
+  "v-remove",
+  // Just for security reasons avoid to use this properties
+  "innerHTML",
+  "outerHTML",
+  "srcdoc"
 ]);
 var SUBTREE_LC = /* @__PURE__ */ Symbol.for("valyrian.subtreeLifecycle");
 function markSubtreeLifecycle(dom) {

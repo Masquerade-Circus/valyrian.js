@@ -157,7 +157,12 @@ export const reservedProps = new Set<string>([
   "v-create",
   "v-update",
   "v-cleanup",
-  "v-remove"
+  "v-remove",
+
+  // Just for security reasons avoid to use this properties
+  "innerHTML",
+  "outerHTML",
+  "srcdoc"
 ]);
 
 enum SetType {

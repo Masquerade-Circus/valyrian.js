@@ -453,6 +453,32 @@ describe("Directives", () => {
       const result = mount("body", Component);
       expect(result).toEqual("<div></div>");
     });
+
+    it("should not apply raw DOM HTML properties as attributes or DOM properties", () => {
+      const Component = () => (
+        <iframe
+          innerHTML="<span>ignored</span>"
+          outerHTML="<section>ignored</section>"
+          srcdoc="<script>ignored()</script>"
+        >
+          safe
+        </iframe>
+      );
+
+      const div = document.createElement("div");
+
+      const result = mount(div, Component);
+      const iframe = div.childNodes[0] as HTMLIFrameElement;
+      const attributeNames = Array.from(iframe.attributes).map((attr) => attr.nodeName);
+
+      expect(result).toEqual("<iframe>safe</iframe>");
+      expect(attributeNames).not.toContain("innerHTML");
+      expect(attributeNames).not.toContain("outerHTML");
+      expect(attributeNames).not.toContain("srcdoc");
+      expect(iframe.innerHTML).toEqual("safe");
+      expect(iframe.outerHTML).toEqual("<iframe>safe</iframe>");
+      expect(iframe.srcdoc).not.toEqual("<script>ignored()</script>");
+    });
   });
 
   // lifecycle hooks
