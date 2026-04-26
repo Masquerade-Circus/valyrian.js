@@ -217,3 +217,22 @@ describe("Html to Tree index", () => {
     expect(result.childNodes).toHaveLength(0);
   });
 });
+
+function nestedHtml(depth: number) {
+  return `${"<div>".repeat(depth)}x${"</div>".repeat(depth)}`;
+}
+
+describe("HTML parser safety", () => {
+  it("rejects excessively deep HTML with a controlled parser error", () => {
+    expect(() => htmlToDom(nestedHtml(20000))).toThrow("HTML input exceeds maximum parser depth");
+  });
+
+  it("continues to parse normally nested HTML", () => {
+    const result = htmlToDom("<main><section><p>Hello</p></section></main>");
+
+    expect(result).toHaveProperty("tagName", "MAIN");
+    expect(result).toHaveProperty("childNodes.0.tagName", "SECTION");
+    expect(result).toHaveProperty("childNodes.0.childNodes.0.tagName", "P");
+    expect(result).toHaveProperty("childNodes.0.childNodes.0.childNodes.0.nodeValue", "Hello");
+  });
+});

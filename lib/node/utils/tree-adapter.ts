@@ -16,7 +16,10 @@ interface NodeWithDispatch extends Node {
 }
 
 export class Event {
-  constructor(public type: string, public options: EventInit = {}) {
+  constructor(
+    public type: string,
+    public options: EventInit = {}
+  ) {
     this.bubbles = options.bubbles ?? false;
     this.cancelable = options.cancelable ?? false;
   }
@@ -426,22 +429,32 @@ export class Element extends Node {
     }
   }
 
-  addEventListener(type: string, callback: EventListenerOrEventListenerObject | null, _options?: boolean | AddEventListenerOptions | undefined): void {
+  addEventListener(
+    type: string,
+    callback: EventListenerOrEventListenerObject | null,
+    _options?: boolean | AddEventListenerOptions | undefined
+  ): void {
     if (!callback) return;
-    const handler = typeof callback === "function" ? callback : (callback as EventListenerObject).handleEvent?.bind(callback);
+    const handler =
+      typeof callback === "function" ? callback : (callback as EventListenerObject).handleEvent?.bind(callback);
     if (!handler) return;
-    
+
     if (!this.#listeners.has(type)) {
       this.#listeners.set(type, new Set());
     }
     this.#listeners.get(type)!.add(handler);
   }
 
-  removeEventListener(type: string, callback: EventListenerOrEventListenerObject | null, _options?: boolean | EventListenerOptions | undefined): void {
+  removeEventListener(
+    type: string,
+    callback: EventListenerOrEventListenerObject | null,
+    _options?: boolean | EventListenerOptions | undefined
+  ): void {
     if (!callback) return;
-    const handler = typeof callback === "function" ? callback : (callback as EventListenerObject).handleEvent?.bind(callback);
+    const handler =
+      typeof callback === "function" ? callback : (callback as EventListenerObject).handleEvent?.bind(callback);
     if (!handler) return;
-    
+
     this.#listeners.get(type)?.delete(handler);
   }
 
@@ -749,122 +762,112 @@ interface ObjectIndexItemWithContent extends ObjectIndexItem {
 
 interface ObjectIndexList extends Array<ObjectIndexItem> {}
 
+const MAX_HTML_PARSER_DEPTH = 15000;
+const MAX_HTML_PARSER_NODES = 100000;
+
+function assertParserDepth(depth: number) {
+  if (depth > MAX_HTML_PARSER_DEPTH) {
+    throw new Error("HTML input exceeds maximum parser depth");
+  }
+}
+
+function assertParserNodes(nodes: number) {
+  if (nodes > MAX_HTML_PARSER_NODES) {
+    throw new Error("HTML input exceeds maximum parser nodes");
+  }
+}
+
+function createTextIndexItem(startsAt: number, endsAt: number, nodeValue: string): ObjectIndexItemWithContent {
+  return {
+    tagName: "#text",
+    startsAt,
+    endsAt,
+    contentStartsAt: startsAt,
+    contentEndsAt: endsAt,
+    attributes: {},
+    children: [],
+    nodeValue
+  };
+}
+
 function findTexts(item: ObjectIndexItemWithContent, html: string) {
-  const newChildren: ObjectIndexItemWithContent[] = [];
+  const stack = [item];
 
-  // If the item has children
-  if (item.children.length) {
-    // Search for texts in the children.
-    for (let i = 0; i < item.children.length; i++) {
-      const child = item.children[i];
-      const nextChild = item.children[i + 1];
+  while (stack.length) {
+    const current = stack.pop() as ObjectIndexItemWithContent;
+    const originalChildren = current.children;
+    const newChildren: ObjectIndexItemWithContent[] = [];
 
-      // If is the first child and the child startsAt is greater than the item contentStartsAt then
-      // the content between the item contentStartsAt and the child startsAt is a text child of the item.
-      if (i === 0 && child.startsAt > item.contentStartsAt) {
-        const childContent = html.substring(item.contentStartsAt, child.startsAt);
+    if (originalChildren.length) {
+      for (let i = 0; i < originalChildren.length; i++) {
+        const child = originalChildren[i];
+        const nextChild = originalChildren[i + 1];
 
-        const childText: ObjectIndexItemWithContent = {
-          tagName: "#text",
-          startsAt: item.contentStartsAt,
-          endsAt: item.contentStartsAt + childContent.length,
-          contentStartsAt: item.contentStartsAt,
-          contentEndsAt: item.contentStartsAt + childContent.length,
-          attributes: {},
-          children: [],
-          nodeValue: childContent
-        };
+        if (i === 0 && child.startsAt > current.contentStartsAt) {
+          const childContent = html.substring(current.contentStartsAt, child.startsAt);
+          newChildren.push(
+            createTextIndexItem(current.contentStartsAt, current.contentStartsAt + childContent.length, childContent)
+          );
+        }
 
-        newChildren.push(childText);
+        newChildren.push(child);
+
+        if (nextChild && child.endsAt < nextChild.startsAt) {
+          const childContent = html.substring(child.endsAt, nextChild.startsAt);
+          newChildren.push(createTextIndexItem(child.endsAt, child.endsAt + childContent.length, childContent));
+        }
+
+        if (!nextChild && child.endsAt < current.contentEndsAt) {
+          const childContent = html.substring(child.endsAt, current.contentEndsAt);
+          newChildren.push(createTextIndexItem(child.endsAt, current.contentEndsAt, childContent));
+        }
       }
 
-      // Add the child to the newChildren array.
-      newChildren.push(child);
-
-      // If there is a next child and the child endsAt is less than the next child startsAt then
-      // the content between the child endsAt and the next child startsAt is a text child of the item.
-      if (nextChild && child.endsAt < nextChild.startsAt) {
-        const childContent = html.substring(child.endsAt, nextChild.startsAt);
-
-        const childText: ObjectIndexItemWithContent = {
-          tagName: "#text",
-          startsAt: child.endsAt,
-          endsAt: child.endsAt + childContent.length,
-          contentStartsAt: child.endsAt,
-          contentEndsAt: child.endsAt + childContent.length,
-          attributes: {},
-          children: [],
-          nodeValue: childContent
-        };
-
-        newChildren.push(childText);
+      for (let i = originalChildren.length - 1; i >= 0; i--) {
+        stack.push(originalChildren[i]);
       }
+    } else {
+      const childContent = html.substring(current.contentStartsAt, current.contentEndsAt);
 
-      // If there are no next child and the child endsAt is less than the item contentEndsAt then
-      // the content between the child endsAt and the item contentEndsAt is a text child of the item.
-      if (!nextChild && child.endsAt < item.contentEndsAt) {
-        const childContent = html.substring(child.endsAt, item.contentEndsAt);
-
-        const childText: ObjectIndexItemWithContent = {
-          tagName: "#text",
-          startsAt: child.endsAt,
-          endsAt: child.endsAt + childContent.length,
-          contentStartsAt: child.endsAt,
-          contentEndsAt: item.contentEndsAt,
-          attributes: {},
-          children: [],
-          nodeValue: childContent
-        };
-
-        newChildren.push(childText);
+      if (childContent.length) {
+        newChildren.push(createTextIndexItem(current.contentStartsAt, current.contentEndsAt, childContent));
       }
-
-      // Find texts in the child.
-      findTexts(child, html);
     }
+
+    current.children = newChildren;
+  }
+}
+
+function createDomNode<T extends Node>(item: ObjectIndexItemWithContent): T {
+  if (item.tagName === "#text") {
+    return document.createTextNode(item.nodeValue as string) as unknown as T;
   }
 
-  // If the item has no children then set the contents between the item contentStartsAt and the item contentEndsAt
-  // as a text child of the item.
-  if (!item.children.length) {
-    const childContent = html.substring(item.contentStartsAt, item.contentEndsAt);
+  const node = (item.tagName === "#document-fragment"
+    ? document.createDocumentFragment()
+    : document.createElement(item.tagName)) as unknown as T;
 
-    if (childContent.length) {
-      const childText: ObjectIndexItemWithContent = {
-        tagName: "#text",
-        startsAt: item.contentStartsAt,
-        endsAt: item.contentEndsAt,
-        contentStartsAt: item.contentStartsAt,
-        contentEndsAt: item.contentEndsAt,
-        attributes: {},
-        children: [],
-        nodeValue: childContent
-      };
-
-      newChildren.push(childText);
-    }
+  for (const key in item.attributes) {
+    node.setAttribute(key, item.attributes[key]);
   }
 
-  item.children = newChildren;
+  return node;
 }
 
 function convertToDom<T extends Node>(item: ObjectIndexItemWithContent): T {
-  let node: T;
+  const node = createDomNode<T>(item);
+  const stack: { item: ObjectIndexItemWithContent; parent: Node }[] = item.children
+    .map((child) => ({ item: child, parent: node }))
+    .reverse();
 
-  if (item.tagName === "#text") {
-    node = document.createTextNode(item.nodeValue as string) as unknown as T;
-  } else {
-    node = (item.tagName === "#document-fragment"
-      ? document.createDocumentFragment()
-      : document.createElement(item.tagName)) as unknown as T;
+  while (stack.length) {
+    const current = stack.pop() as { item: ObjectIndexItemWithContent; parent: Node };
+    const childNode = createDomNode(current.item);
 
-    for (const key in item.attributes) {
-      node.setAttribute(key, item.attributes[key]);
-    }
+    current.parent.appendChild(childNode);
 
-    for (let i = 0; i < item.children.length; i++) {
-      const child = convertToDom(item.children[i]);
-      node.appendChild(child);
+    for (let i = current.item.children.length - 1; i >= 0; i--) {
+      stack.push({ item: current.item.children[i], parent: childNode });
     }
   }
 
@@ -876,26 +879,25 @@ function getObjectIndexTree(html: string): DocumentFragment {
   let item;
   const regex = RegExp("<([^>|^!]+)>", "g");
   const items: ObjectIndexList = [];
+  const openItems: ObjectIndexList = [];
+  let nodeCount = 0;
 
   // Make the initial list of items.
   while ((item = regex.exec(html))) {
     // If is a closing tag
     if (item[0].startsWith("</")) {
-      const lastOpenedItem = [...items].reverse().find((item) => item.endsAt === null);
+      const lastOpenedItem = openItems.pop();
       if (lastOpenedItem) {
         lastOpenedItem.endsAt = item.index + item[0].length;
         lastOpenedItem.contentEndsAt = item.index;
 
         // Find the last opened item again, this will be the parent of the current item.
-        const parent = [...items].reverse().find((item) => item.endsAt === null);
+        const parent = openItems[openItems.length - 1];
         if (parent) {
-          // Find the index of the current item in the items array.
-          const index = items.indexOf(lastOpenedItem);
-          // Remove the last opened item from the items array.
-          items.splice(index, 1);
-
           // Add the last opened item as a child of the parent.
           parent.children.push(lastOpenedItem);
+        } else {
+          items.push(lastOpenedItem);
         }
       }
 
@@ -913,6 +915,9 @@ function getObjectIndexTree(html: string): DocumentFragment {
       children: [],
       nodeValue: null
     };
+
+    nodeCount++;
+    assertParserNodes(nodeCount);
 
     // Find the attributes of the tag.
     let string = (item[1] || "").substring(element.tagName.length + 1).replace(/\/$/g, "");
@@ -949,11 +954,12 @@ function getObjectIndexTree(html: string): DocumentFragment {
 
     // If the tag is self closing
     if (item[0].endsWith("/>")) {
+      assertParserDepth(openItems.length + 1);
       element.endsAt = element.startsAt + item[0].length;
       element.contentStartsAt = element.contentEndsAt = element.endsAt;
 
       // Find the last opened item, this will be the parent of the current item.
-      const parent = [...items].reverse().find((item) => item.endsAt === null);
+      const parent = openItems[openItems.length - 1];
       if (parent) {
         // Add the last opened item as a child of the parent.
         parent.children.push(element);
@@ -961,7 +967,25 @@ function getObjectIndexTree(html: string): DocumentFragment {
       }
     }
 
-    items.push(element);
+    if (item[0].endsWith("/>")) {
+      items.push(element);
+    } else {
+      assertParserDepth(openItems.length + 1);
+      openItems.push(element);
+    }
+  }
+
+  while (openItems.length) {
+    const openItem = openItems.pop() as ObjectIndexItem;
+    openItem.endsAt = html.length;
+    openItem.contentEndsAt = html.length;
+
+    const parent = openItems[openItems.length - 1];
+    if (parent) {
+      parent.children.push(openItem);
+    } else {
+      items.push(openItem);
+    }
   }
 
   const fragmentItem: ObjectIndexItemWithContent = {

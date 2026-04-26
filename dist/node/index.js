@@ -675,88 +675,87 @@ ${spaces}`;
     }
   }).join(",");
 }
+var MAX_HTML_PARSER_DEPTH = 15e3;
+var MAX_HTML_PARSER_NODES = 1e5;
+function assertParserDepth(depth) {
+  if (depth > MAX_HTML_PARSER_DEPTH) {
+    throw new Error("HTML input exceeds maximum parser depth");
+  }
+}
+function assertParserNodes(nodes) {
+  if (nodes > MAX_HTML_PARSER_NODES) {
+    throw new Error("HTML input exceeds maximum parser nodes");
+  }
+}
+function createTextIndexItem(startsAt, endsAt, nodeValue) {
+  return {
+    tagName: "#text",
+    startsAt,
+    endsAt,
+    contentStartsAt: startsAt,
+    contentEndsAt: endsAt,
+    attributes: {},
+    children: [],
+    nodeValue
+  };
+}
 function findTexts(item, html2) {
-  const newChildren = [];
-  if (item.children.length) {
-    for (let i = 0; i < item.children.length; i++) {
-      const child = item.children[i];
-      const nextChild = item.children[i + 1];
-      if (i === 0 && child.startsAt > item.contentStartsAt) {
-        const childContent = html2.substring(item.contentStartsAt, child.startsAt);
-        const childText = {
-          tagName: "#text",
-          startsAt: item.contentStartsAt,
-          endsAt: item.contentStartsAt + childContent.length,
-          contentStartsAt: item.contentStartsAt,
-          contentEndsAt: item.contentStartsAt + childContent.length,
-          attributes: {},
-          children: [],
-          nodeValue: childContent
-        };
-        newChildren.push(childText);
+  const stack = [item];
+  while (stack.length) {
+    const current = stack.pop();
+    const originalChildren = current.children;
+    const newChildren = [];
+    if (originalChildren.length) {
+      for (let i = 0; i < originalChildren.length; i++) {
+        const child = originalChildren[i];
+        const nextChild = originalChildren[i + 1];
+        if (i === 0 && child.startsAt > current.contentStartsAt) {
+          const childContent = html2.substring(current.contentStartsAt, child.startsAt);
+          newChildren.push(
+            createTextIndexItem(current.contentStartsAt, current.contentStartsAt + childContent.length, childContent)
+          );
+        }
+        newChildren.push(child);
+        if (nextChild && child.endsAt < nextChild.startsAt) {
+          const childContent = html2.substring(child.endsAt, nextChild.startsAt);
+          newChildren.push(createTextIndexItem(child.endsAt, child.endsAt + childContent.length, childContent));
+        }
+        if (!nextChild && child.endsAt < current.contentEndsAt) {
+          const childContent = html2.substring(child.endsAt, current.contentEndsAt);
+          newChildren.push(createTextIndexItem(child.endsAt, current.contentEndsAt, childContent));
+        }
       }
-      newChildren.push(child);
-      if (nextChild && child.endsAt < nextChild.startsAt) {
-        const childContent = html2.substring(child.endsAt, nextChild.startsAt);
-        const childText = {
-          tagName: "#text",
-          startsAt: child.endsAt,
-          endsAt: child.endsAt + childContent.length,
-          contentStartsAt: child.endsAt,
-          contentEndsAt: child.endsAt + childContent.length,
-          attributes: {},
-          children: [],
-          nodeValue: childContent
-        };
-        newChildren.push(childText);
+      for (let i = originalChildren.length - 1; i >= 0; i--) {
+        stack.push(originalChildren[i]);
       }
-      if (!nextChild && child.endsAt < item.contentEndsAt) {
-        const childContent = html2.substring(child.endsAt, item.contentEndsAt);
-        const childText = {
-          tagName: "#text",
-          startsAt: child.endsAt,
-          endsAt: child.endsAt + childContent.length,
-          contentStartsAt: child.endsAt,
-          contentEndsAt: item.contentEndsAt,
-          attributes: {},
-          children: [],
-          nodeValue: childContent
-        };
-        newChildren.push(childText);
+    } else {
+      const childContent = html2.substring(current.contentStartsAt, current.contentEndsAt);
+      if (childContent.length) {
+        newChildren.push(createTextIndexItem(current.contentStartsAt, current.contentEndsAt, childContent));
       }
-      findTexts(child, html2);
     }
+    current.children = newChildren;
   }
-  if (!item.children.length) {
-    const childContent = html2.substring(item.contentStartsAt, item.contentEndsAt);
-    if (childContent.length) {
-      const childText = {
-        tagName: "#text",
-        startsAt: item.contentStartsAt,
-        endsAt: item.contentEndsAt,
-        contentStartsAt: item.contentStartsAt,
-        contentEndsAt: item.contentEndsAt,
-        attributes: {},
-        children: [],
-        nodeValue: childContent
-      };
-      newChildren.push(childText);
-    }
+}
+function createDomNode(item) {
+  if (item.tagName === "#text") {
+    return document.createTextNode(item.nodeValue);
   }
-  item.children = newChildren;
+  const node = item.tagName === "#document-fragment" ? document.createDocumentFragment() : document.createElement(item.tagName);
+  for (const key in item.attributes) {
+    node.setAttribute(key, item.attributes[key]);
+  }
+  return node;
 }
 function convertToDom(item) {
-  let node;
-  if (item.tagName === "#text") {
-    node = document.createTextNode(item.nodeValue);
-  } else {
-    node = item.tagName === "#document-fragment" ? document.createDocumentFragment() : document.createElement(item.tagName);
-    for (const key in item.attributes) {
-      node.setAttribute(key, item.attributes[key]);
-    }
-    for (let i = 0; i < item.children.length; i++) {
-      const child = convertToDom(item.children[i]);
-      node.appendChild(child);
+  const node = createDomNode(item);
+  const stack = item.children.map((child) => ({ item: child, parent: node })).reverse();
+  while (stack.length) {
+    const current = stack.pop();
+    const childNode = createDomNode(current.item);
+    current.parent.appendChild(childNode);
+    for (let i = current.item.children.length - 1; i >= 0; i--) {
+      stack.push({ item: current.item.children[i], parent: childNode });
     }
   }
   return node;
@@ -765,17 +764,19 @@ function getObjectIndexTree(html2) {
   let item;
   const regex = RegExp("<([^>|^!]+)>", "g");
   const items = [];
+  const openItems = [];
+  let nodeCount = 0;
   while (item = regex.exec(html2)) {
     if (item[0].startsWith("</")) {
-      const lastOpenedItem = [...items].reverse().find((item2) => item2.endsAt === null);
+      const lastOpenedItem = openItems.pop();
       if (lastOpenedItem) {
         lastOpenedItem.endsAt = item.index + item[0].length;
         lastOpenedItem.contentEndsAt = item.index;
-        const parent = [...items].reverse().find((item2) => item2.endsAt === null);
+        const parent = openItems[openItems.length - 1];
         if (parent) {
-          const index = items.indexOf(lastOpenedItem);
-          items.splice(index, 1);
           parent.children.push(lastOpenedItem);
+        } else {
+          items.push(lastOpenedItem);
         }
       }
       continue;
@@ -790,6 +791,8 @@ function getObjectIndexTree(html2) {
       children: [],
       nodeValue: null
     };
+    nodeCount++;
+    assertParserNodes(nodeCount);
     let string = (item[1] || "").substring(element.tagName.length + 1).replace(/\/$/g, "");
     const attributesWithValues = string.match(/\S+="[^"]+"/g);
     if (attributesWithValues) {
@@ -819,15 +822,32 @@ function getObjectIndexTree(html2) {
       }
     }
     if (item[0].endsWith("/>")) {
+      assertParserDepth(openItems.length + 1);
       element.endsAt = element.startsAt + item[0].length;
       element.contentStartsAt = element.contentEndsAt = element.endsAt;
-      const parent = [...items].reverse().find((item2) => item2.endsAt === null);
+      const parent = openItems[openItems.length - 1];
       if (parent) {
         parent.children.push(element);
         continue;
       }
     }
-    items.push(element);
+    if (item[0].endsWith("/>")) {
+      items.push(element);
+    } else {
+      assertParserDepth(openItems.length + 1);
+      openItems.push(element);
+    }
+  }
+  while (openItems.length) {
+    const openItem = openItems.pop();
+    openItem.endsAt = html2.length;
+    openItem.contentEndsAt = html2.length;
+    const parent = openItems[openItems.length - 1];
+    if (parent) {
+      parent.children.push(openItem);
+    } else {
+      items.push(openItem);
+    }
   }
   const fragmentItem = {
     tagName: "#document-fragment",
