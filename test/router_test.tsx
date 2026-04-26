@@ -510,6 +510,41 @@ describe("Router", () => {
     expect(targetRenderCount).toEqual(1);
   });
 
+  it("should only render href for internal v-route paths", async () => {
+    const Source = () => (
+      <div>
+        <a v-route="/target?ok=true#hash">Internal</a>
+        <a v-route="javascript:alert(1)">Javascript</a>
+        <a v-route="data:text/html,<script>alert(1)</script>">Data</a>
+        <a v-route="https://example.com/target">External</a>
+        <a v-route="//example.com/target">Protocol relative</a>
+      </div>
+    );
+
+    const router = new Router();
+    router.add("/source", () => Source);
+    mountRouter("body", router);
+
+    expect(await router.go("/source")).toEqual(
+      '<div><a href="/target?ok=true#hash">Internal</a><a>Javascript</a><a>Data</a><a>External</a><a>Protocol relative</a></div>'
+    );
+  });
+
+  it("should remove previous v-route href when a route changes to an external URL", async () => {
+    let route = "/target";
+    const dom = document.createElement("div");
+    const Source = () => <a v-route={route}>Go</a>;
+
+    const router = new Router();
+    router.add("/source", () => Source);
+    mountRouter(dom, router);
+
+    expect(await router.go("/source")).toEqual('<a href="/target">Go</a>');
+
+    route = "javascript:alert(1)";
+    expect(update()).toEqual("<a>Go</a>");
+  });
+
   it("should keep public route state coherent when delegated navigation fails", async () => {
     const listeners: Record<string, (event: Event) => void> = {};
     const unhandledRejections: unknown[] = [];
@@ -862,7 +897,11 @@ describe("Router", () => {
 
     const router = new Router();
     router.add("/admin/.*", () => middlewareLog.push("auth"));
-    router.add("/admin/secret", () => middlewareLog.push("handler"), () => "Secret");
+    router.add(
+      "/admin/secret",
+      () => middlewareLog.push("handler"),
+      () => "Secret"
+    );
 
     mountRouter("body", router);
 
@@ -875,7 +914,11 @@ describe("Router", () => {
 
     const router = new Router();
     router.add(() => middlewareLog.push("global"));
-    router.add("/admin/secret", () => middlewareLog.push("handler"), () => "Secret");
+    router.add(
+      "/admin/secret",
+      () => middlewareLog.push("handler"),
+      () => "Secret"
+    );
 
     mountRouter("body", router);
 
@@ -1320,11 +1363,15 @@ describe("Router", () => {
           const HooksComponent = () => {
             onCreate(() => {
               beforeRoute((next, currentRoute) => {
-                beforeEvents.push(`${sessionStorage.getItem("request-id")}:${currentRoute?.path || "none"}->${next.path}`);
+                beforeEvents.push(
+                  `${sessionStorage.getItem("request-id")}:${currentRoute?.path || "none"}->${next.path}`
+                );
               });
 
               afterRoute((next, currentRoute) => {
-                afterEvents.push(`${sessionStorage.getItem("request-id")}:${currentRoute?.path || "none"}->${next.path}`);
+                afterEvents.push(
+                  `${sessionStorage.getItem("request-id")}:${currentRoute?.path || "none"}->${next.path}`
+                );
               });
             });
 

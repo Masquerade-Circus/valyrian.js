@@ -1368,7 +1368,7 @@ Reader note: callbacks are scoped to the currently active route component tree. 
 
 ## 4.1.8. `v-route` Directive
 
-Use `v-route` on anchors for SPA navigation while keeping normal anchor semantics.
+Use `v-route` on anchors for internal SPA navigation while keeping normal anchor semantics.
 
 ```tsx
 const Nav = () => (
@@ -1379,7 +1379,9 @@ const Nav = () => (
 );
 ```
 
-`v-route` sets `href` and an optimized click handler. Modifier keys (Ctrl/Cmd/Shift/Alt) keep native browser behavior.
+`v-route` only accepts internal paths that start with a single `/`, such as `/about`, `/users?id=1`, or `/docs#install`. It does not materialize `href` for external URLs, protocol-relative URLs (`//example.com`), or custom schemes such as `javascript:` and `data:`. Use a normal `href` for external links.
+
+For accepted internal paths, `v-route` sets `href` and an optimized click handler. Modifier keys (Ctrl/Cmd/Shift/Alt) keep native browser behavior.
 
 ## 4.1.9. Lazy Route Loading (Code Splitting)
 

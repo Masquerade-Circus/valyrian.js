@@ -59,11 +59,20 @@ var routerContextScope = createContextScope("router");
 function resolveRouterFromContext() {
   return getContext(routerContextScope) || activeRouter;
 }
+function isInternalRoute(url) {
+  return isString(url) && /^\/(?!\/)/.test(url);
+}
 function ensureRouteDirective() {
   if (routeDirectiveRegistered) {
     return;
   }
   directive("route", (url, vnode) => {
+    if (!isInternalRoute(url)) {
+      setAttribute("href", false, vnode);
+      setAttribute("onclick", false, vnode);
+      vnode.dom.removeAttribute("href");
+      return;
+    }
     setAttribute("href", url, vnode);
     const router = resolveRouterFromContext();
     if (router) {
@@ -350,7 +359,10 @@ var Router = class _Router {
         } else if (isNodeJs) {
           mountedResult = mount("body", component);
         } else {
-          const result = await this.handleError(new RouterError("No container found for mounting the component."), parentComponent);
+          const result = await this.handleError(
+            new RouterError("No container found for mounting the component."),
+            parentComponent
+          );
           return isRenderedNavigationResult(result) ? result.html : result;
         }
         if (routeChanged) {

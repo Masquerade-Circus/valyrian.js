@@ -78,11 +78,20 @@ var routerContextScope = (0, import_context.createContextScope)("router");
 function resolveRouterFromContext() {
   return (0, import_context.getContext)(routerContextScope) || activeRouter;
 }
+function isInternalRoute(url) {
+  return (0, import_utils.isString)(url) && /^\/(?!\/)/.test(url);
+}
 function ensureRouteDirective() {
   if (routeDirectiveRegistered) {
     return;
   }
   (0, import_valyrian.directive)("route", (url, vnode) => {
+    if (!isInternalRoute(url)) {
+      (0, import_valyrian.setAttribute)("href", false, vnode);
+      (0, import_valyrian.setAttribute)("onclick", false, vnode);
+      vnode.dom.removeAttribute("href");
+      return;
+    }
     (0, import_valyrian.setAttribute)("href", url, vnode);
     const router = resolveRouterFromContext();
     if (router) {
@@ -369,7 +378,10 @@ var Router = class _Router {
         } else if (import_valyrian.isNodeJs) {
           mountedResult = (0, import_valyrian.mount)("body", component);
         } else {
-          const result = await this.handleError(new RouterError("No container found for mounting the component."), parentComponent);
+          const result = await this.handleError(
+            new RouterError("No container found for mounting the component."),
+            parentComponent
+          );
           return isRenderedNavigationResult(result) ? result.html : result;
         }
         if (routeChanged) {

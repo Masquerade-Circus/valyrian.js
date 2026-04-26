@@ -126,12 +126,23 @@ function resolveRouterFromContext(): Router | null {
   return getContext(routerContextScope) || activeRouter;
 }
 
+function isInternalRoute(url: unknown): url is string {
+  return isString(url) && /^\/(?!\/)/.test(url);
+}
+
 function ensureRouteDirective() {
   if (routeDirectiveRegistered) {
     return;
   }
 
   directive("route", (url: string, vnode: VnodeWithDom): void => {
+    if (!isInternalRoute(url)) {
+      setAttribute("href", false, vnode);
+      setAttribute("onclick", false, vnode);
+      vnode.dom.removeAttribute("href");
+      return;
+    }
+
     setAttribute("href", url, vnode);
 
     const router = resolveRouterFromContext();
@@ -514,7 +525,10 @@ export class Router {
         } else if (isNodeJs) {
           mountedResult = mount("body", component) as string;
         } else {
-          const result = await this.handleError(new RouterError("No container found for mounting the component."), parentComponent);
+          const result = await this.handleError(
+            new RouterError("No container found for mounting the component."),
+            parentComponent
+          );
           return isRenderedNavigationResult(result) ? result.html : result;
         }
 
@@ -804,7 +818,6 @@ export function mountRouter(elementContainer: string | any, router: Router): voi
     window.addEventListener("popstate", onPopStateGoToRoute, false);
     onPopStateGoToRoute();
   }
-
 }
 
 ensureRouteDirective();
