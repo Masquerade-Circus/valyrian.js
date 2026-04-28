@@ -4,7 +4,7 @@ Purpose
 This file aggregates the official documentation sources from the `docs/` directory as a single reference for AI agents and tooling.
 
 Generated
-- Date (UTC): 2026-04-26
+- Date (UTC): 2026-04-28
 - Source root: `docs/`
 - File count: 43
 
@@ -1527,13 +1527,13 @@ Reader-safe default: use helper methods (`request.get`, `request.post`, ...). Th
 
 Generated helpers depend on `allowedMethods`:
 
-* `request.get`
-* `request.post`
-* `request.put`
-* `request.patch`
-* `request.delete`
-* `request.head`
-* `request.options`
+- `request.get`
+- `request.post`
+- `request.put`
+- `request.patch`
+- `request.delete`
+- `request.head`
+- `request.options`
 
 If you remove a method from `allowedMethods`, that helper is not generated.
 
@@ -1560,10 +1560,10 @@ flowchart TD
 
 Notes:
 
-* `GET` + object data is appended as URL query params.
-* Native bodies are passed through (`FormData`, `URLSearchParams`, `Blob`, `ArrayBuffer`, `DataView`, `ReadableStream`, string).
-* Non-GET object bodies use JSON only when `Content-Type` includes `json`.
-* Otherwise non-GET object bodies are converted to `FormData`.
+- `GET` + object data is appended as URL query params.
+- Native bodies are passed through (`FormData`, `URLSearchParams`, `Blob`, `ArrayBuffer`, `DataView`, `ReadableStream`, string).
+- Non-GET object bodies use JSON only when `Content-Type` includes `json`.
+- Otherwise non-GET object bodies are converted to `FormData`.
 
 ## Response Parsing
 
@@ -1571,11 +1571,11 @@ Notes:
 
 Default: if you do not pass `Accept`, it uses `application/json`.
 
-* `application/json` -> `response.json()` (invalid JSON resolves to `null`)
-* `text/*` -> `response.text()`
-* `*blob*` -> `response.blob()`
-* `*arraybuffer*` -> `response.arrayBuffer()`
-* Otherwise response object is returned as body value.
+- `application/json` -> `response.json()` (invalid JSON resolves to `null`)
+- `text/*` -> `response.text()`
+- `*blob*` -> `response.blob()`
+- `*arraybuffer*` -> `response.arrayBuffer()`
+- Otherwise response object is returned as body value.
 
 For non-OK responses, an error is thrown with `response` and optional parsed `body`.
 
@@ -1595,11 +1595,11 @@ const auth = api.getOption("headers.Authorization");
 
 Available helpers:
 
-* `new(baseUrl, options?)`
-* `setOption(path, value)`
-* `setOptions(values)`
-* `getOption(path)`
-* `getOptions(path?)`
+- `new(baseUrl, options?)`
+- `setOption(path, value)`
+- `setOptions(values)`
+- `getOption(path)`
+- `getOptions(path?)`
 
 Scoped clients created with `new(...)` inherit parent plugins.
 
@@ -3462,6 +3462,10 @@ fs.writeFileSync("./public/main.js", bundle.raw);
 For TS/TSX entries, `inline` validates types by default (`noValidate: true` disables this).
 
 `inline(...)` returns `{ raw, map, file }`.
+
+For JavaScript and TypeScript entries, `map` contains a source map as a data URI. Source maps can expose source code
+and local paths, so production builds should usually publish only `raw` unless you intentionally want clients to access
+the source map.
 
 ## CSS Bundling and Purging
 

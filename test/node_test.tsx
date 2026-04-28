@@ -328,6 +328,43 @@ span.hello{display: inline-block}
     // console.log(indexOld.length);
   });
 
+  it("should return js source maps by default", async () => {
+    const result = await inline("./test/utils/component-automatic.tsx", {
+      compact: false,
+      bundle: false
+    });
+
+    expect(result.raw).toContain("valyrian.js/jsx-runtime");
+    expect(result.map).toMatch(/^\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,/);
+    expect(result.raw).not.toContain("sourceMappingURL");
+  });
+
+  it("should return external js source maps when esbuild sourcemap is enabled", async () => {
+    const result = await inline("./test/utils/component-automatic.tsx", {
+      compact: false,
+      bundle: false,
+      esbuild: {
+        sourcemap: true
+      }
+    });
+
+    expect(result.raw).toContain("valyrian.js/jsx-runtime");
+    expect(result.map).toMatch(/^\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,/);
+  });
+
+  it("should keep external js source maps when compacting", async () => {
+    const result = await inline("./test/utils/component-automatic.tsx", {
+      compact: true,
+      bundle: false,
+      esbuild: {
+        sourcemap: true
+      }
+    });
+
+    expect(result.raw).toContain("valyrian.js/jsx-runtime");
+    expect(result.map).toMatch(/^\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,/);
+  });
+
   it("should compile tsx with automatic jsx runtime imports by default", async () => {
     const { raw: component } = await inline("./test/utils/component-automatic.tsx", {
       compact: false,

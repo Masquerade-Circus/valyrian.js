@@ -407,6 +407,9 @@ export const directives: Record<string, Directive> = {
 
     let value;
     const property = vnode.props.name;
+    if (property === "__proto__" || property === "constructor" || property === "prototype") {
+      return;
+    }
     let event = "oninput";
 
     // This function updates the model property when the input element's value changes
@@ -937,7 +940,9 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
       const nextKey = nextOldVnode?.key;
       if (oldProps && typeof nextKey === "undefined" && oldProps["v-keep"] === newChild.props["v-keep"]) {
         strictRemoveNode(oldChild);
-        oldTree.splice(i, 1);
+        if (newVnode.hasKeys) {
+          oldTree.splice(i, 1);
+        }
         continue;
       }
     }

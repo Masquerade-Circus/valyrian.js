@@ -57,6 +57,14 @@ const createServer = async () => {
   return server;
 };
 
+function expectNoObjectPrototypePollution(callback: () => void) {
+  delete (Object.prototype as any).polluted;
+  callback();
+  const polluted = ({} as Record<string, any>).polluted;
+  delete (Object.prototype as any).polluted;
+  expect(polluted).toBeUndefined();
+}
+
 describe("Request", () => {
   const tests = [
     {
@@ -237,6 +245,28 @@ describe("Request", () => {
 
         expect(requestChild.post).toBeUndefined();
         await server.close();
+      });
+
+      it("should not pollute Object.prototype through setOption or setOptions", () => {
+        expectNoObjectPrototypePollution(() => {
+          request.new("").setOption("__proto__.polluted", true);
+        });
+
+        expectNoObjectPrototypePollution(() => {
+          request.new("").setOption("constructor.prototype.polluted", true);
+        });
+
+        expectNoObjectPrototypePollution(() => {
+          request.new("").setOptions({ "__proto__.polluted": true });
+        });
+      });
+
+      it("should keep setting safe nested request options", () => {
+        const scopedRequest = request.new("");
+
+        scopedRequest.setOption("headers.Authorization", "Bearer token");
+
+        expect(scopedRequest.getOption("headers.Authorization")).toEqual("Bearer token");
       });
 
       it("should work with server side rendering of local requests", async () => {

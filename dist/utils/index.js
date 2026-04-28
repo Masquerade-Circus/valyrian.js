@@ -61,6 +61,9 @@ function set(obj, path, value) {
     return;
   }
   const parts = path.split(".");
+  if (parts.some((part) => part === "__proto__" || part === "constructor" || part === "prototype")) {
+    return;
+  }
   const last = parts.pop();
   if (!last) {
     return;

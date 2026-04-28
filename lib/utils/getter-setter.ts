@@ -22,6 +22,10 @@ export function set(obj: any, path: string, value: any) {
   }
 
   const parts = path.split(".");
+  if (parts.some((part) => part === "__proto__" || part === "constructor" || part === "prototype")) {
+    return;
+  }
+
   const last = parts.pop();
 
   if (!last) {

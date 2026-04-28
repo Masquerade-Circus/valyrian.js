@@ -285,6 +285,9 @@ var directives = {
     }
     let value;
     const property = vnode.props.name;
+    if (property === "__proto__" || property === "constructor" || property === "prototype") {
+      return;
+    }
     let event = "oninput";
     let handler = (e) => model[property] = e.target.value;
     if (vnode.tag === "input") {
@@ -715,7 +718,9 @@ function patch(newVnode, oldVnode) {
       const nextKey = nextOldVnode?.key;
       if (oldProps && typeof nextKey === "undefined" && oldProps["v-keep"] === newChild.props["v-keep"]) {
         strictRemoveNode(oldChild);
-        oldTree.splice(i, 1);
+        if (newVnode.hasKeys) {
+          oldTree.splice(i, 1);
+        }
         continue;
       }
     }

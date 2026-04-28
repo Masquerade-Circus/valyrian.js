@@ -390,6 +390,68 @@ describe("Directives", () => {
         const result3 = update();
         expect(result3).toEqual("<div>Hello John Doe</div>");
       });
+
+      it("should not crash when matching a kept sibling from a live NodeList", () => {
+        const Store = { showFirst: true };
+        const host = document.createElement("div");
+        const app = () => (
+          <main>
+            {Store.showFirst ? <section v-keep="first">First</section> : null}
+            <section v-keep="second">Second</section>
+          </main>
+        );
+
+        expect(mount(host, app)).toEqual("<main><section>First</section><section>Second</section></main>");
+
+        const main = host.childNodes[0] as HTMLElement;
+        const originalChildNodes = main.childNodes;
+        const liveNodeList = Object.assign({}, originalChildNodes) as NodeListOf<ChildNode>;
+        let snapshotOnlyIndexReads = 0;
+        Object.defineProperty(liveNodeList, "1", {
+          get() {
+            snapshotOnlyIndexReads++;
+            return originalChildNodes[1];
+          }
+        });
+        Object.defineProperty(liveNodeList, "length", {
+          get() {
+            return originalChildNodes.length;
+          }
+        });
+        let childNodesReads = 0;
+        Object.defineProperty(main, "childNodes", {
+          configurable: true,
+          get() {
+            childNodesReads++;
+            return childNodesReads === 1 ? liveNodeList : originalChildNodes;
+          }
+        });
+
+        Store.showFirst = false;
+
+        expect(() => update()).not.toThrow();
+        expect(host.innerHTML).toEqual("<main><section>Second</section></main>");
+        expect(snapshotOnlyIndexReads).toEqual(1);
+      });
+    });
+
+    describe("v-model", () => {
+      it("should not bind model handlers for dangerous property names", () => {
+        for (const name of ["__proto__", "constructor", "prototype"]) {
+          const model = {} as Record<string, any>;
+          const host = document.createElement("div");
+          const app = () => <input name={name} v-model={model} />;
+
+          mount(host, app);
+
+          const input = host.childNodes[0] as HTMLInputElement & { vnode: VnodeWithDom };
+          input.value = "polluted";
+          input.dispatchEvent(new Event("input", { bubbles: true }) as any);
+
+          expect(input.vnode.props.oninput).toBeUndefined();
+          expect(Object.hasOwn(model, name)).toBeFalse();
+        }
+      });
     });
 
     /**
