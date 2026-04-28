@@ -25,6 +25,8 @@ If you started in `README.md`, keep the same picture in mind here: mount one com
 
 Valyrian is designed around one runtime model that works in both browser and server contexts.
 
+That model is meant to support complete app flows as an integrated runtime surface, so routing, state, requests, SSR, and hydration can be composed with fewer external app-runtime pieces.
+
 Core areas:
 
 * UI rendering and vnode patching.

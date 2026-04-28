@@ -32,6 +32,8 @@ An isomorphic runtime framework for web apps.
 
 Valyrian.js gives you one runtime model across browser and server so the way you render, update, route, fetch, and hydrate stays consistent as your app expands.
 
+Valyrian.js is intentionally integrated: the same isomorphic runtime can grow from browser UI into complete app flows, with fewer external app-runtime pieces to assemble around the core.
+
 It is for teams that want explicit runtime behavior, deterministic updates, JSX/TSX authoring, and SSR without splitting their app into disconnected client and server mental models.
 
 Here, "isomorphic" means the browser runtime and server runtime follow the same model: SSR, hydration, request isolation, and Node runtime APIs are extensions of the same web-first system, not separate product modes.
@@ -125,8 +127,8 @@ If this works, you already have the core Valyrian mental model.
 
 * One runtime model across browser and server.
 * Explicit runtime behavior with deterministic updates.
-* SSR, hydration, routing, request flow, and state fit the same runtime model.
-* Built-in modules for routing, request, state, forms, offline, and server-side rendering.
+* Integrated app-runtime capabilities: SSR, hydration, routing, request flow, and state fit the same runtime model.
+* Built-in modules for routing, request, state, forms, offline behavior, and server-side rendering reduce the number of external pieces you need to assemble for common app flows.
 * Web-first architecture that can start in the browser and expand into Node tooling without changing the core mental model.
 
 Good fit:

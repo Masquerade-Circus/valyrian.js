@@ -2,6 +2,7 @@ export type MoneyFormatOptions = {
     locale?: Intl.LocalesArgument;
     currency?: string;
     digits?: number;
+    decimalPlaces?: number;
     style?: Intl.NumberFormatOptions["style"];
 };
 export declare class NumberFormatter {

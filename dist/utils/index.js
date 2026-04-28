@@ -79,7 +79,7 @@ function set(obj, path, value) {
 }
 
 // lib/utils/has-changed.ts
-function hasChanged(prev, current) {
+function hasChangedRecursive(prev, current, seen = /* @__PURE__ */ new WeakMap()) {
   if (Array.isArray(prev)) {
     if (Array.isArray(current) === false) {
       return true;
@@ -88,7 +88,7 @@ function hasChanged(prev, current) {
       return true;
     }
     for (let i = 0; i < current.length; i++) {
-      if (hasChanged(prev[i], current[i])) {
+      if (hasChangedRecursive(prev[i], current[i], seen)) {
         return true;
       }
     }
@@ -98,19 +98,33 @@ function hasChanged(prev, current) {
     if (typeof current !== "object" || current === null) {
       return true;
     }
-    for (const key in current) {
-      if (hasChanged(prev[key], current[key])) {
+    if (seen.has(prev)) {
+      return seen.get(prev) !== current;
+    }
+    seen.set(prev, current);
+    const prevKeys = Object.keys(prev);
+    const currentKeys = Object.keys(current);
+    if (prevKeys.length !== currentKeys.length) {
+      return true;
+    }
+    for (let i = 0; i < currentKeys.length; i++) {
+      const key = currentKeys[i];
+      if (hasChangedRecursive(prev[key], current[key], seen)) {
         return true;
       }
     }
-    for (const key in prev) {
-      if (hasChanged(prev[key], current[key])) {
+    for (let i = 0; i < prevKeys.length; i++) {
+      const key = prevKeys[i];
+      if (hasChangedRecursive(prev[key], current[key], seen)) {
         return true;
       }
     }
     return false;
   }
   return Object.is(prev, current) === false;
+}
+function hasChanged(prev, current) {
+  return hasChangedRecursive(prev, current, /* @__PURE__ */ new WeakMap());
 }
 
 // lib/utils/deep-freeze.ts

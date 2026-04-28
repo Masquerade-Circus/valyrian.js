@@ -50,7 +50,7 @@ export class Task<TArgs = void, TResult = unknown> {
   #activeAbortController: AbortController | null = null;
   #activeExecutionId = 0;
   #queue: Promise<TResult | null> = Promise.resolve(null);
-  #abortCause: "cancel" | "reset" | null = null;
+  #abortCauses = new WeakMap<AbortController, "cancel" | "reset">();
 
   #listeners: TaskListeners<TArgs, TResult> = {
     state: new Set(),
@@ -103,6 +103,12 @@ export class Task<TArgs = void, TResult = unknown> {
     this.#emit("state", cloneState(this.#state));
   }
 
+  #setAbortCause(abortController: AbortController, cause: "cancel" | "reset") {
+    if (cause === "reset" || !this.#abortCauses.has(abortController)) {
+      this.#abortCauses.set(abortController, cause);
+    }
+  }
+
   async #runWithArgs(args: TArgs): Promise<TResult | null> {
     this.#activeExecutionId += 1;
     const executionId = this.#activeExecutionId;
@@ -111,8 +117,9 @@ export class Task<TArgs = void, TResult = unknown> {
       this.#activeAbortController?.abort();
     }
 
-    this.#activeAbortController = new AbortController();
-    const { signal } = this.#activeAbortController;
+    const abortController = new AbortController();
+    this.#activeAbortController = abortController;
+    const { signal } = abortController;
 
     this.#setState({ status: "running", running: true, error: null });
 
@@ -120,11 +127,10 @@ export class Task<TArgs = void, TResult = unknown> {
       const result = await this.#handler(args, { signal });
 
       if (signal.aborted) {
-        if (executionId === this.#activeExecutionId && this.#abortCause !== "reset") {
+        if (executionId === this.#activeExecutionId && this.#abortCauses.get(abortController) !== "reset") {
           this.#setState({ status: "cancelled", running: false });
           this.#emit("cancel", args);
         }
-        this.#abortCause = null;
         return this.#state.result;
       }
 
@@ -135,23 +141,24 @@ export class Task<TArgs = void, TResult = unknown> {
       this.#setState({ status: "success", running: false, result });
       this.#options.onSuccess?.(result, args);
       this.#emit("success", result);
-      this.#abortCause = null;
       return result;
     } catch (error) {
       if (signal.aborted) {
-        if (executionId === this.#activeExecutionId && this.#abortCause !== "reset") {
+        if (executionId === this.#activeExecutionId && this.#abortCauses.get(abortController) !== "reset") {
           this.#setState({ status: "cancelled", running: false });
           this.#emit("cancel", args);
         }
-        this.#abortCause = null;
         return this.#state.result;
       }
 
       this.#setState({ status: "error", running: false, error });
       this.#options.onError?.(error, args);
       this.#emit("error", error);
-      this.#abortCause = null;
       throw error;
+    } finally {
+      if (executionId === this.#activeExecutionId && this.#activeAbortController === abortController) {
+        this.#activeAbortController = null;
+      }
     }
   }
 
@@ -173,16 +180,18 @@ export class Task<TArgs = void, TResult = unknown> {
       return;
     }
 
-    if (!this.#abortCause) {
-      this.#abortCause = "cancel";
-    }
-    this.#activeAbortController.abort();
+    const abortController = this.#activeAbortController;
+    this.#setAbortCause(abortController, "cancel");
+    abortController.abort();
     this.#setState({ status: "cancelled", running: false });
   }
 
   reset() {
-    this.cancel();
-    this.#abortCause = "reset";
+    if (this.#activeAbortController) {
+      this.#setAbortCause(this.#activeAbortController, "reset");
+      this.#activeAbortController.abort();
+    }
+
     this.#setState({
       status: "idle",
       running: false,

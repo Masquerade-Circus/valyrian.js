@@ -1,6 +1,6 @@
 // Utility function to check if dependencies have changed recursively
 // eslint-disable-next-line sonarjs/cognitive-complexity
-export function hasChanged(prev: any, current: any) {
+function hasChangedRecursive(prev: any, current: any, seen = new WeakMap()) {
   if (Array.isArray(prev)) {
     if (Array.isArray(current) === false) {
       return true;
@@ -11,7 +11,7 @@ export function hasChanged(prev: any, current: any) {
     }
 
     for (let i = 0; i < current.length; i++) {
-      if (hasChanged(prev[i], current[i])) {
+      if (hasChangedRecursive(prev[i], current[i], seen)) {
         return true;
       }
     }
@@ -24,14 +24,29 @@ export function hasChanged(prev: any, current: any) {
       return true;
     }
 
-    for (const key in current) {
-      if (hasChanged(prev[key], current[key])) {
+    if (seen.has(prev)) {
+      return seen.get(prev) !== current;
+    }
+
+    seen.set(prev, current);
+
+    const prevKeys = Object.keys(prev);
+    const currentKeys = Object.keys(current);
+
+    if (prevKeys.length !== currentKeys.length) {
+      return true;
+    }
+
+    for (let i = 0; i < currentKeys.length; i++) {
+      const key = currentKeys[i];
+      if (hasChangedRecursive(prev[key], current[key], seen)) {
         return true;
       }
     }
 
-    for (const key in prev) {
-      if (hasChanged(prev[key], current[key])) {
+    for (let i = 0; i < prevKeys.length; i++) {
+      const key = prevKeys[i];
+      if (hasChangedRecursive(prev[key], current[key], seen)) {
         return true;
       }
     }
@@ -40,4 +55,8 @@ export function hasChanged(prev: any, current: any) {
   }
 
   return Object.is(prev, current) === false;
+}
+
+export function hasChanged(prev: any, current: any) {
+  return hasChangedRecursive(prev, current, new WeakMap());
 }

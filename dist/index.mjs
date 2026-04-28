@@ -17,6 +17,19 @@ var Vnode = class {
     this.onupdate = onupdate;
     this.onremove = onremove;
   }
+  tag;
+  props;
+  children;
+  key;
+  dom;
+  isSVG;
+  oldChildComponents;
+  childComponents;
+  hasKeys;
+  oncreate;
+  oncleanup;
+  onupdate;
+  onremove;
 };
 var isPOJOComponent = (component) => Boolean(component && typeof component === "object" && "view" in component);
 var isComponent = (component) => Boolean(typeof component === "function" || isPOJOComponent(component));

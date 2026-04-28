@@ -35,7 +35,6 @@ describe("JSX runtime", () => {
       JSON.stringify(
         {
           compilerOptions: {
-            baseUrl: ".",
             module: "NodeNext",
             moduleResolution: "NodeNext",
             target: "ESNext",
@@ -184,7 +183,6 @@ describe("JSX runtime", () => {
       JSON.stringify(
         {
           compilerOptions: {
-            baseUrl: ".",
             module: "NodeNext",
             moduleResolution: "NodeNext",
             target: "ESNext",

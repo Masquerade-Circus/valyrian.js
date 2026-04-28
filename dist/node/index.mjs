@@ -26,6 +26,8 @@ var Event = class {
     this.bubbles = options.bubbles ?? false;
     this.cancelable = options.cancelable ?? false;
   }
+  type;
+  options;
   bubbles = false;
   cancelable = false;
   defaultPrevented = false;

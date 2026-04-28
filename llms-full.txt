@@ -152,6 +152,8 @@ If you started in `README.md`, keep the same picture in mind here: mount one com
 
 Valyrian is designed around one runtime model that works in both browser and server contexts.
 
+That model is meant to support complete app flows as an integrated runtime surface, so routing, state, requests, SSR, and hydration can be composed with fewer external app-runtime pieces.
+
 Core areas:
 
 * UI rendering and vnode patching.
@@ -1660,7 +1662,7 @@ const UserList = async () => {
 };
 
 const App = () => (
-  <Suspense key="users" fallback={<p>Loading users...</p>} error={(e) => <p>{e.message}</p>}>
+  <Suspense suspenseKey="users" fallback={<p>Loading users...</p>} error={(e) => <p>{e.message}</p>}>
     <UserList />
   </Suspense>
 );
@@ -1668,11 +1670,13 @@ const App = () => (
 
 ## Required Props
 
-* `key` is required.
+* `suspenseKey` is required.
 * `fallback` is rendered while async children are pending.
 * `error` is optional. If omitted, Suspense renders `error.message`.
 
-Use a stable `key` for stable data. Change the `key` when you intentionally want a fresh async run.
+Use a stable `suspenseKey` for stable data. Change the `suspenseKey` when you intentionally want a fresh async run.
+
+`key` is reserved by the runtime/JSX reconciliation model. `suspenseKey` is the explicit Suspense scope/cache identifier.
 
 ## Child Compatibility
 
@@ -1685,7 +1689,7 @@ Suspense resolves children with `Promise.all` and supports:
 
 ## Cache and Stale Protection Model
 
-Suspense state is scoped by `(host DOM node, key)`.
+Suspense state is scoped by `(host DOM node, suspenseKey)`.
 
 For each scope:
 
@@ -1695,13 +1699,13 @@ For each scope:
 
 That prevents stale async completion from overwriting a newer render intent.
 
-Reader note: with the same host + key, resolved value and error state are reused on later renders.
+Reader note: with the same host + `suspenseKey`, resolved value and error state are reused on later renders.
 
 ## Recommended Key Rules
 
-* Use stable keys for stable data slices (`"user:42"`, `"feed:home"`).
-* Change keys when you intentionally want a fresh async branch.
-* Avoid random keys per render unless forced refetch is desired.
+* Use stable `suspenseKey` values for stable data slices (`"user:42"`, `"feed:home"`).
+* Change `suspenseKey` when you intentionally want a fresh async branch.
+* Avoid random `suspenseKey` values per render unless forced refetch is desired.
 
 
 ____________________________________________
@@ -1782,6 +1786,21 @@ ____________________________________________
 # 4.2.4. Query Cache (`valyrian.js/query`)
 
 `QueryClient` provides cached queries, mutations, invalidation, and optional persistence.
+
+## Feature Fit
+
+Use `valyrian.js/query` when you want a small runtime-native query layer with:
+
+* cache entries keyed by serializable query keys
+* stale/fresh reads with `staleTime`
+* in-flight request dedupe per key
+* prefix invalidation
+* mutation handles with success/error state
+* optional persistence and rehydration
+* change events for query, mutation, cache, and GC activity
+* garbage collection through `cacheTime`
+
+For advanced workflows such as infinite queries, optimistic update orchestration, retry/backoff policies, query cancellation, or devtools, pair Valyrian.js with a dedicated external query library.
 
 ## Quick Start
 
@@ -3709,7 +3728,7 @@ ____________________________________________
 
 # 8.2. Money and Number Formatting (`valyrian.js/money`)
 
-This module keeps money values precise with cents-based arithmetic and formatting helpers.
+This module keeps money values precise with cents-based arithmetic, locale-aware formatting, and practical parsing helpers for common input patterns.
 
 ## `Money` Value Object
 
@@ -3754,19 +3773,30 @@ Useful APIs:
 ```ts
 import { formatMoney, parseMoneyInput } from "valyrian.js/money";
 
-const parsed = parseMoneyInput("$1,234.56", { decimalPlaces: 2 });
+const parsed = parseMoneyInput("$1,234.56", { locale: "en-US", decimalPlaces: 2 });
 const view = formatMoney(parsed, { currency: "USD", locale: "en-US", digits: 2 });
+
+const euros = parseMoneyInput("1.234,56 €", { locale: "de-DE" });
+const euroView = formatMoney(euros, { currency: "EUR", locale: "de-DE", digits: 2 });
 ```
 
 Parsing notes:
 
-* strips spaces and currency symbols
-* normalizes decimal separators
+* uses `Intl.NumberFormat(locale).formatToParts(...)` to detect decimal and group separators when a locale is provided
+* strips spaces, NBSP-style separators, and currency symbols
+* includes fallback handling for common `.` and `,` separator patterns, including a lone comma used as a decimal separator
+* supports common inputs such as `$1,234.56`, `1.234,56 €`, and `$1,234.56` with `es-MX`, but does not attempt to cover every financial notation or accounting format
 * invalid input returns `Money.fromCents(0)`
+
+Formatting notes:
+
+* `Money` keeps cents as the default internal scale of 2 decimal places
+* `digits` controls display precision and does not mutate or rescale the stored cents value
+* `decimalPlaces` controls how a `Money` value is converted from minor units before formatting; it defaults to `2` for compatibility
 
 ## `v-money` Directive
 
-`v-money` keeps an input in formatted currency while storing cents in your model.
+`v-money` keeps an input in formatted currency while storing minor units in your model. Use `decimalPlaces` to match the currency scale, for example `0` for JPY or `2` for USD.
 
 ```tsx
 <input
@@ -3874,7 +3904,13 @@ Behavior details:
 
 ## Change Detection
 
-`hasChanged(prev, current)` performs recursive diff-style checks for arrays, objects, and primitive values.
+`hasChanged(prev, current)` performs simple recursive diff-style checks for arrays, plain objects, and primitive values.
+
+Behavior details:
+
+* supports cyclic references without overflowing the stack
+* compares own enumerable keys for objects
+* is not intended to be a strict graph-equality or prototype-comparison algorithm
 
 ## Immutability Helpers
 

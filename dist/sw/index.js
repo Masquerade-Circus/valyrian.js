@@ -160,6 +160,14 @@ var SwRuntimeManager = class {
         serviceWorker.removeEventListener("controllerchange", this.#controllerChangeHandler);
       }
     }
-    return this.#state.registration.unregister();
+    const unregistered = await this.#state.registration.unregister();
+    if (unregistered) {
+      this.#state.registration = null;
+      this.#state.waiting = null;
+      this.#state.updateAvailable = false;
+      this.#state.installing = false;
+      this.#initialized = false;
+    }
+    return unregistered;
   }
 };

@@ -119,9 +119,102 @@ var Money = class _Money {
     return new _Money(Math.round(this.cents / divider));
   }
 };
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function getNumberSeparators(locale) {
+  const parts = new Intl.NumberFormat(locale).formatToParts(12345.6);
+  return {
+    group: parts.find((part) => part.type === "group")?.value || ",",
+    decimal: parts.find((part) => part.type === "decimal")?.value || "."
+  };
+}
+function getLocalizedDigitMap(locale) {
+  const formatter = new Intl.NumberFormat(locale, { useGrouping: false });
+  const digitMap = /* @__PURE__ */ new Map();
+  for (let digit = 0; digit <= 9; digit++) {
+    digitMap.set(formatter.format(digit), String(digit));
+  }
+  return digitMap;
+}
+var unicodeZeroCodePoints = [1632, 1776, 2406];
+function normalizeLocalizedDigits(value, locale) {
+  let normalized = value;
+  for (const [localizedDigit, digit] of getLocalizedDigitMap(locale)) {
+    normalized = normalized.replace(new RegExp(escapeRegExp(localizedDigit), "g"), digit);
+  }
+  return normalized.replace(/\p{Decimal_Number}/gu, (digit) => {
+    const codePoint = digit.codePointAt(0);
+    if (codePoint === void 0) {
+      return digit;
+    }
+    for (const zeroCodePoint of unicodeZeroCodePoints) {
+      const value2 = codePoint - zeroCodePoint;
+      if (value2 >= 0 && value2 <= 9) {
+        return String(value2);
+      }
+    }
+    return digit;
+  });
+}
+function isValidGroupedInteger(value, separator) {
+  if (!separator) {
+    return false;
+  }
+  return new RegExp(`^[+-]?\\d{1,3}(${escapeRegExp(separator)}\\d{3})+$`).test(value);
+}
+function hasGroupedIntegerSuffix(value, separator) {
+  const separatorIndex = value.lastIndexOf(separator);
+  return separatorIndex !== -1 && /^\d{3}$/.test(value.slice(separatorIndex + separator.length));
+}
+function removeGrouping(value, separators) {
+  let result = value;
+  for (const separator of separators) {
+    if (separator) {
+      result = result.replace(new RegExp(escapeRegExp(separator), "g"), "");
+    }
+  }
+  return result;
+}
+function chooseDecimalIndex(value, group, decimal) {
+  const lastDot = value.lastIndexOf(".");
+  const lastComma = value.lastIndexOf(",");
+  if (lastDot !== -1 && lastComma !== -1) {
+    return Math.max(lastDot, lastComma);
+  }
+  if (decimal && decimal !== group) {
+    const decimalIndex = value.lastIndexOf(decimal);
+    if (decimalIndex !== -1) {
+      return decimalIndex;
+    }
+  }
+  if (group) {
+    const groupIndex = value.lastIndexOf(group);
+    if (groupIndex !== -1 && !isValidGroupedInteger(value, group) && !hasGroupedIntegerSuffix(value, group)) {
+      return groupIndex;
+    }
+  }
+  const commonSeparator = lastDot !== -1 ? "." : lastComma !== -1 ? "," : "";
+  if (commonSeparator && !isValidGroupedInteger(value, commonSeparator) && !(commonSeparator === group && hasGroupedIntegerSuffix(value, commonSeparator))) {
+    return value.lastIndexOf(commonSeparator);
+  }
+  return -1;
+}
+function normalizeMoneyInput(value, locale) {
+  const { group, decimal } = getNumberSeparators(locale);
+  const normalized = normalizeLocalizedDigits(String(value), locale).replace(/[−]/g, "-").replace(new RegExp(`[^0-9${escapeRegExp(group)}${escapeRegExp(decimal)}.,+-]`, "g"), "");
+  const separators = [group, decimal, ".", ","];
+  const decimalIndex = chooseDecimalIndex(normalized, group, decimal);
+  if (decimalIndex !== -1) {
+    const integer = removeGrouping(normalized.slice(0, decimalIndex), separators);
+    const fraction = removeGrouping(normalized.slice(decimalIndex + 1), separators);
+    return `${integer}.${fraction}`;
+  }
+  return removeGrouping(normalized, separators);
+}
 function parseMoneyInput(value, options = {}) {
   const decimalPlaces = options.decimalPlaces ?? 2;
-  const clean = String(value).replace(/\s/g, "").replace(/[^0-9,.-]/g, "").replace(/,(?=\d{3}(\D|$))/g, "").replace(/,/g, ".");
+  const clean = normalizeMoneyInput(value, options.locale || "en");
   const amount = Number(clean);
   if (isNaN(amount)) {
     return Money.fromCents(0);
@@ -130,10 +223,11 @@ function parseMoneyInput(value, options = {}) {
 }
 function formatMoney(value, options = {}) {
   const digits = options.digits ?? 2;
+  const decimalPlaces = options.decimalPlaces ?? 2;
   const currency = options.currency || "USD";
   const locale = options.locale || "en";
   const style = options.style || "currency";
-  const amount = value instanceof Money ? value.toDecimal(digits) : value;
+  const amount = value instanceof Money ? value.toDecimal(decimalPlaces) : value;
   return NumberFormatter.create(amount).format(digits, { style, currency }, locale);
 }
 (0, import_valyrian.directive)("money", (config, vnode) => {
@@ -143,6 +237,7 @@ function formatMoney(value, options = {}) {
   const cents = Number(config.model[config.field] || 0);
   const value = formatMoney(Money.fromCents(cents), {
     digits: decimalPlaces,
+    decimalPlaces,
     currency,
     locale
   });
@@ -156,6 +251,7 @@ function formatMoney(value, options = {}) {
       config.model[config.field] = money.toCents();
       target.value = formatMoney(money, {
         digits: decimalPlaces,
+        decimalPlaces,
         currency,
         locale
       });
