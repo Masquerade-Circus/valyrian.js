@@ -1137,7 +1137,7 @@ var ServerStorage = class {
     }
   }
   static run(callback) {
-    storageContext.run({}, callback);
+    return storageContext.run({}, callback);
   }
   static isContextActive() {
     return Boolean(storageContext.getStore());

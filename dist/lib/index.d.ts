@@ -64,7 +64,7 @@ export declare function v(tagOrComponent: VnodeTag, props: Properties | null, ..
 export declare namespace v {
     var fragment: (_: any, ...children: Children) => Children;
 }
-export declare function hidrateDomToVnode(dom: any): VnodeWithDom | string | null | void;
+export declare function hydrateDomToVnode(dom: any): VnodeWithDom | string | null | void;
 export declare function trust(htmlString: string): (string | void | VnodeWithDom | null)[];
 export declare const current: {
     oldVnode: Vnode | null;

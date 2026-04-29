@@ -7,7 +7,7 @@ export declare class ServerStorage implements Storage {
     key(index: number): string | null;
     removeItem(key: string): void;
     setItem(key: string, value: string): void;
-    static run(callback: () => void): void;
+    static run<T>(callback: () => T): T;
     static isContextActive(): boolean;
     toJSON(): Record<string, string>;
 }

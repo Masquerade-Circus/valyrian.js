@@ -1,6 +1,6 @@
 import "valyrian.js/node";
 
-import { mount, trust, unmount, v } from "valyrian.js";
+import { hydrateDomToVnode, mount, trust, unmount, v } from "valyrian.js";
 
 import { afterEach, beforeEach, expect, describe, test as it } from "bun:test";
 
@@ -138,6 +138,22 @@ describe("Hyperscript", () => {
         dom: expect.anything()
       }
     ]);
+  });
+
+  it("should expose hydrateDomToVnode with the corrected spelling", () => {
+    const dom = document.createElement("div");
+    dom.setAttribute("id", "unique");
+    dom.appendChild(document.createTextNode("Hola mundo"));
+
+    expect(hydrateDomToVnode(dom)).toEqual({
+      tag: "div",
+      props: {
+        id: "unique"
+      },
+      isSVG: false,
+      children: ["Hola mundo"],
+      dom
+    });
   });
 
   it("should handle different types of data", () => {

@@ -27,7 +27,7 @@ __export(index_exports, {
   directive: () => directive,
   directives: () => directives,
   fragment: () => fragment,
-  hidrateDomToVnode: () => hidrateDomToVnode,
+  hydrateDomToVnode: () => hydrateDomToVnode,
   isComponent: () => isComponent,
   isNodeJs: () => isNodeJs,
   isPOJOComponent: () => isPOJOComponent,
@@ -96,7 +96,7 @@ function v(tagOrComponent, props, ...children) {
   return new Vnode(tagOrComponent, props, children, key);
 }
 v.fragment = (_, ...children) => children;
-function hidrateDomToVnode(dom) {
+function hydrateDomToVnode(dom) {
   if (dom.nodeType === 3) {
     return dom.nodeValue;
   }
@@ -109,7 +109,7 @@ function hidrateDomToVnode(dom) {
       if (childDom.nodeType === 3) {
         children.push(childDom.nodeValue);
       } else if (childDom.nodeType === 1) {
-        const childVnode = hidrateDomToVnode(childDom);
+        const childVnode = hydrateDomToVnode(childDom);
         children.push(childVnode);
       }
     }
@@ -128,7 +128,7 @@ function hidrateDomToVnode(dom) {
 function trust(htmlString) {
   const div = document.createElement("div");
   div.innerHTML = htmlString.trim();
-  return Array.from(div.childNodes).map(hidrateDomToVnode);
+  return Array.from(div.childNodes).map(hydrateDomToVnode);
 }
 var mainComponent = null;
 var mainVnode = null;
@@ -878,6 +878,6 @@ function mount(dom, component) {
   } else {
     mainComponent = v(() => component, {}, []);
   }
-  mainVnode = hidrateDomToVnode(container);
+  mainVnode = hydrateDomToVnode(container);
   return update();
 }

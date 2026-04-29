@@ -50,8 +50,8 @@ export class ServerStorage implements Storage {
     }
   }
 
-  static run(callback: () => void) {
-    storageContext.run({}, callback);
+  static run<T>(callback: () => T): T {
+    return storageContext.run({}, callback);
   }
 
   static isContextActive(): boolean {

@@ -92,7 +92,7 @@ export function v(tagOrComponent: VnodeTag, props: Properties | null, ...childre
 
 v.fragment = (_: any, ...children: Children) => children;
 
-export function hidrateDomToVnode(dom: any): VnodeWithDom | string | null | void {
+export function hydrateDomToVnode(dom: any): VnodeWithDom | string | null | void {
   if (dom.nodeType === 3) {
     return dom.nodeValue;
   }
@@ -107,7 +107,7 @@ export function hidrateDomToVnode(dom: any): VnodeWithDom | string | null | void
       if (childDom.nodeType === 3) {
         children.push(childDom.nodeValue);
       } else if (childDom.nodeType === 1) {
-        const childVnode = hidrateDomToVnode(childDom);
+        const childVnode = hydrateDomToVnode(childDom);
         children.push(childVnode);
       }
     }
@@ -129,7 +129,7 @@ export function hidrateDomToVnode(dom: any): VnodeWithDom | string | null | void
 export function trust(htmlString: string) {
   const div = document.createElement("div");
   div.innerHTML = htmlString.trim();
-  return Array.from(div.childNodes).map(hidrateDomToVnode);
+  return Array.from(div.childNodes).map(hydrateDomToVnode);
 }
 
 let mainComponent: VnodeComponentInterface | null = null;
@@ -1066,6 +1066,6 @@ export function mount(dom: string | DomElement, component: ValyrianComponent | V
     mainComponent = v(() => component, {}, []) as VnodeComponentInterface;
   }
 
-  mainVnode = hidrateDomToVnode(container) as VnodeWithDom;
+  mainVnode = hydrateDomToVnode(container) as VnodeWithDom;
   return update();
 }
