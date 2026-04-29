@@ -1,5 +1,16 @@
 # Changelog
 
+## [9.1.8](https://github.com/Masquerade-Circus/valyrian/compare/9.1.7...9.1.8) (2026-04-29)
+
+### Bug Fixes
+
+* minor fixes. Prototype pollution, possible crash for .slice, and others ([aa37ae9](https://github.com/Masquerade-Circus/valyrian/commit/aa37ae9686acde0adf7b8cf7cf2cb79f3fb8d89c))
+* stabilize money parsing, tasks, and service worker state ([0a2aab2](https://github.com/Masquerade-Circus/valyrian/commit/0a2aab244684d32800608ee377c0c66f9234f9b5))
+
+### Miscellaneous Chores
+
+* update dependencies ([733f5f3](https://github.com/Masquerade-Circus/valyrian/commit/733f5f31bf2cb23221e7a98b2e17ac5cb7c57181))
+
 ## [9.1.7](https://github.com/Masquerade-Circus/valyrian/compare/9.1.6...9.1.7) (2026-04-26)
 
 ### Bug Fixes
