@@ -195,6 +195,48 @@ describe("Forms", () => {
     expect(radioOne.checked).toBeTrue();
   });
 
+  it("should bind checkboxes to boolean checked state instead of value", async () => {
+    const form = new FormStore({
+      state: {
+        accepted: true
+      },
+      schema: {
+        type: "object",
+        properties: {
+          accepted: { type: "boolean" }
+        },
+        required: ["accepted"]
+      }
+    });
+
+    const dom = document.createElement("div");
+
+    mount(dom, () => (
+      <form v-form={form}>
+        <input type="checkbox" name="accepted" value="yes" v-field={form} />
+      </form>
+    ));
+
+    const formDom = dom.childNodes[0] as any;
+    const checkbox = formDom.childNodes[0] as any;
+
+    expect(checkbox.value).toBe("yes");
+    expect(checkbox.checked).toBeTrue();
+    expect(form.state.accepted).toBeTrue();
+
+    checkbox.checked = false;
+    checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+
+    expect(form.state.accepted).toBeFalse();
+    expect(form.state.accepted).not.toBe("yes");
+
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+
+    expect(form.state.accepted).toBeTrue();
+    expect(form.state.accepted).not.toBe("yes");
+  });
+
   it("should bind and submit when inputs and button are rendered through components", async () => {
     const submissions: Array<Record<string, unknown>> = [];
 
@@ -463,7 +505,9 @@ describe("Forms", () => {
       }
     });
 
-    await form.submit();
+    const ok = await form.submit();
+
+    expect(ok).toBeFalse();
     expect(form.submitError).toBeInstanceOf(Error);
     expect(form.hasSubmitError).toBeTrue();
   });

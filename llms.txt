@@ -243,7 +243,7 @@ User outcome:
 - Predictable submit behavior and cleaner canonical state.
 
 Agent checks:
-- `submit()` boolean is handled.
+- `submit()` is awaited and its resolved boolean is handled.
 - Field names exist for `v-model` / `v-field`.
 
 Caution:
@@ -303,7 +303,7 @@ Caution:
 ### 7.4 Forms
 - `v-model` and `v-field` require `name`. `[SOURCE]`
 - Existing handlers are preserved by directive behavior where documented. `[SOURCE]`
-- `FormStore.submit()` returns boolean; handle it explicitly. `[SOURCE]`
+- `FormStore.submit()` returns `Promise<boolean>`; `await` it and handle the resolved boolean explicitly. `[SOURCE]`
 
 ### 7.5 Async orchestration and cleanup
 - `Suspense` requires stable key intent. `[SOURCE]`
