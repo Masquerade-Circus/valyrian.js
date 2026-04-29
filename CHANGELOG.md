@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.1.9](https://github.com/Masquerade-Circus/valyrian/compare/9.1.8...9.1.9) (2026-04-29)
+
+### Code Refactoring
+
+* stabilize server storage scopes and hydrate API ([4275cd9](https://github.com/Masquerade-Circus/valyrian/commit/4275cd9ff83ef83b96e14309f6de69f34e7691b6))
+
 ## [9.1.8](https://github.com/Masquerade-Circus/valyrian/compare/9.1.7...9.1.8) (2026-04-29)
 
 ### Bug Fixes
