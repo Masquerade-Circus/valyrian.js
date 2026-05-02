@@ -1,5 +1,15 @@
 # Changelog
 
+## [9.1.10](https://github.com/Masquerade-Circus/valyrian/compare/9.1.9...9.1.10) (2026-05-02)
+
+### Bug Fixes
+
+* **pulses:** fix pulse subscriptions during flushed async renders ([58ae4ca](https://github.com/Masquerade-Circus/valyrian/commit/58ae4ca2a4e8f1e69f27122cfaa78d001fdcd65d))
+
+### Documentation
+
+* update documentation ([1a0ab9c](https://github.com/Masquerade-Circus/valyrian/commit/1a0ab9c46f324032095bbf29a2c1aa2ac2c3a5a1))
+
 ## [9.1.9](https://github.com/Masquerade-Circus/valyrian/compare/9.1.8...9.1.9) (2026-04-29)
 
 ### Code Refactoring
