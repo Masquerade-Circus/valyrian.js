@@ -29,35 +29,50 @@ module.exports = __toCommonJS(index_exports);
 var import_valyrian = require("valyrian.js");
 var import_utils = require("valyrian.js/utils");
 var effectStack = [];
-function registerDomSubscription(subscribers, domWithVnodesToUpdate) {
-  const currentVnode = import_valyrian.current.vnode;
-  if (!currentVnode || domWithVnodesToUpdate.has(currentVnode.dom)) {
+function addDomSubscription(subscribers, domSubscription) {
+  if (domSubscription.subscriberSets.has(subscribers)) {
     return;
   }
-  let hasParent = false;
+  subscribers.add(domSubscription.subscription);
+  domSubscription.subscriberSets.add(subscribers);
+}
+function registerDomSubscription(subscribers, domSubscriptions, currentVnode) {
+  if (!currentVnode) {
+    return;
+  }
+  const existingSubscription = domSubscriptions.get(currentVnode.dom);
+  if (existingSubscription) {
+    addDomSubscription(subscribers, existingSubscription);
+    return;
+  }
   let parent = currentVnode.dom.parentElement;
   while (parent) {
-    if (domWithVnodesToUpdate.has(parent)) {
-      hasParent = true;
-      break;
+    const parentSubscription = domSubscriptions.get(parent);
+    if (parentSubscription) {
+      addDomSubscription(subscribers, parentSubscription);
+      return;
     }
     parent = parent.parentElement;
   }
-  if (!hasParent) {
-    const dom = currentVnode.dom;
-    const subscription = () => {
+  const dom = currentVnode.dom;
+  const domSubscription = {
+    subscription: () => {
       (0, import_valyrian.updateVnode)(dom.vnode);
       if (!dom.parentElement) {
-        subscribers.delete(subscription);
-        domWithVnodesToUpdate.delete(dom);
+        for (const subscriberSet of domSubscription.subscriberSets) {
+          subscriberSet.delete(domSubscription.subscription);
+        }
+        domSubscription.subscriberSets.clear();
+        domSubscriptions.delete(dom);
       }
-    };
-    subscribers.add(subscription);
-    domWithVnodesToUpdate.add(dom);
-  }
+    },
+    subscriberSets: /* @__PURE__ */ new Set()
+  };
+  addDomSubscription(subscribers, domSubscription);
+  domSubscriptions.set(dom, domSubscription);
 }
 function createStore(initialState, pulses, immutable = false) {
-  const domWithVnodesToUpdate = /* @__PURE__ */ new WeakSet();
+  const domSubscriptions = /* @__PURE__ */ new WeakMap();
   const propertySubscribers = /* @__PURE__ */ new Map();
   const getPropertySubscribers = (prop) => {
     let subscribers = propertySubscribers.get(prop);
@@ -87,16 +102,16 @@ function createStore(initialState, pulses, immutable = false) {
   let pulseCallCount = 0;
   const proxyState = new Proxy(localState, {
     get: (state, prop) => {
-      if (currentState) {
-        return currentState[prop];
-      }
-      const subscribers = getPropertySubscribers(prop);
       const currentEffect = effectStack[effectStack.length - 1];
-      if (currentEffect) {
-        currentEffect.dependencies.add(subscribers);
+      const currentVnode = import_valyrian.current.vnode;
+      if (currentEffect || currentVnode) {
+        const subscribers = getPropertySubscribers(prop);
+        if (currentEffect) {
+          currentEffect.dependencies.add(subscribers);
+        }
+        registerDomSubscription(subscribers, domSubscriptions, currentVnode);
       }
-      registerDomSubscription(subscribers, domWithVnodesToUpdate);
-      return state[prop];
+      return currentState ? currentState[prop] : state[prop];
     },
     set: (state, prop, value) => {
       isMutable();
@@ -122,13 +137,15 @@ function createStore(initialState, pulses, immutable = false) {
   let debounceTimeout = null;
   const pendingSubscribers = /* @__PURE__ */ new Set();
   function debouncedUpdate(changedProps) {
-    changedProps.forEach((prop) => {
+    for (const prop of changedProps) {
       const subscribers = propertySubscribers.get(prop);
       if (!subscribers) {
-        return;
+        continue;
       }
-      subscribers.forEach((subscriber) => pendingSubscribers.add(subscriber));
-    });
+      for (const subscriber of subscribers) {
+        pendingSubscribers.add(subscriber);
+      }
+    }
     if (pendingSubscribers.size === 0) {
       return;
     }
@@ -138,7 +155,10 @@ function createStore(initialState, pulses, immutable = false) {
     debounceTimeout = setTimeout(() => {
       const subscribersToNotify = Array.from(pendingSubscribers);
       pendingSubscribers.clear();
-      subscribersToNotify.forEach((subscriber) => subscriber());
+      debounceTimeout = null;
+      for (let i = 0; i < subscribersToNotify.length; i++) {
+        subscribersToNotify[i]();
+      }
     }, 0);
   }
   function setState(newState, flush = false) {
@@ -218,7 +238,10 @@ function createStore(initialState, pulses, immutable = false) {
   const listeners = {};
   const trigger = (event, ...args) => {
     if (listeners[event]) {
-      listeners[event].forEach((callback) => callback(...args));
+      const eventListeners = listeners[event];
+      for (let i = 0; i < eventListeners.length; i++) {
+        eventListeners[i](...args);
+      }
     }
   };
   const pulsesProxy = new Proxy(boundPulses, {
@@ -273,7 +296,9 @@ function createEffect(effect) {
   let currentDependencies = /* @__PURE__ */ new Set();
   let disposed = false;
   const cleanupDependencies = () => {
-    currentDependencies.forEach((dependency) => dependency.delete(runEffect));
+    for (const dependency of currentDependencies) {
+      dependency.delete(runEffect);
+    }
     currentDependencies.clear();
   };
   const runEffect = () => {
@@ -287,16 +312,16 @@ function createEffect(effect) {
     } finally {
       effectStack.pop();
     }
-    currentDependencies.forEach((dependency) => {
+    for (const dependency of currentDependencies) {
       if (!nextDependencies.has(dependency)) {
         dependency.delete(runEffect);
       }
-    });
-    nextDependencies.forEach((dependency) => {
+    }
+    for (const dependency of nextDependencies) {
       if (!currentDependencies.has(dependency)) {
         dependency.add(runEffect);
       }
-    });
+    }
     currentDependencies = nextDependencies;
   };
   runEffect();
@@ -308,16 +333,18 @@ function createEffect(effect) {
 function createPulse(initialValue) {
   let value = initialValue;
   const subscribers = /* @__PURE__ */ new Set();
-  const domWithVnodesToUpdate = /* @__PURE__ */ new WeakSet();
+  const domSubscriptions = /* @__PURE__ */ new WeakMap();
   const runSubscribers = () => {
-    subscribers.forEach((subscriber) => subscriber());
+    for (const subscriber of subscribers) {
+      subscriber();
+    }
   };
   const read = () => {
     const currentEffect = effectStack[effectStack.length - 1];
     if (currentEffect) {
       currentEffect.dependencies.add(subscribers);
     }
-    registerDomSubscription(subscribers, domWithVnodesToUpdate);
+    registerDomSubscription(subscribers, domSubscriptions, import_valyrian.current.vnode);
     return value;
   };
   const write = (newValue) => {

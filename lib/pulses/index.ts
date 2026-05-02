@@ -18,6 +18,11 @@ type EffectSubscription = {
   dependencies: Set<Set<Function>>;
 };
 
+type DomSubscription = {
+  subscription: Function;
+  subscriberSets: Set<Set<Function>>;
+};
+
 const effectStack: EffectSubscription[] = [];
 
 type StorePulses<PulsesType> = {
@@ -26,34 +31,56 @@ type StorePulses<PulsesType> = {
     : never;
 };
 
-function registerDomSubscription(subscribers: Set<Function>, domWithVnodesToUpdate: WeakSet<DomElement>): void {
-  const currentVnode = current.vnode as VnodeWithDom;
-  if (!currentVnode || domWithVnodesToUpdate.has(currentVnode.dom)) {
+function addDomSubscription(subscribers: Set<Function>, domSubscription: DomSubscription): void {
+  if (domSubscription.subscriberSets.has(subscribers)) {
     return;
   }
 
-  let hasParent = false;
+  subscribers.add(domSubscription.subscription);
+  domSubscription.subscriberSets.add(subscribers);
+}
+
+function registerDomSubscription(
+  subscribers: Set<Function>,
+  domSubscriptions: WeakMap<DomElement, DomSubscription>,
+  currentVnode: VnodeWithDom
+): void {
+  if (!currentVnode) {
+    return;
+  }
+
+  const existingSubscription = domSubscriptions.get(currentVnode.dom);
+  if (existingSubscription) {
+    addDomSubscription(subscribers, existingSubscription);
+    return;
+  }
+
   let parent = currentVnode.dom.parentElement as DomElement;
   while (parent) {
-    if (domWithVnodesToUpdate.has(parent)) {
-      hasParent = true;
-      break;
+    const parentSubscription = domSubscriptions.get(parent);
+    if (parentSubscription) {
+      addDomSubscription(subscribers, parentSubscription);
+      return;
     }
     parent = parent.parentElement as DomElement;
   }
 
-  if (!hasParent) {
-    const dom = currentVnode.dom;
-    const subscription = () => {
+  const dom = currentVnode.dom;
+  const domSubscription: DomSubscription = {
+    subscription: () => {
       updateVnode(dom.vnode);
       if (!dom.parentElement) {
-        subscribers.delete(subscription);
-        domWithVnodesToUpdate.delete(dom);
+        for (const subscriberSet of domSubscription.subscriberSets) {
+          subscriberSet.delete(domSubscription.subscription);
+        }
+        domSubscription.subscriberSets.clear();
+        domSubscriptions.delete(dom);
       }
-    };
-    subscribers.add(subscription);
-    domWithVnodesToUpdate.add(dom);
-  }
+    },
+    subscriberSets: new Set()
+  };
+  addDomSubscription(subscribers, domSubscription);
+  domSubscriptions.set(dom, domSubscription);
 }
 
 function createStore<StateType extends State, PulsesType extends Record<string, Pulse<StateType, any>>>(
@@ -65,7 +92,7 @@ function createStore<StateType extends State, PulsesType extends Record<string, 
   on: (event: string, callback: Function) => void;
   off: (event: string, callback: Function) => void;
 } {
-  const domWithVnodesToUpdate = new WeakSet<DomElement>();
+  const domSubscriptions = new WeakMap<DomElement, DomSubscription>();
   const propertySubscribers = new Map<PropertyKey, Set<Function>>();
 
   const getPropertySubscribers = (prop: PropertyKey) => {
@@ -102,19 +129,18 @@ function createStore<StateType extends State, PulsesType extends Record<string, 
 
   const proxyState = new Proxy(localState, {
     get: (state, prop: string) => {
-      if (currentState) {
-        return currentState[prop];
-      }
-
-      const subscribers = getPropertySubscribers(prop);
       const currentEffect = effectStack[effectStack.length - 1];
-      if (currentEffect) {
-        currentEffect.dependencies.add(subscribers);
+      const currentVnode = current.vnode as VnodeWithDom;
+      if (currentEffect || currentVnode) {
+        const subscribers = getPropertySubscribers(prop);
+        if (currentEffect) {
+          currentEffect.dependencies.add(subscribers);
+        }
+
+        registerDomSubscription(subscribers, domSubscriptions, currentVnode);
       }
 
-      registerDomSubscription(subscribers, domWithVnodesToUpdate);
-
-      return state[prop];
+      return currentState ? currentState[prop] : state[prop];
     },
     set: (state, prop: string, value: any) => {
       isMutable();
@@ -143,13 +169,15 @@ function createStore<StateType extends State, PulsesType extends Record<string, 
   const pendingSubscribers = new Set<Function>();
 
   function debouncedUpdate(changedProps: Set<PropertyKey>) {
-    changedProps.forEach((prop) => {
+    for (const prop of changedProps) {
       const subscribers = propertySubscribers.get(prop);
       if (!subscribers) {
-        return;
+        continue;
       }
-      subscribers.forEach((subscriber) => pendingSubscribers.add(subscriber));
-    });
+      for (const subscriber of subscribers) {
+        pendingSubscribers.add(subscriber);
+      }
+    }
 
     if (pendingSubscribers.size === 0) {
       return;
@@ -161,7 +189,10 @@ function createStore<StateType extends State, PulsesType extends Record<string, 
     debounceTimeout = setTimeout(() => {
       const subscribersToNotify = Array.from(pendingSubscribers);
       pendingSubscribers.clear();
-      subscribersToNotify.forEach((subscriber) => subscriber());
+      debounceTimeout = null;
+      for (let i = 0; i < subscribersToNotify.length; i++) {
+        subscribersToNotify[i]();
+      }
     }, 0);
   }
 
@@ -263,7 +294,10 @@ function createStore<StateType extends State, PulsesType extends Record<string, 
   const listeners: Record<string, Function[]> = {};
   const trigger = (event: string, ...args: any[]) => {
     if (listeners[event]) {
-      listeners[event].forEach((callback) => callback(...args));
+      const eventListeners = listeners[event];
+      for (let i = 0; i < eventListeners.length; i++) {
+        eventListeners[i](...args);
+      }
     }
   };
 
@@ -335,7 +369,9 @@ export function createEffect(effect: Function): () => void {
   let disposed = false;
 
   const cleanupDependencies = () => {
-    currentDependencies.forEach((dependency) => dependency.delete(runEffect));
+    for (const dependency of currentDependencies) {
+      dependency.delete(runEffect);
+    }
     currentDependencies.clear();
   };
 
@@ -353,17 +389,17 @@ export function createEffect(effect: Function): () => void {
       effectStack.pop();
     }
 
-    currentDependencies.forEach((dependency) => {
+    for (const dependency of currentDependencies) {
       if (!nextDependencies.has(dependency)) {
         dependency.delete(runEffect);
       }
-    });
+    }
 
-    nextDependencies.forEach((dependency) => {
+    for (const dependency of nextDependencies) {
       if (!currentDependencies.has(dependency)) {
         dependency.add(runEffect);
       }
-    });
+    }
 
     currentDependencies = nextDependencies;
   };
@@ -379,10 +415,12 @@ export function createEffect(effect: Function): () => void {
 export function createPulse<T>(initialValue: T): [() => T, (newValue: T | ((current: T) => T)) => void, () => void] {
   let value = initialValue;
   const subscribers = new Set<Function>();
-  const domWithVnodesToUpdate = new WeakSet<DomElement>();
+  const domSubscriptions = new WeakMap<DomElement, DomSubscription>();
 
   const runSubscribers = () => {
-    subscribers.forEach((subscriber) => subscriber());
+    for (const subscriber of subscribers) {
+      subscriber();
+    }
   };
 
   const read = (): T => {
@@ -390,7 +428,7 @@ export function createPulse<T>(initialValue: T): [() => T, (newValue: T | ((curr
     if (currentEffect) {
       currentEffect.dependencies.add(subscribers);
     }
-    registerDomSubscription(subscribers, domWithVnodesToUpdate);
+    registerDomSubscription(subscribers, domSubscriptions, current.vnode as VnodeWithDom);
     return value;
   };
 

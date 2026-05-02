@@ -551,7 +551,16 @@ export class Element extends Node {
     this.childNodes = this.nodeValue ? [new Text(this.nodeValue)] : [];
   }
   get textContent() {
-    return this.nodeValue;
+    const { childNodes } = this;
+    if (childNodes.length === 0) {
+      return this.nodeValue;
+    }
+
+    let text = "";
+    for (let i = 0, l = childNodes.length; i < l; i++) {
+      text += childNodes[i].textContent || childNodes[i].nodeValue || "";
+    }
+    return text;
   }
 
   set innerText(text) {
