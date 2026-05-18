@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.1.11](https://github.com/Masquerade-Circus/valyrian/compare/9.1.10...9.1.11) (2026-05-18)
+
+### Code Refactoring
+
+* **forms:** avoid to update the view if the dom value equals the current formated value ([aa6ea28](https://github.com/Masquerade-Circus/valyrian/commit/aa6ea2816b6150c64ed5f1ff03d1f637280777e0))
+
 ## [9.1.10](https://github.com/Masquerade-Circus/valyrian/compare/9.1.9...9.1.10) (2026-05-02)
 
 ### Bug Fixes
