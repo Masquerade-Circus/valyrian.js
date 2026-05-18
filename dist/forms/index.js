@@ -2874,7 +2874,8 @@ var FormStore = class {
     method = "onchange";
   } else if (tagName === "select" || tagName === "textarea" || tagName === "input") {
     const formattedValue = formStore.formatValue(name, stateValue);
-    if (dom.value != formattedValue) {
+    const domValue = formattedValue == null ? "" : String(formattedValue);
+    if (dom.value !== domValue) {
       (0, import_valyrian.setAttribute)("value", formattedValue, vnode);
     }
   }

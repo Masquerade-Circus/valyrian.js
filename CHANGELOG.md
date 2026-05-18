@@ -1,5 +1,7 @@
 # Changelog
 
+## [9.1.12](https://github.com/Masquerade-Circus/valyrian/compare/9.1.11...9.1.12) (2026-05-18)
+
 ## [9.1.11](https://github.com/Masquerade-Circus/valyrian/compare/9.1.10...9.1.11) (2026-05-18)
 
 ### Code Refactoring

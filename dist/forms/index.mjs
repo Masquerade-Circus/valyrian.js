@@ -2849,7 +2849,8 @@ directive("field", (formStore, vnode) => {
     method = "onchange";
   } else if (tagName === "select" || tagName === "textarea" || tagName === "input") {
     const formattedValue = formStore.formatValue(name, stateValue);
-    if (dom.value != formattedValue) {
+    const domValue = formattedValue == null ? "" : String(formattedValue);
+    if (dom.value !== domValue) {
       setAttribute("value", formattedValue, vnode);
     }
   }
