@@ -2774,7 +2774,10 @@ var FormStore = class {
   async submit(event) {
     event?.preventDefault();
     const validationErrors = this.validator(this.state);
-    const isValid = this.setValidationErrors(validationErrors.valid ? {} : mapValidationError(validationErrors.error), event);
+    const isValid = this.setValidationErrors(
+      validationErrors.valid ? {} : mapValidationError(validationErrors.error),
+      event
+    );
     if (!isValid) {
       return false;
     }
@@ -2830,16 +2833,25 @@ directive("field", (formStore, vnode) => {
   const dom = vnode.dom;
   let method = "oninput";
   if (type === "checkbox") {
-    setAttribute("checked", Boolean(stateValue), vnode);
+    const isChecked = Boolean(stateValue);
+    if (dom.checked !== isChecked) {
+      setAttribute("checked", isChecked, vnode);
+    }
     method = "onchange";
   } else if (type === "radio") {
     const radioValue = vnode.props.value ?? dom.value;
-    const normalizedStateValue = stateValue == null ? "" : stateValue;
-    const normalizedRadioValue = radioValue == null ? "" : radioValue;
-    setAttribute("checked", String(normalizedStateValue) === String(normalizedRadioValue), vnode);
+    const normalizedStateValue = String(stateValue == null ? "" : stateValue);
+    const normalizedRadioValue = String(radioValue == null ? "" : radioValue);
+    const isChecked = normalizedStateValue === normalizedRadioValue;
+    if (dom.checked !== isChecked) {
+      setAttribute("checked", isChecked, vnode);
+    }
     method = "onchange";
   } else if (tagName === "select" || tagName === "textarea" || tagName === "input") {
-    setAttribute("value", formStore.formatValue(name, stateValue), vnode);
+    const formattedValue = formStore.formatValue(name, stateValue);
+    if (dom.value != formattedValue) {
+      setAttribute("value", formattedValue, vnode);
+    }
   }
   if (method === "oninput") {
     const userOnInput = vnode.props.oninput;
