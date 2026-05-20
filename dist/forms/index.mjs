@@ -2835,7 +2835,7 @@ directive("field", (formStore, vnode) => {
   if (type === "checkbox") {
     const isChecked = Boolean(stateValue);
     if (dom.checked !== isChecked) {
-      setAttribute("checked", isChecked, vnode);
+      dom.checked = isChecked;
     }
     method = "onchange";
   } else if (type === "radio") {
@@ -2844,14 +2844,14 @@ directive("field", (formStore, vnode) => {
     const normalizedRadioValue = String(radioValue == null ? "" : radioValue);
     const isChecked = normalizedStateValue === normalizedRadioValue;
     if (dom.checked !== isChecked) {
-      setAttribute("checked", isChecked, vnode);
+      dom.checked = isChecked;
     }
     method = "onchange";
   } else if (tagName === "select" || tagName === "textarea" || tagName === "input") {
     const formattedValue = formStore.formatValue(name, stateValue);
     const domValue = formattedValue == null ? "" : String(formattedValue);
     if (dom.value !== domValue) {
-      setAttribute("value", formattedValue, vnode);
+      dom.value = domValue;
     }
   }
   if (method === "oninput") {

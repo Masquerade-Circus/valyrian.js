@@ -2860,7 +2860,7 @@ var FormStore = class {
   if (type === "checkbox") {
     const isChecked = Boolean(stateValue);
     if (dom.checked !== isChecked) {
-      (0, import_valyrian.setAttribute)("checked", isChecked, vnode);
+      dom.checked = isChecked;
     }
     method = "onchange";
   } else if (type === "radio") {
@@ -2869,14 +2869,14 @@ var FormStore = class {
     const normalizedRadioValue = String(radioValue == null ? "" : radioValue);
     const isChecked = normalizedStateValue === normalizedRadioValue;
     if (dom.checked !== isChecked) {
-      (0, import_valyrian.setAttribute)("checked", isChecked, vnode);
+      dom.checked = isChecked;
     }
     method = "onchange";
   } else if (tagName === "select" || tagName === "textarea" || tagName === "input") {
     const formattedValue = formStore.formatValue(name, stateValue);
     const domValue = formattedValue == null ? "" : String(formattedValue);
     if (dom.value !== domValue) {
-      (0, import_valyrian.setAttribute)("value", formattedValue, vnode);
+      dom.value = domValue;
     }
   }
   if (method === "oninput") {
