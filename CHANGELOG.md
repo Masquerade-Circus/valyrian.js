@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.1.13](https://github.com/Masquerade-Circus/valyrian/compare/9.1.12...9.1.13) (2026-05-20)
+
+### Bug Fixes
+
+* **forms:** fix cursor jumping to the end if something is writed in the middle of the value ([2e82bf3](https://github.com/Masquerade-Circus/valyrian/commit/2e82bf357b198abcd50b32ea2418c50fa5e83f23))
+
 ## [9.1.12](https://github.com/Masquerade-Circus/valyrian/compare/9.1.11...9.1.12) (2026-05-18)
 
 ## [9.1.11](https://github.com/Masquerade-Circus/valyrian/compare/9.1.10...9.1.11) (2026-05-18)
