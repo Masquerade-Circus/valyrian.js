@@ -880,15 +880,35 @@ async function icons(source, configuration) {
       }
     }
     if (options.linksViewPath) {
+      const hyperscriptLinks = response.html.map((item) => {
+        const hyperscript = htmlToHyperscript(item);
+        return hyperscript.substring(1, hyperscript.length - 2);
+      }).join(",");
+      const jsxLinks = response.html.map((item) => `    ${item.endsWith("/>") ? item : item.replace(/>$/, " />")}`).join("\n");
       const html2 = `
+  const { v } = require("valyrian.js");
+
   function Links(){
-    return ${htmlToHyperscript(response.html.join(""))};
+    return [${hyperscriptLinks}
+  ];
   }
   
   Links.default = Links;
   module.exports = Links;
         `;
+      const jsx = `/** @jsxImportSource valyrian.js */
+
+export function Links() {
+  return (
+    <>
+${jsxLinks}
+    </>
+  );
+}
+`;
       fs.writeFileSync(`${options.linksViewPath}/links.js`, html2);
+      fs.writeFileSync(`${options.linksViewPath}/links.jsx`, jsx);
+      fs.writeFileSync(`${options.linksViewPath}/links.tsx`, jsx);
     }
   } catch (err) {
     process.stdout.write(err.status + "\n");
@@ -972,11 +992,24 @@ async function inline(file, options = {}) {
         };
         tsc.build(tscProgOptions);
       }
+      const {
+        bundle: _bundle,
+        entryPoints: _entryPoints,
+        jsx: _jsx,
+        jsxImportSource: _jsxImportSource,
+        loader: _loader,
+        minify: _minify,
+        outdir: _outdir,
+        outfile: _outfile,
+        sourcemap: _sourcemap,
+        stdin: _stdin,
+        write: _write,
+        ...safeEsbuildOptions
+      } = options.esbuild || {};
       const esbuildOptions = {
+        ...safeEsbuildOptions,
         entryPoints: [file],
         bundle: "bundle" in options ? options.bundle : true,
-        sourcemap: "external",
-        write: false,
         minify: options.compact,
         outdir: "out",
         target: "esnext",
@@ -988,7 +1021,8 @@ async function inline(file, options = {}) {
           ".mjs": "jsx",
           ".ts": "tsx"
         },
-        ...options.esbuild || {}
+        sourcemap: "external",
+        write: false
       };
       const result = await esbuild.build(esbuildOptions);
       if (result.outputFiles?.length !== 2) {

@@ -3,15 +3,54 @@ import * as tsc from "tsc-prog";
 import CleanCSS from "clean-css";
 import { PurgeCSS } from "purgecss";
 import esbuild from "esbuild";
+import type { BuildOptions } from "esbuild";
+import type { UserDefinedOptions } from "purgecss";
+import type { MinifyOptions } from "terser";
 /* eslint-disable sonarjs/cognitive-complexity */
 import fs from "fs";
 import { isString } from "../../utils";
 
+export type InlineInput = string | { raw: string; map?: string | null; file: string };
+
+type InlineOwnedEsbuildOptions =
+  | "write"
+  | "sourcemap"
+  | "entryPoints"
+  | "stdin"
+  | "outfile"
+  | "outdir"
+  | "bundle"
+  | "minify"
+  | "loader"
+  | "jsx"
+  | "jsxImportSource";
+
+export type InlineEsbuildOptions = Omit<BuildOptions, InlineOwnedEsbuildOptions>;
+
+export interface InlineOptions {
+  compact?: boolean;
+  bundle?: boolean;
+  noValidate?: boolean;
+  declarationDir?: string;
+  tsc?: Record<string, any>;
+  esbuild?: InlineEsbuildOptions;
+  terser?: MinifyOptions;
+  cleanCss?: CleanCSS.OptionsOutput;
+  [key: string]: unknown;
+}
+
+export interface InlineUncssOptions extends Omit<UserDefinedOptions, "content" | "css"> {
+  cleanCss?: CleanCSS.OptionsOutput;
+}
+
+export interface InlineResult {
+  raw: string;
+  map: string | null;
+  file: string;
+}
+
 // eslint-disable-next-line complexity
-export async function inline(
-  file: string | { raw: string; map?: string | null; file: string },
-  options: Record<string, any> = {}
-) {
+export async function inline(file: InlineInput, options: InlineOptions = {}): Promise<InlineResult> {
   if (isString(file)) {
     const ext = file.split(".").pop();
     if (ext && /(js|cjs|jsx|mjs|ts|tsx)/.test(ext)) {
@@ -50,11 +89,25 @@ export async function inline(
         (tsc as any).build(tscProgOptions);
       }
 
-      const esbuildOptions = {
+      const {
+        bundle: _bundle,
+        entryPoints: _entryPoints,
+        jsx: _jsx,
+        jsxImportSource: _jsxImportSource,
+        loader: _loader,
+        minify: _minify,
+        outdir: _outdir,
+        outfile: _outfile,
+        sourcemap: _sourcemap,
+        stdin: _stdin,
+        write: _write,
+        ...safeEsbuildOptions
+      } = (options.esbuild || {}) as BuildOptions;
+
+      const esbuildOptions: BuildOptions = {
+        ...safeEsbuildOptions,
         entryPoints: [file],
         bundle: "bundle" in options ? options.bundle : true,
-        sourcemap: "external",
-        write: false,
         minify: options.compact,
         outdir: "out",
         target: "esnext",
@@ -66,7 +119,8 @@ export async function inline(
           ".mjs": "jsx",
           ".ts": "tsx"
         },
-        ...(options.esbuild || {})
+        sourcemap: "external",
+        write: false
       };
 
       const result = await esbuild.build(esbuildOptions);
@@ -88,7 +142,7 @@ export async function inline(
           },
           ecma: 2022,
           ...(options.terser || {})
-        });
+        } as MinifyOptions);
 
         if (!result2.code || !result2.map) {
           throw new Error("Unknown error");
@@ -114,7 +168,7 @@ export async function inline(
           }
         },
         ...(options.cleanCss || {})
-      }).minify([file]);
+      } as CleanCSS.OptionsOutput).minify([file]);
 
       return { raw: result.styles, map: null, file };
     } else {
@@ -130,7 +184,7 @@ export async function inline(
 inline.uncss = async function (
   renderedHtml: (string | Promise<string>)[],
   css: string,
-  options: Record<string, any> = {}
+  options: InlineUncssOptions = {}
 ) {
   const html = await Promise.all(renderedHtml);
 
@@ -164,7 +218,7 @@ inline.uncss = async function (
       }
     },
     ...(options.cleanCss || {})
-  }).minify(output[0].css);
+  } as CleanCSS.OptionsOutput).minify(output[0].css);
 
   return cleanCss.styles;
 };

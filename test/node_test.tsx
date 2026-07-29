@@ -1,4 +1,5 @@
 import { htmlToHyperscript, icons, inline, render, sw, htmlToDom, domToHtml, ServerStorage } from "valyrian.js/node";
+import type { InlineOptions } from "valyrian.js/node";
 import { SwRuntimeManager } from "valyrian.js/sw";
 
 import { expect, describe, test as it } from "bun:test";
@@ -305,7 +306,18 @@ describe("Node test", () => {
     await icons("./assets/icon.png", favicons);
     expect(fs.existsSync(".tmp/favicon.ico")).toBeTruthy();
     expect(fs.existsSync(".tmp/links.js")).toBeTruthy();
+    expect(fs.existsSync(".tmp/links.jsx")).toBeTruthy();
+    expect(fs.existsSync(".tmp/links.tsx")).toBeTruthy();
     expect(fs.existsSync(".tmp/manifest.webmanifest")).toBeTruthy();
+
+    const linksView = fs.readFileSync(".tmp/links.js", "utf8");
+    expect(linksView).toContain("return [");
+    expect(linksView).not.toMatch(/v\("link", [\s\S]+\[\s*v\("link",/);
+
+    const jsxLinksView = fs.readFileSync(".tmp/links.jsx", "utf8");
+    const tsxLinksView = fs.readFileSync(".tmp/links.tsx", "utf8");
+    expect(jsxLinksView).toContain("export function Links() {");
+    expect(tsxLinksView).toContain("export function Links() {");
   });
 
   it("should remove unused css", async () => {
@@ -339,17 +351,55 @@ span.hello{display: inline-block}
     expect(result.raw).not.toContain("sourceMappingURL");
   });
 
-  it("should return external js source maps when esbuild sourcemap is enabled", async () => {
+  it("should keep external js source maps when esbuild sourcemap is overridden unsafely", async () => {
     const result = await inline("./test/utils/component-automatic.tsx", {
       compact: false,
       bundle: false,
       esbuild: {
         sourcemap: true
-      }
+      } as unknown as NonNullable<InlineOptions["esbuild"]>
     });
 
     expect(result.raw).toContain("valyrian.js/jsx-runtime");
     expect(result.map).toMatch(/^\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,/);
+  });
+
+  it("should keep inline output contract when esbuild invariants are overridden unsafely", async () => {
+    const result = await inline("./test/utils/component-automatic.tsx", {
+      compact: false,
+      bundle: false,
+      esbuild: {
+        bundle: true,
+        outfile: "./out/unsafe.js",
+        outdir: "./out/unsafe",
+        write: true,
+        sourcemap: false
+      } as unknown as NonNullable<InlineOptions["esbuild"]>
+    });
+
+    expect(result.raw).toContain("valyrian.js/jsx-runtime");
+    expect(result.map).toMatch(/^\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,/);
+    expect(result.file).toEqual("./test/utils/component-automatic.tsx");
+  });
+
+  it("should reject dangerous esbuild overrides at type level", () => {
+    const writeOptions: InlineOptions = {
+      esbuild: {
+        jsxDev: true,
+        // @ts-expect-error inline owns esbuild.write so callers keep outputFiles available.
+        write: true
+      }
+    };
+    const outfileOptions: InlineOptions = {
+      esbuild: {
+        jsxDev: true,
+        // @ts-expect-error inline owns esbuild.outfile so callers cannot change output shape.
+        outfile: "./out/unsafe.js"
+      }
+    };
+
+    expect(writeOptions.esbuild?.jsxDev).toBeTrue();
+    expect(outfileOptions.esbuild?.jsxDev).toBeTrue();
   });
 
   it("should keep external js source maps when compacting", async () => {
@@ -358,7 +408,7 @@ span.hello{display: inline-block}
       bundle: false,
       esbuild: {
         sourcemap: true
-      }
+      } as unknown as NonNullable<InlineOptions["esbuild"]>
     });
 
     expect(result.raw).toContain("valyrian.js/jsx-runtime");

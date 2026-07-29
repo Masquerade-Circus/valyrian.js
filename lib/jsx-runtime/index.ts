@@ -16,7 +16,7 @@ export function jsx(tag: JsxTag, props: JsxProps, key?: string | number) {
   let children: Children = [];
 
   if ("children" in props) {
-    children = [props.children];
+    children = Array.isArray(props.children) ? props.children : [props.children];
     Reflect.deleteProperty(props, "children");
   }
 

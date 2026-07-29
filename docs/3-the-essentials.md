@@ -66,7 +66,7 @@ const Counter = {
 mount("body", Counter);
 ```
 
-### Intentional Versatility: Component Shape and State Model
+### Choose a Component Shape and State Model
 
 Valyrian separates two independent decisions:
 

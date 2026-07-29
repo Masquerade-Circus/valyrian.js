@@ -2,23 +2,27 @@
 
 Use this page as your map for the docs set.
 
-If you are new to Valyrian.js, follow the recommended path first. It introduces the web-first runtime model, then expands it from browser rendering into browser/server runtime usage.
+If you are new to Valyrian.js, follow the recommended path first. It starts with one browser render, then grows the same application so browser and Node.js can import the same application code and produce the right result for each environment.
 
 ## Recommended Path (First-Time Readers)
 
 1. [Introduction](./1-introduction.md)
 2. [Getting Started (No-Build First)](./2-getting-started.md)
-3. [The Essentials (View and Interaction)](./3-the-essentials.md)
-4. [Routing and Navigation](./4.1-routing-and-navigation.md)
-5. [Data Fetching and Async Workflows (Hub)](./4.2-data-fetching-and-async.md)
-6. [Forms](./4.3-forms.md)
+3. [Taskboard Tutorial](./taskboard-tutorial.md)
+4. [The Essentials (View and Interaction)](./3-the-essentials.md)
+5. [Routing and Navigation](./4.1-routing-and-navigation.md)
+6. [Data Fetching and Async Workflows (Hub)](./4.2-data-fetching-and-async.md)
+7. [Forms](./4.3-forms.md)
 
 ## Full Table of Contents
 
+0. [Editorial Style Guide](./editorial-style-guide.md)
 1. [Introduction](./1-introduction.md)
 2. [Getting Started (No-Build First)](./2-getting-started.md)
+   * [Taskboard Tutorial: One Application, Seven Stages](./taskboard-tutorial.md)
 3. [The Essentials](./3-the-essentials.md)
    * [Runtime Core API](./3.1-runtime-core.md)
+   * [API Reference Standard](./api-reference-standard.md)
 4. [Building Single Page Applications (SPA Hub)](./4-building-spa.md)
    * [4.1. Routing and Navigation](./4.1-routing-and-navigation.md)
    * [4.2. Data Fetching and Async Workflows (Hub)](./4.2-data-fetching-and-async.md)
@@ -34,9 +38,9 @@ If you are new to Valyrian.js, follow the recommended path first. It introduces 
    * [5.3. FluxStore](./5.3-flux-store.md)
    * [5.4. Redux DevTools Bridge](./5.4-redux-devtools.md)
 6. [Optimization and Performance](./6-optimization-and-performance.md)
-7. [Browser/Server Runtime in Practice](./7-full-stack-capability.md)
+7. [Run the Same Application in Browser and Node.js](./7-full-stack-capability.md)
    * [7.1. Server-Side Rendering and Hydration](./7.1-ssr.md)
-      * [7.1.1. Node Runtime APIs](./7.1.1-node-runtime-apis.md)
+      * [7.1.1. Node.js Runtime APIs](./7.1.1-node-runtime-apis.md)
    * [7.2. Isomorphic Request and Storage Runtime](./7.2-isomorphic-networking-and-storage.md)
    * [7.3. PWA and Build Tooling](./7.3-pwa-and-build-tooling.md)
       * [7.3.1. Service Worker Runtime](./7.3.1-sw-runtime.md)
@@ -57,7 +61,15 @@ If you are new to Valyrian.js, follow the recommended path first. It introduces 
    * [9.8. Reactive Counter Variants](./9.8-reactive-counter-variants.md)
 10. [Meta-Framework and CLI (Downstream / Planned)](./10-meta-framework-cli.md)
 11. [Contribution](./11-contribution.md)
+12. [Versioning and Compatibility Policy](./12-versioning-policy.md)
+13. Framework Appendices
+    * [React Developers](./appendix-react-developers.md)
+    * [Vue Developers](./appendix-vue-developers.md)
+    * [Svelte Developers](./appendix-svelte-developers.md)
+    * [Solid Developers](./appendix-solid-developers.md)
 
 ## Notes
 
-* New readers should complete the recommended path before jumping to browser/server runtime chapters.
+* New readers should complete the recommended path before jumping to browser/Node.js runtime chapters.
+* Taskboard is the official cumulative tutorial. Use it when a page needs one growing application instead of a standalone example.
+* Documentation contributors should use the [Editorial Style Guide](./editorial-style-guide.md) before adding or rewriting official docs.

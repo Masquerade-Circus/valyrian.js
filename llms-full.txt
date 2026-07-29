@@ -4,9 +4,9 @@ Purpose
 This file aggregates the official documentation sources from the `docs/` directory as a single reference for AI agents and tooling.
 
 Generated
-- Date (UTC): 2026-05-20
+- Date (UTC): 2026-07-29
 - Source root: `docs/`
-- File count: 43
+- File count: 51
 
 Source Files (in order)
 1. `docs/toc.md`
@@ -52,6 +52,14 @@ Source Files (in order)
 41. `docs/9.8-reactive-counter-variants.md`
 42. `docs/10-meta-framework-cli.md`
 43. `docs/11-contribution.md`
+44. `docs/12-versioning-policy.md`
+45. `docs/api-reference-standard.md`
+46. `docs/appendix-react-developers.md`
+47. `docs/appendix-solid-developers.md`
+48. `docs/appendix-svelte-developers.md`
+49. `docs/appendix-vue-developers.md`
+50. `docs/editorial-style-guide.md`
+51. `docs/taskboard-tutorial.md`
 
 
 ____________________________________________
@@ -61,23 +69,27 @@ ____________________________________________
 
 Use this page as your map for the docs set.
 
-If you are new to Valyrian.js, follow the recommended path first. It introduces the web-first runtime model, then expands it from browser rendering into browser/server runtime usage.
+If you are new to Valyrian.js, follow the recommended path first. It starts with one browser render, then grows the same application so browser and Node.js can import the same application code and produce the right result for each environment.
 
 ## Recommended Path (First-Time Readers)
 
 1. [Introduction](./1-introduction.md)
 2. [Getting Started (No-Build First)](./2-getting-started.md)
-3. [The Essentials (View and Interaction)](./3-the-essentials.md)
-4. [Routing and Navigation](./4.1-routing-and-navigation.md)
-5. [Data Fetching and Async Workflows (Hub)](./4.2-data-fetching-and-async.md)
-6. [Forms](./4.3-forms.md)
+3. [Taskboard Tutorial](./taskboard-tutorial.md)
+4. [The Essentials (View and Interaction)](./3-the-essentials.md)
+5. [Routing and Navigation](./4.1-routing-and-navigation.md)
+6. [Data Fetching and Async Workflows (Hub)](./4.2-data-fetching-and-async.md)
+7. [Forms](./4.3-forms.md)
 
 ## Full Table of Contents
 
+0. [Editorial Style Guide](./editorial-style-guide.md)
 1. [Introduction](./1-introduction.md)
 2. [Getting Started (No-Build First)](./2-getting-started.md)
+   * [Taskboard Tutorial: One Application, Seven Stages](./taskboard-tutorial.md)
 3. [The Essentials](./3-the-essentials.md)
    * [Runtime Core API](./3.1-runtime-core.md)
+   * [API Reference Standard](./api-reference-standard.md)
 4. [Building Single Page Applications (SPA Hub)](./4-building-spa.md)
    * [4.1. Routing and Navigation](./4.1-routing-and-navigation.md)
    * [4.2. Data Fetching and Async Workflows (Hub)](./4.2-data-fetching-and-async.md)
@@ -93,9 +105,9 @@ If you are new to Valyrian.js, follow the recommended path first. It introduces 
    * [5.3. FluxStore](./5.3-flux-store.md)
    * [5.4. Redux DevTools Bridge](./5.4-redux-devtools.md)
 6. [Optimization and Performance](./6-optimization-and-performance.md)
-7. [Browser/Server Runtime in Practice](./7-full-stack-capability.md)
+7. [Run the Same Application in Browser and Node.js](./7-full-stack-capability.md)
    * [7.1. Server-Side Rendering and Hydration](./7.1-ssr.md)
-      * [7.1.1. Node Runtime APIs](./7.1.1-node-runtime-apis.md)
+      * [7.1.1. Node.js Runtime APIs](./7.1.1-node-runtime-apis.md)
    * [7.2. Isomorphic Request and Storage Runtime](./7.2-isomorphic-networking-and-storage.md)
    * [7.3. PWA and Build Tooling](./7.3-pwa-and-build-tooling.md)
       * [7.3.1. Service Worker Runtime](./7.3.1-sw-runtime.md)
@@ -116,10 +128,18 @@ If you are new to Valyrian.js, follow the recommended path first. It introduces 
    * [9.8. Reactive Counter Variants](./9.8-reactive-counter-variants.md)
 10. [Meta-Framework and CLI (Downstream / Planned)](./10-meta-framework-cli.md)
 11. [Contribution](./11-contribution.md)
+12. [Versioning and Compatibility Policy](./12-versioning-policy.md)
+13. Framework Appendices
+    * [React Developers](./appendix-react-developers.md)
+    * [Vue Developers](./appendix-vue-developers.md)
+    * [Svelte Developers](./appendix-svelte-developers.md)
+    * [Solid Developers](./appendix-solid-developers.md)
 
 ## Notes
 
-* New readers should complete the recommended path before jumping to browser/server runtime chapters.
+* New readers should complete the recommended path before jumping to browser/Node.js runtime chapters.
+* Taskboard is the official cumulative tutorial. Use it when a page needs one growing application instead of a standalone example.
+* Documentation contributors should use the [Editorial Style Guide](./editorial-style-guide.md) before adding or rewriting official docs.
 
 
 ____________________________________________
@@ -127,19 +147,20 @@ ____________________________________________
 
 # 1. Introduction
 
-Valyrian.js is an isomorphic runtime framework for web apps with one runtime model across browser and server.
+Valyrian.js lets the browser and Node.js import the same application code and render it according to the runtime that is executing it.
 
-Here, "isomorphic" means you keep the same mental model when you move between browser and server work. The runtime grows from first render, to SSR, to hydration and request-scoped behavior without turning into a separate product mode.
+The browser mounts or hydrates DOM. Node.js renders HTML for the response. Both runtimes keep the same components, routes and state owners as the application surface.
 
-It is for teams that want browser/server continuity, explicit runtime behavior, and deterministic updates without hiding app behavior behind framework ceremony.
+Valyrian.js fits teams that want to inspect how an event, state change, request or route produces the next render in either runtime.
 
-The goal is simple: ship fast, keep control, and expand from browser rendering into SSR, hydration, and request-scoped server behavior without switching mental models.
+Start with one visible render, then add interaction, routing, data, forms, SSR and hydration while the application code stays recognizable.
 
-If you started in `README.md`, keep the same picture in mind here: mount one component into a root, confirm it renders, then expand that same model into richer component trees, events, state, and server-side execution.
+If you started in `README.md`, keep the same picture in mind here: mount one component into a root, confirm it renders, then expand that same application into richer component trees, events, state, routing, data, forms and Node.js execution.
 
 ## What this guide gives you
 
 * A fast first-success path (chapters 1-3).
+* A cumulative Taskboard path that grows one application through seven stages.
 * A practical SPA path (chapter 4 and its module pages).
 * A clear expansion path for state, optimization, and full-stack runtime concerns.
 
@@ -150,9 +171,9 @@ If you started in `README.md`, keep the same picture in mind here: mount one com
 
 ## 1.1. What Valyrian.js Is
 
-Valyrian is designed around one runtime model that works in both browser and server contexts.
+Valyrian is designed so one application can run in browser and Node.js contexts.
 
-That model is meant to support complete app flows as an integrated runtime surface, so routing, state, requests, SSR, and hydration can be composed with fewer external app-runtime pieces.
+That model supports complete app flows as an integrated runtime surface. Routing, state, requests, forms, SSR, hydration, offline work and PWA behavior can be composed as parts of the same application. When the runtime changes, the output changes: the browser updates DOM, and Node.js produces HTML or request-scoped output.
 
 Core areas:
 
@@ -160,7 +181,8 @@ Core areas:
 * Router and navigation lifecycle.
 * State options (plain JavaScript objects, called `POJO` in the docs, plus `pulse`, `pulse store`, and `flux store`).
 * Request and async orchestration modules.
-* Node-side SSR, hydration entry points, and build utilities.
+* Forms, offline queues, network status and service worker runtime behavior.
+* Node.js SSR, hydration entry points, request isolation, build utilities and guarded environment-specific APIs.
 
 ## 1.2. Philosophy
 
@@ -169,36 +191,38 @@ The project emphasizes:
 1. **Simplicity first**: complexity should come from product logic, not framework ceremony.
 2. **Platform-native APIs**: lean on Web/JS primitives whenever practical.
 3. **Deterministic updates**: avoid hidden schedulers where explicit control is clearer.
-4. **Unified behavior**: keep runtime semantics consistent between browser and server.
+4. **Visible execution**: each interaction, request, route, form submit or hydration step should have a traceable entry point and observable result.
+5. **Shared application code**: keep browser and Node.js execution inside the same application model.
 
 ## 1.3. Architecture Overview
 
 ```mermaid
-flowchart LR
-    input[User or Request] --> router[Router]
-    router --> components[Components]
-    state[State] --> components
-    components --> state
-    components --> target[Render Target]
-    target --> dom[Interactive DOM]
-    target --> html[HTML String]
+flowchart TD
+    app[Shared application code] --> components[Components, routes and state]
+    components --> runtime{Runtime}
+    runtime -- Browser mount or hydration --> dom[Interactive DOM]
+    runtime -- Node.js render --> html[HTML response]
+    components --> branch{Environment-specific API needed?}
+    branch -- Browser API --> browserGuard[Run behind !isNodeJs]
+    branch -- Node.js API --> nodeGuard[Run behind isNodeJs]
 ```
 
-`Render Target` is the key architectural bridge. In the browser, the runtime resolves to interactive DOM updates. On the server, the same component and routing model can resolve to HTML output, then hydrate back into interactive behavior on the client. That continuity is why SSR, hydration, and request-scoped execution belong to the same runtime story instead of separate feature buckets.
+The application imports stay shared. The runtime decides the result: browser execution mounts or hydrates interactive DOM, while Node.js execution renders HTML for the response. Use `isNodeJs` when shared components need an environment-specific branch, so browser-only or Node.js-only APIs stay inside the same application without leaking into the wrong runtime.
 
 ## 1.4. Reading Path
 
 Recommended order:
 
 1. [./2-getting-started.md](./2-getting-started.md)
-2. [./3-the-essentials.md](./3-the-essentials.md)
-3. [./4.1-routing-and-navigation.md](./4.1-routing-and-navigation.md)
-4. [./4.2-data-fetching-and-async.md](./4.2-data-fetching-and-async.md)
-5. [./4.3-forms.md](./4.3-forms.md)
+2. [./taskboard-tutorial.md](./taskboard-tutorial.md)
+3. [./3-the-essentials.md](./3-the-essentials.md)
+4. [./4.1-routing-and-navigation.md](./4.1-routing-and-navigation.md)
+5. [./4.2-data-fetching-and-async.md](./4.2-data-fetching-and-async.md)
+6. [./4.3-forms.md](./4.3-forms.md)
 
-If your goal is first success only, complete chapters 2 and 3 first, then return for chapter 4 when you need routing and async workflows.
+If your goal is first success only, complete chapter 2 first. If you want the official accumulating application path, continue into Taskboard before jumping to individual guides.
 
-The intended onboarding flow is: `README.md` for the first render, this introduction for the mental model, and `2-getting-started.md` for the first fuller example and local tooling path.
+The intended onboarding flow is: `README.md` for the first render, this introduction for the browser/Node.js mental model, `2-getting-started.md` for the local tooling path and `taskboard-tutorial.md` for the cumulative application.
 
 
 ____________________________________________
@@ -206,9 +230,9 @@ ____________________________________________
 
 # 2. Getting Started (No-Build First)
 
-Valyrian.js can run directly in the browser with ES modules, or from a Node.js project with the built-in `inline` utility.
+Valyrian.js can run directly in the browser with ES modules, or from a Node.js project that imports the same application code and prepares it with the built-in `inline` utility.
 
-Use this page to meet the runtime model in stages: first in the browser mount-and-render path, then in local Node tooling, and later in SSR as the same model expanded to the server.
+This page starts with a browser mount, adds local Node.js tooling for TSX, and prepares the same component entry for SSR.
 
 ## Goal and Time
 
@@ -317,7 +341,7 @@ Use the short string example as the default mental model. Use this expanded form
 
 If you want TSX/JSX without a complex bundler setup, use `valyrian.js/node` and `inline`.
 
-This path proves a second point: the same runtime model can move into local Node tooling without changing how you think about components, mounting, or output.
+The Node.js path compiles the same component entry for local development while preserving its mount and output contracts.
 
 ### 1. Install
 
@@ -415,13 +439,15 @@ python3 -m http.server
 
 Then open `http://localhost:8000`.
 
-The important part is not the server choice. It is that Node becomes a practical runtime surface for authoring, transforming, and preparing the same browser-facing application model.
+The important part is not the server choice. It is that Node.js becomes a practical runtime surface for authoring, transforming and preparing the same browser-facing application model.
+
+When shared application code needs an environment-specific API, use `isNodeJs` from `valyrian.js` to keep that branch explicit. Browser-only code can run behind `!isNodeJs`, and Node.js-only code can run behind `isNodeJs`, while the component, route or state owner remains part of the same application.
 
 ## Next Steps
 
 1. Continue with [./3-the-essentials.md](./3-the-essentials.md) for components, directives, and update flow.
 2. Move to [./4.1-routing-and-navigation.md](./4.1-routing-and-navigation.md) to build your first SPA route.
-3. Continue to [./7.1-ssr.md](./7.1-ssr.md) when you are ready to see SSR as the next expansion of the same runtime model.
+3. Continue to [./7.1-ssr.md](./7.1-ssr.md) to render the existing component tree on the server and hydrate it in the browser.
 4. Use [./9-recipes-and-integrations.md](./9-recipes-and-integrations.md) when you are ready for Vite/Webpack and backend integration patterns.
 
 
@@ -496,7 +522,7 @@ const Counter = {
 mount("body", Counter);
 ```
 
-### Intentional Versatility: Component Shape and State Model
+### Choose a Component Shape and State Model
 
 Valyrian separates two independent decisions:
 
@@ -844,9 +870,11 @@ ____________________________________________
 
 This page documents the runtime core behind the base `valyrian.js` package.
 
-The same mount, update, lifecycle, and hydration rules described here power both browser execution and server-side rendering in Node.js. Read this page as the reference for the shared runtime model, then layer server-specific behavior from chapter 7 on top of it.
+The browser uses these APIs to mount and update DOM. The Node runtime uses the same vnode and lifecycle contracts to produce HTML for hydration. Chapter 7 adds request-scoped server behavior.
 
 Use [./3-the-essentials.md](./3-the-essentials.md) for the learning path, then use this page for exact API behavior.
+
+Reference entries in this chapter should follow the practical contract from [API Reference Standard](./api-reference-standard.md): import, signature, inputs, return value or state change, effects, errors, observable result and related guide or recipe.
 
 ## VNode Construction Contract
 
@@ -1115,9 +1143,7 @@ ____________________________________________
 
 # 4. Building Single Page Applications (SPA Hub)
 
-This chapter is a hub. Each subsystem has its own focused page.
-
-If you are adopting Valyrian for the first time, follow these pages in order and add modules gradually.
+Build the SPA in three layers: add routing, choose the async modules required by the data flow, then introduce `FormStore` when validation and submission logic begin to repeat.
 
 ## 4.1. Routing and Navigation
 
@@ -1158,7 +1184,7 @@ ____________________________________________
 
 # 4.1. Routing and Navigation
 
-Valyrian routing lives in `valyrian.js/router` and follows the same explicit runtime style as the rest of the framework.
+Import `Router` from `valyrian.js/router` to register routes, run middlewares, resolve navigation and render the matched view.
 
 ## Quick Start Recipe
 
@@ -1431,7 +1457,7 @@ ____________________________________________
 
 This chapter is a hub for networked and async modules used in SPA flows.
 
-These modules layer on top of the base runtime. For the exact delegated event semantics that govern automatic rerenders, async handler timing, and `preventUpdate()` behavior, see [./3.1-runtime-core.md](./3.1-runtime-core.md).
+Choose each async module by its data-flow responsibility. The delegated event contract in [./3.1-runtime-core.md](./3.1-runtime-core.md) defines automatic rerenders, async handler timing and `preventUpdate()` behavior for every module on this page.
 
 ## Choose the Right Async Tool
 
@@ -1443,8 +1469,6 @@ These modules layer on top of the base runtime. For the exact delegated event se
 | Cached server state | [./4.2.4-query.md](./4.2.4-query.md) | Adds query/mutation handles, cache reuse, dedupe, and invalidation. |
 | Connectivity-aware UI or network listeners | [./4.2.5-network.md](./4.2.5-network.md) | Tracks online/offline state and connection quality signals. |
 | Offline-capable mutation queue | [./4.2.6-offline.md](./4.2.6-offline.md) | Persists operations and retries them when the network returns. |
-
-Choosing an async module is a separate decision from the base delegated event rerender contract. Pick the module by data-flow need, then use [./3.1-runtime-core.md](./3.1-runtime-core.md) for the exact rules behind automatic updates, async handler timing, and `preventUpdate()` for manual render control.
 
 ## Async event semantics to keep in mind
 
@@ -2322,7 +2346,7 @@ ____________________________________________
 
 # 5.2. Pulses (`valyrian.js/pulses`)
 
-Pulses give you fine-grained reactivity with a pulse-specific state model.
+Pulses track reactive reads and publish state changes to their subscribers. Start with `createPulse` for one value and `createPulseStore` for grouped state with named operations. The sections below define notification timing, async behavior and cleanup.
 
 Use this page as a behavior guide first and an API reference second.
 
@@ -2716,7 +2740,7 @@ ____________________________________________
 
 # 6. Optimization and Performance
 
-Valyrian is fast by default, but you can still control rendering cost explicitly.
+Measure the screen before optimizing it. When rendering cost becomes visible, Valyrian provides keys, `v-keep` and state boundaries that let you reduce the affected work.
 
 Before optimizing, confirm there is a real bottleneck (profiling or measured latency). Most screens do not need early optimization.
 
@@ -2792,30 +2816,28 @@ Rules:
 ____________________________________________
 # Source: docs/7-full-stack-capability.md
 
-# 7. Browser/Server Runtime Model in Practice
+# 7. Run the Same Application in Browser and Node.js
 
-Valyrian's full-stack story is the same runtime model expressed across browser and server, not a collection of optional extras.
+Valyrian lets the browser and Node.js import the same application code. The browser mounts or hydrates DOM, Node.js renders HTML for responses, and request-scoped context keeps concurrent server work isolated.
 
-SSR, hydration, request-scoped context, and isomorphic networking all extend the same explicit runtime behavior and deterministic update model described in the core chapters.
-
-If you are new to server rendering, start with one SSR render path first, then add request isolation and networking continuity, then layer PWA tooling after the runtime flow is stable.
+If you are new to server rendering, start with one SSR render path first. Then add request isolation, networking continuity and guarded environment-specific APIs before layering PWA tooling.
 
 This chapter is a hub split into focused pages:
 
 ## 7.1. Server-Side Rendering
 
 * File: [./7.1-ssr.md](./7.1-ssr.md)
-* Covers the server-side expression of the same runtime model, including SSR render flow and browser hydration.
+* Covers HTML generation, escaping, route resolution, browser hydration and `isNodeJs` guards inside shared application code.
 
-### 7.1.1. Node Runtime APIs
+### 7.1.1. Node.js Runtime APIs
 
 * File: [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md)
-* Covers the Node server runtime surface: `render`, DOM setup, request-scoped storage, and runtime-side exports.
+* Covers the Node.js runtime surface: `render`, DOM setup, request-scoped storage, and runtime-side exports.
 
 ## 7.2. Isomorphic Networking and Storage
 
 * File: [./7.2-isomorphic-networking-and-storage.md](./7.2-isomorphic-networking-and-storage.md)
-* Covers runtime continuity for network calls plus request-scoped storage isolation with `ServerStorage`.
+* Covers shared request APIs and request-scoped storage isolation with `ServerStorage`.
 
 ## 7.3. PWA and Build Tooling
 
@@ -2835,10 +2857,10 @@ This chapter is a hub split into focused pages:
 ## Read This If You Are Starting SSR
 
 1. Start with [./7.1-ssr.md](./7.1-ssr.md).
-2. Use [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md) for the Node server runtime surface.
+2. Use [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md) for the Node.js runtime surface.
 3. Configure request URL rewriting and storage isolation with [./7.2-isomorphic-networking-and-storage.md](./7.2-isomorphic-networking-and-storage.md).
 4. Review request-scoped context behavior with [./7.4-server-context.md](./7.4-server-context.md).
-5. Add PWA/build tooling and service worker runtime only after the browser/server runtime flow is stable.
+5. Add PWA/build tooling and service worker runtime only after the browser/Node.js runtime flow is stable.
 
 
 ____________________________________________
@@ -2846,18 +2868,16 @@ ____________________________________________
 
 # 7.1. Server-Side Rendering
 
-Server-side rendering in Valyrian is not a separate product mode bolted onto a client framework. It is the server-side expression of the same runtime model used in the browser: render the same component tree, preserve the same state shape, and continue with the same patch and hydration rules after the HTML reaches the client.
+Valyrian renders the same application code in Node.js and the browser. Node.js produces HTML from the application state, and the browser hydrates that output with the same patch rules.
 
-In practice, SSR means running the Valyrian runtime through `valyrian.js/node` for each request, producing deterministic HTML, and then mounting the same app on the same container in the browser so hydration can continue from that existing DOM.
-
-For full node runtime exports (`render`, DOM helpers, `ServerStorage`, build helpers), see [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md).
+For full Node.js runtime exports (`render`, DOM helpers, `ServerStorage`, build helpers), see [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md).
 
 ## Quick Start Checklist
 
 1. Import `render` and `ServerStorage` from `valyrian.js/node`.
-2. Render one component tree to HTML per request.
+2. Render one shared component tree to HTML per request.
 3. Send a full HTML document where the app owns the `<body>`.
-4. Mount the same app on `body` in the browser with the same initial state shape.
+4. Mount or hydrate the same app on `body` in the browser with the same initial state shape.
 
 ## Main App Component
 
@@ -2889,7 +2909,7 @@ When interpolating data into an inline `<script>`, HTML escaping is not enough. 
 
 ## End-to-End HTTP + Hydration Recipe
 
-Use this pattern to ship one full browser/server runtime cycle (server render + browser hydration).
+Use this pattern to ship one full browser/Node.js runtime cycle: Node.js render plus browser hydration.
 
 ```tsx
 import { v } from "valyrian.js";
@@ -2962,7 +2982,7 @@ Hydration safety checklist:
 
 ## Router-Driven SSR
 
-For route-first rendering, keep route definitions in the app, export the router, and reuse it in Node.
+For route-first rendering, keep route definitions in the app, export the router, and reuse it in Node.js.
 
 ```tsx
 import "valyrian.js/node";
@@ -2975,7 +2995,7 @@ Use `routeHtml` as the routed fragment inside your shell response.
 
 ## SSR + Router Prefetch + Client Refetch
 
-This pattern keeps data-fetching in router middlewares/routes and uses the same app router in backend and browser.
+This pattern keeps data-fetching in router middlewares/routes and uses the same application router in backend and browser.
 
 App module (router source of truth):
 
@@ -3136,9 +3156,9 @@ flowchart TD
     listeners --> interactive[Interactive UI without full DOM replacement]
 ```
 
-## Guard Browser-Only Code
+## Guard Environment-Specific Code
 
-Use `isNodeJs` from `valyrian.js` when components need browser APIs.
+Use `isNodeJs` from `valyrian.js` when shared components need browser-only or Node.js-only APIs.
 
 ```tsx
 import { isNodeJs } from "valyrian.js";
@@ -3151,25 +3171,27 @@ const Component = () => {
 };
 ```
 
+The component stays shared. The branch keeps the browser API out of Node.js execution, and the same pattern can protect Node.js-only APIs behind `isNodeJs`.
+
 
 ____________________________________________
 # Source: docs/7.1.1-node-runtime-apis.md
 
-# 7.1.1. Node Runtime APIs (`valyrian.js/node`)
+# 7.1.1. Node.js Runtime APIs (`valyrian.js/node`)
 
-`valyrian.js/node` is the Node-facing server runtime surface of Valyrian.
+`valyrian.js/node` is the Node.js runtime surface that lets shared Valyrian application code render HTML outside the browser.
 
-It prepares the runtime environment that SSR and request-scoped server execution need, then exposes the rendering, DOM, and storage APIs that keep browser/server behavior aligned under one runtime model.
+It prepares the runtime environment that SSR and request-scoped Node.js execution need, then exposes the rendering, DOM and storage APIs that keep browser and Node.js behavior aligned under one application model.
 
 ## Runtime Setup Side Effects
 
-Importing `valyrian.js/node` initializes the Node runtime surface:
+Importing `valyrian.js/node` initializes the Node.js runtime surface:
 
 * `global.document` (lightweight DOM adapter)
 * `global.FormData`
 * `global.sessionStorage` and `global.localStorage` backed by `ServerStorage`
 
-Import it before using server-side modules that expect these globals.
+Import it before using Node.js-side modules that expect these globals.
 
 ## `render(...nodes)`
 
@@ -3215,7 +3237,7 @@ Use them from tooling scripts (see [./7.3-pwa-and-build-tooling.md](./7.3-pwa-an
 
 ## Request-Scoped Storage
 
-`ServerStorage` is part of the server runtime surface for per-request storage isolation.
+`ServerStorage` is part of the Node.js runtime surface for per-request storage isolation.
 
 Use `ServerStorage.run(() => { ... })` per incoming request to avoid storage leakage between concurrent SSR requests.
 
@@ -3227,7 +3249,7 @@ ____________________________________________
 
 # 7.2. Isomorphic Networking and Storage
 
-Networking and storage are part of runtime continuity in Valyrian: the same application code should keep working across browser and server without leaking request state between concurrent renders.
+Use the same request and storage APIs across browser and Node.js. In Node.js, create request-scoped clients and storage boundaries so concurrent renders cannot share user state while the application code keeps one request and storage model.
 
 Start with one endpoint first. Confirm URL rewriting and request isolation work in Node.js, then expand to the rest of your API surface.
 
@@ -3458,6 +3480,14 @@ await icons("./assets/logo.png", {
 });
 ```
 
+When `linksViewPath` is set, `icons()` writes the links view in three formats in that same folder:
+
+* `links.js`: CommonJS output with a flat array of `link` vnodes.
+* `links.jsx`: JSX component output with a named `Links` export for projects that use the automatic JSX runtime.
+* `links.tsx`: TSX component output with a named `Links` export for TypeScript projects that use the automatic JSX runtime.
+
+Choose the generated format that matches your build environment.
+
 ## Service Worker File Generation
 
 ```js
@@ -3493,6 +3523,19 @@ For JavaScript and TypeScript entries, `map` contains a source map as a data URI
 and local paths, so production builds should usually publish only `raw` unless you intentionally want clients to access
 the source map.
 
+Supported `inline` options:
+
+* `compact`: minifies JavaScript and TypeScript output with Terser, and CSS output with CleanCSS defaults.
+* `bundle`: controls esbuild bundling for JavaScript and TypeScript entries. The default is `true`.
+* `noValidate`: skips the default TypeScript validation step for TS/TSX entries.
+* `declarationDir`: enables declaration-only TypeScript output in the provided directory during validation.
+* `tsc`: passes extra options to the internal `tsc-prog` validation step.
+* `esbuild`: passes safe esbuild options through to the bundling step. `inline` owns `write`, `sourcemap`, entry inputs,
+  output paths, bundling/minify flags, loaders and JSX runtime settings so it can keep returning `{ raw, map, file }`.
+  Use this for safe passthroughs such as `jsxDev`, `target` or `define`.
+* `terser`: passes extra options to Terser when `compact` is enabled for JavaScript and TypeScript entries.
+* `cleanCss`: passes extra options to CleanCSS for CSS entries.
+
 ## CSS Bundling and Purging
 
 ```js
@@ -3503,6 +3546,9 @@ const criticalCss = await inline.uncss([renderedHtml], cssBundle.raw);
 ```
 
 `inline.uncss` removes unused selectors using rendered HTML as input.
+
+`inline.uncss(renderedHtml, css, options)` accepts PurgeCSS options for selector extraction and safelists. It owns the
+generated `content` and `css` inputs, and accepts `cleanCss` for the final minification pass.
 
 
 ____________________________________________
@@ -3953,14 +3999,31 @@ ____________________________________________
 
 # 9. Recipes and Integrations (Hub)
 
+Recipes complete one focused task with public Valyrian.js APIs and a result you can verify. Use them when you already understand the cumulative model from [Taskboard](./taskboard-tutorial.md) and need a specific integration, runtime boundary or production check.
+
 This chapter contains two tracks:
 
 1. Integration and operations recipes (`9.1`-`9.6`).
 2. Architecture reference patterns (`9.7`-`9.8`).
 
-These pages show optional integration choices around the Valyrian runtime. They are not a separate framework layer, not a required app shell, and not a replacement for the web-first browser/server model described in earlier chapters.
+These recipes connect build tools, servers and backend services to Valyrian's documented runtime boundaries. Choose one integration at a time and verify its result before combining it with another.
 
 Pick one recipe at a time. Keep the first integration path stable before combining strategies.
+
+## Recipe Contract
+
+Each official recipe should make this contract visible:
+
+| Section | Purpose |
+| --- | --- |
+| Objective | The task the recipe completes. |
+| Starting point | The application state, guide or file set you start from. |
+| Files | The files the recipe creates or changes. |
+| Run or verify | The commands or interaction that prove the path. |
+| Observable result | The rendered, built, stored, rejected, hydrated or updated behavior you can inspect. |
+| Continue | The guide, reference or Taskboard stage that extends the same capability. |
+
+Recipes may compress these labels when the page is short, but the task, files, verification and result should stay explicit.
 
 ## Integration and Operations Recipes
 
@@ -3968,31 +4031,37 @@ Pick one recipe at a time. Keep the first integration path stable before combini
 
 * File: [./9.1-vite-integration.md](./9.1-vite-integration.md)
 * Use this when you want Vite dev server, HMR, and a direct dev/build/preview verification loop.
+* Observable result: the same `mount` entry renders in dev, production build and preview without JSX transform errors.
 
 ## 9.2. Webpack/Rspack Integration
 
 * File: [./9.2-webpack-rspack-integration.md](./9.2-webpack-rspack-integration.md)
 * Use this when your organization standardizes on Webpack or Rspack and you need explicit TSX transform control.
+* Observable result: the selected bundler serves and builds the same TSX entry with `valyrian.js` as the automatic runtime import source.
 
 ## 9.3. Express/Fastify SSR
 
 * File: [./9.3-express-fastify-ssr.md](./9.3-express-fastify-ssr.md)
 * End-to-end SSR recipe with request-scoped isolation and hydration continuity.
+* Observable result: each HTTP request receives route HTML produced inside its own `ServerStorage.run(...)` boundary and hydrates with the serialized response state.
 
 ## 9.4. API Client Composition
 
 * File: [./9.4-api-client-composition.md](./9.4-api-client-composition.md)
 * Shows how to structure per-domain request clients.
+* Observable result: `authApi`, `usersApi` and `billingApi` inherit root options and the root plugin can be ejected through `destroy()`.
 
 ## 9.5. Offline-First Commands
 
 * File: [./9.5-offline-first-commands.md](./9.5-offline-first-commands.md)
 * Practical mutation queueing and retry flows for flaky networks.
+* Observable result: queue state exposes `pending`, `failed` and `syncing`, and failed operations can be retried or discarded.
 
 ## 9.6. Production Checklist
 
 * File: [./9.6-production-checklist.md](./9.6-production-checklist.md)
 * Pre-release checks to validate runtime behavior and docs/runtime alignment.
+* Observable result: each release capability has a recorded success or failure path before shipping.
 
 ## Architecture Reference Patterns
 
@@ -4000,11 +4069,13 @@ Pick one recipe at a time. Keep the first integration path stable before combini
 
 * File: [./9.7-counter-variants-by-component-shape.md](./9.7-counter-variants-by-component-shape.md)
 * Exhaustive shared and per-instance counter variants.
+* Observable result: each shape increments through the same delegated event and update model while preserving either shared or per-instance state ownership.
 
 ## 9.8. Reactive Counter Variants
 
 * File: [./9.8-reactive-counter-variants.md](./9.8-reactive-counter-variants.md)
 * Equivalent counter variants with `createPulse`, `createPulseStore`, and `FluxStore`.
+* Observable result: each reactive state option updates the rendered count through its own public write surface.
 
 ## Suggested Reading Order
 
@@ -4024,7 +4095,26 @@ ____________________________________________
 
 Use this recipe when you want fast local feedback (`vite dev`) and a straightforward production bundle (`vite build`).
 
-This is an integration recipe for a Valyrian app, not a prescribed meta-framework workflow.
+This recipe configures Vite to compile a Valyrian application with the automatic TSX runtime in development and production.
+
+## Recipe Contract
+
+Objective: integrate Valyrian.js with Vite using the automatic TSX runtime.
+
+Starting point: a new or existing Vite TypeScript application with one browser mount root.
+
+Files:
+
+- `tsconfig.json` sets `jsx` and `jsxImportSource`.
+- `vite.config.ts` mirrors the JSX runtime settings for esbuild.
+- `index.html` exposes the mount target.
+- `src/main.tsx` imports `mount` and renders the application.
+
+Run or verify: run `npm run dev`, `npm run build` and `npm run preview`.
+
+Observable result: development renders the page, the production build completes without JSX transform errors, and preview renders the built output.
+
+Continue: expand the mounted app through [Taskboard Stage 1](./taskboard-tutorial.md#stage-1-build-a-local-tsx-project) or inspect [`mount`](./3.1-runtime-core.md#mountdom-component).
 
 Prerequisite:
 
@@ -4095,7 +4185,7 @@ npm run build
 npm run preview
 ```
 
-Expected outcomes:
+Observable result:
 
 1. `dev`: page renders and updates on file save.
 2. `build`: production bundle completes without JSX transform errors.
@@ -4121,7 +4211,27 @@ ____________________________________________
 
 Use this path when your organization already standardizes on Webpack or Rspack.
 
-This page documents bundler integration choices around the Valyrian runtime, not a separate framework layer.
+This page configures Webpack or Rspack to compile the same Valyrian TSX entry for development and production.
+
+## Recipe Contract
+
+Objective: compile one Valyrian.js TSX entry through Webpack or Rspack.
+
+Starting point: an application that needs explicit bundler configuration and one stable render target.
+
+Files:
+
+- `tsconfig.json` sets the automatic TSX runtime.
+- `index.html` supplies the document template.
+- `src/main.tsx` imports `mount` and renders the app.
+- `webpack.config.cjs` or `rspack.config.cjs` carries the selected bundler transform.
+- `package.json` exposes the selected dev and build scripts.
+
+Run or verify: execute only the selected branch first, either `npm run dev:webpack` plus `npm run build:webpack` or `npm run dev:rspack` plus `npm run build:rspack`.
+
+Observable result: the selected bundler serves and builds the same entry without JSX transform errors.
+
+Continue: use [Taskboard Stage 2](./taskboard-tutorial.md#stage-2-add-interaction-with-pulsestore) after first render works, then add routing or state inside the same entry.
 
 Prerequisite:
 
@@ -4299,7 +4409,7 @@ npm run dev:rspack
 npm run build:rspack
 ```
 
-Expected outcome: both bundlers render the same app and complete production builds without JSX transform errors.
+Observable result: the selected bundler renders the same app and completes the production build without JSX transform errors. Run both branches only when the project needs parity between Webpack and Rspack.
 
 ## Key Points
 
@@ -4323,9 +4433,30 @@ ____________________________________________
 
 # 9.3. Express/Fastify SSR (Request-Scoped Isolation)
 
-This recipe shows a request-scoped SSR flow for Express/Fastify with hydration continuity and no cross-request state leaks.
+This recipe shows how Express or Fastify can run the same routed Valyrian application in Node.js, render HTML for each request, and let the browser hydrate that response without cross-request state leaks.
 
-Use it as an integration pattern for the browser/server runtime model, not as evidence that this repository ships a fully opinionated server meta-framework.
+Use this recipe to render one routed Valyrian application per Express or Fastify request, serialize its response state and hydrate the same component tree in the browser.
+
+## Recipe Contract
+
+Objective: render one Valyrian.js route per HTTP request, carry response state into the browser and hydrate the same component tree.
+
+Starting point: a routed Valyrian.js application with a server entry, a browser entry and a request client for route data.
+
+Files:
+
+- `app/views/edit-user.page.tsx` owns the route view, `PulseStore` and `FormStore`.
+- `app/router.tsx` creates the browser router.
+- `client-entry.tsx` reads server state and mounts the router.
+- `app/app-shell.tsx` renders the document shell.
+- `app/server-router.tsx` creates one server router per request.
+- `server.ts` opens `ServerStorage.run(...)`, creates a per-request `request.new(...)`, resolves the route and renders HTML.
+
+Run or verify: request `/users/:id/edit` through the Express or Fastify adapter, then hydrate the response in the browser.
+
+Observable result: first paint contains the user form, the browser refresh pass uses the same state shape, and concurrent requests do not share headers, storage, route state or form state.
+
+Continue: use [Taskboard Stage 6](./taskboard-tutorial.md#stage-6-add-runtime-ssr-and-hydration) for the cumulative version, then inspect [Server Execution Context](./7.4-server-context.md).
 
 Goal:
 
@@ -4622,7 +4753,7 @@ mountRouter("body", router);
 Why pass `api` explicitly?
 
 - It keeps request boundaries visible in the example.
-- In Node request context (`ServerStorage.run(...)`), the exported `request` singleton can also resolve the contextual scoped client automatically.
+- In Node.js request context (`ServerStorage.run(...)`), the exported `request` singleton can also resolve the contextual scoped client automatically.
 
 ---
 
@@ -4719,7 +4850,7 @@ Per-request isolation:
 // server.ts
 import express from "express";
 
-// Import node runtime before SSR/storage-dependent logic.
+// Import the Node.js runtime before SSR/storage-dependent logic.
 import "valyrian.js/node";
 
 import { render, ServerStorage } from "valyrian.js/node";
@@ -4844,6 +4975,23 @@ ____________________________________________
 
 Use this recipe when your app talks to multiple backend domains (auth, billing, users) and you want shared policies without shared mutable leakage.
 
+## Recipe Contract
+
+Objective: create one root `request` client and derive domain clients that inherit shared options and plugins.
+
+Starting point: an application that already uses `request` and needs several backend domains.
+
+Files:
+
+- A browser or request-scoped module that exports `createApiClients(...)`.
+- The server request handler when the clients need incoming headers or request-local storage.
+
+Run or verify: create the clients, print their public keys or make one call through each domain client, then call `destroy()` to eject the shared plugin.
+
+Observable result: `authApi`, `usersApi` and `billingApi` share root headers and plugins while each domain keeps its own base URL.
+
+Continue: use the per-request composition from [Express/Fastify SSR](./9.3-express-fastify-ssr.md) when the clients run inside SSR.
+
 Prerequisites:
 
 - [./4.2.1-request.md](./4.2.1-request.md)
@@ -4896,6 +5044,8 @@ Notes:
 - Clients created with `new(...)` inherit parent plugins/options.
 - Domain-specific settings can still be applied per client with `setOption(...)`.
 
+Observable result: the returned object exposes `authApi`, `usersApi` and `billingApi` with inherited root options. `destroy()` calls `rootApi.eject(requestIdPlugin)` and removes the shared plugin from later calls.
+
 ## Per-Request SSR Composition
 
 In Node.js SSR, create clients inside each `ServerStorage.run(...)` request scope.
@@ -4947,6 +5097,24 @@ ____________________________________________
 # 9.5. Offline-First Commands
 
 Use this recipe when users must be able to submit commands while offline (for example, creating orders or saving drafts).
+
+## Recipe Contract
+
+Objective: enqueue user commands, try delivery when the network is available and expose recovery controls.
+
+Starting point: a browser application with a `request` client and a command the user can submit from the UI.
+
+Files:
+
+- A queue module that creates `NetworkManager` and `OfflineQueue`.
+- The UI action that calls `queue.enqueue(...)` and then `queue.sync()`.
+- The status view that reads `pending`, `failed` and `syncing` from `queue.state()`.
+
+Run or verify: submit one command online, switch the browser offline, submit another command, then return online or use retry controls.
+
+Observable result: the app shows pending work while offline, moves retryable failures through the configured backoff path and lets the user retry or discard failed commands.
+
+Continue: use [Taskboard Stage 7](./taskboard-tutorial.md#stage-7-add-local-offline-delivery-and-pwa-updates) for a full local queue plus service worker update flow.
 
 Prerequisite:
 
@@ -5029,6 +5197,8 @@ async function retryFirstFailed() {
 }
 ```
 
+Observable result: each `change` event provides the status you render in the UI. Each `sync:error` event exposes the operation and error you need for logs, recovery copy or a retry button.
+
 ## Operational Rules
 
 1. Keep command payloads deterministic and schema-stable.
@@ -5043,6 +5213,20 @@ ____________________________________________
 # 9.6. Production Checklist
 
 Use this checklist before release. It is split into app runtime checks and docs quality checks.
+
+## Recipe Contract
+
+Objective: confirm the runtime capabilities the application actually uses before release.
+
+Starting point: a staging build with realistic routes, data flows, SSR behavior and offline or service worker features when the app uses them.
+
+Files: keep this page as the checklist, then record the result in the release notes, issue, PR or deployment runbook used by your team.
+
+Run or verify: execute only the checks for capabilities present in the application.
+
+Observable result: every active capability has a recorded success path and failure path before the release moves forward.
+
+Continue: return to the linked guide or recipe for any failed check.
 
 ## A) App Release Checklist
 
@@ -5078,6 +5262,20 @@ ____________________________________________
 # 9.7. Counter Variants by Component Shape (Exhaustive)
 
 This page shows equivalent counters with shared/global state and per-instance state.
+
+## Recipe Contract
+
+Objective: choose the component shape that matches the ownership of a small interactive value.
+
+Starting point: a mounted Valyrian.js app that needs a counter or another small stateful interaction.
+
+Files: keep the examples in the component module where the counter state should live. Shared examples place state at module scope. Per-instance examples create state through a factory, class instance or object instance.
+
+Run or verify: mount one shared counter twice, then mount two per-instance counters. Click each button.
+
+Observable result: shared counters read and update the same value. Per-instance counters update only their own value.
+
+Continue: use [Reactive Counter Variants](./9.8-reactive-counter-variants.md) when the counter should use `createPulse`, `createPulseStore` or `FluxStore`.
 
 ## 9.7.1. Shared/Global State
 
@@ -5296,6 +5494,20 @@ ____________________________________________
 
 Use this page as recipe and comparison material.
 
+## Recipe Contract
+
+Objective: choose a reactive state API for a small counter and preserve either shared or per-instance ownership.
+
+Starting point: a Valyrian.js app that already understands delegated events and needs reactive reads in the view.
+
+Files: keep `createPulse` near the smallest value, `createPulseStore` near grouped state and named operations, and `FluxStore` near commit-based workflows.
+
+Run or verify: render the selected shared or per-instance counter and click Increment.
+
+Observable result: the count changes through the selected public write surface: setter, named pulse method or `commit(...)`.
+
+Continue: use [Pulses](./5.2-pulses.md) for pulse behavior or [FluxStore](./5.3-flux-store.md) for commit-based state.
+
 For the first explanation of Valyrian's reactive state models and starter counter examples, use [./3-the-essentials.md](./3-the-essentials.md). For the detailed runtime behavior of pulse-based state, use [./5.2-pulses.md](./5.2-pulses.md). For the alternative store model, use [./5.3-flux-store.md](./5.3-flux-store.md). This page focuses on one practical question: should this counter be shared across usages or created per instance?
 
 | Need | Prefer | Why |
@@ -5475,7 +5687,7 @@ Status: **planned downstream direction**.
 
 This page documents architecture concepts that can be built on top of Valyrian.js without changing the core direction of this repository.
 
-Valyrian.js stays focused here on a web-first isomorphic runtime framework for browser/server apps. A dedicated meta-framework or generator CLI should be treated as downstream or external tooling layered on top of that runtime, not as the primary identity of this repo.
+Valyrian.js remains a web-first isomorphic runtime. A dedicated CLI or meta-framework can add project generation, file conventions and deployment workflows on top of the existing router, SSR and build APIs.
 
 ## 10.1. CLI Goals
 
@@ -5557,4 +5769,1443 @@ bun run dev:test
 bun run build:source
 bun run badges
 ```
+
+
+____________________________________________
+# Source: docs/12-versioning-policy.md
+
+# 12. Versioning and Compatibility Policy
+
+Status: active policy
+Applies from: Valyrian.js 9.x
+Versioning standard: Semantic Versioning 2.0.0
+
+## 12.1. Purpose
+
+This policy defines how Valyrian.js evolves, which parts of the project preserve compatibility, and what people can expect when upgrading between versions.
+
+The policy has four goals:
+
+1. Keep patch and minor releases compatible within the same major version.
+2. Allow the internal architecture to evolve without treating every refactor as a breaking change.
+3. Communicate deprecations and migrations in advance.
+4. Promise only the compatibility that the project can verify through tests.
+
+## 12.2. Public API
+
+Valyrian.js treats the following as stable public API:
+
+- Documented exports from `valyrian.js`.
+- Documented exports from subpaths such as `valyrian.js/router`, `valyrian.js/pulses`, and `valyrian.js/node`.
+- Published TypeScript signatures.
+- Documented directives and lifecycles.
+- Component shapes described in the documentation.
+- Documented arguments, return values, errors, and observable effects.
+- Documented rendering, update, SSR, and hydration behavior.
+
+The project treats the following as internal details:
+
+- Functions that are not exported.
+- Internal structures that the documentation does not present for direct consumption.
+- Reconciliation and update algorithms.
+- Indexes, caches, `WeakMap`, `WeakSet`, and other implementation structures.
+- Internal markers used during SSR and hydration.
+- The exact HTML shape when it preserves the same semantics and can hydrate correctly.
+
+Internal details can change in a patch or minor release when the change preserves the public API behavior.
+
+## 12.3. Semantic Versioning
+
+Valyrian.js uses versions in the `MAJOR.MINOR.PATCH` format.
+
+### 12.3.1. Patch Releases
+
+A patch release:
+
+- Fixes bugs.
+- Improves security, stability, or performance.
+- Preserves public exports and signatures.
+- Preserves documented behavior.
+- Can correct incorrect behavior so it complies again with the documented contract.
+- Can update dependencies when the public result remains compatible.
+
+Example:
+
+```text
+9.1.13 becomes 9.1.14
+```
+
+A fix can change a result that accidentally depended on a bug. The changelog must call out the case when the fix can affect existing code.
+
+### 12.3.2. Minor Releases
+
+A minor release:
+
+- Adds compatible modules, functions, directives, or options.
+- Can improve types without rejecting previously valid public usage.
+- Can start deprecating an API.
+- Can include patch fixes.
+- Preserves compatibility with existing public APIs in the same major version.
+
+Example:
+
+```text
+9.1.13 becomes 9.2.0
+```
+
+A new independent module normally belongs in a minor release.
+
+### 12.3.3. Major Releases
+
+A major release can:
+
+- Remove or rename public APIs.
+- Change documented signatures, return values, or semantics.
+- Remove APIs previously marked as deprecated.
+- Raise the minimum Node.js version.
+- Raise the minimum browser requirements.
+- Change persisted formats without a compatible migration.
+- Change public SSR, hydration, directive, or lifecycle contracts.
+
+Example:
+
+```text
+9.4.2 becomes 10.0.0
+```
+
+Every major release with breaking changes must include a migration guide.
+
+## 12.4. Deprecations
+
+An API is marked as deprecated in a minor release and remains functional for the rest of that major version.
+
+The next major version can remove it.
+
+Example:
+
+1. `9.2.0` marks `oldFunction` as deprecated.
+2. Later `9.x` releases preserve `oldFunction`.
+3. `10.0.0` can remove it.
+
+When an API is fundamental or its migration affects many applications, the project can preserve an alias for one additional major version:
+
+1. `9.2.0` announces the deprecation.
+2. `10.x` preserves a compatible alias.
+3. `11.0.0` removes the alias.
+
+Every deprecation must include:
+
+- The `@deprecated` annotation in the TypeScript types.
+- The replacement API or migration path.
+- The major version where it could be removed.
+- A changelog entry.
+- An explanation in the next migration guide.
+
+Example:
+
+```ts
+/**
+ * @deprecated Use newFunction instead. Planned for removal in v10.
+ */
+```
+
+The project can emit a warning during development. The warning must appear only once per API and must stay out of production builds when practical.
+
+## 12.5. Node.js Compatibility
+
+Each Valyrian.js major version fixes its supported Node.js versions when it is published.
+
+Minor and patch releases do not raise the minimum Node.js requirement.
+
+### 12.5.1. Policy for Valyrian.js 9.x
+
+- Keep `node >=18` because major version 9 has already published that contract.
+- Run tests on Node 18 while support is declared.
+- Use Node 22 or Node 24 as the default choice for new projects.
+- Explain that Node 18 and Node 20 have ended official maintenance.
+
+Valyrian.js support means the framework works on that version. The Node.js project may have stopped publishing security fixes for an old runtime.
+
+### 12.5.2. Policy for Valyrian.js 10
+
+- Declare `node >=22`.
+- Test Node 22 and Node 24 as required CI jobs.
+- Test Node 26 as an experimental job while it is a Current release.
+- Make Node 26 required when the project decides to adopt it formally.
+
+A future removal of Node 22 must wait for the next Valyrian.js major version.
+
+## 12.6. Browser Compatibility
+
+Valyrian.js uses Baseline Widely Available as its reference for the web platform.
+
+### 12.6.1. What Baseline Is
+
+Baseline is a compatibility classification created by the WebDX Community Group. It evaluates whether an HTML, CSS, or JavaScript feature is interoperably available across the core browser set:
+
+- Chrome on desktop and Android.
+- Edge.
+- Firefox on desktop and Android.
+- Safari on macOS and iOS.
+
+Baseline uses three main states:
+
+- **Limited availability:** the feature is not yet available in all major browsers.
+- **Newly available:** all major browsers already implement the feature.
+- **Widely available:** at least 30 months have passed since the feature reached interoperable availability.
+
+The 30-month period reduces the risk of requiring browser versions that are too recent.
+
+### 12.6.2. What Widely Available Means for Valyrian.js
+
+A feature marked as Baseline Widely Available has broad enough availability to be used normally without polyfills.
+
+Baseline Widely Available:
+
+- Provides a shared browser compatibility reference.
+- Avoids depending only on Chrome.
+- Describes compatibility without maintaining a manual list that ages quickly.
+- Can be queried from Browserslist and build tools.
+
+Baseline Widely Available does not:
+
+- Guarantee support in every existing browser.
+- Include Internet Explorer.
+- Evaluate performance.
+- Replace real framework tests.
+- Guarantee that an application does not need polyfills for its own dependencies.
+
+### 12.6.3. Policy
+
+Each Valyrian.js major version fixes the current Baseline reference when it is published.
+
+During that major version:
+
+- Minor and patch releases preserve that minimum reference.
+- A newer feature can be used if it includes a compatible alternative.
+- Introducing a required dependency on a feature not yet covered by the reference requires a new major version.
+- The project should validate runtime behavior against Chromium, Firefox, and WebKit before publishing browser compatibility claims for a release.
+- Internet Explorer is outside support.
+
+Policy text:
+
+> Valyrian.js supports web platform features classified as Baseline Widely Available when each major version is published. That reference remains stable for the full major version. Browser-engine validation targets Chromium, Firefox, and WebKit. Each release must publish only the validation coverage that is visible in its repository, CI, or release notes.
+
+To make the policy reproducible, each major version can save the following in the documentation:
+
+- The Baseline reference date.
+- The Browserslist query used.
+- The browser matrix tested in CI.
+
+## 12.7. SSR and Hydration Contracts
+
+- The server and the client must use the same Valyrian.js major version.
+- Use the exact same version on both sides when possible.
+- Minor and patch releases in a major version preserve the documented SSR and hydration contract.
+- Hydration can reconcile differences between the server HTML and the initial client state.
+- The exact HTML shape can change when its semantics and hydration capability remain compatible.
+- Internal hydration markers and structures are outside the public API.
+
+The project does not need to guarantee that an old client will hydrate HTML produced indefinitely by a future major version.
+
+## 12.8. Persisted Data
+
+Modules that preserve data across sessions must consider stored format compatibility.
+
+This can affect:
+
+- `valyrian.js/offline`.
+- `valyrian.js/query`.
+- `valyrian.js/native-store`.
+- Service workers.
+- Persistent caches and queues.
+
+When a format can survive an upgrade:
+
+- The format must include a version when necessary.
+- A minor release must be able to read data created by earlier releases in the same major version.
+- A major release can change the format.
+- The major release must migrate, invalidate, or discard the data explicitly and safely.
+
+## 12.9. TypeScript Types
+
+Published types are part of the public API.
+
+A patch or minor release can:
+
+- Correct types that were more permissive than the documented behavior.
+- Add optional properties.
+- Improve inference without invalidating correct usage.
+- Add compatible overloads.
+
+A type change must be treated as breaking when it rejects a usage that the documentation and runtime considered valid.
+
+## 12.10. Release Policy
+
+Valyrian.js can publish stable releases directly after completing its local and automated tests.
+
+### 12.10.1. Patch
+
+Flow:
+
+1. Reproduce the bug.
+2. Add a regression test.
+3. Implement the fix.
+4. Run all tests.
+5. Update the changelog.
+6. Publish the stable patch release.
+
+Patch releases normally do not need alpha, beta, or RC stages.
+
+### 12.10.2. Minor
+
+Flow:
+
+1. Design and test the new module or capability.
+2. Confirm that previous APIs remain compatible.
+3. Add tests for the public API and its edge cases.
+4. Update types and documentation.
+5. Run all tests.
+6. Publish the stable minor release.
+
+Minor releases normally do not need alpha, beta, or RC stages when the new capability is additive and isolated.
+
+### 12.10.3. Major
+
+A major release can be published directly as stable when:
+
+- The architecture has been fully tested.
+- Coverage exists for the changed contracts.
+- The migration guide is complete.
+- Examples and documentation use the new API.
+- The author controls and understands all breaking changes.
+
+Alpha, beta, and RC releases are optional tools.
+
+Use them when:
+
+- The change affects the reconciler, SSR, or hydration.
+- Several public APIs change at the same time.
+- The migration needs validation in applications outside the repository.
+- There are open questions about ergonomics, naming, or edge cases.
+- The author wants feedback before freezing the API.
+
+Stage meanings:
+
+- `alpha`: the architecture can still change.
+- `beta`: the architecture is defined, but validation is incomplete.
+- `rc`: the API is considered final and only fixes are expected.
+
+A small and well-controlled major release can skip these stages. A broad major release can publish at least one RC without making it a permanent project requirement.
+
+## 12.11. Tests Before Publishing
+
+Every release must run:
+
+- Unit tests.
+- Integration tests.
+- Keyed and non-keyed rendering tests.
+- Mount, update, and unmount tests.
+- Listener and subscription cleanup tests.
+- SSR and hydration tests.
+- Request isolation tests when server code changes.
+- TypeScript type checks.
+- Builds for all published modules.
+
+When public examples change, the project should compile or run them in CI. This turns documentation into an additional compatibility test.
+
+## 12.12. Fixing an Accidental Break
+
+If a patch or minor release accidentally introduces an incompatibility:
+
+1. Document the affected version.
+2. Restore compatibility in a new release as soon as possible.
+3. Add a regression test.
+4. Publish the fix without modifying the contents of an already published release.
+
+When restoring compatibility would create another major break for users who already adopted the accidental behavior, the project must explain the case and choose a major version.
+
+## 12.13. Maintenance for Older Versions
+
+Minimum maintenance policy:
+
+> The latest major version receives features and fixes. Older versions remain available, but they do not receive active maintenance unless the project announces otherwise.
+
+Optional extended maintenance policy:
+
+> The previous major version can receive critical and security fixes for six months after a new major version is published.
+
+The project must adopt the extended policy only if it can sustain it.
+
+## 12.14. Migration Guide Contents
+
+Every major migration guide must include:
+
+- Summary of breaking changes.
+- Removed APIs.
+- Replacement APIs.
+- Before and after examples.
+- Changes to supported Node.js and browsers.
+- SSR and hydration changes.
+- Persisted data changes.
+- Relevant TypeScript type changes.
+- Verifiable steps to complete the migration.
+
+## 12.15. Short Text for README or Documentation
+
+> Valyrian.js follows Semantic Versioning. Patch releases fix bugs without breaking the public API. Minor releases add compatible capabilities and can mark APIs as deprecated. Major releases can introduce breaking changes, remove deprecated APIs, or raise Node.js and browser requirements.
+>
+> Every documented export and documented behavior is considered part of the public API. Undocumented internals can change in any release.
+>
+> Deprecated APIs remain available for the rest of the major version where they are announced and can be removed in the next major version. Every deprecation includes an alternative and a migration guide.
+>
+> Each major version fixes its supported Node.js and browser matrix. Minor and patch releases do not raise those requirements.
+
+## 12.16. References
+
+- [Semantic Versioning 2.0.0](https://semver.org/)
+- [Node.js End-Of-Life](https://nodejs.org/en/about/eol)
+- [Web Platform Baseline](https://web.dev/baseline)
+- [Baseline 2026](https://web.dev/baseline/2026)
+
+
+____________________________________________
+# Source: docs/api-reference-standard.md
+
+# API Reference Standard
+
+Use this page when adding or rewriting public API reference entries. It turns the site reference pattern into a repo-level contract without requiring a full reference rewrite in one pass.
+
+The reference should explain what a symbol lets the application do, where it comes from, what input it accepts, what Valyrian.js returns or changes, what errors or side effects matter and which guide or recipe demonstrates it in a complete flow.
+
+## Entry Shape
+
+Each public symbol should use this order when the information applies:
+
+1. Purpose.
+2. Import.
+3. Signature.
+4. Inputs.
+5. Return value or state change.
+6. Effects and runtime boundary.
+7. Error behavior.
+8. Observable result.
+9. Related guide or recipe.
+
+## Template
+
+````md
+### `symbolName(...)`
+
+Purpose: use `symbolName` to [application responsibility].
+
+Import:
+
+```ts
+import { symbolName } from "module-name";
+```
+
+Signature:
+
+```ts
+symbolName(input: InputType, options?: Options): ResultType
+```
+
+Inputs:
+
+- `input`: describes the value the application passes.
+- `options`: describes optional runtime behavior and defaults.
+
+Return value: describes the value returned, or the state, DOM, storage, route, cache or worker state the API changes.
+
+Effects: describes rendering, hydration, request isolation, event timing, storage, cache, queue or service worker behavior.
+
+Errors: describes thrown errors, rejected promises, invalid runtime boundaries or unavailable browser/server features.
+
+Observable result: names the behavior the developer can verify.
+
+Related guide or recipe: link to the smallest complete flow.
+````
+
+## Example: `mount(dom, component)`
+
+Purpose: use `mount` to attach one Valyrian.js component tree to a browser or server render target.
+
+Import:
+
+```ts
+import { mount } from "valyrian.js";
+```
+
+Signature:
+
+```ts
+mount(dom: string | DomElement, component: ValyrianComponent | VnodeComponentInterface | any): string
+```
+
+Inputs:
+
+- `dom`: a selector string or DOM element. In the browser, a string resolves through `document.querySelector(...)`. In Node.js, a string creates a fresh element for that mount call.
+- `component`: a function component, POJO component, vnode component, class-style object with `view()` or a renderable value.
+
+Return value: in the browser, `mount()` patches the target and returns `""`. In Node.js, it returns the generated HTML string.
+
+Effects: the runtime hydrates the current container DOM into a vnode tree, sets the mounted app reference and runs the normal patch cycle.
+
+Errors: a browser selector must resolve to an element before mounting can continue.
+
+Observable result: the selected container displays the component output in the browser, or Node.js returns the rendered HTML string.
+
+Related guide or recipe: [Getting Started](./2-getting-started.md), [Taskboard Stage 1](./taskboard-tutorial.md#stage-1-build-a-local-tsx-project) and [Vite Integration](./9.1-vite-integration.md).
+
+## Migration Rule for Existing Reference Pages
+
+When you touch an existing reference entry, update only the affected symbol unless the surrounding section already needs broader cleanup. Preserve published behavior and do not invent narrower TypeScript types than the package exposes.
+
+Minimum viable improvement for an entry:
+
+1. Add import and signature.
+2. Name return value or state change.
+3. Name one observable result.
+4. Link one complete guide or recipe.
+
+
+____________________________________________
+# Source: docs/appendix-react-developers.md
+
+# Appendix: Valyrian.js for React Developers
+
+React developers can start with familiar TSX, functional components, composition and keys. In Valyrian, delegated events update the mounted application, Pulses subscribe rendered reads precisely, and the same components can render in Node.js for SSR before the browser hydrates them.
+
+## Mental Model Bridge
+
+| If you reach for this in React | Start here in Valyrian.js |
+| --- | --- |
+| A function component that returns JSX | A function component that returns TSX through `valyrian.js` automatic runtime. |
+| `props` and composition | Plain function parameters and nested TSX children. |
+| `key` for list identity | `key` as structural vnode data. |
+| A local state hook | An object, class component, `createPulse` or `createPulseStore`, depending on ownership. |
+| React Router | `Router`, route handlers and `mountRouter`. |
+| Server render plus hydration | `render`, `ServerStorage.run(...)` and browser `mount` or `mountRouter`. |
+
+## First Taskboard Step
+
+Use the same automatic TSX settings you already expect from JSX tooling:
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "valyrian.js"
+  }
+}
+```
+
+Then mount a component directly:
+
+```tsx
+import { mount } from "valyrian.js";
+
+function App() {
+  return <main>Hello from Valyrian.js</main>;
+}
+
+mount("body", App);
+```
+
+Observable result: the browser renders the component in `body`. From there, [Taskboard Stage 1](./taskboard-tutorial.md#stage-1-build-a-local-tsx-project) turns the same shape into a local TSX project.
+
+## State and Updates
+
+Valyrian.js lets small state stay close to JavaScript. Use the smallest state owner that matches the application responsibility:
+
+- Use a plain object or class component for self-contained interaction.
+- Use `createPulse` for one independently reactive value.
+- Use `createPulseStore` when the state has several fields and named operations.
+- Use `FluxStore` when the workflow fits explicit commits and modules.
+
+In Taskboard, `createPulseStore` becomes useful when interactions, routing, async loading and forms need the same state object.
+
+Continue with [Taskboard Stage 2](./taskboard-tutorial.md#stage-2-add-interaction-with-pulsestore) and [Reactive Counter Variants](./9.8-reactive-counter-variants.md).
+
+
+____________________________________________
+# Source: docs/appendix-solid-developers.md
+
+# Appendix: Valyrian.js for Solid Developers
+
+Solid developers can approach Valyrian.js through precise reactive reads, TSX and small state primitives. The main shift is ownership: Valyrian.js lets you choose whether a value lives in a small pulse, a store with named operations, a component object or a request-scoped server boundary.
+
+## Mental Model Bridge
+
+| If you reach for this in Solid | Start here in Valyrian.js |
+| --- | --- |
+| TSX components | TSX components through `jsxImportSource: "valyrian.js"`. |
+| Signals | `createPulse` for a small independently reactive value. |
+| Stores | `createPulseStore` for grouped state and named pulse operations. |
+| Fine-grained reads | Read the state surface that owns the value, such as `count()` or `store.state.count`. |
+| Server request isolation | `ServerStorage.run(...)` around the full request lifecycle. |
+
+## Pulse Starting Point
+
+Use `createPulse` when the application needs one small reactive value:
+
+```tsx
+import { createPulse } from "valyrian.js/pulses";
+
+const [count, setCount] = createPulse(0);
+
+function Counter() {
+  return (
+    <main>
+      <span>{count()}</span>
+      <button onclick={() => setCount((current) => current + 1)}>Increment</button>
+    </main>
+  );
+}
+```
+
+Observable result: clicking Increment writes through the pulse setter and the rendered count reads the updated value.
+
+## Store Starting Point
+
+Use `createPulseStore` when a workflow needs named operations and several related fields. Taskboard uses this shape for tasks, details, loading state and later queue or worker status.
+
+Continue with [Reactive Counter Variants](./9.8-reactive-counter-variants.md), then build the cumulative app in [Taskboard](./taskboard-tutorial.md).
+
+
+____________________________________________
+# Source: docs/appendix-svelte-developers.md
+
+# Appendix: Valyrian.js for Svelte Developers
+
+Svelte developers can start from direct state changes and compact component code. Valyrian.js keeps that directness while making the runtime update path explicit: delegated events, state owners and manual or store-driven updates remain inspectable.
+
+## Mental Model Bridge
+
+| If you reach for this in Svelte | Start here in Valyrian.js |
+| --- | --- |
+| A component that returns markup | A TSX component that returns Valyrian.js vnodes. |
+| Direct assignment for local state | Plain object or class state when the interaction is local. |
+| Stores for shared state | `createPulse`, `createPulseStore` or `FluxStore`. |
+| `{#if}` and `{#each}` | `v-if` and `v-for`. |
+| SSR output and browser hydration | `render`, `ServerStorage.run(...)` and `mount` or `mountRouter`. |
+
+## Direct Interaction First
+
+For small local interactions, keep the state owner obvious:
+
+```tsx
+const Counter = {
+  count: 0,
+  view() {
+    return (
+      <main>
+        <span>{Counter.count}</span>
+        <button onclick={() => Counter.count++}>Increment</button>
+      </main>
+    );
+  }
+};
+```
+
+Observable result: clicking the delegated button changes the value read by the view on the next update pass.
+
+## When the App Grows
+
+Move from direct local state to a named state owner when more screens need the same workflow. Taskboard uses `createPulseStore` when interaction, routing, Request, Suspense and FormStore all need the same task state.
+
+Continue with [Counter Variants](./9.7-counter-variants-by-component-shape.md), then follow [Taskboard Stage 2](./taskboard-tutorial.md#stage-2-add-interaction-with-pulsestore).
+
+
+____________________________________________
+# Source: docs/appendix-vue-developers.md
+
+# Appendix: Valyrian.js for Vue Developers
+
+Vue developers can approach Valyrian.js through declarative views, named state operations and directives. The main shift is that Valyrian.js exposes the runtime path directly: a component renders, an event calls a function, state changes through its owner and the application updates.
+
+## Mental Model Bridge
+
+| If you reach for this in Vue | Start here in Valyrian.js |
+| --- | --- |
+| A template with directives | TSX with Valyrian directives such as `v-if`, `v-for`, `v-model`, `v-form` and `v-field`. |
+| Reactive component state | Plain state, `createPulse`, `createPulseStore` or `FluxStore`. |
+| Methods that mutate state | Named operations in a store or methods on the component owner. |
+| Vue Router | `Router`, `router.add(...)`, `router.go(...)` and `mountRouter`. |
+| Form bindings and validation | `v-model` for simple fields or `FormStore` with `v-form` and `v-field`. |
+
+## Directive Continuity
+
+Valyrian.js directives stay close to HTML and JavaScript:
+
+```tsx
+function TaskList({ store }) {
+  return (
+    <main>
+      <button onclick={() => store.toggleDetails()}>Toggle details</button>
+      <p v-if={store.state.showDetails}>Tasks stay in one shared PulseStore.</p>
+      <ul v-for={store.state.tasks}>
+        {(task) => <li key={task.id}>{task.title}</li>}
+      </ul>
+    </main>
+  );
+}
+```
+
+Observable result: the details paragraph appears only when `showDetails` is true, and every task keeps stable identity through `key`.
+
+## Forms
+
+Use `v-model` when a simple object owns the field. Use `FormStore` when the form needs schema validation, clean or format transforms, submission state and reusable behavior.
+
+Taskboard introduces this path in [Stage 5](./taskboard-tutorial.md#stage-5-add-a-validated-form). For the full form contract, read [Forms](./4.3-forms.md).
+
+
+____________________________________________
+# Source: docs/editorial-style-guide.md
+
+# Editorial Style Guide
+
+This guide defines the editorial voice for the official Valyrian.js documentation. It carries the voice of the published site into `docs/` so every page teaches the runtime through the same practical, traceable model.
+
+Use this guide when writing introductions, tutorials, recipes, API reference pages, migration notes, framework comparisons, and README updates.
+
+For the concrete public-symbol reference shape, use [API Reference Standard](./api-reference-standard.md) together with this guide.
+
+## Voice Principle
+
+Valyrian.js documentation should help developers build one application whose code can run in the browser and in Node.js.
+
+The voice is direct, practical, and architectural. It explains what the developer does, what the runtime does in each environment, what changes in the application, and what result the developer can observe.
+
+Preferred sentence shape:
+
+> Use [public API] to [application action]. The application then [observable behavior or runtime consequence].
+
+Example:
+
+> Use Request to load the tasks and Suspense to show the loading state, content, or error while the Tasks screen resolves.
+
+## What the Voice Should Preserve
+
+### 1. Same application, environment-specific result
+
+Frame Valyrian.js as one application that can run in the browser and in Node.js. The browser mounts or hydrates DOM. Node.js renders HTML or request-scoped output.
+
+Use language that keeps browser and Node.js work in the same mental model:
+
+- "the same application code in browser and Node.js"
+- "two stages of the same application"
+- "the same project"
+- "the same component tree"
+- "one runtime model"
+- "the browser mounts or hydrates DOM"
+- "Node.js renders HTML"
+
+Avoid language that splits the product into separate framework modes unless the page is explicitly comparing boundaries.
+
+### Environment-specific APIs
+
+When shared application code needs browser-only or Node.js-only APIs, show the branch with `isNodeJs` from `valyrian.js`.
+
+Preferred:
+
+> Use `isNodeJs` to keep browser-only code behind `!isNodeJs` and Node.js-only code behind `isNodeJs`, while the component stays part of the shared application.
+
+Avoid:
+
+> Move browser-only behavior into a separate client app.
+
+### Repetition control
+
+State the full product thesis in the README and introduction pages. A hub may repeat it once. A tutorial should demonstrate it through continuity between steps. A recipe should lead with the task and observable result. An API reference should lead with the public contract. Reuse the principle without repeating the same sentence across page types.
+
+### 2. Visible execution
+
+Explain behavior through traceable steps. A reader should be able to follow an event, request, state change, render, or hydration path without guessing what the runtime hides.
+
+Strong verbs for this voice:
+
+- mount
+- render
+- load
+- hydrate
+- trace
+- preserve
+- carry
+- connect
+- update
+- resolve
+- reject
+- verify
+- continue
+
+Preferred framing:
+
+> Each interaction has an identifiable entry point, and every update preserves a path that can be inspected.
+
+Apply this principle when a page crosses runtime boundaries, but adapt the wording to the page type and avoid repeating the same product sentence.
+
+### 3. Build by accumulation
+
+Teach Valyrian.js as an accumulating project rather than scattered examples. The Taskboard pattern is the default tutorial shape: each stage starts from a known state, applies one meaningful capability, verifies a visible result, and points to the next stage.
+
+Each cumulative tutorial stage should answer four questions:
+
+1. What state does the reader start from?
+2. What change does the reader apply?
+3. What result can the reader observe?
+4. What capability comes next?
+
+Use these labels when a stage benefits from explicit structure:
+
+- Starting state
+- Applied change
+- Observable result
+- Next step
+
+### 4. Practical architecture before abstraction
+
+Explain concepts through the shape of the work. Start with the application responsibility, then name the Valyrian.js API that fits it.
+
+Preferred:
+
+> Use state held by an object or class component for self-contained interactions, `createPulse` for an independently reactive value and `createPulseStore` for a workflow with several fields and named operations.
+
+Weaker:
+
+> Valyrian.js has several state management options.
+
+Use tables when they help the reader choose a starting point by responsibility:
+
+| Application responsibility | Valyrian.js starting point |
+| --- | --- |
+| Navigation | Router |
+| Requests and cached data | Request and Query |
+| Forms and validation | `FormStore` |
+| Offline and PWA behavior | Offline queue and service worker runtime |
+
+### 5. Results should be observable
+
+A recipe or tutorial should name the expected result. When a command, snippet, or page interaction matters, state what the developer sees or verifies.
+
+Use result sentences like these:
+
+- "Expected result: the text appears in the page body."
+- "The browser displays Taskboard with one task from the initial state."
+- "The route first shows Loading tasks and then the loaded Taskboard list."
+- "A request to /profile through either adapter receives this HTML."
+
+Do not leave a code sample without its success condition unless the surrounding section already states the result.
+
+## Page Types
+
+### README and introduction pages
+
+Purpose: give the reader a fast first success, then show how the same model expands.
+
+Use this order:
+
+1. State the product in one sentence.
+2. Name the continuity across browser and Node.js.
+3. Give a first working render path.
+4. Point to the recommended learning path.
+5. Explain why the architecture reduces fragmentation.
+
+The README should stay action-oriented. It should not become a full reference page.
+
+### Taskboard tutorial pages
+
+Purpose: make the official learning path cumulative.
+
+Each Taskboard stage should include:
+
+- A stage heading that starts with the stage number and the capability.
+- A short body that names the capability and the file or screen it changes.
+- Definitions for the starting state, applied change, observable result, and next step.
+- File snapshots or focused diffs where the reader needs exact code.
+- A run or verification step when the stage changes runtime behavior.
+
+Write the Taskboard as one growing application. Reuse names, state shape, routes, files, and result language consistently across stages.
+
+### Recipes
+
+Purpose: complete one focused task with public APIs and a verifiable result.
+
+Each recipe should include:
+
+- A title that starts with the action.
+- A one-sentence summary that names the task and the runtime boundary.
+- A short API list.
+- Numbered steps with commands or files when applicable.
+- A result section that names what renders, builds, runs, hydrates, stores, rejects, or updates.
+- A continue section that points to the related guide or reference.
+
+Recipe titles should use imperative or action-first phrasing:
+
+- "Render and hydrate one response"
+- "Verify request-scoped server storage"
+- "Integrate Valyrian.js with Vite"
+- "Register and apply a service worker update"
+
+### API reference pages
+
+Purpose: explain a public symbol through its practical contract.
+
+Each reference entry should answer:
+
+1. What problem does this symbol solve?
+2. Where does the developer import it from?
+3. What does the developer pass in?
+4. What does Valyrian.js return or change?
+5. What behavior can the developer observe?
+6. Which recipe or guide demonstrates it in a complete flow?
+
+Prefer contract language over encyclopedic description. Name defaults, side effects, error behavior, and runtime boundaries when they affect real usage.
+
+### Framework comparison appendices
+
+Purpose: welcome developers from React, Vue, Svelte, and Solid through familiar concepts while keeping Valyrian.js distinct.
+
+Start from what the audience already knows, then show the Valyrian.js starting point:
+
+- React: TSX, functional components, composition, keys, component shape.
+- Vue: declarative views, reactive state, named state operations.
+- Svelte: direct state changes, compiled-style ergonomics, explicit runtime updates.
+- Solid: fine-grained reactivity, signals, reactive reads, precise subscriptions.
+
+Keep the bridge practical. The appendix should help the reader choose APIs and build the Taskboard, not argue about framework identity.
+
+## Style Rules
+
+### Use direct, active sentences
+
+Good:
+
+> The server and browser use the same state shape, and the button increments that state after hydration.
+
+Avoid:
+
+> The state shape is utilized by both server and browser and then incrementation is enabled after hydration.
+
+### Name the actor when behavior matters
+
+Good:
+
+> `request.get` sets `Accept: application/json` by default, parses the response according to that header and rejects non-OK responses with an error.
+
+Avoid:
+
+> JSON is handled automatically and errors may be returned.
+
+### Keep examples close to HTML and JavaScript
+
+Valyrian.js should feel like a web-first runtime. Prefer examples that expose components, events, state, requests, and render targets directly.
+
+### Use capability nouns consistently
+
+Use these names consistently:
+
+- Valyrian.js
+- Taskboard
+- Router
+- Request
+- Query
+- Suspense
+- FormStore
+- Pulse
+- PulseStore
+- FluxStore
+- ServerStorage
+- service worker runtime
+- offline queue
+- automatic TSX runtime
+- vnode
+- hydration
+
+### Prefer "guide", "recipe", "reference", and "stage"
+
+Use these content terms with clear roles:
+
+- A guide explains a capability and its mental model.
+- A recipe completes one focused task.
+- A reference defines the contract of a public API.
+- A stage extends the cumulative Taskboard tutorial.
+
+## Patterns to Avoid
+
+### Avoid vague benefit language
+
+Avoid claims that do not connect to developer action:
+
+- "powerful"
+- "seamless"
+- "next-generation"
+- "magical"
+- "easy to use" without proof
+
+Replace vague benefits with observable consequences:
+
+> Routing, data, state, forms, SSR, and offline support share components, functions, and named operations.
+
+### Avoid hidden-magic framing
+
+The site voice values explicit flow. Do not describe Valyrian.js as magic, invisible automation, or behavior the developer should not inspect.
+
+Preferred:
+
+> Clear ownership and named operations reduce implicit behavior.
+
+### Avoid fragmented examples
+
+Do not introduce throwaway mini-apps when a page can extend Taskboard or reuse the same conceptual model. New examples are acceptable when a recipe needs a clean context, but they should still include imports, execution contract, and result.
+
+### Avoid unsupported certainty
+
+Marketing pages may be confident, but official docs should stay anchored to behavior the runtime provides. Do not add performance, compatibility, security, or ecosystem claims without evidence in the repo or existing official material.
+
+## Editorial Checklist
+
+Before publishing or changing a documentation page, verify that it satisfies the relevant items:
+
+- The page names the application responsibility before introducing the API.
+- The page shows that browser and Node.js can import the same application code when both runtimes appear.
+- The page explains environment-specific APIs with `isNodeJs` when a shared example needs a guarded branch.
+- Every tutorial or recipe has an observable result.
+- Code samples use public APIs and include imports when the snippet needs to stand alone.
+- The next step points to the related guide, recipe, reference, or Taskboard stage.
+- Terminology matches the names in this guide.
+- The prose uses direct verbs and visible actors.
+- The page avoids unsupported claims and hidden-magic language.
+- The page preserves Taskboard continuity when it belongs to the cumulative tutorial.
+
+## Working Model for Future Documentation Work
+
+When transferring material from the published site into `docs/`, use this sequence:
+
+1. Identify the content type: guide, Taskboard stage, recipe, reference, or framework appendix.
+2. Preserve the site's framing: same application in browser and Node.js, environment-specific result, visible execution and observable result.
+3. Convert site-specific navigation into repo-relative links.
+4. Keep code examples tied to public APIs and documented runtime behavior.
+5. Add the page to `docs/toc.md` and the README documentation list when it should be discoverable from the entry point.
+
+
+____________________________________________
+# Source: docs/taskboard-tutorial.md
+
+# Taskboard Tutorial: One Application, Seven Stages
+
+Taskboard is the official cumulative tutorial for Valyrian.js. It starts with one browser render and keeps extending the same application code through interaction, routing, data loading, forms, SSR, hydration, offline work and PWA updates.
+
+Use this route after [Getting Started](./2-getting-started.md). Each stage preserves the same project, state shape and application name so you can observe how the browser mounts or hydrates DOM and how Node.js renders HTML from the same application.
+
+## Stage Contract
+
+Every stage uses the same contract:
+
+| Label | What it answers |
+| --- | --- |
+| Starting state | The exact application state you already have. |
+| Applied change | The public APIs and files you add or change. |
+| Observable result | The behavior you can see in the browser, server response or generated assets. |
+| Next step | The capability that builds on this stage. |
+
+## Project Baseline
+
+The tutorial uses this local project shape:
+
+```text
+valyrian-taskboard/
+  build.mjs
+  package.json
+  public/
+  src/
+    app.tsx
+    client-entry.tsx
+    state.ts
+    taskboard.ts
+```
+
+Run the browser stages with this loop:
+
+```bash
+npm install valyrian.js@9.1.13 @types/node@22.15.3
+node build.mjs
+npx --yes serve@14.2.5 public --listen 8000
+```
+
+Expected result: opening `http://localhost:8000` shows the current Taskboard screen.
+
+## Stage 1. Build a Local TSX Project
+
+Starting state: you have an empty local folder.
+
+Applied change: create a TSX and ESM browser project, configure the automatic TSX runtime and mount `TaskboardApp` with serializable state.
+
+Files:
+
+- `package.json` installs `valyrian.js` and `@types/node`.
+- `tsconfig.json` sets `jsx` to `react-jsx` and `jsxImportSource` to `valyrian.js`.
+- `build.mjs` uses `inline` from `valyrian.js/node` and writes `public/client-entry.js`.
+- `public/index.html` loads the generated browser bundle.
+- `src/state.ts` creates the first `TaskboardState` object.
+- `src/app.tsx` renders the first screen.
+- `src/client-entry.tsx` mounts the app in `body`.
+
+Core files:
+
+Create `package.json`:
+
+```json
+{
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "serve": "npx --yes serve@14.2.5 public --listen 8000"
+  },
+  "dependencies": {
+    "@types/node": "22.15.3",
+    "valyrian.js": "9.1.13"
+  }
+}
+```
+
+Create `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "valyrian.js"
+  }
+}
+```
+
+```javascript
+// build.mjs
+import fs from "node:fs";
+import path from "node:path";
+import { inline } from "valyrian.js/node";
+
+const outputDir = "./public";
+
+async function build() {
+  fs.mkdirSync(outputDir, { recursive: true });
+
+  const result = await inline("./src/client-entry.tsx", {
+    compact: true
+  });
+
+  fs.writeFileSync(path.join(outputDir, "client-entry.js"), result.raw);
+}
+
+build().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+```
+
+```html
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Valyrian Taskboard</title>
+  </head>
+  <body>
+    <script src="./client-entry.js"></script>
+  </body>
+</html>
+```
+
+```tsx
+// src/state.ts
+export type Task = { id: number; title: string };
+
+export type TaskboardState = {
+  tasks: Task[];
+  showDetails: boolean;
+  nextId: number;
+  loaded: boolean;
+};
+
+export function createState(initial: Partial<TaskboardState> = {}): TaskboardState {
+  return {
+    tasks: initial.tasks ?? [{ id: 1, title: "Learn Valyrian.js" }],
+    showDetails: initial.showDetails ?? false,
+    nextId: initial.nextId ?? 2,
+    loaded: initial.loaded ?? false
+  };
+}
+```
+
+```tsx
+// src/app.tsx
+import type { TaskboardState } from "./state";
+
+export function TaskboardApp({ state }: { state: TaskboardState }) {
+  return (
+    <main style="font-family: sans-serif; padding: 2rem;">
+      <h1>Taskboard</h1>
+      <ul>
+        {state.tasks.map((task) => (
+          <li key={task.id}>{task.title}</li>
+        ))}
+      </ul>
+    </main>
+  );
+}
+```
+
+```tsx
+// src/client-entry.tsx
+import { mount } from "valyrian.js";
+import { TaskboardApp } from "./app";
+import { createState } from "./state";
+
+const state = createState();
+mount("body", <TaskboardApp state={state} />);
+```
+
+Observable result: the browser displays `Taskboard` with one task from the initial state.
+
+Next step: add interaction while keeping the same mounted application.
+
+## Stage 2. Add Interaction with PulseStore
+
+Starting state: Stage 1 renders Taskboard from a plain `TaskboardState` object.
+
+Applied change: replace the plain state instance with `createPulseStore`, then handle delegated clicks through named operations.
+
+Files changed:
+
+- `src/state.ts` exports `createTaskboardStore`.
+- `src/app.tsx` reads `store.state` and calls `store.toggleDetails()` and `store.addTask(...)`.
+- `src/client-entry.tsx` creates one store instance and passes it to the component.
+
+Core flow:
+
+```tsx
+import { createPulseStore } from "valyrian.js/pulses";
+
+export function createTaskboardStore(initial: Partial<TaskboardState> = {}) {
+  return createPulseStore(
+    {
+      tasks: initial.tasks ?? [{ id: 1, title: "Learn Valyrian.js" }],
+      showDetails: initial.showDetails ?? false,
+      nextId: initial.nextId ?? 2,
+      loaded: initial.loaded ?? false
+    },
+    {
+      toggleDetails(state) {
+        state.showDetails = !state.showDetails;
+      },
+      addTask(state, task: Task) {
+        state.tasks.push(task);
+        state.nextId = Math.max(state.nextId, task.id + 1);
+      },
+      replaceTasks(state, tasks: Task[]) {
+        state.tasks = tasks;
+        state.loaded = true;
+        state.nextId = tasks.reduce((nextId, task) => Math.max(nextId, task.id + 1), 1);
+      }
+    }
+  );
+}
+```
+
+Observable result: `Toggle details` changes the `v-if` paragraph, and `Add task` appends the next keyed `v-for` item.
+
+Next step: keep the same store while adding routes.
+
+## Stage 3. Add Routing
+
+Starting state: Stage 2 keeps interaction and task state in one `TaskboardStore`.
+
+Applied change: create a `Router`, register Tasks and About routes, create the store and router once in `createTaskboardApp`, then mount the router on `body`.
+
+Files changed:
+
+- `src/router.tsx` creates the route registry.
+- `src/taskboard.ts` creates the shared store and router.
+- `src/client-entry.tsx` switches from `mount` to `mountRouter`.
+
+Core flow:
+
+```tsx
+import { Router } from "valyrian.js/router";
+import { TaskboardApp } from "./app";
+
+export function createRouter(store: TaskboardStore) {
+  const router = new Router();
+  router.add("/", () => (
+    <>
+      <button onclick={() => router.go("/about")}>About</button>
+      <TaskboardApp store={store} />
+    </>
+  ));
+  router.add("/about", () => (
+    <main>
+      <h1>About Taskboard</h1>
+      <button onclick={() => router.go("/")}>Tasks</button>
+    </main>
+  ));
+  router.catch(404, () => <h1>Taskboard page not found</h1>);
+  return router;
+}
+```
+
+Observable result: the Tasks and About buttons change screens while the task state remains available through the same store.
+
+Next step: load the Tasks screen asynchronously.
+
+## Stage 4. Load Asynchronous Task Data
+
+Starting state: Stage 3 renders the `/` route from the shared store.
+
+Applied change: move the route body to `TasksScreen`, load `/tasks.json` once with `request.get`, then render through `Suspense` while the request resolves.
+
+Files changed:
+
+- `public/tasks.json` supplies initial data.
+- `src/tasks-screen.tsx` coordinates `Request`, `Suspense` and `TaskboardStore`.
+- `src/router.tsx` renders `TasksScreen` at `/`.
+
+Core flow:
+
+```tsx
+import { request } from "valyrian.js/request";
+import { Suspense } from "valyrian.js/suspense";
+
+async function LoadedTasks({ store }: { store: TaskboardStore }) {
+  if (store.state.loaded === false) {
+    const tasks = (await request.get("/tasks.json")) as Task[];
+    store.replaceTasks(tasks);
+  }
+  return <TaskboardApp store={store} />;
+}
+
+export function TasksScreen({ store }: { store: TaskboardStore }) {
+  if (store.state.loaded) {
+    return <TaskboardApp store={store} />;
+  }
+
+  return (
+    <Suspense suspenseKey="taskboard:tasks" fallback={<p>Loading tasks...</p>} error={(error) => <p>{String(error)}</p>}>
+      <LoadedTasks store={store} />
+    </Suspense>
+  );
+}
+```
+
+Observable result: the route first shows `Loading tasks...` and then the parsed Taskboard list. If the request rejects, `Suspense` renders its error branch.
+
+Next step: add a validated form to the loaded Tasks screen.
+
+## Stage 5. Add a Validated Form
+
+Starting state: Stage 4 loads initial tasks through `Request` and `Suspense`.
+
+Applied change: create a local `FormStore`, bind it with `v-form` and `v-field`, then add valid submissions to `TaskboardStore` from `onSubmit`.
+
+Files changed:
+
+- `src/task-form.tsx` creates the form and renders its validation state.
+- `src/app.tsx` includes `TaskForm`.
+- `src/taskboard.ts` creates one form instance for the application.
+
+Core flow:
+
+```tsx
+import { FormStore } from "valyrian.js/forms";
+
+export function createTaskForm(store: TaskboardStore) {
+  return new FormStore({
+    state: { title: "" },
+    schema: {
+      type: "object",
+      required: ["title"],
+      properties: { title: { type: "string", minLength: 2 } }
+    },
+    clean: { title: (value) => String(value).trim() },
+    onSubmit: async ({ title }) => {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+      if (title === "fail") {
+        throw new Error("Local FormStore submission failed");
+      }
+      store.addTask({ id: store.state.nextId, title });
+    }
+  });
+}
+```
+
+Observable result: a one-character title fills `validationErrors`, a valid title shows `isInflight` during submit and then appears in the task list, and the reserved title `fail` renders `submitError`.
+
+Next step: render the routed application for each server request.
+
+## Stage 6. Add Runtime SSR and Hydration
+
+Starting state: Stage 5 has shared state, routes, async initial data and a local validated form.
+
+Applied change: create a Node.js server that opens a fresh application for each request, loads initial tasks, resolves `request.url` through `router.go()` and renders a full TSX document inside `ServerStorage.run()`.
+
+Files changed:
+
+- `src/server.tsx` handles assets and SSR responses.
+- `build.mjs` writes both `dist/server.mjs` and `public/client-entry.js`.
+- `src/client-entry.tsx` reads the serialized state from `body` and hydrates the router.
+- `package.json` adds `start` for the generated server.
+
+Run and verify:
+
+```bash
+node build.mjs
+npm start
+```
+
+Open `http://127.0.0.1:3000/` and `http://127.0.0.1:3000/about`.
+
+Observable result: each response contains the route HTML and its own initial state. In the browser, `mountRouter` hydrates that response and connects `Toggle details`, About navigation and the form.
+
+The same Taskboard application now has two runtime results: Node.js renders the HTML response, and the browser hydrates that response into interactive DOM.
+
+Next step: add local offline delivery and a service worker update flow.
+
+## Stage 7. Add Local Offline Delivery and PWA Updates
+
+Starting state: Stage 6 hydrates the SSR response with routes, `FormStore` and `PulseStore`.
+
+Applied change: keep browser-only managers inactive during the initial server and browser render, then start them after hydration with `runtime.init()`.
+
+Files changed:
+
+- `build.mjs` generates icons and `public/sw.js` with `icons()` and `sw()`.
+- `src/offline.ts` creates `NetworkManager`, `OfflineQueue` and `SwRuntimeManager`.
+- `src/state.ts` adds network, queue and worker status fields.
+- `src/app.tsx` renders queue, network and worker controls.
+- `src/client-entry.tsx` hydrates first, then calls `app.runtime.init()`.
+
+Observable flows:
+
+1. `FormStore` passes a title to `enqueueTask`, `OfflineQueue` stores a local `create-task` operation, and `sync()` runs the handler while `NetworkManager` reports online.
+2. `queue.state()` supplies `pending`, `failed` and `syncing`, and queue events publish `sync success` or `sync error` to the view.
+3. `Create failed task`, `Retry failed task` and `Discard failed task` show the failed-operation lifecycle.
+4. `SwRuntimeManager` reports registration, available update, completed update or failure. When an update is available, Taskboard shows `Apply update`.
+
+Run and verify:
+
+```bash
+node build.mjs
+npm start
+```
+
+Expected result: the SSR server serves the Taskboard document, generated manifest, icons, client bundle and worker. After hydration, queue actions, network changes and worker events update the same Taskboard view.
+
+## Continue
+
+- Use [Recipes and Integrations](./9-recipes-and-integrations.md) when you want a focused task outside the cumulative tutorial.
+- Use [Runtime Core API](./3.1-runtime-core.md) to inspect the mount, update, lifecycle and hydration contracts behind these stages.
+- Use [Run the Same Application in Browser and Node.js](./7-full-stack-capability.md) when you want the server-side model in more depth.
 

@@ -4,7 +4,7 @@ Status: **planned downstream direction**.
 
 This page documents architecture concepts that can be built on top of Valyrian.js without changing the core direction of this repository.
 
-Valyrian.js stays focused here on a web-first isomorphic runtime framework for browser/server apps. A dedicated meta-framework or generator CLI should be treated as downstream or external tooling layered on top of that runtime, not as the primary identity of this repo.
+Valyrian.js remains a web-first isomorphic runtime. A dedicated CLI or meta-framework can add project generation, file conventions and deployment workflows on top of the existing router, SSR and build APIs.
 
 ## 10.1. CLI Goals
 

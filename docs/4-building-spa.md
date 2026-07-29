@@ -1,8 +1,6 @@
 # 4. Building Single Page Applications (SPA Hub)
 
-This chapter is a hub. Each subsystem has its own focused page.
-
-If you are adopting Valyrian for the first time, follow these pages in order and add modules gradually.
+Build the SPA in three layers: add routing, choose the async modules required by the data flow, then introduce `FormStore` when validation and submission logic begin to repeat.
 
 ## 4.1. Routing and Navigation
 

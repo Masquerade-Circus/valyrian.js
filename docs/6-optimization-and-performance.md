@@ -1,6 +1,6 @@
 # 6. Optimization and Performance
 
-Valyrian is fast by default, but you can still control rendering cost explicitly.
+Measure the screen before optimizing it. When rendering cost becomes visible, Valyrian provides keys, `v-keep` and state boundaries that let you reduce the affected work.
 
 Before optimizing, confirm there is a real bottleneck (profiling or measured latency). Most screens do not need early optimization.
 

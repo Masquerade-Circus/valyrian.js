@@ -1,27 +1,25 @@
-# 7. Browser/Server Runtime Model in Practice
+# 7. Run the Same Application in Browser and Node.js
 
-Valyrian's full-stack story is the same runtime model expressed across browser and server, not a collection of optional extras.
+Valyrian lets the browser and Node.js import the same application code. The browser mounts or hydrates DOM, Node.js renders HTML for responses, and request-scoped context keeps concurrent server work isolated.
 
-SSR, hydration, request-scoped context, and isomorphic networking all extend the same explicit runtime behavior and deterministic update model described in the core chapters.
-
-If you are new to server rendering, start with one SSR render path first, then add request isolation and networking continuity, then layer PWA tooling after the runtime flow is stable.
+If you are new to server rendering, start with one SSR render path first. Then add request isolation, networking continuity and guarded environment-specific APIs before layering PWA tooling.
 
 This chapter is a hub split into focused pages:
 
 ## 7.1. Server-Side Rendering
 
 * File: [./7.1-ssr.md](./7.1-ssr.md)
-* Covers the server-side expression of the same runtime model, including SSR render flow and browser hydration.
+* Covers HTML generation, escaping, route resolution, browser hydration and `isNodeJs` guards inside shared application code.
 
-### 7.1.1. Node Runtime APIs
+### 7.1.1. Node.js Runtime APIs
 
 * File: [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md)
-* Covers the Node server runtime surface: `render`, DOM setup, request-scoped storage, and runtime-side exports.
+* Covers the Node.js runtime surface: `render`, DOM setup, request-scoped storage, and runtime-side exports.
 
 ## 7.2. Isomorphic Networking and Storage
 
 * File: [./7.2-isomorphic-networking-and-storage.md](./7.2-isomorphic-networking-and-storage.md)
-* Covers runtime continuity for network calls plus request-scoped storage isolation with `ServerStorage`.
+* Covers shared request APIs and request-scoped storage isolation with `ServerStorage`.
 
 ## 7.3. PWA and Build Tooling
 
@@ -41,7 +39,7 @@ This chapter is a hub split into focused pages:
 ## Read This If You Are Starting SSR
 
 1. Start with [./7.1-ssr.md](./7.1-ssr.md).
-2. Use [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md) for the Node server runtime surface.
+2. Use [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md) for the Node.js runtime surface.
 3. Configure request URL rewriting and storage isolation with [./7.2-isomorphic-networking-and-storage.md](./7.2-isomorphic-networking-and-storage.md).
 4. Review request-scoped context behavior with [./7.4-server-context.md](./7.4-server-context.md).
-5. Add PWA/build tooling and service worker runtime only after the browser/server runtime flow is stable.
+5. Add PWA/build tooling and service worker runtime only after the browser/Node.js runtime flow is stable.

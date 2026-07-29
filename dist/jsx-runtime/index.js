@@ -29,7 +29,7 @@ var import_valyrian = require("valyrian.js");
 function jsx(tag, props, key) {
   let children = [];
   if ("children" in props) {
-    children = [props.children];
+    children = Array.isArray(props.children) ? props.children : [props.children];
     Reflect.deleteProperty(props, "children");
   }
   return new import_valyrian.Vnode(tag, props, children, key);

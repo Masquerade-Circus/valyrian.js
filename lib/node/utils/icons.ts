@@ -62,16 +62,40 @@ export async function icons(source: string, configuration?: IconsOptions) {
     }
 
     if (options.linksViewPath) {
+      const hyperscriptLinks = response.html
+        .map((item) => {
+          const hyperscript = htmlToHyperscript(item);
+          return hyperscript.substring(1, hyperscript.length - 2);
+        })
+        .join(",");
+      const jsxLinks = response.html
+        .map((item) => `    ${item.endsWith("/>") ? item : item.replace(/>$/, " />")}`)
+        .join("\n");
       const html = `
+  const { v } = require("valyrian.js");
+
   function Links(){
-    return ${htmlToHyperscript(response.html.join(""))};
+    return [${hyperscriptLinks}
+  ];
   }
   
   Links.default = Links;
   module.exports = Links;
         `;
+      const jsx = `/** @jsxImportSource valyrian.js */
+
+export function Links() {
+  return (
+    <>
+${jsxLinks}
+    </>
+  );
+}
+`;
 
       fs.writeFileSync(`${options.linksViewPath}/links.js`, html);
+      fs.writeFileSync(`${options.linksViewPath}/links.jsx`, jsx);
+      fs.writeFileSync(`${options.linksViewPath}/links.tsx`, jsx);
     }
   } catch (err) {
     process.stdout.write((err as any).status + "\n"); // HTTP error code (e.g. `200`) or `null`

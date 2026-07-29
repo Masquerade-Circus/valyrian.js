@@ -6,6 +6,7 @@ import { icons } from "./utils/icons";
 import { inline } from "./utils/inline";
 import { sw } from "./utils/sw";
 import { ServerStorage } from "./utils/server-storage";
+export type { InlineInput, InlineOptions, InlineResult, InlineUncssOptions } from "./utils/inline";
 
 global.FormData = FormData as any;
 global.document = document as any;

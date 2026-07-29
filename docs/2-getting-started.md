@@ -1,8 +1,8 @@
 # 2. Getting Started (No-Build First)
 
-Valyrian.js can run directly in the browser with ES modules, or from a Node.js project with the built-in `inline` utility.
+Valyrian.js can run directly in the browser with ES modules, or from a Node.js project that imports the same application code and prepares it with the built-in `inline` utility.
 
-Use this page to meet the runtime model in stages: first in the browser mount-and-render path, then in local Node tooling, and later in SSR as the same model expanded to the server.
+This page starts with a browser mount, adds local Node.js tooling for TSX, and prepares the same component entry for SSR.
 
 ## Goal and Time
 
@@ -111,7 +111,7 @@ Use the short string example as the default mental model. Use this expanded form
 
 If you want TSX/JSX without a complex bundler setup, use `valyrian.js/node` and `inline`.
 
-This path proves a second point: the same runtime model can move into local Node tooling without changing how you think about components, mounting, or output.
+The Node.js path compiles the same component entry for local development while preserving its mount and output contracts.
 
 ### 1. Install
 
@@ -209,11 +209,13 @@ python3 -m http.server
 
 Then open `http://localhost:8000`.
 
-The important part is not the server choice. It is that Node becomes a practical runtime surface for authoring, transforming, and preparing the same browser-facing application model.
+The important part is not the server choice. It is that Node.js becomes a practical runtime surface for authoring, transforming and preparing the same browser-facing application model.
+
+When shared application code needs an environment-specific API, use `isNodeJs` from `valyrian.js` to keep that branch explicit. Browser-only code can run behind `!isNodeJs`, and Node.js-only code can run behind `isNodeJs`, while the component, route or state owner remains part of the same application.
 
 ## Next Steps
 
 1. Continue with [./3-the-essentials.md](./3-the-essentials.md) for components, directives, and update flow.
 2. Move to [./4.1-routing-and-navigation.md](./4.1-routing-and-navigation.md) to build your first SPA route.
-3. Continue to [./7.1-ssr.md](./7.1-ssr.md) when you are ready to see SSR as the next expansion of the same runtime model.
+3. Continue to [./7.1-ssr.md](./7.1-ssr.md) to render the existing component tree on the server and hydrate it in the browser.
 4. Use [./9-recipes-and-integrations.md](./9-recipes-and-integrations.md) when you are ready for Vite/Webpack and backend integration patterns.
