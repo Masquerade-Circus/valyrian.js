@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.1.14](https://github.com/Masquerade-Circus/valyrian/compare/9.1.13...9.1.14) (2026-07-30)
+
+### Code Refactoring
+
+* update runtime generation and docs ([3634bec](https://github.com/Masquerade-Circus/valyrian/commit/3634becb9166604bfa747d9ba34c91c41111ec47))
+
 ## [9.1.13](https://github.com/Masquerade-Circus/valyrian/compare/9.1.12...9.1.13) (2026-05-20)
 
 ### Bug Fixes
