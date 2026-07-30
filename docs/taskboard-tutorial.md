@@ -411,4 +411,4 @@ Expected result: the SSR server serves the Taskboard document, generated manifes
 
 - Use [Recipes and Integrations](./9-recipes-and-integrations.md) when you want a focused task outside the cumulative tutorial.
 - Use [Runtime Core API](./3.1-runtime-core.md) to inspect the mount, update, lifecycle and hydration contracts behind these stages.
-- Use [Run the Same Application in Browser and Node.js](./7-full-stack-capability.md) when you want the server-side model in more depth.
+- Use [Run the Same Application in Browser and Node.js](./7-full-stack-capability.md) when you want the server-side path in more depth.

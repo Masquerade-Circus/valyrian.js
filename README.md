@@ -28,15 +28,15 @@
 
 # Valyrian.js
 
-An isomorphic runtime framework for web apps.
+Build one application and run it in the browser and Node.js.
 
-Valyrian.js gives you one runtime model across browser and server so the way you render, update, route, fetch, validate, hydrate and continue offline stays consistent as your app expands.
+Valyrian.js lets you build components, state, routing, data and forms in one application. The browser mounts or hydrates it, and Node.js imports the same application to render HTML for SSR.
 
-Valyrian.js is intentionally integrated: the same isomorphic runtime can grow from browser UI into complete app flows, with fewer external app-runtime pieces to assemble around the core.
+Start in the browser, then run the same application in Node.js for SSR, hydrate it in the browser and add offline and PWA support as the app grows.
 
-It is for teams that want explicit runtime behavior, deterministic updates, JSX/TSX authoring, and SSR without splitting their app into disconnected client and server mental models.
+Valyrian.js is for teams that want explicit updates, JSX/TSX authoring, browser interactivity and server rendering without splitting the product into separate client and server apps.
 
-Here, "isomorphic" means the browser runtime and server runtime follow the same model. SSR, hydration, request isolation, routing, data loading, forms, offline queues and Node runtime APIs are extensions of the same web-first system.
+Here, "isomorphic" means the same Valyrian application can run in both environments. Browser execution creates the interactive UI. Node.js execution renders HTML for responses.
 
 ## Table of Contents
 
@@ -76,7 +76,7 @@ Get a working screen first. Start with the CDN path to prove the mount-and-rende
 
 Expected result: the text appears in the page body.
 
-This snippet proves the runtime can mount component output into a root. `docs/2-getting-started.md` starts from this same example, then expands it into explicit VNodes and local TSX/JSX tooling.
+This snippet proves your first Valyrian screen can run in the browser. `docs/2-getting-started.md` starts from this same example, then expands it into richer components and local TSX/JSX tooling.
 
 ### Node (npm)
 
@@ -84,33 +84,27 @@ This snippet proves the runtime can mount component output into a root. `docs/2-
 npm install valyrian.js
 ```
 
-Then follow [docs/2-getting-started.md](docs/2-getting-started.md) for the `inline` build flow and the automatic TSX runtime setup (`jsx: "react-jsx"` + `jsxImportSource: "valyrian.js"`).
+Then follow [docs/2-getting-started.md](docs/2-getting-started.md) for the `inline` build flow and the supported TSX setup (`jsx: "react-jsx"` + `jsxImportSource: "valyrian.js"`).
 
-### Runtime authoring surfaces
-
-- `v(...)` and the automatic TSX runtime are both first-class vnode authoring surfaces.
-- `Fragment` in the automatic runtime is the shared fragment sentinel, expanded later by the runtime instead of becoming a special vnode kind.
-- `key` is structural vnode data (`vnode.key`), not component props.
-- `flatTree()` remains the runtime step that expands fragments/components and flattens nested children.
-- `trust()` keeps the same raw-HTML model in this phase.
+When you are ready for SSR, Node.js can import the same application and render HTML for the browser to hydrate.
 
 ## Choose Your Path
 
 - **Try it now (no install):** use the CDN snippet above.
 - **Understand the same example in more detail:** read [docs/1-introduction.md](docs/1-introduction.md), then continue with [docs/2-getting-started.md](docs/2-getting-started.md).
 - **Build the official cumulative application:** after Getting Started, follow [docs/taskboard-tutorial.md](docs/taskboard-tutorial.md).
-- **Add local TSX/JSX tooling in Node:** continue with [docs/2-getting-started.md](docs/2-getting-started.md) (Node path, automatic TSX runtime).
-- **Expand the same model to SSR and request-scoped runtime behavior:** complete chapters 1-3, then go to [docs/7-full-stack-capability.md](docs/7-full-stack-capability.md).
+- **Add local TSX/JSX tooling in Node:** continue with [docs/2-getting-started.md](docs/2-getting-started.md) (Node path and supported TSX setup).
+- **Run the same application in Node.js for SSR:** complete chapters 1-3, then go to [docs/7-full-stack-capability.md](docs/7-full-stack-capability.md).
 
 ## First 5 Minutes (Recommended)
 
 1. Copy the CDN snippet into an `index.html` file.
 2. Open it in your browser and confirm the UI renders.
-3. Read [docs/1-introduction.md](docs/1-introduction.md) for the browser/server mental model behind that snippet.
+3. Read [docs/1-introduction.md](docs/1-introduction.md) to see how the same application runs in the browser and Node.js.
 4. Continue with [docs/2-getting-started.md](docs/2-getting-started.md) to expand the same example.
 5. Continue with [docs/taskboard-tutorial.md](docs/taskboard-tutorial.md) to build one application through interaction, routing, data, forms, SSR, hydration and offline/PWA behavior.
 
-If this works, you already have the core Valyrian mental model.
+If this works, you have your first Valyrian screen running. The next steps grow the same app into routing, data, forms, SSR and offline support.
 
 ## Official Learning Route
 
@@ -121,7 +115,7 @@ Taskboard is the official cumulative tutorial. It starts from the first browser 
 3. Routing.
 4. Async data with Request and Suspense.
 5. Validated forms with FormStore.
-6. Runtime SSR and hydration.
+6. Node.js SSR and browser hydration.
 7. Offline queue, network status and service worker updates.
 
 Each stage names the starting state, the applied change, the observable result and the next step. Start at [docs/taskboard-tutorial.md](docs/taskboard-tutorial.md).
@@ -145,28 +139,17 @@ Each stage names the starting state, the applied change, the observable result a
 
 ## Why Valyrian.js
 
-- One runtime model across browser and server.
-- Explicit runtime behavior with deterministic updates.
-- Integrated app-runtime capabilities: SSR, hydration, routing, request flow, and state fit the same runtime model.
-- Built-in modules for routing, request, state, forms, offline behavior, and server-side rendering reduce the number of external pieces you need to assemble for common app flows.
-- Web-first architecture that can start in the browser and expand into Node tooling without changing the core mental model.
-- Official Taskboard route that demonstrates growth by accumulation instead of fragmented examples.
-
-Good fit:
-
-- You want a smaller stack with fewer moving parts.
-- You prefer explicit updates and clear runtime behavior.
-- You want browser and server flows to use the same developed app.
-- You want SSR and hydration without adopting a separate meta-framework as the core of your app architecture.
-
-Not the best fit:
-
-- You need a huge plugin ecosystem as your primary decision factor.
-- You require a fully opinionated meta-framework workflow out of the box.
+- One application runs in the browser and Node.js.
+- The browser mounts or hydrates your app, and Node.js imports that same app to render HTML for SSR.
+- Routing, data, forms, SSR, hydration and offline support grow from the same application.
+- Built-in modules for routing, requests, state, forms, offline behavior and server-side rendering reduce the number of pieces you need to assemble for common app flows.
+- Start with a simple browser screen, then use the same application in Node.js when you need SSR.
+- The official Taskboard route demonstrates growth by accumulation instead of fragmented examples.
+- Valyrian.js gives teams a compact app stack with explicit updates, JSX/TSX authoring, SSR, hydration and fewer pieces around the core UI.
 
 ## Testing Philosophy
 
-Valyrian.js tests are behavior-first and API-contract driven. Public modules validate happy paths, edge cases, and runtime consistency across browser-like and Node-like environments. Documentation examples are kept aligned with tested behavior.
+Valyrian.js tests are behavior-first and API-contract driven. Public modules validate happy paths, edge cases, and documented consistency across browser-like and Node-like environments. Documentation examples are kept aligned with tested behavior.
 
 ## Tests
 

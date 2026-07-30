@@ -6,7 +6,7 @@ This page starts with a browser mount, adds local Node.js tooling for TSX, and p
 
 ## Goal and Time
 
-* **Goal:** render your first component and understand the first proof points of the runtime model.
+* **Goal:** render your first component and prepare it to grow into the same application in browser and Node.js.
 * **Time:** 2-5 minutes (CDN path) or 10-15 minutes (Node path).
 
 If you came from `README.md`, this page starts with the same `mount("body", App)` idea and then expands it into a fuller component tree.
@@ -36,9 +36,9 @@ flowchart TD
 
 ## 2.1. Browser Method (Recommended First)
 
-This is the fastest way to confirm the runtime and your environment are working.
+This is the fastest way to confirm Valyrian.js and your environment are working.
 
-Treat this as the first proof of the model: render one component into one root and confirm the runtime output appears where you mounted it.
+Treat this as the first proof of your application: render one component into one root and confirm the output appears where you mounted it.
 
 Create `index.html`:
 
@@ -73,7 +73,7 @@ What happens here:
 
 If you see the text rendered, your core setup is done.
 
-At this point you have verified the first browser-side render of the runtime model.
+At this point you have verified the first browser-side render of your Valyrian application.
 
 ### Equivalent expanded form
 
@@ -105,7 +105,7 @@ The same example can be written in explicit VNode form when you want to see the 
 </html>
 ```
 
-Use the short string example as the default mental model. Use this expanded form when you want to see how components can return richer trees.
+Use the short string example as the default starting point. Use this expanded form when you want to see how components can return richer trees.
 
 ## 2.2. Node.js Method (Built-in Tooling)
 
@@ -137,7 +137,7 @@ Create `tsconfig.json`:
 
 This is the supported TSX path in Valyrian: TypeScript emits the automatic runtime and resolves TSX helpers from `valyrian.js`.
 
-That automatic runtime is a first-class vnode surface, equivalent in contract to manual `v(...)` authoring. You do not need `v` in scope for TSX, and `key` stays as structural vnode data instead of becoming component props.
+With this setup, TSX authoring works through the supported Valyrian.js JSX runtime. You do not need `v` in scope for TSX.
 
 ### 3. Create your app entry
 
@@ -150,7 +150,7 @@ function App() {
   return (
     <main style="font-family: sans-serif; padding: 2rem;">
       <h1>Hello from Valyrian.js</h1>
-      <p>The same mount mental model, now with TSX.</p>
+      <p>The same application, now with TSX.</p>
     </main>
   );
 }
@@ -209,7 +209,7 @@ python3 -m http.server
 
 Then open `http://localhost:8000`.
 
-The important part is not the server choice. It is that Node.js becomes a practical runtime surface for authoring, transforming and preparing the same browser-facing application model.
+The important part is that Node.js can author, transform and prepare the same browser-facing application.
 
 When shared application code needs an environment-specific API, use `isNodeJs` from `valyrian.js` to keep that branch explicit. Browser-only code can run behind `!isNodeJs`, and Node.js-only code can run behind `isNodeJs`, while the component, route or state owner remains part of the same application.
 

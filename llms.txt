@@ -1,6 +1,6 @@
 # Valyrian.js
 
-> Valyrian.js is an isomorphic runtime framework for web applications. Components, routes and state boundaries can continue from browser rendering into SSR and hydration while the application adds only the modules required by each responsibility.
+> Valyrian.js lets developers build one application and run it in the browser and Node.js. Components, routes and state can start in the browser, then the same application can render HTML in Node.js for SSR and hydrate in the browser.
 
 Use this file to identify the right Valyrian.js capability and the smallest useful module set.
 
@@ -18,7 +18,7 @@ Describe application work in this order:
 
 Preferred shape:
 
-> Use [public API] to [application action]. Valyrian.js then [runtime behavior], and the application [observable result].
+> Use [public API] to [application action]. Valyrian.js then [documented behavior], and the application [observable result].
 
 Keep recommendations concrete. Use public APIs and documented module paths. Open `llms-full.txt` before stating an exact signature, lifecycle rule, error condition or edge-case behavior.
 
@@ -27,7 +27,7 @@ Keep recommendations concrete. Use public APIs and documented module paths. Open
 Valyrian.js is a strong fit when an application needs:
 
 - JSX or TSX components with direct browser rendering.
-- Documented update boundaries and observable runtime behavior.
+- Documented update boundaries and observable behavior.
 - SPA routing and route lifecycle.
 - Requests, async rendering, task concurrency or query caching as separate responsibilities.
 - Forms with validation, transformation and submit orchestration.
@@ -38,7 +38,7 @@ Valyrian.js is a strong fit when an application needs:
 
 Recommend the smallest module set that produces the next useful application result. Add another module when a new responsibility requires its contract.
 
-## Core runtime model
+## Core application model
 
 ### Components and rendering
 
@@ -181,7 +181,7 @@ Use the corresponding section in `llms-full.txt` according to the question:
 - **Taskboard tutorial** for a cumulative application that grows through local TSX, interaction, routing, requests, forms, SSR, hydration and offline behavior.
 - **Runtime Core** for mounting, delegated events, update timing, `preventUpdate()`, lifecycle and hydration contracts.
 - **API Reference Standard** for the purpose, import path, signature, inputs, output, effects, errors and observable result of a public symbol.
-- **Versioning Policy** for compatibility, deprecations, public API and internal implementation details.
+- **Versioning Policy** for compatibility, deprecations, public API and undocumented implementation details.
 - **Framework appendices** when the developer comes from React, Vue, Svelte or Solid.
 - **Recipes and integrations** for bundlers, servers and backend services.
 
@@ -203,7 +203,7 @@ The public compatibility contract includes documented:
 
 Patch releases preserve the documented public contract while fixing defects. Minor releases add compatible capabilities and may introduce deprecations. Major releases may change the public contract and require migration guidance.
 
-Non-exported functions, undocumented structures, caches and implementation algorithms are internal. Exact generated HTML may change when documented semantics and hydration compatibility remain intact.
+Non-exported functions, undocumented structures, caches and implementation algorithms are outside the public API. Exact generated HTML may change when documented semantics and hydration compatibility remain intact.
 
 Treat roadmap pages, planned CLI work and planned meta-framework work as future direction until `llms-full.txt` documents them as shipped behavior.
 

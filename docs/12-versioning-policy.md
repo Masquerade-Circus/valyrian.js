@@ -11,7 +11,7 @@ This policy defines how Valyrian.js evolves, which parts of the project preserve
 The policy has four goals:
 
 1. Keep patch and minor releases compatible within the same major version.
-2. Allow the internal architecture to evolve without treating every refactor as a breaking change.
+2. Allow implementation details to evolve without treating every refactor as a breaking change.
 3. Communicate deprecations and migrations in advance.
 4. Promise only the compatibility that the project can verify through tests.
 
@@ -27,16 +27,16 @@ Valyrian.js treats the following as stable public API:
 - Documented arguments, return values, errors, and observable effects.
 - Documented rendering, update, SSR, and hydration behavior.
 
-The project treats the following as internal details:
+The project treats the following as undocumented implementation details:
 
 - Functions that are not exported.
-- Internal structures that the documentation does not present for direct consumption.
+- Structures that the documentation does not present for direct consumption.
 - Reconciliation and update algorithms.
 - Indexes, caches, `WeakMap`, `WeakSet`, and other implementation structures.
-- Internal markers used during SSR and hydration.
+- Markers used during SSR and hydration that are not part of the documented API.
 - The exact HTML shape when it preserves the same semantics and can hydrate correctly.
 
-Internal details can change in a patch or minor release when the change preserves the public API behavior.
+Undocumented implementation details can change in a patch or minor release when the change preserves the public API behavior.
 
 ## 12.3. Semantic Versioning
 
@@ -208,7 +208,7 @@ During that major version:
 - Minor and patch releases preserve that minimum reference.
 - A newer feature can be used if it includes a compatible alternative.
 - Introducing a required dependency on a feature not yet covered by the reference requires a new major version.
-- The project should validate runtime behavior against Chromium, Firefox, and WebKit before publishing browser compatibility claims for a release.
+- The project should validate documented browser behavior against Chromium, Firefox, and WebKit before publishing browser compatibility claims for a release.
 - Internet Explorer is outside support.
 
 Policy text:
@@ -228,7 +228,7 @@ To make the policy reproducible, each major version can save the following in th
 - Minor and patch releases in a major version preserve the documented SSR and hydration contract.
 - Hydration can reconcile differences between the server HTML and the initial client state.
 - The exact HTML shape can change when its semantics and hydration capability remain compatible.
-- Internal hydration markers and structures are outside the public API.
+- Hydration markers and structures that are not documented for application use are outside the public API.
 
 The project does not need to guarantee that an old client will hydrate HTML produced indefinitely by a future major version.
 
@@ -379,7 +379,7 @@ Every major migration guide must include:
 
 > Valyrian.js follows Semantic Versioning. Patch releases fix bugs without breaking the public API. Minor releases add compatible capabilities and can mark APIs as deprecated. Major releases can introduce breaking changes, remove deprecated APIs, or raise Node.js and browser requirements.
 >
-> Every documented export and documented behavior is considered part of the public API. Undocumented internals can change in any release.
+> Every documented export and documented behavior is considered part of the public API. Undocumented implementation details can change in any release.
 >
 > Deprecated APIs remain available for the rest of the major version where they are announced and can be removed in the next major version. Every deprecation includes an alternative and a migration guide.
 >

@@ -6,7 +6,7 @@ This chapter keeps contribution expectations explicit and predictable.
 
 If you change behavior in `lib/`, update both docs and tests.
 
-If you change runtime behavior that affects browser/server continuity, update the relevant chapter 7 docs and any reference pages that define the same contract.
+If you change documented behavior that affects browser/server continuity, update the relevant chapter 7 docs and any reference pages that define the same contract.
 
 Recommended order:
 

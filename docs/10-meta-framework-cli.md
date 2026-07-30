@@ -2,9 +2,9 @@
 
 Status: **planned downstream direction**.
 
-This page documents architecture concepts that can be built on top of Valyrian.js without changing the core direction of this repository.
+This page documents product concepts that can be built on top of Valyrian.js without changing the core direction of this repository.
 
-Valyrian.js remains a web-first isomorphic runtime. A dedicated CLI or meta-framework can add project generation, file conventions and deployment workflows on top of the existing router, SSR and build APIs.
+Valyrian.js remains a web-first isomorphic framework for building one application that runs in the browser and Node.js. A dedicated CLI or meta-framework can add project generation, file conventions and deployment workflows on top of the existing router, SSR and build APIs.
 
 ## 10.1. CLI Goals
 
@@ -14,7 +14,7 @@ Potential CLI responsibilities:
 * enforce directory conventions
 * automate build targets (SPA, SSR, static)
 
-These are workflow goals for downstream tooling, not required runtime capabilities of `valyrian.js` itself.
+These are workflow goals for downstream tooling, not required capabilities of `valyrian.js` itself.
 
 ## 10.2. File-Based Routing Goals
 
@@ -24,11 +24,11 @@ Potential conventions:
 * support nested layouts
 * support dynamic segments and catch-all routes
 
-If implemented, these conventions should compose on top of the existing router instead of redefining the runtime model described in chapters 1-7.
+If implemented, these conventions should compose on top of the existing router and preserve the same-application path described in chapters 1-7.
 
 ## 10.3. Target Architectures
 
-These are downstream app-shaping patterns that a future CLI or external meta-framework could scaffold around the runtime:
+These are downstream app-shaping patterns that a future CLI or external meta-framework could scaffold around Valyrian.js:
 
 * **SSG**: static output for content-first sites
 * **SAG**: static app shell + runtime API interaction
@@ -36,12 +36,12 @@ These are downstream app-shaping patterns that a future CLI or external meta-fra
 
 ## 10.4. What Exists Today
 
-Today, core runtime capabilities already available in this repository include:
+Today, core capabilities already available in this repository include:
 
 * router (`valyrian.js/router`)
 * SSR and build utilities (`valyrian.js/node`)
-* service worker runtime (`valyrian.js/sw`)
+* service worker APIs (`valyrian.js/sw`)
 
 This means teams can implement many meta-framework patterns now, even before a dedicated downstream CLI flow is finalized.
 
-The important boundary is that these runtime primitives belong in this repository, while higher-level generators, file conventions, and opinionated app shells belong in downstream tooling unless the project direction explicitly changes.
+The important boundary is that these public APIs belong in this repository, while higher-level generators, file conventions, and opinionated app shells belong in downstream tooling unless the project direction explicitly changes.

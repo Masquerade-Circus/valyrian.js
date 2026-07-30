@@ -14,7 +14,7 @@ This chapter is a hub split into focused pages:
 ### 7.1.1. Node.js Runtime APIs
 
 * File: [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md)
-* Covers the Node.js runtime surface: `render`, DOM setup, request-scoped storage, and runtime-side exports.
+* Covers the Node.js API surface: `render`, DOM setup, request-scoped storage, and server-side exports.
 
 ## 7.2. Isomorphic Networking and Storage
 
@@ -34,7 +34,7 @@ This chapter is a hub split into focused pages:
 ## 7.4. Server Execution Context
 
 * File: [./7.4-server-context.md](./7.4-server-context.md)
-* Covers request-scoped server context and how core modules keep per-request runtime behavior isolated in Node.js.
+* Covers request-scoped server context and how core modules keep per-request data isolated in Node.js.
 
 ## Read This If You Are Starting SSR
 
@@ -42,4 +42,4 @@ This chapter is a hub split into focused pages:
 2. Use [./7.1.1-node-runtime-apis.md](./7.1.1-node-runtime-apis.md) for the Node.js runtime surface.
 3. Configure request URL rewriting and storage isolation with [./7.2-isomorphic-networking-and-storage.md](./7.2-isomorphic-networking-and-storage.md).
 4. Review request-scoped context behavior with [./7.4-server-context.md](./7.4-server-context.md).
-5. Add PWA/build tooling and service worker runtime only after the browser/Node.js runtime flow is stable.
+5. Add PWA/build tooling and service worker APIs only after the browser/Node.js flow is stable.

@@ -1,13 +1,13 @@
 # 9. Recipes and Integrations (Hub)
 
-Recipes complete one focused task with public Valyrian.js APIs and a result you can verify. Use them when you already understand the cumulative model from [Taskboard](./taskboard-tutorial.md) and need a specific integration, runtime boundary or production check.
+Recipes complete one focused task with public Valyrian.js APIs and a result you can verify. Use them when you already understand the cumulative Taskboard tutorial and need a specific integration, browser/Node.js boundary or production check.
 
 This chapter contains two tracks:
 
 1. Integration and operations recipes (`9.1`-`9.6`).
 2. Architecture reference patterns (`9.7`-`9.8`).
 
-These recipes connect build tools, servers and backend services to Valyrian's documented runtime boundaries. Choose one integration at a time and verify its result before combining it with another.
+These recipes connect build tools, servers and backend services to Valyrian's documented browser and Node.js boundaries. Choose one integration at a time and verify its result before combining it with another.
 
 Pick one recipe at a time. Keep the first integration path stable before combining strategies.
 
@@ -61,7 +61,7 @@ Recipes may compress these labels when the page is short, but the task, files, v
 ## 9.6. Production Checklist
 
 * File: [./9.6-production-checklist.md](./9.6-production-checklist.md)
-* Pre-release checks to validate runtime behavior and docs/runtime alignment.
+* Pre-release checks to validate documented behavior and documentation alignment.
 * Observable result: each release capability has a recorded success or failure path before shipping.
 
 ## Architecture Reference Patterns
@@ -70,7 +70,7 @@ Recipes may compress these labels when the page is short, but the task, files, v
 
 * File: [./9.7-counter-variants-by-component-shape.md](./9.7-counter-variants-by-component-shape.md)
 * Exhaustive shared and per-instance counter variants.
-* Observable result: each shape increments through the same delegated event and update model while preserving either shared or per-instance state ownership.
+* Observable result: each shape increments through the same delegated event and update path while preserving either shared or per-instance state ownership.
 
 ## 9.8. Reactive Counter Variants
 
@@ -80,7 +80,7 @@ Recipes may compress these labels when the page is short, but the task, files, v
 
 ## Suggested Reading Order
 
-1. Choose your build/runtime integration path first (`9.1`, `9.2`, or `9.3`).
+1. Choose your build or SSR integration path first (`9.1`, `9.2`, or `9.3`).
    Pick one bundler path first; do not optimize both in parallel on day one.
 2. Add reliability patterns (`9.4`, `9.5`).
 3. Run the release checks in `9.6`.

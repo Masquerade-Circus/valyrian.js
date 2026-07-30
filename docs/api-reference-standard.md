@@ -40,7 +40,7 @@ symbolName(input: InputType, options?: Options): ResultType
 Inputs:
 
 - `input`: describes the value the application passes.
-- `options`: describes optional runtime behavior and defaults.
+- `options`: describes optional behavior and defaults.
 
 Return value: describes the value returned, or the state, DOM, storage, route, cache or worker state the API changes.
 

@@ -1,6 +1,6 @@
 # Editorial Style Guide
 
-This guide defines the editorial voice for the official Valyrian.js documentation. It carries the voice of the published site into `docs/` so every page teaches the runtime through the same practical, traceable model.
+This guide defines the editorial voice for the official Valyrian.js documentation. It carries the voice of the published site into `docs/` so every page helps developers build one application that runs in the browser and Node.js.
 
 Use this guide when writing introductions, tutorials, recipes, API reference pages, migration notes, framework comparisons, and README updates.
 
@@ -10,7 +10,7 @@ For the concrete public-symbol reference shape, use [API Reference Standard](./a
 
 Valyrian.js documentation should help developers build one application whose code can run in the browser and in Node.js.
 
-The voice is direct, practical, and architectural. It explains what the developer does, what the runtime does in each environment, what changes in the application, and what result the developer can observe.
+The voice is direct, practical, and architectural. It explains what the developer does, what Valyrian.js does in each environment, what changes in the application, and what result the developer can observe.
 
 Preferred sentence shape:
 
@@ -26,13 +26,12 @@ Example:
 
 Frame Valyrian.js as one application that can run in the browser and in Node.js. The browser mounts or hydrates DOM. Node.js renders HTML or request-scoped output.
 
-Use language that keeps browser and Node.js work in the same mental model:
+Use language that keeps browser and Node.js work inside the same application:
 
 - "the same application code in browser and Node.js"
 - "two stages of the same application"
 - "the same project"
 - "the same component tree"
-- "one runtime model"
 - "the browser mounts or hydrates DOM"
 - "Node.js renders HTML"
 
@@ -136,7 +135,7 @@ Do not leave a code sample without its success condition unless the surrounding 
 
 ### README and introduction pages
 
-Purpose: give the reader a fast first success, then show how the same model expands.
+Purpose: give the reader a fast first success, then show how the same application expands.
 
 Use this order:
 
@@ -158,7 +157,7 @@ Each Taskboard stage should include:
 - A short body that names the capability and the file or screen it changes.
 - Definitions for the starting state, applied change, observable result, and next step.
 - File snapshots or focused diffs where the reader needs exact code.
-- A run or verification step when the stage changes runtime behavior.
+- A run or verification step when the stage changes browser or Node.js behavior.
 
 Write the Taskboard as one growing application. Reuse names, state shape, routes, files, and result language consistently across stages.
 
@@ -261,7 +260,7 @@ Use these names consistently:
 
 Use these content terms with clear roles:
 
-- A guide explains a capability and its mental model.
+- A guide explains a capability and how the developer uses it.
 - A recipe completes one focused task.
 - A reference defines the contract of a public API.
 - A stage extends the cumulative Taskboard tutorial.
@@ -292,7 +291,7 @@ Preferred:
 
 ### Avoid fragmented examples
 
-Do not introduce throwaway mini-apps when a page can extend Taskboard or reuse the same conceptual model. New examples are acceptable when a recipe needs a clean context, but they should still include imports, execution contract, and result.
+Do not introduce throwaway mini-apps when a page can extend Taskboard or reuse the same application context. New examples are acceptable when a recipe needs a clean context, but they should still include imports, execution contract, and result.
 
 ### Avoid unsupported certainty
 
@@ -320,5 +319,5 @@ When transferring material from the published site into `docs/`, use this sequen
 1. Identify the content type: guide, Taskboard stage, recipe, reference, or framework appendix.
 2. Preserve the site's framing: same application in browser and Node.js, environment-specific result, visible execution and observable result.
 3. Convert site-specific navigation into repo-relative links.
-4. Keep code examples tied to public APIs and documented runtime behavior.
+4. Keep code examples tied to public APIs and documented behavior.
 5. Add the page to `docs/toc.md` and the README documentation list when it should be discoverable from the entry point.

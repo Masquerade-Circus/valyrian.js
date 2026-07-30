@@ -1,8 +1,8 @@
 # 1. Introduction
 
-Valyrian.js lets the browser and Node.js import the same application code and render it according to the runtime that is executing it.
+Valyrian.js lets you build one application and run it in the browser and Node.js.
 
-The browser mounts or hydrates DOM. Node.js renders HTML for the response. Both runtimes keep the same components, routes and state owners as the application surface.
+The browser mounts or hydrates DOM. Node.js imports the same application and renders HTML for the response. Components, routes and state owners stay in the application you already built.
 
 Valyrian.js fits teams that want to inspect how an event, state change, request or route produces the next render in either runtime.
 
@@ -15,7 +15,7 @@ If you started in `README.md`, keep the same picture in mind here: mount one com
 * A fast first-success path (chapters 1-3).
 * A cumulative Taskboard path that grows one application through seven stages.
 * A practical SPA path (chapter 4 and its module pages).
-* A clear expansion path for state, optimization, and full-stack runtime concerns.
+* A clear expansion path for state, optimization, SSR and browser hydration.
 
 ## Estimated Time
 
@@ -26,15 +26,15 @@ If you started in `README.md`, keep the same picture in mind here: mount one com
 
 Valyrian is designed so one application can run in browser and Node.js contexts.
 
-That model supports complete app flows as an integrated runtime surface. Routing, state, requests, forms, SSR, hydration, offline work and PWA behavior can be composed as parts of the same application. When the runtime changes, the output changes: the browser updates DOM, and Node.js produces HTML or request-scoped output.
+That design supports complete app flows. Routing, state, requests, forms, SSR, hydration, offline work and PWA behavior can be composed as parts of the same application. Browser execution updates DOM. Node.js execution produces HTML or request-scoped output.
 
 Core areas:
 
-* UI rendering and vnode patching.
+* UI rendering.
 * Router and navigation lifecycle.
 * State options (plain JavaScript objects, called `POJO` in the docs, plus `pulse`, `pulse store`, and `flux store`).
 * Request and async orchestration modules.
-* Forms, offline queues, network status and service worker runtime behavior.
+* Forms, offline queues, network status and service worker behavior.
 * Node.js SSR, hydration entry points, request isolation, build utilities and guarded environment-specific APIs.
 
 ## 1.2. Philosophy
@@ -45,7 +45,7 @@ The project emphasizes:
 2. **Platform-native APIs**: lean on Web/JS primitives whenever practical.
 3. **Deterministic updates**: avoid hidden schedulers where explicit control is clearer.
 4. **Visible execution**: each interaction, request, route, form submit or hydration step should have a traceable entry point and observable result.
-5. **Shared application code**: keep browser and Node.js execution inside the same application model.
+5. **Shared application code**: keep browser and Node.js execution inside the same application.
 
 ## 1.3. Architecture Overview
 
@@ -60,7 +60,7 @@ flowchart TD
     branch -- Node.js API --> nodeGuard[Run behind isNodeJs]
 ```
 
-The application imports stay shared. The runtime decides the result: browser execution mounts or hydrates interactive DOM, while Node.js execution renders HTML for the response. Use `isNodeJs` when shared components need an environment-specific branch, so browser-only or Node.js-only APIs stay inside the same application without leaking into the wrong runtime.
+The application imports stay shared. Browser execution mounts or hydrates interactive DOM, while Node.js execution renders HTML for the response. Use `isNodeJs` when shared components need an environment-specific branch, so browser-only or Node.js-only APIs stay inside the same application without running in the wrong environment.
 
 ## 1.4. Reading Path
 
@@ -75,4 +75,4 @@ Recommended order:
 
 If your goal is first success only, complete chapter 2 first. If you want the official accumulating application path, continue into Taskboard before jumping to individual guides.
 
-The intended onboarding flow is: `README.md` for the first render, this introduction for the browser/Node.js mental model, `2-getting-started.md` for the local tooling path and `taskboard-tutorial.md` for the cumulative application.
+The intended onboarding flow is: `README.md` for the first render, this introduction for the browser/Node.js application path, `2-getting-started.md` for the local tooling path and `taskboard-tutorial.md` for the cumulative application.

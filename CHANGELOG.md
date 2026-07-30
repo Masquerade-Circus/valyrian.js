@@ -61,7 +61,7 @@
 
 ### Code Refactoring
 
-* **router:** restrict v-route directive to internal paths ([8d8f168](https://github.com/Masquerade-Circus/valyrian/commit/8d8f1687d945428cfcb42ba693105fd938a8db5c))
+* **router:** restrict v-route directive to app-local paths ([8d8f168](https://github.com/Masquerade-Circus/valyrian/commit/8d8f1687d945428cfcb42ba693105fd938a8db5c))
 * **tree-adapter:** harden Ssr html parser against deep nesting ([1500fd1](https://github.com/Masquerade-Circus/valyrian/commit/1500fd1cfd6287f14248d11748c11c083b65eb07))
 
 ## [9.1.6](https://github.com/Masquerade-Circus/valyrian/compare/9.1.5...9.1.6) (2026-04-19)
