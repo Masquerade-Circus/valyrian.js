@@ -34,7 +34,7 @@ valyrian-taskboard/
 Run the browser stages with this loop:
 
 ```bash
-npm install valyrian.js@9.1.13 @types/node@22.15.3
+npm install valyrian.js@9.1.13 @types/node@20.19.25
 node build.mjs
 npx --yes serve@14.2.5 public --listen 8000
 ```
@@ -69,7 +69,7 @@ Create `package.json`:
     "serve": "npx --yes serve@14.2.5 public --listen 8000"
   },
   "dependencies": {
-    "@types/node": "22.15.3",
+    "@types/node": "20.19.25",
     "valyrian.js": "9.1.13"
   }
 }

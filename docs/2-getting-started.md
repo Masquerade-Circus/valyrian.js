@@ -31,7 +31,7 @@ flowchart TD
 ## Prerequisites
 
 * **Browser path (CDN):** Any modern browser with ES modules support.
-* **Node path (local tooling):** Node.js `>=18` (as defined in `package.json`) and npm or bun.
+* **Node path (local tooling):** Node.js `>=20.9.0` (as defined in `package.json`) and npm or bun.
 * **Optional:** TypeScript + TSX if you want JSX/TSX authoring.
 
 ## 2.1. Browser Method (Recommended First)

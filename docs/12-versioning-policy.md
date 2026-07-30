@@ -143,10 +143,10 @@ Minor and patch releases do not raise the minimum Node.js requirement.
 
 ### 12.5.1. Policy for Valyrian.js 9.x
 
-- Keep `node >=18` because major version 9 has already published that contract.
-- Run tests on Node 18 while support is declared.
+- Keep `node >=20.9.0` for maintained Valyrian.js 9.x releases.
+- Run tests on Node 20.9.x or newer Node 20 releases while support is declared.
 - Use Node 22 or Node 24 as the default choice for new projects.
-- Explain that Node 18 and Node 20 have ended official maintenance.
+- Explain that Node 20 has ended official maintenance.
 
 Valyrian.js support means the framework works on that version. The Node.js project may have stopped publishing security fixes for an old runtime.
 

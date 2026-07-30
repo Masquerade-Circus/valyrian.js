@@ -32,4 +32,5 @@ export declare function inline(file: InlineInput, options?: InlineOptions): Prom
 export declare namespace inline {
     var uncss: (renderedHtml: (string | Promise<string>)[], css: string, options?: InlineUncssOptions) => Promise<string>;
 }
+export {};
 //# sourceMappingURL=inline.d.ts.map
