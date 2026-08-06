@@ -1,5 +1,15 @@
 # Changelog
 
+## [9.1.15](https://github.com/Masquerade-Circus/valyrian/compare/9.1.14...9.1.15) (2026-08-06)
+
+### Documentation
+
+* align copy around same application ([29aa8e0](https://github.com/Masquerade-Circus/valyrian/commit/29aa8e0e116997bdcbba29d8330073b32182936d))
+
+### Code Refactoring
+
+* improve rendering,lifecycle handling and implement v-ref directive ([4cf7c82](https://github.com/Masquerade-Circus/valyrian/commit/4cf7c827c469a7c9ec5baf6c7521647b650267c9))
+
 ## [9.1.14](https://github.com/Masquerade-Circus/valyrian/compare/9.1.13...9.1.14) (2026-07-30)
 
 ### Code Refactoring
