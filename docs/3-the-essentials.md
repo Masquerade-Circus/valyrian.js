@@ -228,6 +228,22 @@ const Content = () => (
 - array: joined class names
 - object: `{ className: boolean | () => boolean }`
 
+### Element refs: `v-ref`
+
+Use `v-ref` when a component needs the rendered DOM node for imperative work such as focus, measurements or third-party widgets.
+
+`v-ref` accepts a callback ref or an object with a `current` property:
+
+```tsx
+const inputRef = { current: null as HTMLInputElement | null };
+
+const App = () => <input v-ref={inputRef} />;
+```
+
+Callback refs receive the DOM node when the ref is applied. During cleanup, the callback can receive `null`. If the callback returns a function, Valyrian uses that function as the cleanup step.
+
+Valyrian cleans refs when the node is removed, the ref changes, the ref is removed from a persistent vnode or the mounted tree is unmounted. Object refs are cleared by setting `current` to `null`.
+
 ## 3.5. Reactivity and Async Control
 
 The same delegated event model applies to async handlers, but render timing changes slightly.

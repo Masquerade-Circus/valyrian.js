@@ -1,7 +1,7 @@
 /* eslint-disable sonarjs/no-nested-functions */
 import "valyrian.js/node";
 
-import { directive, mount, Properties, setAttribute, trust, unmount, update, v, VnodeWithDom } from "valyrian.js";
+import { directive, DomElement, mount, Properties, setAttribute, trust, unmount, update, v, VnodeWithDom } from "valyrian.js";
 
 import dayjs from "dayjs";
 import { expect, describe, test as it } from "bun:test";
@@ -235,6 +235,22 @@ describe("Directives", () => {
 
         expect(result).toEqual(expected);
       });
+
+      it("preserves ascending callback order and final order with nested arrays", () => {
+        const items = ["alpha", "beta", "gamma"];
+        const calls: string[] = [];
+        const result = mount("body", () => (
+          <ul v-for={items}>
+            {(word: string, index: number) => {
+              calls.push(`${index}:${word}`);
+              return [<li>{word}</li>];
+            }}
+          </ul>
+        ));
+
+        expect(calls).toEqual(["0:alpha", "1:beta", "2:gamma"]);
+        expect(result).toEqual("<ul><li>alpha</li><li>beta</li><li>gamma</li></ul>");
+      });
     });
 
     /**
@@ -452,6 +468,39 @@ describe("Directives", () => {
           expect(Object.hasOwn(model, name)).toBeFalse();
         }
       });
+
+      it("should keep select option order while updating selected values", () => {
+        const model = { choice: "b", choices: ["a", "c"] };
+        const host = document.createElement("div");
+        const options = ["a", "b", "c"];
+        let multiple = false;
+        const app = () => (
+          <select name={multiple ? "choices" : "choice"} multiple={multiple} v-model={model}>
+            {options.map((option) => (
+              <option value={option}>{option}</option>
+            ))}
+          </select>
+        );
+
+        mount(host, app);
+        expect(Array.from((host.childNodes[0] as HTMLSelectElement).childNodes).map((child) => child.textContent)).toEqual([
+          "a",
+          "b",
+          "c"
+        ]);
+        expect(host.innerHTML).toEqual(
+          '<select name="choice"><option value="a">a</option><option value="b" selected="true">b</option><option value="c">c</option></select>'
+        );
+
+        multiple = true;
+        update();
+
+        const select = host.childNodes[0] as HTMLSelectElement;
+        expect(Array.from(select.childNodes).map((child) => child.textContent)).toEqual(["a", "b", "c"]);
+        expect(host.innerHTML).toEqual(
+          '<select name="choices" multiple="true"><option value="a" selected="true">a</option><option value="b">b</option><option value="c" selected="true">c</option></select>'
+        );
+      });
     });
 
     /**
@@ -545,6 +594,301 @@ describe("Directives", () => {
 
   // lifecycle hooks
   describe("lifecycle hooks", () => {
+    it("runs v-create after the root patch has committed the full DOM", () => {
+      const host = document.createElement("div");
+      const observed: string[] = [];
+      const Component = () => (
+        <section v-create={() => observed.push(host.innerHTML)}>
+          <span>child</span>
+        </section>
+      );
+
+      expect(mount(host, Component)).toEqual("<section><span>child</span></section>");
+      expect(observed).toEqual(["<section><span>child</span></section>"]);
+    });
+
+    it("runs v-update after the root patch has committed the full DOM", () => {
+      const host = document.createElement("div");
+      const observed: string[] = [];
+      const state = { label: "first" };
+      const Component = () => (
+        <section v-update={() => observed.push(host.innerHTML)}>
+          <span>{state.label}</span>
+        </section>
+      );
+
+      expect(mount(host, Component)).toEqual("<section><span>first</span></section>");
+      state.label = "second";
+
+      expect(update()).toEqual("<section><span>second</span></section>");
+      expect(observed).toEqual(["<section><span>second</span></section>"]);
+    });
+
+    it("keeps commit queue order stable after the root patch finishes", () => {
+      const host = document.createElement("div");
+      const events: string[] = [];
+      const state = { label: "first" };
+      const Component = () => (
+        <section v-create={() => events.push(`create:section:${host.innerHTML}`)} v-update={() => events.push(`update:section:${host.innerHTML}`)}>
+          <span v-create={() => events.push(`create:first:${host.innerHTML}`)} v-update={() => events.push(`update:first:${host.innerHTML}`)}>
+            {state.label}
+          </span>
+          <span v-create={() => events.push(`create:second:${host.innerHTML}`)} v-update={() => events.push(`update:second:${host.innerHTML}`)}>
+            static
+          </span>
+        </section>
+      );
+
+      expect(mount(host, Component)).toEqual("<section><span>first</span><span>static</span></section>");
+      expect(events).toEqual([
+        "create:first:<section><span>first</span><span>static</span></section>",
+        "create:second:<section><span>first</span><span>static</span></section>",
+        "create:section:<section><span>first</span><span>static</span></section>"
+      ]);
+
+      events.length = 0;
+      state.label = "second";
+
+      expect(update()).toEqual("<section><span>second</span><span>static</span></section>");
+      expect(events).toEqual([
+        "update:first:<section><span>second</span><span>static</span></section>",
+        "update:second:<section><span>second</span><span>static</span></section>",
+        "update:section:<section><span>second</span><span>static</span></section>"
+      ]);
+    });
+
+    it("keeps v-cleanup before detach and v-remove after detach", () => {
+      const host = document.createElement("div");
+      const events: string[] = [];
+      let show = true;
+      const Component = () => (
+        <div>
+          {show ? (
+            <span
+              v-cleanup={() => events.push(`cleanup:${host.innerHTML}`)}
+              v-remove={() => events.push(`remove:${host.innerHTML}`)}
+            >
+              old
+            </span>
+          ) : (
+            <p>new</p>
+          )}
+        </div>
+      );
+
+      expect(mount(host, Component)).toEqual("<div><span>old</span></div>");
+      show = false;
+
+      expect(update()).toEqual("<div><p>new</p></div>");
+      expect(events).toEqual(["cleanup:<div><span>old</span></div>", "remove:<div><p></p></div>"]);
+    });
+
+    it("keeps lifecycle cleanup for children appended through a fragment", () => {
+      const host = document.createElement("div");
+      const events: string[] = [];
+      let show = false;
+      const Component = () => (
+        <main>
+          {show
+            ? [
+                <i>static</i>,
+                <span
+                  v-cleanup={() => events.push(`cleanup:${host.innerHTML}`)}
+                  v-remove={() => events.push(`remove:${host.innerHTML}`)}
+                >
+                  tracked
+                </span>
+              ]
+            : null}
+        </main>
+      );
+
+      expect(mount(host, Component)).toEqual("<main></main>");
+      show = true;
+      expect(update()).toEqual("<main><i>static</i><span>tracked</span></main>");
+
+      show = false;
+      expect(update()).toEqual("<main></main>");
+      expect(events).toEqual([
+        "cleanup:<main><i>static</i><span>tracked</span></main>",
+        "remove:<main><i>static</i></main>"
+      ]);
+    });
+
+    it("runs persistent vnode cleanup before applying updated attributes", () => {
+      const events: string[] = [];
+      const state = { phase: "old" };
+      const Component = () => (
+        <div
+          data-phase={state.phase}
+          v-cleanup={(vnode: VnodeWithDom) => {
+            events.push(vnode.dom.getAttribute("data-phase") as string);
+          }}
+        />
+      );
+
+      expect(mount("body", Component)).toEqual('<div data-phase="old"></div>');
+      state.phase = "new";
+
+      expect(update()).toEqual('<div data-phase="new"></div>');
+      expect(events).toEqual(["old"]);
+    });
+
+    it("keeps directive false scoped to later attribute processing", () => {
+      const events: string[] = [];
+      const state = { label: "first", blocked: "old" };
+      directive("stop-attrs", () => false);
+      directive("after-stop", () => events.push("after-stop"));
+      const Component = () => (
+        <div v-stop-attrs data-blocked={state.blocked} v-after-stop>
+          {state.label}
+        </div>
+      );
+
+      expect(mount("body", Component)).toEqual("<div>first</div>");
+      state.label = "second";
+      state.blocked = "new";
+
+      expect(update()).toEqual("<div>second</div>");
+      expect(events).toEqual([]);
+    });
+
+    it("registers v-update returned cleanup for the next cycle", () => {
+      const events: string[] = [];
+      const state = { phase: "first" };
+      const Component = () => (
+        <div
+          data-phase={state.phase}
+          v-update={(vnode: VnodeWithDom) => {
+            events.push(`update:${vnode.dom.getAttribute("data-phase")}`);
+            return () => {
+              events.push(`cleanup:${vnode.dom.getAttribute("data-phase")}`);
+            };
+          }}
+        />
+      );
+
+      expect(mount("body", Component)).toEqual('<div data-phase="first"></div>');
+      state.phase = "second";
+      expect(update()).toEqual('<div data-phase="second"></div>');
+      expect(events).toEqual(["update:second"]);
+
+      state.phase = "third";
+      expect(update()).toEqual('<div data-phase="third"></div>');
+      expect(events).toEqual(["update:second", "cleanup:second", "update:third"]);
+    });
+
+    it("calls function refs with DOM and then null on removal", () => {
+      const events: Array<string | null> = [];
+      let show = true;
+      const Component = () => <div>{show ? <span v-ref={(dom: DomElement | null) => events.push(dom?.nodeName.toLowerCase() || null)} /> : null}</div>;
+
+      expect(mount("body", Component)).toEqual("<div><span></span></div>");
+      show = false;
+
+      expect(update()).toEqual("<div></div>");
+      expect(events).toEqual(["span", null]);
+    });
+
+    it("cleans the old function ref when the callback changes", () => {
+      const events: string[] = [];
+      const refA = (dom: DomElement | null) => events.push(`a:${dom?.nodeName.toLowerCase() || "null"}`);
+      const refB = (dom: DomElement | null) => events.push(`b:${dom?.nodeName.toLowerCase() || "null"}`);
+      let ref = refA;
+      const Component = () => <span v-ref={ref} />;
+
+      expect(mount("body", Component)).toEqual("<span></span>");
+      ref = refB;
+
+      expect(update()).toEqual("<span></span>");
+      expect(events).toEqual(["a:span", "a:null", "b:span"]);
+    });
+
+    it("cleans a function ref when it disappears from a persistent vnode", () => {
+      const events: string[] = [];
+      const ref = (dom: DomElement | null) => events.push(dom?.nodeName.toLowerCase() || "null");
+      let useRef = true;
+      const Component = () => <span {...(useRef ? { "v-ref": ref } : {})} />;
+
+      expect(mount("body", Component)).toEqual("<span></span>");
+      useRef = false;
+
+      expect(update()).toEqual("<span></span>");
+      expect(events).toEqual(["span", "null"]);
+    });
+
+    it("cleans a function ref on unmount", () => {
+      const events: string[] = [];
+      const Component = () => <span v-ref={(dom: DomElement | null) => events.push(dom?.nodeName.toLowerCase() || "null")} />;
+
+      expect(mount("body", Component)).toEqual("<span></span>");
+      expect(unmount()).toEqual("");
+      expect(events).toEqual(["span", "null"]);
+    });
+
+    it("cleans object refs on removal", () => {
+      const ref: { current: DomElement | null } = { current: null };
+      let show = true;
+      const Component = () => <div>{show ? <span v-ref={ref} /> : null}</div>;
+
+      expect(mount("body", Component)).toEqual("<div><span></span></div>");
+      expect(ref.current?.nodeName.toLowerCase()).toEqual("span");
+
+      show = false;
+      expect(update()).toEqual("<div></div>");
+      expect(ref.current).toBeNull();
+    });
+
+    it("cleans the old object ref when the object changes", () => {
+      const refA: { current: DomElement | null } = { current: null };
+      const refB: { current: DomElement | null } = { current: null };
+      let ref = refA;
+      const Component = () => <span v-ref={ref} />;
+
+      expect(mount("body", Component)).toEqual("<span></span>");
+      expect(refA.current?.nodeName.toLowerCase()).toEqual("span");
+
+      ref = refB;
+      expect(update()).toEqual("<span></span>");
+      expect(refA.current).toBeNull();
+      expect(refB.current?.nodeName.toLowerCase()).toEqual("span");
+    });
+
+    it("cleans an object ref when it disappears from a persistent vnode", () => {
+      const ref: { current: DomElement | null } = { current: null };
+      let useRef = true;
+      const Component = () => <span {...(useRef ? { "v-ref": ref } : {})} />;
+
+      expect(mount("body", Component)).toEqual("<span></span>");
+      expect(ref.current?.nodeName.toLowerCase()).toEqual("span");
+
+      useRef = false;
+      expect(update()).toEqual("<span></span>");
+      expect(ref.current).toBeNull();
+    });
+
+    it("defers update calls made during commit until the current commit finishes", () => {
+      const state = { label: "first", rerendered: false };
+      const Component = () => (
+        <section
+          v-update={() => {
+            if (!state.rerendered) {
+              state.rerendered = true;
+              state.label = "third";
+              update();
+            }
+          }}
+        >
+          {state.label}
+        </section>
+      );
+
+      expect(mount("body", Component)).toEqual("<section>first</section>");
+      state.label = "second";
+
+      expect(update()).toEqual("<section>third</section>");
+    });
+
     it("should allow to identify lifecycles", () => {
       const events: string[] = [];
       const Component = () => (

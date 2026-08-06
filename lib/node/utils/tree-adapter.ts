@@ -148,6 +148,10 @@ export class Node implements NodeWithDispatch {
   constructor() {}
 
   appendChild<T extends Node>(node: T): T {
+    if (node instanceof DocumentFragment) {
+      return this.insertBefore(node, null);
+    }
+
     if (node) {
       node.parentNode && node.parentNode.removeChild(node as Node);
       this.childNodes.push(node);
@@ -158,6 +162,14 @@ export class Node implements NodeWithDispatch {
   }
 
   insertBefore<T extends Node>(node: T, child: Node | null): T {
+    if (node instanceof DocumentFragment) {
+      const children = Array.from(node.childNodes);
+      for (const fragmentChild of children) {
+        this.insertBefore(fragmentChild, child);
+      }
+      return node;
+    }
+
     if (node) {
       node.parentNode && node.parentNode.removeChild(node as Node);
       node.parentNode = this;

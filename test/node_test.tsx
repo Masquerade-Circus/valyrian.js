@@ -1,4 +1,14 @@
-import { htmlToHyperscript, icons, inline, render, sw, htmlToDom, domToHtml, ServerStorage } from "valyrian.js/node";
+import {
+  htmlToHyperscript,
+  icons,
+  inline,
+  render,
+  sw,
+  htmlToDom,
+  domToHtml,
+  ServerStorage,
+  document as nodeDocument
+} from "valyrian.js/node";
 import type { InlineOptions } from "valyrian.js/node";
 import { SwRuntimeManager } from "valyrian.js/sw";
 
@@ -118,6 +128,71 @@ describe("Node test", () => {
     const svg = '<svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg"><path d="M0 0h10v10H0z"></path></svg>';
 
     expect(render(<div v-html={svg} />)).toEqual(`<div>${svg}</div>`);
+  });
+
+  it("Node adapter expands DocumentFragment in appendChild", () => {
+    const parent = nodeDocument.createElement("section");
+    const fragment = nodeDocument.createDocumentFragment();
+    const first = nodeDocument.createElement("span");
+    const second = nodeDocument.createElement("strong");
+    first.textContent = "one";
+    second.textContent = "two";
+    fragment.appendChild(first);
+    fragment.appendChild(second);
+
+    parent.appendChild(fragment);
+
+    expect(parent.innerHTML).toEqual("<span>one</span><strong>two</strong>");
+    expect(fragment.childNodes.length).toEqual(0);
+  });
+
+  it("Node adapter expands DocumentFragment in insertBefore", () => {
+    const parent = nodeDocument.createElement("section");
+    const before = nodeDocument.createElement("em");
+    const after = nodeDocument.createElement("i");
+    const fragment = nodeDocument.createDocumentFragment();
+    const first = nodeDocument.createElement("span");
+    const second = nodeDocument.createElement("strong");
+    before.textContent = "before";
+    after.textContent = "after";
+    first.textContent = "one";
+    second.textContent = "two";
+    parent.appendChild(before);
+    parent.appendChild(after);
+    fragment.appendChild(first);
+    fragment.appendChild(second);
+
+    parent.insertBefore(fragment, after);
+
+    expect(parent.innerHTML).toEqual("<em>before</em><span>one</span><strong>two</strong><i>after</i>");
+    expect(fragment.childNodes.length).toEqual(0);
+  });
+
+  it("Node adapter expands DocumentFragment in replaceChild", () => {
+    const parent = nodeDocument.createElement("section");
+    const before = nodeDocument.createElement("em");
+    const target = nodeDocument.createElement("p");
+    const after = nodeDocument.createElement("i");
+    const fragment = nodeDocument.createDocumentFragment();
+    const first = nodeDocument.createElement("span");
+    const second = nodeDocument.createElement("strong");
+    before.textContent = "before";
+    target.textContent = "target";
+    after.textContent = "after";
+    first.textContent = "one";
+    second.textContent = "two";
+    parent.appendChild(before);
+    parent.appendChild(target);
+    parent.appendChild(after);
+    fragment.appendChild(first);
+    fragment.appendChild(second);
+
+    const removed = parent.replaceChild(fragment, target);
+
+    expect(removed).toBe(target);
+    expect(target.parentNode).toEqual(null);
+    expect(parent.innerHTML).toEqual("<em>before</em><span>one</span><strong>two</strong><i>after</i>");
+    expect(fragment.childNodes.length).toEqual(0);
   });
 
   it("should apply styles correctly", () => {

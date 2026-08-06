@@ -207,4 +207,58 @@ describe("Keyed lists", () => {
     expect(update()).toEqual("<ul><li>C</li><li>B</li><li>A</li></ul>");
     expect(Array.from(list.childNodes)).toEqual(originalNodes);
   });
+
+  it("supports special keyed names through a null-prototype keyed dictionary", () => {
+    let keys = ["__proto__", "constructor"];
+    const component = () => (
+      <ul>
+        {keys.map((key) => (
+          <li key={key}>{key}</li>
+        ))}
+      </ul>
+    );
+
+    expect(mount("body", component)).toEqual("<ul><li>__proto__</li><li>constructor</li></ul>");
+
+    keys = ["constructor", "__proto__"];
+
+    expect(update()).toEqual("<ul><li>constructor</li><li>__proto__</li></ul>");
+  });
+
+  it("Keyed list: runs lifecycle hooks when a keyed survivor displaces a removed node", () => {
+    const host = document.createElement("div");
+    const events: string[] = [];
+    let keys = ["A", "B"];
+
+    const component = () => (
+      <ul>
+        {keys.map((key) => {
+          if (key === "A") {
+            return (
+              <li
+                key={key}
+                v-cleanup={() => events.push("cleanup:A")}
+                v-remove={() => events.push("remove:A")}
+              >
+                {key}
+              </li>
+            );
+          }
+
+          return <li key={key}>{key}</li>;
+        })}
+      </ul>
+    );
+
+    expect(mount(host, component)).toEqual("<ul><li>A</li><li>B</li></ul>");
+
+    const list = host.childNodes[0] as Element;
+    const survivor = list.childNodes[1];
+
+    keys = ["B"];
+
+    expect(update()).toEqual("<ul><li>B</li></ul>");
+    expect(Array.from(list.childNodes)).toEqual([survivor]);
+    expect(events).toEqual(["cleanup:A", "remove:A"]);
+  });
 });

@@ -179,6 +179,9 @@ var Node = class _Node {
   constructor() {
   }
   appendChild(node) {
+    if (node instanceof DocumentFragment) {
+      return this.insertBefore(node, null);
+    }
     if (node) {
       node.parentNode && node.parentNode.removeChild(node);
       this.childNodes.push(node);
@@ -188,6 +191,13 @@ var Node = class _Node {
     return node;
   }
   insertBefore(node, child) {
+    if (node instanceof DocumentFragment) {
+      const children = Array.from(node.childNodes);
+      for (const fragmentChild of children) {
+        this.insertBefore(fragmentChild, child);
+      }
+      return node;
+    }
     if (node) {
       node.parentNode && node.parentNode.removeChild(node);
       node.parentNode = this;
