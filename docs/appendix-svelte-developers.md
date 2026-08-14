@@ -10,7 +10,7 @@ Svelte developers can start from direct state changes and compact component code
 | Direct assignment for local state | Plain object or class state when the interaction is local. |
 | Stores for shared state | `createPulse`, `createPulseStore` or `FluxStore`. |
 | `{#if}` and `{#each}` | `v-if` and `v-for`. |
-| SSR output and browser hydration | `render`, `ServerStorage.run(...)` and `mount` or `mountRouter`. |
+| SSR output and browser hydration | `render`, `NodeRuntime.run(...)` and `mount` or `mountRouter`. |
 
 ## Direct Interaction First
 

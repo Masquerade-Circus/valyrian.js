@@ -59,7 +59,8 @@ typings/
 # dotenv environment variables file
 .env
 
-.tmp/**
+/.tmp/
+/tmp/
 
 !.tmp/favicon.ico
 
@@ -73,4 +74,5 @@ yalc.lock
 www
 .session-storage
 .worktrees/
-docs/plans
+/docs/plans/
+/docs/issues/

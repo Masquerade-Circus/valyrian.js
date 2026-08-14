@@ -15,7 +15,13 @@ import {
   setAttribute,
   v
 } from "valyrian.js";
-import { createContextScope, getContext, runWithContext } from "valyrian.js/context";
+import {
+  createContextScope,
+  getContext,
+  isServerContextActive,
+  runWithContext,
+  setContext
+} from "valyrian.js/context";
 import { isFunction, isNumber, isString } from "valyrian.js/utils";
 
 export interface Request {
@@ -121,9 +127,31 @@ function createRouteCallbackCollection(): RouteCallbackCollection {
 let activeRouter: Router | null = null;
 let routeDirectiveRegistered = false;
 const routerContextScope = createContextScope<Router>("router");
+const popstateListeners = new WeakMap<Window, () => void>();
+
+function getNavigationWindow(): Window | null {
+  const navigationWindow = globalThis.window;
+  if (
+    typeof navigationWindow !== "object" ||
+    navigationWindow === null ||
+    typeof navigationWindow.addEventListener !== "function" ||
+    typeof navigationWindow.history?.pushState !== "function" ||
+    typeof navigationWindow.location?.pathname !== "string"
+  ) {
+    return null;
+  }
+  return navigationWindow;
+}
 
 function resolveRouterFromContext(): Router | null {
-  return getContext(routerContextScope) || activeRouter;
+  const contextualRouter = getContext(routerContextScope);
+  if (contextualRouter) {
+    return contextualRouter;
+  }
+  if (isServerContextActive()) {
+    return null;
+  }
+  return activeRouter;
 }
 
 function isInternalRoute(url: unknown): url is string {
@@ -422,10 +450,12 @@ export class Router {
     }
 
     const constructedPath = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
-    const parts = constructedPath.split("?", 2);
+    const pathWithoutHash = constructedPath.split("#", 1)[0];
+    const parts = pathWithoutHash.split("?", 2);
     const nextQuery = parseQuery(parts[1]);
 
-    const finalPath = parts[0].replace(/(.+)\/$/, "$1").split("#")[0];
+    const finalPath = parts[0].replace(/(.+)\/$/, "$1");
+    const publicPath = getPathWithoutLastSlash(path.split(/[?#]/, 1)[0]);
 
     let route = this.routeTree.findRoute(finalPath);
 
@@ -455,7 +485,7 @@ export class Router {
 
     return runWithContext(routerContextScope, this, async () => {
       const nextRoute: RouteSnapshot = {
-        path: getPathWithoutLastSlash(path),
+        path: publicPath,
         query: nextQuery,
         params
       };
@@ -484,7 +514,7 @@ export class Router {
       try {
         this.url = constructedPath;
         this.query = nextQuery;
-        this.path = path;
+        this.path = publicPath;
         this.params = params;
 
         let component = await this.searchComponent(middlewares, parentComponent);
@@ -515,8 +545,13 @@ export class Router {
           }
         }
 
-        if (!isNodeJs && window.location.pathname + window.location.search !== constructedPath) {
-          window.history.pushState(null, "", constructedPath);
+        const navigationWindow = getNavigationWindow();
+        if (
+          navigationWindow &&
+          navigationWindow.location.pathname + navigationWindow.location.search + navigationWindow.location.hash !==
+            constructedPath
+        ) {
+          navigationWindow.history.pushState(null, "", constructedPath);
         }
 
         let mountedResult: string | void = undefined;
@@ -717,8 +752,12 @@ export class Router {
       }
 
       // If we are in the browser, we update the URL
-      if (!isNodeJs && window.location.pathname + window.location.search !== this.url) {
-        window.history.pushState(null, "", this.url);
+      const navigationWindow = getNavigationWindow();
+      if (
+        navigationWindow &&
+        navigationWindow.location.pathname + navigationWindow.location.search + navigationWindow.location.hash !== this.url
+      ) {
+        navigationWindow.history.pushState(null, "", this.url);
       }
 
       // If there is a container, we mount the component
@@ -808,14 +847,25 @@ export async function redirect(
 export function mountRouter(elementContainer: string | any, router: Router): void {
   ensureRouteDirective();
   router.container = elementContainer;
-  activeRouter = router;
+  if (isServerContextActive()) {
+    setContext(routerContextScope, router);
+  } else {
+    activeRouter = router;
+  }
 
-  if (!isNodeJs) {
-    function onPopStateGoToRoute(): void {
-      const pathWithoutPrefix = getPathWithoutPrefix(document.location.pathname, router.pathPrefix);
-      (router as unknown as Router).go(pathWithoutPrefix);
+  const navigationWindow = getNavigationWindow();
+  if (navigationWindow) {
+    const previous = popstateListeners.get(navigationWindow);
+    if (previous) {
+      navigationWindow.removeEventListener("popstate", previous, false);
     }
-    window.addEventListener("popstate", onPopStateGoToRoute, false);
+    const onPopStateGoToRoute = (): void => {
+      const currentUrl = `${navigationWindow.location.pathname}${navigationWindow.location.search}${navigationWindow.location.hash}`;
+      const pathWithoutPrefix = getPathWithoutPrefix(currentUrl, router.pathPrefix);
+      void router.go(pathWithoutPrefix);
+    };
+    popstateListeners.set(navigationWindow, onPopStateGoToRoute);
+    navigationWindow.addEventListener("popstate", onPopStateGoToRoute, false);
     onPopStateGoToRoute();
   }
 }

@@ -210,7 +210,7 @@ describe("Html to Tree index", () => {
       },
       {
         nodeName: "opened",
-        nodeValue: true
+        nodeValue: "true"
       }
     ]);
     expect(result).toHaveProperty("childNodes", expect.any(Array));

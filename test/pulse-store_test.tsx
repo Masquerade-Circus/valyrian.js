@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 /* eslint-disable max-lines-per-function */
-import "valyrian.js/node";
+import { NodeRuntime } from "valyrian.js/node";
 import { expect, describe, test as it } from "bun:test";
 import { createPulse, createPulseStore, createMutableStore, createEffect } from "../lib/pulses/index.ts";
 import { v, mount, unmount } from "valyrian.js";
@@ -158,7 +158,7 @@ describe("PulseStore", () => {
     unmount();
   });
 
-  it("should render async list after opening a flushed conditional panel", async () => {
+  it("should render async list after opening a flushed conditional panel", async () => NodeRuntime.run(async () => {
     const store = createPulseStore(
       {
         panel: "home" as "home" | "list",
@@ -177,8 +177,7 @@ describe("PulseStore", () => {
       }
     );
 
-    const dom = document.createElement("div");
-    document.body.appendChild(dom);
+    const dom = document.body;
 
     function ListPanel() {
       return (
@@ -213,29 +212,29 @@ describe("PulseStore", () => {
     }
 
     mount(dom, <App />);
-    expect(dom.getElementById("home_panel")).not.toBeNull();
-    expect(dom.getElementById("list_panel")).toBeNull();
+    expect(document.getElementById("home_panel")).not.toBeNull();
+    expect(document.getElementById("list_panel")).toBeNull();
 
-    dom.getElementById("open_btn")!.dispatchEvent(new Event("click", { bubbles: true }));
+    document.getElementById("open_btn")!.dispatchEvent(new Event("click", { bubbles: true }));
 
     await wait(0);
 
-    expect(dom.getElementById("list_panel")).not.toBeNull();
-    expect(dom.getElementById("loading")).not.toBeNull();
-    expect(dom.getElementById("empty")).toBeNull();
-    expect(dom.getElementById("item_0")).toBeNull();
+    expect(document.getElementById("list_panel")).not.toBeNull();
+    expect(document.getElementById("loading")).not.toBeNull();
+    expect(document.getElementById("empty")).toBeNull();
+    expect(document.getElementById("item_0")).toBeNull();
 
     await wait(0);
 
     expect(store.state.loading).toEqual(false);
     expect(store.state.items).toEqual(["first"]);
-    expect(dom.getElementById("loading")).toBeNull();
-    expect(dom.getElementById("empty")).toBeNull();
-    expect(dom.getElementById("items")).not.toBeNull();
-    expect(dom.getElementById("item_0")?.textContent).toEqual("first");
+    expect(document.getElementById("loading")).toBeNull();
+    expect(document.getElementById("empty")).toBeNull();
+    expect(document.getElementById("items")).not.toBeNull();
+    expect(document.getElementById("item_0")?.textContent).toEqual("first");
 
     unmount();
-  });
+  }));
 
   it("should update when a component reads multiple store properties and the second property changes", async () => {
     const pulseStore = createPulseStore(
@@ -266,7 +265,7 @@ describe("PulseStore", () => {
     unmount();
   });
 
-  it("should keep parent and remounted child subscriptions isolated after conditional unmount", async () => {
+  it("should keep parent and remounted child subscriptions isolated after conditional unmount", async () => NodeRuntime.run(async () => {
     const store = createPulseStore(
       { showChild: true, parentValue: "p1", childValue: "c1" },
       {
@@ -282,8 +281,7 @@ describe("PulseStore", () => {
       }
     );
 
-    const dom = document.createElement("div");
-    document.body.appendChild(dom);
+    const dom = document.body;
 
     let childRenderCount = 0;
 
@@ -302,45 +300,45 @@ describe("PulseStore", () => {
     }
 
     mount(dom, <Parent />);
-    expect(dom.getElementById("parent_value")?.textContent).toEqual("p1");
-    expect(dom.getElementById("child_value")?.textContent).toEqual("c1");
+    expect(document.getElementById("parent_value")?.textContent).toEqual("p1");
+    expect(document.getElementById("child_value")?.textContent).toEqual("c1");
     expect(childRenderCount).toEqual(1);
 
     store.setChildValue("c2");
     await wait(0);
 
-    expect(dom.getElementById("child_value")?.textContent).toEqual("c2");
+    expect(document.getElementById("child_value")?.textContent).toEqual("c2");
     expect(childRenderCount).toEqual(2);
 
     store.toggleChild(false);
     await wait(0);
 
-    expect(dom.getElementById("child_value")).toBeNull();
+    expect(document.getElementById("child_value")).toBeNull();
 
     store.setChildValue("c3");
     await wait(0);
 
-    expect(dom.getElementById("child_value")).toBeNull();
+    expect(document.getElementById("child_value")).toBeNull();
     expect(childRenderCount).toEqual(2);
 
     store.toggleChild(true);
     await wait(0);
 
-    expect(dom.getElementById("child_value")?.textContent).toEqual("c3");
+    expect(document.getElementById("child_value")?.textContent).toEqual("c3");
     expect(childRenderCount).toEqual(3);
 
     store.setParentValue("p2");
     store.setChildValue("c4");
     await wait(0);
 
-    expect(dom.getElementById("parent_value")?.textContent).toEqual("p2");
-    expect(dom.getElementById("child_value")?.textContent).toEqual("c4");
+    expect(document.getElementById("parent_value")?.textContent).toEqual("p2");
+    expect(document.getElementById("child_value")?.textContent).toEqual("c4");
     expect(childRenderCount).toEqual(4);
 
     unmount();
-  });
+  }));
 
-  it("should keep keyed pulse item subscriptions current after reorder", async () => {
+  it("should keep keyed pulse item subscriptions current after reorder", async () => NodeRuntime.run(async () => {
     const store = createPulseStore(
       { order: ["a", "b"], labels: { a: "A1", b: "B1" } as Record<string, string> },
       {
@@ -353,8 +351,7 @@ describe("PulseStore", () => {
       }
     );
 
-    const dom = document.createElement("div");
-    document.body.appendChild(dom);
+    const dom = document.body;
 
     function Item({ id }: { id: string }) {
       return (
@@ -370,8 +367,8 @@ describe("PulseStore", () => {
 
     mount(dom, <List />);
 
-    const itemA = dom.getElementById("item_a");
-    const itemB = dom.getElementById("item_b");
+    const itemA = document.getElementById("item_a");
+    const itemB = document.getElementById("item_b");
 
     expect(dom.innerHTML).toEqual('<ul><li id="item_a">A1</li><li id="item_b">B1</li></ul>');
 
@@ -379,8 +376,8 @@ describe("PulseStore", () => {
     await wait(0);
 
     expect(dom.innerHTML).toEqual('<ul><li id="item_b">B1</li><li id="item_a">A1</li></ul>');
-    expect(dom.getElementById("item_a")).toBe(itemA);
-    expect(dom.getElementById("item_b")).toBe(itemB);
+    expect(document.getElementById("item_a")).toBe(itemA);
+    expect(document.getElementById("item_b")).toBe(itemB);
 
     store.setLabel("a", "A2");
     await wait(0);
@@ -393,7 +390,7 @@ describe("PulseStore", () => {
     expect(dom.innerHTML).toEqual('<ul><li id="item_b">B2</li><li id="item_a">A2</li></ul>');
 
     unmount();
-  });
+  }));
 
   it("should suppress delegated auto-update without calling preventDefault when a pulse runs inside the handler", async () => {
     const pulseStore = createPulseStore(
@@ -987,7 +984,7 @@ describe("PulseStore", () => {
     expect(duration).toBeLessThan(30); // Less than 30ms
   });
 
-  it("should update many subscribed DOM nodes and report update duration", async () => {
+  it("should update many subscribed DOM nodes and report update duration", async () => NodeRuntime.run(async () => {
     const itemCount = 500;
     const itemIds = Array.from({ length: itemCount }, (_, index) => index);
     const pulseStore = createPulseStore(
@@ -1015,9 +1012,9 @@ describe("PulseStore", () => {
     mount(dom, <App />);
 
     expect(renderCount).toEqual(itemCount);
-    expect(dom.getElementById("perf_item_0")?.textContent).toEqual("item-0-0");
-    expect(dom.getElementById("perf_item_250")?.textContent).toEqual("item-250-0");
-    expect(dom.getElementById("perf_item_499")?.textContent).toEqual("item-499-0");
+    expect(document.getElementById("perf_item_0")?.textContent).toEqual("item-0-0");
+    expect(document.getElementById("perf_item_250")?.textContent).toEqual("item-250-0");
+    expect(document.getElementById("perf_item_499")?.textContent).toEqual("item-499-0");
 
     const start = performance.now();
     pulseStore.increment();
@@ -1026,37 +1023,42 @@ describe("PulseStore", () => {
 
     console.log(`DOM subscription update duration for ${itemCount} nodes: ${duration.toFixed(2)}ms`);
     expect(renderCount).toEqual(itemCount * 2);
-    expect(dom.getElementById("perf_item_0")?.textContent).toEqual("item-0-1");
-    expect(dom.getElementById("perf_item_250")?.textContent).toEqual("item-250-1");
-    expect(dom.getElementById("perf_item_499")?.textContent).toEqual("item-499-1");
+    expect(document.getElementById("perf_item_0")?.textContent).toEqual("item-0-1");
+    expect(document.getElementById("perf_item_250")?.textContent).toEqual("item-250-1");
+    expect(document.getElementById("perf_item_499")?.textContent).toEqual("item-499-1");
     expect(duration).toBeLessThan(5000);
 
     unmount();
-  });
+  }));
 
   it("should handle long-running asynchronous pulses without blocking", async () => {
+    let resolveData!: (value: string) => void;
+    let operationResolved = false;
+    const pendingData = new Promise<string>((resolve) => {
+      resolveData = resolve;
+    });
     const initialState = { data: null };
     const pulses = {
       async fetchData(state: any) {
-        const data = await new Promise((resolve) => setTimeout(() => resolve("fetched data"), 10));
+        const data = await pendingData;
+        operationResolved = true;
         state.data = data;
       }
     };
 
     const pulseStore = createPulseStore(initialState, pulses);
 
-    const start = performance.now();
     const fetchPromise = pulseStore.fetchData();
-    const mid = performance.now();
 
+    expect(fetchPromise).toBeInstanceOf(Promise);
+    expect(operationResolved).toBeFalse();
     expect(pulseStore.state.data).toBeNull();
-    expect(mid - start).toBeLessThan(1); // Less than 1ms to test that fetchData is non-blocking
 
+    resolveData("fetched data");
     await fetchPromise;
 
-    const end = performance.now();
+    expect(operationResolved).toBeTrue();
     expect(pulseStore.state.data).toEqual("fetched data" as any);
-    expect(end - start).toBeGreaterThanOrEqual(6);
   });
 
   it("should efficiently handle deeply nested state updates", () => {

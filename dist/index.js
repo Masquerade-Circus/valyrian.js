@@ -130,15 +130,44 @@ function trust(htmlString) {
   div.innerHTML = htmlString.trim();
   return Array.from(div.childNodes).map(hydrateDomToVnode);
 }
-var mainComponent = null;
-var mainVnode = null;
-var isMounted = false;
-var current = {
-  oldVnode: null,
-  vnode: null,
-  component: null,
-  event: null
-};
+var rendererStateKey = /* @__PURE__ */ Symbol.for("valyrian.rendererState");
+function createRendererState() {
+  return {
+    mainComponent: null,
+    mainVnode: null,
+    isMounted: false,
+    current: { oldVnode: null, vnode: null, component: null, event: null },
+    commitQueue: null,
+    isFlushingCommit: false,
+    pendingUpdateAfterCommit: false,
+    eventListenerNames: /* @__PURE__ */ new Set(),
+    debouncedUpdateTimeout: null
+  };
+}
+var rendererState = createRendererState();
+function getRendererState() {
+  if (isNodeJs && typeof sessionStorage !== "undefined") {
+    const storage = sessionStorage;
+    const store = storage.store;
+    if (store) {
+      let state = store[rendererStateKey];
+      if (!state) {
+        state = createRendererState();
+        store[rendererStateKey] = state;
+      }
+      return state;
+    }
+  }
+  return rendererState;
+}
+var current = isNodeJs ? new Proxy(rendererState.current, {
+  get(_target, property) {
+    return Reflect.get(getRendererState().current, property);
+  },
+  set(_target, property, value) {
+    return Reflect.set(getRendererState().current, property, value);
+  }
+}) : rendererState.current;
 var reservedProps = /* @__PURE__ */ new Set([
   "key",
   "state",
@@ -161,9 +190,6 @@ var reservedProps = /* @__PURE__ */ new Set([
   "srcdoc"
 ]);
 var SUBTREE_LC = /* @__PURE__ */ Symbol.for("valyrian.subtreeLifecycle");
-var commitQueue = null;
-var isFlushingCommit = false;
-var pendingUpdateAfterCommit = false;
 function markSubtreeLifecycle(dom) {
   let node = dom;
   while (node && node.nodeType === 1 && !node[SUBTREE_LC]) {
@@ -190,15 +216,17 @@ function addCallbackToSet(callback, setType, vnode) {
     }
   });
 }
-function validateIsCalledInsideComponent() {
-  if (!current.vnode) {
+function getCurrentComponentState() {
+  const currentState = getRendererState().current;
+  if (!currentState.vnode) {
     throw new Error("This function must be called inside a component");
   }
+  return currentState;
 }
 var onCreate = (callback) => {
-  validateIsCalledInsideComponent();
-  const parentVnode = current.vnode;
-  const component = current.component;
+  const currentState = getCurrentComponentState();
+  const parentVnode = currentState.vnode;
+  const component = currentState.component;
   const hasComponentAsOldChild = parentVnode.oldChildComponents && parentVnode.oldChildComponents.has(component);
   if (!hasComponentAsOldChild) {
     parentVnode["oncreate" /* onCreate */] = parentVnode["oncreate" /* onCreate */] || /* @__PURE__ */ new Set();
@@ -219,22 +247,22 @@ var onCreate = (callback) => {
   }
 };
 var onUpdate = (callback) => {
-  validateIsCalledInsideComponent();
-  const parentVnode = current.vnode;
-  const component = current.component;
+  const currentState = getCurrentComponentState();
+  const parentVnode = currentState.vnode;
+  const component = currentState.component;
   const hasComponentAsChild = parentVnode.childComponents && parentVnode.childComponents.has(component);
   if (hasComponentAsChild) {
-    addCallbackToSet(callback, "onupdate" /* onUpdate */, current.vnode);
+    addCallbackToSet(callback, "onupdate" /* onUpdate */, parentVnode);
   }
 };
 var onCleanup = (callback) => {
-  validateIsCalledInsideComponent();
-  addCallbackToSet(callback, "oncleanup" /* onCleanup */, current.vnode);
+  const currentState = getCurrentComponentState();
+  addCallbackToSet(callback, "oncleanup" /* onCleanup */, currentState.vnode);
 };
 var onRemove = (callback) => {
-  validateIsCalledInsideComponent();
-  const parentVnode = current.vnode;
-  const component = current.component;
+  const currentState = getCurrentComponentState();
+  const parentVnode = currentState.vnode;
+  const component = currentState.component;
   let removed = false;
   function removeCallback() {
     const hasComponentAsChild = parentVnode.childComponents && parentVnode.childComponents.has(component);
@@ -244,7 +272,7 @@ var onRemove = (callback) => {
     removed = true;
     callback();
   }
-  addCallbackToSet(removeCallback, "onremove" /* onRemove */, current.vnode);
+  addCallbackToSet(removeCallback, "onremove" /* onRemove */, parentVnode);
 };
 var callSet = (set) => {
   if (!set) {
@@ -261,10 +289,11 @@ var commitSet = (set) => {
   }
   const callbacks = Array.from(set);
   set.clear();
-  if (!commitQueue) {
-    commitQueue = [];
+  const state = getRendererState();
+  if (!state.commitQueue) {
+    state.commitQueue = [];
   }
-  commitQueue.push(() => {
+  state.commitQueue.push(() => {
     for (let i = 0; i < callbacks.length; i++) {
       callbacks[i]();
     }
@@ -523,19 +552,20 @@ function directive(name, directive2) {
 function setPropNameReserved(name) {
   reservedProps.add(name);
 }
-var eventListenerNames = /* @__PURE__ */ new Set();
 var preventedUpdates = /* @__PURE__ */ new WeakMap();
 function preventUpdate() {
-  if (!current.event) {
+  const event = getRendererState().current.event;
+  if (!event) {
     return;
   }
-  preventedUpdates.set(current.event, true);
+  preventedUpdates.set(event, true);
 }
 function sharedSetAttribute(name, value, newVnode) {
   if (typeof value === "function") {
-    if (!eventListenerNames.has(name)) {
-      mainVnode.dom.addEventListener(name.slice(2), eventListener);
-      eventListenerNames.add(name);
+    const state = getRendererState();
+    if (!state.eventListenerNames.has(name)) {
+      state.mainVnode.dom.addEventListener(name.slice(2), eventListener);
+      state.eventListenerNames.add(name);
     }
     return;
   }
@@ -554,8 +584,9 @@ function isThenable(value) {
   return value !== null && (typeof value === "object" || typeof value === "function") && typeof Reflect.get(value, "then") === "function";
 }
 function eventListener(e) {
-  const previousEvent = current.event;
-  current.event = e;
+  const currentState = getRendererState().current;
+  const previousEvent = currentState.event;
+  currentState.event = e;
   let dom = e.target;
   const name = `on${e.type}`;
   while (dom) {
@@ -565,7 +596,7 @@ function eventListener(e) {
       try {
         result = oldVnode.props[name](e, oldVnode);
       } finally {
-        current.event = previousEvent;
+        currentState.event = previousEvent;
       }
       if (preventedUpdates.get(e) !== true) {
         update();
@@ -581,7 +612,7 @@ function eventListener(e) {
     }
     dom = dom.parentNode;
   }
-  current.event = previousEvent;
+  currentState.event = previousEvent;
 }
 function setAttribute(name, value, newVnode) {
   if (!reservedProps.has(name)) {
@@ -595,6 +626,7 @@ function updateSVGAttributes(newVnode, oldVnode) {
   const oldVnodeProps = oldVnode?.props;
   vnodeDom.vnode = newVnode;
   if (oldVnodeProps) {
+    const eventListenerNames = getRendererState().eventListenerNames;
     for (const name in oldVnodeProps) {
       if (name in vnodeProps === false && !eventListenerNames.has(name) && !reservedProps.has(name)) {
         vnodeDom.removeAttribute(name);
@@ -643,6 +675,7 @@ function updateDomAttributes(newVnode, oldVnode) {
   const oldVnodeProps = oldVnode?.props;
   vnodeDom.vnode = newVnode;
   if (oldVnodeProps) {
+    const eventListenerNames = getRendererState().eventListenerNames;
     for (const name in oldVnodeProps) {
       if (name in vnodeProps === false && !eventListenerNames.has(name) && !reservedProps.has(name)) {
         if (name in vnodeDom) {
@@ -799,8 +832,9 @@ function processNewChild(newChild, parentVnode, oldDom, appendTarget) {
     }
     return;
   }
-  current.oldVnode = null;
-  current.vnode = newChild;
+  const currentState = getRendererState().current;
+  currentState.oldVnode = null;
+  currentState.vnode = newChild;
   const children = flatTree(newChild);
   if (children.length === 0) {
     newChild.dom.textContent = "";
@@ -821,8 +855,9 @@ function processNewChild(newChild, parentVnode, oldDom, appendTarget) {
   }
 }
 function patch(newVnode, oldVnode) {
-  current.oldVnode = oldVnode;
-  current.vnode = newVnode;
+  const currentState = getRendererState().current;
+  currentState.oldVnode = oldVnode;
+  currentState.vnode = newVnode;
   const children = flatTree(newVnode);
   const dom = newVnode.dom;
   if (children.length === 0) {
@@ -1002,105 +1037,110 @@ function patch(newVnode, oldVnode) {
   }
 }
 function updateVnode(vnode, shouldCleanup = true) {
+  const state = getRendererState();
+  const currentState = state.current;
   vnode.props = vnode.props || {};
-  const previousCommitQueue = commitQueue;
-  commitQueue = null;
+  const previousCommitQueue = state.commitQueue;
+  state.commitQueue = null;
   if (shouldCleanup && vnode.oncleanup?.size) {
     callSet(vnode.oncleanup);
   }
   const oldOnRemoveSet = vnode.onremove?.size ? new Set(vnode.onremove) : null;
-  current.vnode = vnode;
+  currentState.vnode = vnode;
   try {
     patch(vnode, shouldCleanup ? vnode : null);
     if (oldOnRemoveSet?.size) {
       callSet(oldOnRemoveSet);
     }
-    const nextCommitQueue = commitQueue;
+    const nextCommitQueue = state.commitQueue;
     if (nextCommitQueue) {
-      const previousIsFlushingCommit = isFlushingCommit;
-      isFlushingCommit = true;
+      const previousIsFlushingCommit = state.isFlushingCommit;
+      state.isFlushingCommit = true;
       try {
         for (let i = 0; i < nextCommitQueue.length; i++) {
           nextCommitQueue[i]();
         }
       } finally {
-        isFlushingCommit = previousIsFlushingCommit;
+        state.isFlushingCommit = previousIsFlushingCommit;
       }
     }
-    if (pendingUpdateAfterCommit) {
-      pendingUpdateAfterCommit = false;
+    if (state.pendingUpdateAfterCommit) {
+      state.pendingUpdateAfterCommit = false;
       updateVnode(vnode, true);
     }
-    isMounted = true;
-    current.oldVnode = null;
-    current.vnode = null;
-    current.component = null;
+    state.isMounted = true;
+    currentState.oldVnode = null;
+    currentState.vnode = null;
+    currentState.component = null;
   } finally {
-    commitQueue = previousCommitQueue;
+    state.commitQueue = previousCommitQueue;
   }
 }
 function update() {
-  if (mainVnode) {
-    if (isFlushingCommit) {
-      pendingUpdateAfterCommit = true;
+  const state = getRendererState();
+  if (state.mainVnode) {
+    if (state.isFlushingCommit) {
+      state.pendingUpdateAfterCommit = true;
       if (isNodeJs) {
-        return mainVnode.dom.innerHTML;
+        return state.mainVnode.dom.innerHTML;
       }
       return "";
     }
-    mainVnode.children = [mainComponent];
-    updateVnode(mainVnode, isMounted);
+    state.mainVnode.children = [state.mainComponent];
+    updateVnode(state.mainVnode, state.isMounted);
     if (isNodeJs) {
-      return mainVnode.dom.innerHTML;
+      return state.mainVnode.dom.innerHTML;
     }
   }
   return "";
 }
-var debouncedUpdateTimeout;
 var debouncedUpdateMethod = isNodeJs ? update : () => requestAnimationFrame(update);
 function debouncedUpdate(timeout = 42) {
   preventUpdate();
-  clearTimeout(debouncedUpdateTimeout);
-  debouncedUpdateTimeout = setTimeout(() => {
+  const state = getRendererState();
+  clearTimeout(state.debouncedUpdateTimeout);
+  state.debouncedUpdateTimeout = setTimeout(() => {
     debouncedUpdateMethod();
   }, timeout);
 }
-function removeEventListeners() {
-  if (!mainVnode) {
+function removeEventListeners(state) {
+  if (!state.mainVnode) {
     return;
   }
-  for (const name of eventListenerNames) {
-    mainVnode.dom.removeEventListener(name.slice(2), eventListener);
+  for (const name of state.eventListenerNames) {
+    state.mainVnode.dom.removeEventListener(name.slice(2), eventListener);
   }
-  eventListenerNames.clear();
+  state.eventListenerNames.clear();
 }
 function unmount() {
-  if (mainVnode) {
-    mainComponent = v(() => null, {});
+  const state = getRendererState();
+  if (state.mainVnode) {
+    state.mainComponent = v(() => null, {});
     const result = update();
-    removeEventListeners();
-    mainComponent = null;
-    mainVnode = null;
-    isMounted = false;
-    current.vnode = null;
-    current.component = null;
-    current.event = null;
+    removeEventListeners(state);
+    state.mainComponent = null;
+    state.mainVnode = null;
+    state.isMounted = false;
+    state.current.vnode = null;
+    state.current.component = null;
+    state.current.event = null;
     return result;
   }
   return "";
 }
 function mount(dom, component) {
-  const container = typeof dom === "string" ? isNodeJs ? createElement(dom, dom === "svg") : document.querySelector(dom) : dom;
-  if (mainVnode && mainVnode.dom !== container) {
-    removeEventListeners();
+  const state = getRendererState();
+  const container = typeof dom === "string" ? isNodeJs ? document.querySelector(dom) || createElement(dom, dom === "svg") : document.querySelector(dom) : dom;
+  if (state.mainVnode && state.mainVnode.dom !== container) {
+    removeEventListeners(state);
   }
   if (isComponent(component)) {
-    mainComponent = v(component, {}, []);
+    state.mainComponent = v(component, {}, []);
   } else if (isVnodeComponent(component)) {
-    mainComponent = component;
+    state.mainComponent = component;
   } else {
-    mainComponent = v(() => component, {}, []);
+    state.mainComponent = v(() => component, {}, []);
   }
-  mainVnode = hydrateDomToVnode(container);
+  state.mainVnode = hydrateDomToVnode(container);
   return update();
 }

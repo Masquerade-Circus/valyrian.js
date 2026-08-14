@@ -1,79 +1,57 @@
-import { AsyncLocalStorage } from "node:async_hooks";
-
-const storageContext = new AsyncLocalStorage<Record<string, string>>();
-let globalStore: Record<string, string> = {};
+import { getRuntimeStorage, isRuntimeContextActive, NodeRuntime } from "../runtime";
 
 export class ServerStorage implements Storage {
+  private readonly storeKey = Symbol("server-storage");
+  private readonly globalStore: Record<string | symbol, unknown> = {};
+
   isContextActive(): boolean {
-    return Boolean(storageContext.getStore());
+    return isRuntimeContextActive();
   }
 
-  get store(): Record<string, string> {
-    return storageContext.getStore() || globalStore;
+  get store(): Record<string | symbol, any> {
+    return getRuntimeStorage(this.storeKey) ?? this.globalStore;
   }
 
   get length(): number {
-    const store = this.store;
-    return store ? Object.keys(store).length : 0;
+    return Object.keys(this.store).length;
   }
 
   clear(): void {
     const store = this.store;
-    if (store) {
-      for (const key in store) {
-        Reflect.deleteProperty(store, key);
-      }
+    for (const key in store) {
+      Reflect.deleteProperty(store, key);
     }
   }
 
   getItem(key: string): string | null {
     const store = this.store;
-    return store ? (key in store ? store[key] : null) : null;
+    return key in store ? store[key] : null;
   }
 
   key(index: number): string | null {
-    const store = this.store;
-    return store ? Object.keys(store)[index] || null : null;
+    return Object.keys(this.store)[index] ?? null;
   }
 
   removeItem(key: string): void {
-    const store = this.store;
-    if (store) {
-      Reflect.deleteProperty(store, key);
-    }
+    Reflect.deleteProperty(this.store, key);
   }
 
   setItem(key: string, value: string): void {
-    const store = this.store;
-    if (store) {
-      store[key] = String(value);
-    }
+    this.store[key] = String(value);
   }
 
+  /**
+   * @deprecated Use `NodeRuntime.run()` instead. This method may be removed in v10.
+   */
   static run<T>(callback: () => T): T {
-    return storageContext.run({}, callback);
+    return NodeRuntime.run(callback);
   }
 
   static isContextActive(): boolean {
-    return Boolean(storageContext.getStore());
+    return isRuntimeContextActive();
   }
 
   toJSON(): Record<string, string> {
-    const store = this.store;
-    return store ? { ...store } : {};
+    return { ...this.store };
   }
 }
-
-/*
-On node.js environment, use ServerStorage for session storage.
-At each request, a new storage context is created using ServerStorage.run method.
-In browser environment, use the native sessionStorage.
-
-server.get("*", (req, res) => {
-  ServerStorage.run(() => {
-      const html = router.go(req.url);
-      res.send(html);
-      
-  });
-});
-*/

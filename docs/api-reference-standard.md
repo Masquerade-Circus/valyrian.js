@@ -71,14 +71,14 @@ mount(dom: string | DomElement, component: ValyrianComponent | VnodeComponentInt
 
 Inputs:
 
-- `dom`: a selector string or DOM element. In the browser, a string resolves through `document.querySelector(...)`. In Node.js, a string creates a fresh element for that mount call.
+- `dom`: a selector string or DOM element. In the browser, a string resolves through `document.querySelector(...)`. In Node.js, a string first resolves against the active request document. The runtime creates a detached element when that document has no match.
 - `component`: a function component, POJO component, vnode component, class-style object with `view()` or a renderable value.
 
 Return value: in the browser, `mount()` patches the target and returns `""`. In Node.js, it returns the generated HTML string.
 
 Effects: the runtime hydrates the current container DOM into a vnode tree, sets the mounted app reference and runs the normal patch cycle.
 
-Errors: a browser selector must resolve to an element before mounting can continue.
+Errors: a browser selector must resolve to an element before mounting can continue. Node.js falls back to a detached element when its limited selector grammar has no match.
 
 Observable result: the selected container displays the component output in the browser, or Node.js returns the rendered HTML string.
 

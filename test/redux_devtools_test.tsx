@@ -7,6 +7,8 @@ import { connectFluxStore, connectPulseStore, connectPulse } from "valyrian.js/r
 import { wait } from "./utils/helpers"
 import { v, mount, unmount } from "valyrian.js"
 
+const originalWindowDescriptor = Object.getOwnPropertyDescriptor( globalThis, "window" )
+
 describe( "Redux DevTools Integration", () => {
   function setup () {
     const mockSend = mock( ( action: any, state: any ) => { } )
@@ -25,9 +27,13 @@ describe( "Redux DevTools Integration", () => {
       connect: mockConnect
     };
 
-    ( global as any ).window = {
-      __REDUX_DEVTOOLS_EXTENSION__: mockDevTools
-    }
+    Object.defineProperty( globalThis, "window", {
+      configurable: true,
+      writable: true,
+      value: {
+        __REDUX_DEVTOOLS_EXTENSION__: mockDevTools
+      }
+    } )
 
     return {
       mockSend,
@@ -38,7 +44,11 @@ describe( "Redux DevTools Integration", () => {
   }
 
   afterEach( () => {
-    Reflect.deleteProperty( global, "window" )
+    if ( originalWindowDescriptor ) {
+      Object.defineProperty( globalThis, "window", originalWindowDescriptor )
+    } else {
+      Reflect.deleteProperty( globalThis, "window" )
+    }
     unmount()
   } )
 

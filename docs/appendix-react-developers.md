@@ -11,7 +11,7 @@ React developers can start with familiar TSX, functional components, composition
 | `key` for list identity | `key` as structural vnode data. |
 | A local state hook | An object, class component, `createPulse` or `createPulseStore`, depending on ownership. |
 | React Router | `Router`, route handlers and `mountRouter`. |
-| Server render plus hydration | `render`, `ServerStorage.run(...)` and browser `mount` or `mountRouter`. |
+| Server render plus hydration | `render`, `NodeRuntime.run(...)` and browser `mount` or `mountRouter`. |
 
 ## First Taskboard Step
 

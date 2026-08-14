@@ -10,7 +10,7 @@ Solid developers can approach Valyrian.js through precise reactive reads, TSX an
 | Signals | `createPulse` for a small independently reactive value. |
 | Stores | `createPulseStore` for grouped state and named pulse operations. |
 | Fine-grained reads | Read the state surface that owns the value, such as `count()` or `store.state.count`. |
-| Server request isolation | `ServerStorage.run(...)` around the full request lifecycle. |
+| Server request isolation | `NodeRuntime.run(...)` around the full request lifecycle. |
 
 ## Pulse Starting Point
 

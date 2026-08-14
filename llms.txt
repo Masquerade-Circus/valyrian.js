@@ -155,8 +155,10 @@ Use `render` from `valyrian.js/node` to produce server HTML. Mount the browser a
 For each incoming server request:
 
 - Create a request-scoped client with `request.new(...)` when headers or options vary by request.
-- Wrap storage-dependent work in `ServerStorage.run(...)` when request isolation is required.
+- Wrap the request lifecycle in `NodeRuntime.run(...)` when request isolation is required.
 - Import `valyrian.js/node` before storage-dependent modules when the documented Node runtime setup requires its globals.
+
+`ServerStorage.run(...)` is a deprecated compatibility wrapper that delegates to `NodeRuntime.run(...)`. It remains functional throughout v9 and may be removed in v10, although removal is not scheduled or promised. New integrations should use `NodeRuntime.run(...)`.
 
 Observable result: the server returns HTML from the application tree, and the browser continues from that output without sharing request state between concurrent users.
 

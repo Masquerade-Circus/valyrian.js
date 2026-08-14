@@ -75,8 +75,23 @@ function createRouteCallbackCollection() {
 var activeRouter = null;
 var routeDirectiveRegistered = false;
 var routerContextScope = (0, import_context.createContextScope)("router");
+var popstateListeners = /* @__PURE__ */ new WeakMap();
+function getNavigationWindow() {
+  const navigationWindow = globalThis.window;
+  if (typeof navigationWindow !== "object" || navigationWindow === null || typeof navigationWindow.addEventListener !== "function" || typeof navigationWindow.history?.pushState !== "function" || typeof navigationWindow.location?.pathname !== "string") {
+    return null;
+  }
+  return navigationWindow;
+}
 function resolveRouterFromContext() {
-  return (0, import_context.getContext)(routerContextScope) || activeRouter;
+  const contextualRouter = (0, import_context.getContext)(routerContextScope);
+  if (contextualRouter) {
+    return contextualRouter;
+  }
+  if ((0, import_context.isServerContextActive)()) {
+    return null;
+  }
+  return activeRouter;
 }
 function isInternalRoute(url) {
   return (0, import_utils.isString)(url) && /^\/(?!\/)/.test(url);
@@ -294,9 +309,11 @@ var Router = class _Router {
       return isRenderedNavigationResult(result) ? result.html : result;
     }
     const constructedPath = getPathWithoutLastSlash(`${this.pathPrefix}${path}`);
-    const parts = constructedPath.split("?", 2);
+    const pathWithoutHash = constructedPath.split("#", 1)[0];
+    const parts = pathWithoutHash.split("?", 2);
     const nextQuery = parseQuery(parts[1]);
-    const finalPath = parts[0].replace(/(.+)\/$/, "$1").split("#")[0];
+    const finalPath = parts[0].replace(/(.+)\/$/, "$1");
+    const publicPath = getPathWithoutLastSlash(path.split(/[?#]/, 1)[0]);
     let route = this.routeTree.findRoute(finalPath);
     if (!route || !route.middlewares) {
       const finalPathParts = finalPath.split("/");
@@ -318,7 +335,7 @@ var Router = class _Router {
     const { middlewares, params } = route;
     return (0, import_context.runWithContext)(routerContextScope, this, async () => {
       const nextRoute = {
-        path: getPathWithoutLastSlash(path),
+        path: publicPath,
         query: nextQuery,
         params
       };
@@ -344,7 +361,7 @@ var Router = class _Router {
       try {
         this.url = constructedPath;
         this.query = nextQuery;
-        this.path = path;
+        this.path = publicPath;
         this.params = params;
         let component = await this.searchComponent(middlewares, parentComponent);
         if (isRenderedNavigationResult(component)) {
@@ -369,8 +386,9 @@ var Router = class _Router {
             component = (0, import_valyrian.v)(parentComponent, {}, childComponent);
           }
         }
-        if (!import_valyrian.isNodeJs && window.location.pathname + window.location.search !== constructedPath) {
-          window.history.pushState(null, "", constructedPath);
+        const navigationWindow = getNavigationWindow();
+        if (navigationWindow && navigationWindow.location.pathname + navigationWindow.location.search + navigationWindow.location.hash !== constructedPath) {
+          navigationWindow.history.pushState(null, "", constructedPath);
         }
         let mountedResult = void 0;
         if (this.container) {
@@ -521,8 +539,9 @@ var Router = class _Router {
           component = (0, import_valyrian.v)(parentComponent, {}, childComponent);
         }
       }
-      if (!import_valyrian.isNodeJs && window.location.pathname + window.location.search !== this.url) {
-        window.history.pushState(null, "", this.url);
+      const navigationWindow = getNavigationWindow();
+      if (navigationWindow && navigationWindow.location.pathname + navigationWindow.location.search + navigationWindow.location.hash !== this.url) {
+        navigationWindow.history.pushState(null, "", this.url);
       }
       if (this.container) {
         return createRenderedNavigationResult((0, import_valyrian.mount)(this.container, component));
@@ -583,15 +602,25 @@ async function redirect(url, parentComponent, preventPushState = false) {
 function mountRouter(elementContainer, router) {
   ensureRouteDirective();
   router.container = elementContainer;
-  activeRouter = router;
-  if (!import_valyrian.isNodeJs) {
-    let onPopStateGoToRoute2 = function() {
-      const pathWithoutPrefix = getPathWithoutPrefix(document.location.pathname, router.pathPrefix);
-      router.go(pathWithoutPrefix);
+  if ((0, import_context.isServerContextActive)()) {
+    (0, import_context.setContext)(routerContextScope, router);
+  } else {
+    activeRouter = router;
+  }
+  const navigationWindow = getNavigationWindow();
+  if (navigationWindow) {
+    const previous = popstateListeners.get(navigationWindow);
+    if (previous) {
+      navigationWindow.removeEventListener("popstate", previous, false);
+    }
+    const onPopStateGoToRoute = () => {
+      const currentUrl = `${navigationWindow.location.pathname}${navigationWindow.location.search}${navigationWindow.location.hash}`;
+      const pathWithoutPrefix = getPathWithoutPrefix(currentUrl, router.pathPrefix);
+      void router.go(pathWithoutPrefix);
     };
-    var onPopStateGoToRoute = onPopStateGoToRoute2;
-    window.addEventListener("popstate", onPopStateGoToRoute2, false);
-    onPopStateGoToRoute2();
+    popstateListeners.set(navigationWindow, onPopStateGoToRoute);
+    navigationWindow.addEventListener("popstate", onPopStateGoToRoute, false);
+    onPopStateGoToRoute();
   }
 }
 ensureRouteDirective();

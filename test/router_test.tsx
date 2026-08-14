@@ -1329,21 +1329,6 @@ describe("Router", () => {
   });
 
   it("should isolate router context across concurrent ServerStorage requests without mountRouter", async () => {
-    const originalCreateElement = document.createElement.bind(document);
-    const createdBodiesByRequest = new Map<string, Set<Element>>();
-
-    (document as any).createElement = ((tagName: string) => {
-      const element = originalCreateElement(tagName as any);
-      if (String(tagName).toLowerCase() === "body") {
-        const requestId = sessionStorage.getItem("request-id") || "unknown";
-        if (!createdBodiesByRequest.has(requestId)) {
-          createdBodiesByRequest.set(requestId, new Set());
-        }
-        createdBodiesByRequest.get(requestId)!.add(element as Element);
-      }
-      return element;
-    }) as any;
-
     const runRequest = (requestId: string, delayMs: number) =>
       new Promise<{
         requestId: string;
@@ -1352,10 +1337,12 @@ describe("Router", () => {
         beforeEvents: string[];
         afterEvents: string[];
         finalPath: string;
+        body: Element;
       }>((resolve, reject) => {
         ServerStorage.run(() => {
           sessionStorage.setItem("request-id", requestId);
 
+          const body = document.body;
           const beforeEvents: string[] = [];
           const afterEvents: string[] = [];
           const router = new Router();
@@ -1404,46 +1391,34 @@ describe("Router", () => {
               linkResult,
               beforeEvents,
               afterEvents,
-              finalPath: router.path
+              finalPath: router.path,
+              body
             });
           })().catch(reject);
         });
       });
 
-    try {
-      const [slow, fast] = await Promise.all([runRequest("slow", 25), runRequest("fast", 5)]);
+    const [slow, fast] = await Promise.all([runRequest("slow", 25), runRequest("fast", 5)]);
 
-      expect(String(slow.redirectResult)).toContain("target-slow-slow-slow");
-      expect(String(fast.redirectResult)).toContain("target-fast-fast-fast");
+    expect(String(slow.redirectResult)).toContain("target-slow-slow-slow");
+    expect(String(fast.redirectResult)).toContain("target-fast-fast-fast");
 
-      expect(String(slow.linkResult)).toContain('href="/target?rid=slow"');
-      expect(String(fast.linkResult)).toContain('href="/target?rid=fast"');
+    expect(String(slow.linkResult)).toContain('href="/target?rid=slow"');
+    expect(String(fast.linkResult)).toContain('href="/target?rid=fast"');
 
-      expect(slow.beforeEvents.length).toBeGreaterThan(0);
-      expect(fast.beforeEvents.length).toBeGreaterThan(0);
-      expect(slow.afterEvents.length).toBeGreaterThan(0);
-      expect(fast.afterEvents.length).toBeGreaterThan(0);
+    expect(slow.beforeEvents.length).toBeGreaterThan(0);
+    expect(fast.beforeEvents.length).toBeGreaterThan(0);
+    expect(slow.afterEvents.length).toBeGreaterThan(0);
+    expect(fast.afterEvents.length).toBeGreaterThan(0);
 
-      expect(slow.beforeEvents.every((event) => event.startsWith("slow:"))).toBeTrue();
-      expect(slow.afterEvents.every((event) => event.startsWith("slow:"))).toBeTrue();
-      expect(fast.beforeEvents.every((event) => event.startsWith("fast:"))).toBeTrue();
-      expect(fast.afterEvents.every((event) => event.startsWith("fast:"))).toBeTrue();
+    expect(slow.beforeEvents.every((event) => event.startsWith("slow:"))).toBeTrue();
+    expect(slow.afterEvents.every((event) => event.startsWith("slow:"))).toBeTrue();
+    expect(fast.beforeEvents.every((event) => event.startsWith("fast:"))).toBeTrue();
+    expect(fast.afterEvents.every((event) => event.startsWith("fast:"))).toBeTrue();
 
-      expect(slow.finalPath).toContain("/link");
-      expect(fast.finalPath).toContain("/link");
-
-      const slowBodies = Array.from(createdBodiesByRequest.get("slow") || []);
-      const fastBodies = Array.from(createdBodiesByRequest.get("fast") || []);
-
-      expect(slowBodies.length).toBeGreaterThan(0);
-      expect(fastBodies.length).toBeGreaterThan(0);
-
-      for (const body of slowBodies) {
-        expect(fastBodies.includes(body)).toBeFalse();
-      }
-    } finally {
-      (document as any).createElement = originalCreateElement as any;
-    }
+    expect(slow.finalPath).toContain("/link");
+    expect(fast.finalPath).toContain("/link");
+    expect(slow.body).not.toBe(fast.body);
   });
 
   it("Error handlers", async () => {

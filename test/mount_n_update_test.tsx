@@ -17,6 +17,7 @@ import {
 } from "valyrian.js";
 
 import { expect, describe, test as it, beforeEach, afterEach } from "bun:test";
+import { pathToFileURL } from "node:url";
 
 describe("Mount and update", () => {
   type DelegatedEventMock = {
@@ -85,6 +86,29 @@ describe("Mount and update", () => {
       }
     };
   }
+
+  it("exports current without a Proxy when the Node.js runtime is unavailable", async () => {
+    const moduleUrl = `${pathToFileURL(`${process.cwd()}/lib/index.ts`).href}?browser-runtime=${Date.now()}`;
+    const script = `
+      import { types } from "node:util";
+      Object.defineProperty(globalThis, "process", { value: undefined, configurable: true });
+      const runtime = await import(${JSON.stringify(moduleUrl)});
+      console.log(JSON.stringify({ isNodeJs: runtime.isNodeJs, isProxy: types.isProxy(runtime.current) }));
+    `;
+    const child = Bun.spawn([process.execPath, "-e", script], {
+      stdout: "pipe",
+      stderr: "pipe"
+    });
+    const [stdout, stderr, exitCode] = await Promise.all([
+      new Response(child.stdout).text(),
+      new Response(child.stderr).text(),
+      child.exited
+    ]);
+
+    expect(stderr).toEqual("");
+    expect(exitCode).toEqual(0);
+    expect(JSON.parse(stdout)).toEqual({ isNodeJs: false, isProxy: false });
+  });
 
   it("Mount and update with POJO component", () => {
     const Component = {

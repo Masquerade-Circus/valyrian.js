@@ -28,22 +28,75 @@ var Event = class {
   }
   type;
   options;
+  propagationPath = [];
   bubbles = false;
+  NONE = 0;
+  CAPTURING_PHASE = 1;
+  AT_TARGET = 2;
+  BUBBLING_PHASE = 3;
+  cancelBubble = false;
   cancelable = false;
+  composed = false;
   defaultPrevented = false;
+  eventPhase = 0;
+  isTrusted = false;
   propagationStopped = false;
+  returnValue = true;
+  srcElement = null;
   target = null;
   currentTarget = null;
+  timeStamp = Date.now();
+  composedPath() {
+    return [...this.propagationPath];
+  }
+  initEvent(type, bubbles = false, cancelable = false) {
+    this.type = type;
+    this.bubbles = bubbles;
+    this.cancelable = cancelable;
+  }
   preventDefault() {
     if (this.cancelable) {
       this.defaultPrevented = true;
+      this.returnValue = false;
     }
   }
   stopPropagation() {
     this.propagationStopped = true;
+    this.cancelBubble = true;
   }
   stopImmediatePropagation() {
     this.propagationStopped = true;
+  }
+};
+var MouseEvent = class extends Event {
+  button;
+  buttons;
+  ctrlKey;
+  metaKey;
+  shiftKey;
+  altKey;
+  constructor(type, options = {}) {
+    super(type, options);
+    this.button = options.button ?? 0;
+    this.buttons = options.buttons ?? 0;
+    this.ctrlKey = options.ctrlKey ?? false;
+    this.metaKey = options.metaKey ?? false;
+    this.shiftKey = options.shiftKey ?? false;
+    this.altKey = options.altKey ?? false;
+  }
+};
+var SubmitEvent = class extends Event {
+  submitter;
+  constructor(type, options = {}) {
+    super(type, options);
+    this.submitter = options.submitter ?? null;
+  }
+};
+var PopStateEvent = class extends Event {
+  state;
+  constructor(type, options = {}) {
+    super(type, options);
+    this.state = options.state ?? null;
   }
 };
 var Node = class _Node {
@@ -55,10 +108,13 @@ var Node = class _Node {
     if (!(event instanceof Event)) {
       return true;
     }
+    const eventState = event;
     if (!event.target) {
       event.target = this;
+      eventState.propagationPath = [];
     }
     event.currentTarget = this;
+    eventState.propagationPath.push(this);
     if (this instanceof Element) {
       const listeners = this._listeners?.get(event.type);
       if (listeners) {
@@ -77,7 +133,7 @@ var Node = class _Node {
     return this.dispatchEvent(event);
   }
   get nodeName() {
-    return this.tag_name.toLowerCase();
+    return this.tag_name;
   }
   set nodeName(name) {
     this.tag_name = name;
@@ -215,7 +271,7 @@ var Node = class _Node {
   setAttribute(name, value) {
     const attr = {
       nodeName: name,
-      nodeValue: value
+      nodeValue: String(value)
     };
     let idx = -1;
     for (let i = 0, l = this.attributes.length; i < l; i++) {
@@ -229,9 +285,18 @@ var Node = class _Node {
   getAttribute(name) {
     for (let i = 0, l = this.attributes.length; i < l; i++) {
       if (this.attributes[i].nodeName === name) {
-        return this.attributes[i].nodeValue;
+        return String(this.attributes[i].nodeValue);
       }
     }
+    return null;
+  }
+  hasAttribute(name) {
+    for (let index = 0; index < this.attributes.length; index++) {
+      if (this.attributes[index].nodeName === name) {
+        return true;
+      }
+    }
+    return false;
   }
   removeAttribute(name) {
     let idx = -1;
@@ -244,22 +309,6 @@ var Node = class _Node {
     if (idx > -1) {
       this.attributes.splice(idx, 1);
     }
-  }
-  getElementById(id) {
-    let elementFound;
-    for (let i = 0, l = this.childNodes.length; i < l; i++) {
-      if (this.childNodes[i].nodeType === 1) {
-        if (this.childNodes[i].getAttribute("id") === id) {
-          elementFound = this.childNodes[i];
-          break;
-        }
-        elementFound = this.childNodes[i].getElementById(id);
-        if (elementFound) {
-          break;
-        }
-      }
-    }
-    return elementFound || null;
   }
   // Not implemented
   // firstChild!: ChildNode | null;
@@ -349,6 +398,7 @@ function updateElementStyles(element, state) {
 }
 var Element = class extends Node {
   #listeners = /* @__PURE__ */ new Map();
+  #objectListeners = /* @__PURE__ */ new WeakMap();
   get _listeners() {
     return this.#listeners;
   }
@@ -388,21 +438,32 @@ var Element = class extends Node {
   }
   addEventListener(type, callback, _options) {
     if (!callback) return;
-    const handler = typeof callback === "function" ? callback : callback.handleEvent?.bind(callback);
-    if (!handler) return;
-    if (!this.#listeners.has(type)) {
-      this.#listeners.set(type, /* @__PURE__ */ new Set());
+    let handler;
+    if (typeof callback === "function") {
+      handler = callback;
+    } else {
+      handler = this.#objectListeners.get(callback);
+      if (!handler) {
+        handler = (event) => callback.handleEvent(event);
+        this.#objectListeners.set(callback, handler);
+      }
     }
-    this.#listeners.get(type).add(handler);
+    if (!handler) return;
+    let listeners = this.#listeners.get(type);
+    if (!listeners) {
+      listeners = /* @__PURE__ */ new Set();
+      this.#listeners.set(type, listeners);
+    }
+    listeners.add(handler);
   }
   removeEventListener(type, callback, _options) {
     if (!callback) return;
-    const handler = typeof callback === "function" ? callback : callback.handleEvent?.bind(callback);
+    const handler = typeof callback === "function" ? callback : this.#objectListeners.get(callback);
     if (!handler) return;
-    this.#listeners.get(type)?.delete(handler);
-  }
-  _dispatchEvent(event) {
-    return this.dispatchEvent(event);
+    const listeners = this.#listeners.get(type);
+    if (listeners?.delete(handler) && listeners.size === 0) {
+      this.#listeners.delete(type);
+    }
   }
   _style = new Proxy(
     {},
@@ -502,9 +563,12 @@ var Element = class extends Node {
     }
     return str;
   }
-  set innerHTML(html2) {
+  set innerHTML(html) {
     this.textContent = "";
-    const result = htmlToDom(html2);
+    if (html.length === 0) {
+      return;
+    }
+    const result = htmlToDom(html);
     if (result instanceof DocumentFragment) {
       const children = Array.from(result.childNodes);
       for (const child of children) {
@@ -516,6 +580,30 @@ var Element = class extends Node {
   }
   get outerHTML() {
     return domToHtml(this);
+  }
+  querySelector(selector) {
+    return querySelectorWithin(this, selector, 1)[0] ?? null;
+  }
+  querySelectorAll(selector) {
+    return querySelectorWithin(this, selector);
+  }
+  click() {
+    const tag = this.nodeName.toLowerCase();
+    if ((tag === "button" || tag === "input") && this.hasAttribute("disabled")) {
+      return;
+    }
+    this.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 }));
+  }
+};
+var HTMLFormElement = class extends Element {
+  requestSubmit(submitter = null) {
+    this.dispatchEvent(
+      new SubmitEvent("submit", {
+        bubbles: true,
+        cancelable: true,
+        submitter
+      })
+    );
   }
 };
 var DocumentFragment = class extends Element {
@@ -530,14 +618,38 @@ var Document = class extends Element {
     super();
     this.nodeType = 9;
     this.nodeName = "#document";
+    this.documentElement = this.createElement("html");
+    this.head = this.createElement("head");
     this.body = this.createElement("body");
+    this.documentElement.appendChild(this.head);
+    this.documentElement.appendChild(this.body);
+    this.appendChild(this.documentElement);
   }
+  documentElement;
+  head;
   body;
+  location;
+  getElementById(id) {
+    const stack = Array.from(this.childNodes).reverse();
+    while (stack.length > 0) {
+      const node = stack.pop();
+      if (!(node instanceof Element)) {
+        continue;
+      }
+      if (node.getAttribute("id") === id) {
+        return node;
+      }
+      for (let index = node.childNodes.length - 1; index >= 0; index--) {
+        stack.push(node.childNodes[index]);
+      }
+    }
+    return null;
+  }
   createDocumentFragment() {
     return new DocumentFragment();
   }
   createElement(type) {
-    const element = new Element();
+    const element = type.toLowerCase() === "form" ? new HTMLFormElement() : new Element();
     element.nodeName = type.toUpperCase();
     return element;
   }
@@ -550,6 +662,80 @@ var Document = class extends Element {
     return new Text(text);
   }
 };
+function parseSimpleSelector(selector) {
+  const match = selector.match(
+    /^(?:([A-Za-z][A-Za-z0-9-]*))?(?:(#[A-Za-z_][A-Za-z0-9_-]*)|(\.[A-Za-z_][A-Za-z0-9_-]*)|\[([A-Za-z_][A-Za-z0-9_-]*)(?:="([^"]*)")?\])?$/
+  );
+  if (!match || !match[1] && !match[2] && !match[3] && !match[4]) {
+    throw new SyntaxError(`Unsupported selector: ${selector}`);
+  }
+  return {
+    tag: match[1]?.toLowerCase() ?? null,
+    id: match[2]?.slice(1) ?? null,
+    className: match[3]?.slice(1) ?? null,
+    attribute: match[4] ?? null,
+    attributeValue: typeof match[5] === "string" ? match[5] : null
+  };
+}
+function parseSelector(selector) {
+  if (selector.trim() !== selector || selector.length === 0 || /\s{2,}/.test(selector)) {
+    throw new SyntaxError(`Unsupported selector: ${selector}`);
+  }
+  return selector.split(" ").map(parseSimpleSelector);
+}
+function matchesSimpleSelector(element, selector) {
+  if (selector.tag && element.nodeName.toLowerCase() !== selector.tag) {
+    return false;
+  }
+  if (selector.id && element.id !== selector.id) {
+    return false;
+  }
+  if (selector.className && !element.className.split(/\s+/).includes(selector.className)) {
+    return false;
+  }
+  if (selector.attribute) {
+    const attributeValue = element.getAttribute(selector.attribute);
+    if (attributeValue === null) {
+      return false;
+    }
+    if (selector.attributeValue !== null) {
+      return attributeValue === selector.attributeValue;
+    }
+  }
+  return true;
+}
+function querySelectorWithin(root, selector, limit = Number.POSITIVE_INFINITY) {
+  const parts = parseSelector(selector);
+  const targetSelector = parts[parts.length - 1];
+  const matches = [];
+  const stack = Array.from(root.childNodes).reverse();
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (!(node instanceof Element)) {
+      continue;
+    }
+    if (matchesSimpleSelector(node, targetSelector)) {
+      let ancestor = node.parentElement;
+      let partIndex = parts.length - 2;
+      while (partIndex >= 0 && ancestor) {
+        if (matchesSimpleSelector(ancestor, parts[partIndex])) {
+          partIndex--;
+        }
+        ancestor = ancestor.parentElement;
+      }
+      if (partIndex < 0) {
+        matches.push(node);
+        if (matches.length === limit) {
+          return matches;
+        }
+      }
+    }
+    for (let index = node.childNodes.length - 1; index >= 0; index--) {
+      stack.push(node.childNodes[index]);
+    }
+  }
+  return matches;
+}
 var ESCAPE_LOOKUP = {
   "&": "&amp;",
   ">": "&gt;",
@@ -628,7 +814,7 @@ ${spaces}"<!DOCTYPE html>"`;
 ${spaces}"${item.nodeValue}"`;
     } else {
       let str = `
-${spaces}v("${item.nodeName}", `;
+${spaces}v("${item.nodeName.toLowerCase()}", `;
       if (item.attributes) {
         const attrs = {};
         for (let i = 0, l = item.attributes.length; i < l; i++) {
@@ -673,7 +859,7 @@ function createTextIndexItem(startsAt, endsAt, nodeValue) {
     nodeValue
   };
 }
-function findTexts(item, html2) {
+function findTexts(item, html) {
   const stack = [item];
   while (stack.length) {
     const current = stack.pop();
@@ -684,18 +870,18 @@ function findTexts(item, html2) {
         const child = originalChildren[i];
         const nextChild = originalChildren[i + 1];
         if (i === 0 && child.startsAt > current.contentStartsAt) {
-          const childContent = html2.substring(current.contentStartsAt, child.startsAt);
+          const childContent = html.substring(current.contentStartsAt, child.startsAt);
           newChildren.push(
             createTextIndexItem(current.contentStartsAt, current.contentStartsAt + childContent.length, childContent)
           );
         }
         newChildren.push(child);
         if (nextChild && child.endsAt < nextChild.startsAt) {
-          const childContent = html2.substring(child.endsAt, nextChild.startsAt);
+          const childContent = html.substring(child.endsAt, nextChild.startsAt);
           newChildren.push(createTextIndexItem(child.endsAt, child.endsAt + childContent.length, childContent));
         }
         if (!nextChild && child.endsAt < current.contentEndsAt) {
-          const childContent = html2.substring(child.endsAt, current.contentEndsAt);
+          const childContent = html.substring(child.endsAt, current.contentEndsAt);
           newChildren.push(createTextIndexItem(child.endsAt, current.contentEndsAt, childContent));
         }
       }
@@ -703,7 +889,7 @@ function findTexts(item, html2) {
         stack.push(originalChildren[i]);
       }
     } else {
-      const childContent = html2.substring(current.contentStartsAt, current.contentEndsAt);
+      const childContent = html.substring(current.contentStartsAt, current.contentEndsAt);
       if (childContent.length) {
         newChildren.push(createTextIndexItem(current.contentStartsAt, current.contentEndsAt, childContent));
       }
@@ -734,13 +920,13 @@ function convertToDom(item) {
   }
   return node;
 }
-function getObjectIndexTree(html2) {
+function getObjectIndexTree(html) {
   let item;
   const regex = RegExp("<([^>|^!]+)>", "g");
   const items = [];
   const openItems = [];
   let nodeCount = 0;
-  while (item = regex.exec(html2)) {
+  while (item = regex.exec(html)) {
     if (item[0].startsWith("</")) {
       const lastOpenedItem = openItems.pop();
       if (lastOpenedItem) {
@@ -814,8 +1000,8 @@ function getObjectIndexTree(html2) {
   }
   while (openItems.length) {
     const openItem = openItems.pop();
-    openItem.endsAt = html2.length;
-    openItem.contentEndsAt = html2.length;
+    openItem.endsAt = html.length;
+    openItem.contentEndsAt = html.length;
     const parent = openItems[openItems.length - 1];
     if (parent) {
       parent.children.push(openItem);
@@ -826,40 +1012,37 @@ function getObjectIndexTree(html2) {
   const fragmentItem = {
     tagName: "#document-fragment",
     startsAt: 0,
-    endsAt: html2.length,
+    endsAt: html.length,
     contentStartsAt: 0,
-    contentEndsAt: html2.length,
+    contentEndsAt: html.length,
     attributes: {},
     children: items,
     nodeValue: null
   };
-  findTexts(fragmentItem, html2);
+  findTexts(fragmentItem, html);
   return convertToDom(fragmentItem);
 }
-function htmlToDom(html2) {
-  const openingTag = html2.match(/<[^>]+>/g);
-  const document2 = new Document();
+function htmlToDom(html) {
+  const openingTag = html.match(/<[^>]+>/g);
+  const document3 = new Document();
   if (!openingTag) {
-    const documentFragment = document2.createDocumentFragment();
-    documentFragment.appendChild(document2.createTextNode(html2));
+    const documentFragment = document3.createDocumentFragment();
+    documentFragment.appendChild(document3.createTextNode(html));
     return documentFragment;
   }
-  const fragment = getObjectIndexTree(html2);
+  const fragment = getObjectIndexTree(html);
   if (fragment.childNodes.length > 1) {
     return fragment;
   }
   return fragment.childNodes[0];
 }
-function htmlToHyperscript(html2) {
-  const domTree = htmlToDom(html2);
+function htmlToHyperscript(html) {
+  const domTree = htmlToDom(html);
   const hyperscript = domToHyperscript(domTree instanceof DocumentFragment ? domTree.childNodes : [domTree]);
   return `[${hyperscript}
 ]`;
 }
 var document = new Document();
-var html = document.createElement("html");
-html.appendChild(document.createElement("head"));
-html.appendChild(document.body);
 
 // lib/node/index.ts
 import { mount, unmount } from "valyrian.js";
@@ -895,7 +1078,7 @@ async function icons(source, configuration) {
         return hyperscript.substring(1, hyperscript.length - 2);
       }).join(",");
       const jsxLinks = response.html.map((item) => `    ${item.endsWith("/>") ? item : item.replace(/>$/, " />")}`).join("\n");
-      const html2 = `
+      const html = `
   const { v } = require("valyrian.js");
 
   function Links(){
@@ -916,7 +1099,7 @@ ${jsxLinks}
   );
 }
 `;
-      fs.writeFileSync(`${options.linksViewPath}/links.js`, html2);
+      fs.writeFileSync(`${options.linksViewPath}/links.js`, html);
       fs.writeFileSync(`${options.linksViewPath}/links.jsx`, jsx);
       fs.writeFileSync(`${options.linksViewPath}/links.tsx`, jsx);
     }
@@ -1088,8 +1271,8 @@ async function inline(file, options = {}) {
   throw new Error(`Unknown file type: ${file}`);
 }
 inline.uncss = async function(renderedHtml, css, options = {}) {
-  const html2 = await Promise.all(renderedHtml);
-  const contents = html2.map((item) => {
+  const html = await Promise.all(renderedHtml);
+  const contents = html.map((item) => {
     return {
       raw: item,
       extension: "html"
@@ -1145,77 +1328,322 @@ function sw(file, options = {}) {
   fs3.writeFileSync(file, contents, "utf8");
 }
 
-// lib/node/utils/server-storage.ts
+// lib/node/runtime.ts
 import { AsyncLocalStorage } from "node:async_hooks";
-var storageContext = new AsyncLocalStorage();
-var globalStore = {};
-var ServerStorage = class {
-  isContextActive() {
-    return Boolean(storageContext.getStore());
+var runtimeContext = new AsyncLocalStorage();
+var assignedWindow;
+var assignedLocation;
+var assignedHistory;
+function installRuntimeGlobals(publicDocument) {
+  Object.defineProperties(globalThis, {
+    document: {
+      configurable: true,
+      get: () => runtimeContext.getStore()?.document ?? publicDocument
+    },
+    window: {
+      configurable: true,
+      get: () => {
+        const context = runtimeContext.getStore();
+        return context ? context.browser ?? void 0 : assignedWindow;
+      },
+      set: (value) => {
+        assignedWindow = value;
+      }
+    },
+    location: {
+      configurable: true,
+      get: () => {
+        const context = runtimeContext.getStore();
+        return context ? context.browser?.location : assignedLocation;
+      },
+      set: (value) => {
+        assignedLocation = value;
+      }
+    },
+    history: {
+      configurable: true,
+      get: () => {
+        const context = runtimeContext.getStore();
+        return context ? context.browser?.history : assignedHistory;
+      },
+      set: (value) => {
+        assignedHistory = value;
+      }
+    }
+  });
+}
+var BrowserWindow = class {
+  window = this;
+  document;
+  location;
+  history;
+  listeners = /* @__PURE__ */ new Map();
+  constructor(document3, initialUrl) {
+    this.document = document3;
+    this.location = new BrowserLocation(initialUrl);
+    this.history = new BrowserHistory(this, initialUrl);
+    document3.location = this.location;
   }
-  get store() {
-    return storageContext.getStore() || globalStore;
+  addEventListener(type, callback) {
+    if (callback === null) {
+      return;
+    }
+    let listeners = this.listeners.get(type);
+    if (!listeners) {
+      listeners = /* @__PURE__ */ new Set();
+      this.listeners.set(type, listeners);
+    }
+    listeners.add(callback);
+  }
+  removeEventListener(type, callback) {
+    if (callback === null) {
+      return;
+    }
+    this.listeners.get(type)?.delete(callback);
+  }
+  dispatchEvent(event) {
+    if (event.target === null) {
+      event.target = this;
+    }
+    event.currentTarget = this;
+    const listeners = this.listeners.get(event.type);
+    if (listeners) {
+      for (const callback of listeners) {
+        if (event.propagationStopped) {
+          break;
+        }
+        if (typeof callback === "function") {
+          callback.call(this, event);
+        } else {
+          callback.handleEvent(event);
+        }
+      }
+    }
+    return !event.defaultPrevented;
+  }
+};
+var BrowserLocation = class {
+  url;
+  constructor(url) {
+    this.url = new URL(url.href);
+  }
+  get href() {
+    return this.url.href;
+  }
+  get origin() {
+    return this.url.origin;
+  }
+  get pathname() {
+    return this.url.pathname;
+  }
+  get search() {
+    return this.url.search;
+  }
+  get hash() {
+    return this.url.hash;
+  }
+  setUrl(url) {
+    this.url = url;
+  }
+};
+var BrowserHistory = class {
+  constructor(target, initialUrl) {
+    this.target = target;
+    this.initialUrl = new URL(initialUrl.href);
+    this.entries = [{ url: this.initialUrl, state: null }];
+  }
+  target;
+  entries;
+  index = 0;
+  initialUrl;
+  get state() {
+    return this.entries[this.index].state;
   }
   get length() {
-    const store = this.store;
-    return store ? Object.keys(store).length : 0;
+    return this.entries.length;
+  }
+  pushState(state, _unused, url) {
+    const nextUrl = this.resolveUrl(url);
+    this.entries.splice(this.index + 1);
+    this.entries.push({ url: nextUrl, state });
+    this.index = this.entries.length - 1;
+    this.target.location.setUrl(nextUrl);
+  }
+  replaceState(state, _unused, url) {
+    const nextUrl = this.resolveUrl(url);
+    this.entries[this.index] = { url: nextUrl, state };
+    this.target.location.setUrl(nextUrl);
+  }
+  back() {
+    this.go(-1);
+  }
+  forward() {
+    this.go(1);
+  }
+  go(delta = 0) {
+    if (!Number.isInteger(delta) || delta === 0) {
+      return;
+    }
+    const nextIndex = this.index + delta;
+    if (nextIndex < 0 || nextIndex >= this.entries.length) {
+      return;
+    }
+    this.index = nextIndex;
+    const entry = this.entries[this.index];
+    this.target.location.setUrl(entry.url);
+    this.target.dispatchEvent(new PopStateEvent("popstate", { state: entry.state }));
+  }
+  reset() {
+    this.entries = [{ url: new URL(this.initialUrl.href), state: null }];
+    this.index = 0;
+    this.target.location.setUrl(this.initialUrl);
+  }
+  resolveUrl(url) {
+    if (url === null || typeof url === "undefined") {
+      return new URL(this.target.location.href);
+    }
+    const resolved = new URL(url, this.target.location.href);
+    if (resolved.origin !== this.target.location.origin) {
+      throw new DOMException("History state URL must keep the current origin", "SecurityError");
+    }
+    return resolved;
+  }
+};
+function createRuntimeContext(browserUrl) {
+  const document3 = new Document();
+  return {
+    document: document3,
+    browser: browserUrl === null ? null : new BrowserWindow(document3, browserUrl),
+    stores: /* @__PURE__ */ new Map()
+  };
+}
+function runRuntimeContext(browserUrl, callback) {
+  return runtimeContext.run(createRuntimeContext(browserUrl), callback);
+}
+function getActiveDocument(fallback) {
+  return runtimeContext.getStore()?.document ?? fallback;
+}
+function getRuntimeStorage(storeKey) {
+  const context = runtimeContext.getStore();
+  if (!context) {
+    return null;
+  }
+  let store = context.stores.get(storeKey);
+  if (!store) {
+    store = {};
+    context.stores.set(storeKey, store);
+  }
+  return store;
+}
+function isRuntimeContextActive() {
+  return Boolean(runtimeContext.getStore());
+}
+var NodeRuntime = class {
+  static run(callback) {
+    return runRuntimeContext(null, callback);
+  }
+  static runBrowser(options, callback) {
+    return runRuntimeContext(new URL(options.url), callback);
+  }
+  static resetHistory() {
+    const browser = runtimeContext.getStore()?.browser;
+    if (browser === null || typeof browser === "undefined") {
+      throw new Error("NodeRuntime.resetHistory() requires an active NodeRuntime.runBrowser() context");
+    }
+    browser.history.reset();
+  }
+};
+
+// lib/node/utils/server-storage.ts
+var ServerStorage = class {
+  storeKey = /* @__PURE__ */ Symbol("server-storage");
+  globalStore = {};
+  isContextActive() {
+    return isRuntimeContextActive();
+  }
+  get store() {
+    return getRuntimeStorage(this.storeKey) ?? this.globalStore;
+  }
+  get length() {
+    return Object.keys(this.store).length;
   }
   clear() {
     const store = this.store;
-    if (store) {
-      for (const key in store) {
-        Reflect.deleteProperty(store, key);
-      }
+    for (const key in store) {
+      Reflect.deleteProperty(store, key);
     }
   }
   getItem(key) {
     const store = this.store;
-    return store ? key in store ? store[key] : null : null;
+    return key in store ? store[key] : null;
   }
   key(index) {
-    const store = this.store;
-    return store ? Object.keys(store)[index] || null : null;
+    return Object.keys(this.store)[index] ?? null;
   }
   removeItem(key) {
-    const store = this.store;
-    if (store) {
-      Reflect.deleteProperty(store, key);
-    }
+    Reflect.deleteProperty(this.store, key);
   }
   setItem(key, value) {
-    const store = this.store;
-    if (store) {
-      store[key] = String(value);
-    }
+    this.store[key] = String(value);
   }
+  /**
+   * @deprecated Use `NodeRuntime.run()` instead. This method may be removed in v10.
+   */
   static run(callback) {
-    return storageContext.run({}, callback);
+    return NodeRuntime.run(callback);
   }
   static isContextActive() {
-    return Boolean(storageContext.getStore());
+    return isRuntimeContextActive();
   }
   toJSON() {
-    const store = this.store;
-    return store ? { ...store } : {};
+    return { ...this.store };
   }
 };
 
 // lib/node/index.ts
+var document2 = new Proxy(document, {
+  get(_target, property) {
+    const activeDocument = getActiveDocument(document);
+    const value = Reflect.get(activeDocument, property, activeDocument);
+    if (property === "documentElement" && value instanceof Element) {
+      if (value.parentNode !== document2) {
+        value.parentNode = document2;
+      }
+      return value;
+    }
+    return typeof value === "function" ? value.bind(activeDocument) : value;
+  },
+  set(_target, property, value) {
+    return Reflect.set(getActiveDocument(document), property, value);
+  }
+});
+installRuntimeGlobals(document2);
 global.FormData = FormData;
-global.document = document;
 global.Event = Event;
+global.MouseEvent = MouseEvent;
+global.SubmitEvent = SubmitEvent;
+global.PopStateEvent = PopStateEvent;
 global.sessionStorage = new ServerStorage();
 global.localStorage = new ServerStorage();
 function render(...args) {
   const Component = () => args;
-  const result = mount("div", Component);
+  const result = mount(document2.createElement("div"), Component);
   unmount();
   return result;
 }
 export {
+  Document,
+  DocumentFragment,
+  Element,
   Event,
+  HTMLFormElement,
+  MouseEvent,
+  Node,
+  NodeRuntime,
+  PopStateEvent,
   ServerStorage,
-  document,
+  SubmitEvent,
+  document2 as document,
   domToHtml,
   domToHyperscript,
   htmlToDom,

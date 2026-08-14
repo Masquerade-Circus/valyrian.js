@@ -44,7 +44,7 @@ Recipes may compress these labels when the page is short, but the task, files, v
 
 * File: [./9.3-express-fastify-ssr.md](./9.3-express-fastify-ssr.md)
 * End-to-end SSR recipe with request-scoped isolation and hydration continuity.
-* Observable result: each HTTP request receives route HTML produced inside its own `ServerStorage.run(...)` boundary and hydrates with the serialized response state.
+* Observable result: each HTTP request receives route HTML produced inside its own `NodeRuntime.run(...)` boundary and hydrates with the serialized response state.
 
 ## 9.4. API Client Composition
 

@@ -4,6 +4,12 @@ import { describe, expect, test as it } from "bun:test";
 import { mount, preventUpdate, update, v } from "valyrian.js";
 import { FormStore, formSchemaShield } from "../lib/forms";
 import { Money, formatMoney, parseMoneyInput } from "valyrian.js/money";
+import {
+  HTMLFormElement,
+  NodeRuntime,
+  SubmitEvent as NodeSubmitEvent,
+  document as nodeDocument
+} from "valyrian.js/node";
 import { wait } from "./utils/helpers";
 
 describe("Forms", () => {
@@ -550,6 +556,54 @@ describe("Forms", () => {
     shouldThrow = false;
     await form.submit();
     expect(form.hasSubmitError).toBeFalse();
+  });
+
+  it("requestSubmit dispatches a cancelable bubbling SubmitEvent with its submitter", () => {
+    NodeRuntime.run(() => {
+      const parent = nodeDocument.createElement("section");
+      const form = nodeDocument.createElement("form");
+      const submitter = nodeDocument.createElement("button");
+      const seen: Array<{ currentTarget: unknown; event: NodeSubmitEvent }> = [];
+
+      submitter.setAttribute("type", "submit");
+      form.appendChild(submitter);
+      parent.appendChild(form);
+      form.addEventListener("submit", (event) => {
+        seen.push({ currentTarget: event.currentTarget, event: event as NodeSubmitEvent });
+        event.preventDefault();
+      });
+      parent.addEventListener("submit", (event) => {
+        seen.push({ currentTarget: event.currentTarget, event: event as NodeSubmitEvent });
+      });
+
+      expect(form).toBeInstanceOf(HTMLFormElement);
+      form.requestSubmit(submitter);
+
+      expect(seen.length).toEqual(2);
+      expect(seen[0].currentTarget).toBe(form);
+      expect(seen[1].currentTarget).toBe(parent);
+      expect(seen[0].event).toBeInstanceOf(NodeSubmitEvent);
+      expect(seen[0].event.target).toBe(form);
+      expect(seen[0].event.submitter).toBe(submitter);
+      expect(seen[0].event.bubbles).toBeTrue();
+      expect(seen[0].event.cancelable).toBeTrue();
+      expect(seen[0].event.defaultPrevented).toBeTrue();
+    });
+  });
+
+  it("requestSubmit uses a null submitter when no control is supplied", () => {
+    NodeRuntime.run(() => {
+      const form = nodeDocument.createElement("form");
+      const submitEvents: NodeSubmitEvent[] = [];
+
+      form.addEventListener("submit", (event) => {
+        submitEvents.push(event as NodeSubmitEvent);
+      });
+      form.requestSubmit();
+
+      expect(submitEvents[0]).toBeInstanceOf(NodeSubmitEvent);
+      expect(submitEvents[0]?.submitter).toBeNull();
+    });
   });
 
   it("should set isInflight during submit", async () => {

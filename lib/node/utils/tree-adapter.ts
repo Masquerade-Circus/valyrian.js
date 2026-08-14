@@ -4,18 +4,11 @@ import { isString } from "../../utils";
 
 interface ChildNodes extends Array<Node | Element | Text | DocumentFragment> {}
 
-declare global {
-  interface Node {
-    dispatchEvent(event: Event): boolean;
-  }
-}
+type EventPath = globalThis.EventTarget[] & [(globalThis.EventTarget | undefined)?];
 
-interface NodeWithDispatch extends Node {
-  dispatchEvent(event: Event): boolean;
-  _dispatchEvent(event: Event): boolean;
-}
+export class Event implements globalThis.Event {
+  private propagationPath: unknown[] = [];
 
-export class Event {
   constructor(
     public type: string,
     public options: EventInit = {}
@@ -24,20 +17,43 @@ export class Event {
     this.cancelable = options.cancelable ?? false;
   }
   bubbles: boolean = false;
+  readonly NONE: 0 = 0;
+  readonly CAPTURING_PHASE: 1 = 1;
+  readonly AT_TARGET: 2 = 2;
+  readonly BUBBLING_PHASE: 3 = 3;
+  cancelBubble = false;
   cancelable: boolean = false;
+  composed = false;
   defaultPrevented: boolean = false;
+  eventPhase = 0;
+  isTrusted = false;
   propagationStopped: boolean = false;
+  returnValue = true;
+  srcElement: globalThis.EventTarget | null = null;
   target: any = null;
   currentTarget: any = null;
+  timeStamp = Date.now();
+
+  composedPath(): EventPath {
+    return [...this.propagationPath] as unknown as EventPath;
+  }
+
+  initEvent(type: string, bubbles = false, cancelable = false): void {
+    this.type = type;
+    this.bubbles = bubbles;
+    this.cancelable = cancelable;
+  }
 
   preventDefault() {
     if (this.cancelable) {
       this.defaultPrevented = true;
+      this.returnValue = false;
     }
   }
 
   stopPropagation() {
     this.propagationStopped = true;
+    this.cancelBubble = true;
   }
 
   stopImmediatePropagation() {
@@ -45,21 +61,65 @@ export class Event {
   }
 }
 
-export class Node implements NodeWithDispatch {
+export class MouseEvent extends Event {
+  button: number;
+  buttons: number;
+  ctrlKey: boolean;
+  metaKey: boolean;
+  shiftKey: boolean;
+  altKey: boolean;
+
+  constructor(type: string, options: MouseEventInit = {}) {
+    super(type, options);
+    this.button = options.button ?? 0;
+    this.buttons = options.buttons ?? 0;
+    this.ctrlKey = options.ctrlKey ?? false;
+    this.metaKey = options.metaKey ?? false;
+    this.shiftKey = options.shiftKey ?? false;
+    this.altKey = options.altKey ?? false;
+  }
+}
+
+export class SubmitEvent extends Event {
+  submitter: Element | null;
+
+  constructor(type: string, options: SubmitEventInit = {}) {
+    super(type, options);
+    this.submitter = (options.submitter as Element | null | undefined) ?? null;
+  }
+}
+
+export class PopStateEvent extends Event {
+  state: unknown;
+
+  constructor(type: string, options: PopStateEventInit = {}) {
+    super(type, options);
+    this.state = options.state ?? null;
+  }
+}
+
+type LocalEventListener<TEvent extends Event = Event> =
+  | ((event: TEvent) => unknown)
+  | { handleEvent(event: TEvent): void };
+
+export class Node {
   // eslint-disable-next-line no-use-before-define
   childNodes: ChildNodes = [];
   baseURI: string = "";
 
   tag_name!: string;
-  dispatchEvent(event: Event): boolean {
+  dispatchEvent(event: Event | globalThis.Event): boolean {
     if (!(event instanceof Event)) {
       return true;
     }
 
+    const eventState = event as unknown as { propagationPath: unknown[] };
     if (!event.target) {
       event.target = this;
+      eventState.propagationPath = [];
     }
     event.currentTarget = this;
+    eventState.propagationPath.push(this);
 
     if (this instanceof Element) {
       const listeners = (this as unknown as { _listeners: Map<string, Set<Function>> })._listeners?.get(event.type);
@@ -78,12 +138,12 @@ export class Node implements NodeWithDispatch {
     return !event.defaultPrevented;
   }
 
-  _dispatchEvent(event: Event): boolean {
+  _dispatchEvent(event: Event | globalThis.Event): boolean {
     return this.dispatchEvent(event);
   }
 
   get nodeName(): string {
-    return this.tag_name.toLowerCase();
+    return this.tag_name;
   }
   set nodeName(name: string) {
     this.tag_name = name;
@@ -241,7 +301,7 @@ export class Node implements NodeWithDispatch {
   setAttribute(name: string, value: any) {
     const attr = {
       nodeName: name,
-      nodeValue: value
+      nodeValue: String(value)
     };
     let idx = -1;
     for (let i = 0, l = this.attributes.length; i < l; i++) {
@@ -253,12 +313,22 @@ export class Node implements NodeWithDispatch {
     idx === -1 ? this.attributes.push(attr as Attr) : this.attributes.splice(idx, 1, attr as Attr);
   }
 
-  getAttribute(name: string) {
+  getAttribute(name: string): string | null {
     for (let i = 0, l = this.attributes.length; i < l; i++) {
       if (this.attributes[i].nodeName === name) {
-        return this.attributes[i].nodeValue;
+        return String(this.attributes[i].nodeValue);
       }
     }
+    return null;
+  }
+
+  hasAttribute(name: string): boolean {
+    for (let index = 0; index < this.attributes.length; index++) {
+      if (this.attributes[index].nodeName === name) {
+        return true;
+      }
+    }
+    return false;
   }
 
   removeAttribute(name: string) {
@@ -272,23 +342,6 @@ export class Node implements NodeWithDispatch {
     if (idx > -1) {
       this.attributes.splice(idx, 1);
     }
-  }
-
-  getElementById(id: string): Node | null {
-    let elementFound;
-    for (let i = 0, l = this.childNodes.length; i < l; i++) {
-      if (this.childNodes[i].nodeType === 1) {
-        if (this.childNodes[i].getAttribute("id") === id) {
-          elementFound = this.childNodes[i];
-          break;
-        }
-        elementFound = this.childNodes[i].getElementById(id);
-        if (elementFound) {
-          break;
-        }
-      }
-    }
-    return elementFound || null;
   }
 
   // Not implemented
@@ -348,10 +401,8 @@ export class Node implements NodeWithDispatch {
   // PROCESSING_INSTRUCTION_NODE!: number;
   // TEXT_NODE!: number;
   addEventListener(
-    // eslint-disable-next-line no-unused-vars
     type: string,
-    // eslint-disable-next-line no-unused-vars
-    callback: EventListenerOrEventListenerObject | null,
+    callback: LocalEventListener<any> | null,
     // eslint-disable-next-line no-unused-vars
     options?: boolean | AddEventListenerOptions | undefined
   ): void {
@@ -361,10 +412,8 @@ export class Node implements NodeWithDispatch {
   //   throw new Error("Method not implemented.");
   // }
   removeEventListener(
-    // eslint-disable-next-line no-unused-vars
     type: string,
-    // eslint-disable-next-line no-unused-vars
-    callback: EventListenerOrEventListenerObject | null,
+    callback: LocalEventListener | null,
     // eslint-disable-next-line no-unused-vars
     options?: boolean | EventListenerOptions | undefined
   ): void {
@@ -398,6 +447,7 @@ function updateElementStyles(element: Element, state: Record<string, any>) {
 
 export class Element extends Node {
   #listeners: Map<string, Set<Function>> = new Map();
+  #objectListeners = new WeakMap<object, Function>();
   protected get _listeners() {
     return this.#listeners;
   }
@@ -442,36 +492,59 @@ export class Element extends Node {
   }
 
   addEventListener(
+    type: "click",
+    callback: LocalEventListener<MouseEvent> | null,
+    options?: boolean | AddEventListenerOptions
+  ): void;
+  addEventListener(
+    type: "submit",
+    callback: LocalEventListener<SubmitEvent> | null,
+    options?: boolean | AddEventListenerOptions
+  ): void;
+  addEventListener(
     type: string,
-    callback: EventListenerOrEventListenerObject | null,
+    callback: LocalEventListener | null,
+    options?: boolean | AddEventListenerOptions
+  ): void;
+  addEventListener(
+    type: string,
+    callback: LocalEventListener<any> | null,
     _options?: boolean | AddEventListenerOptions | undefined
   ): void {
     if (!callback) return;
-    const handler =
-      typeof callback === "function" ? callback : (callback as EventListenerObject).handleEvent?.bind(callback);
+    let handler: Function | undefined;
+    if (typeof callback === "function") {
+      handler = callback;
+    } else {
+      handler = this.#objectListeners.get(callback);
+      if (!handler) {
+        handler = (event: Event) => callback.handleEvent(event);
+        this.#objectListeners.set(callback, handler);
+      }
+    }
     if (!handler) return;
 
-    if (!this.#listeners.has(type)) {
-      this.#listeners.set(type, new Set());
+    let listeners = this.#listeners.get(type);
+    if (!listeners) {
+      listeners = new Set();
+      this.#listeners.set(type, listeners);
     }
-    this.#listeners.get(type)!.add(handler);
+    listeners.add(handler);
   }
 
   removeEventListener(
     type: string,
-    callback: EventListenerOrEventListenerObject | null,
+    callback: LocalEventListener | null,
     _options?: boolean | EventListenerOptions | undefined
   ): void {
     if (!callback) return;
-    const handler =
-      typeof callback === "function" ? callback : (callback as EventListenerObject).handleEvent?.bind(callback);
+    const handler = typeof callback === "function" ? callback : this.#objectListeners.get(callback);
     if (!handler) return;
 
-    this.#listeners.get(type)?.delete(handler);
-  }
-
-  _dispatchEvent(event: Event): boolean {
-    return (this as unknown as { dispatchEvent(event: Event): boolean }).dispatchEvent(event);
+    const listeners = this.#listeners.get(type);
+    if (listeners?.delete(handler) && listeners.size === 0) {
+      this.#listeners.delete(type);
+    }
   }
 
   _style = new Proxy(
@@ -594,6 +667,9 @@ export class Element extends Node {
 
   set innerHTML(html) {
     this.textContent = "";
+    if (html.length === 0) {
+      return;
+    }
     const result = htmlToDom(html);
     if (result instanceof DocumentFragment) {
       const children = Array.from(result.childNodes);
@@ -607,6 +683,34 @@ export class Element extends Node {
 
   get outerHTML(): string {
     return domToHtml(this);
+  }
+
+  querySelector(selector: string): Element | null {
+    return querySelectorWithin(this, selector, 1)[0] ?? null;
+  }
+
+  querySelectorAll(selector: string): Element[] {
+    return querySelectorWithin(this, selector);
+  }
+
+  click(): void {
+    const tag = this.nodeName.toLowerCase();
+    if ((tag === "button" || tag === "input") && this.hasAttribute("disabled")) {
+      return;
+    }
+    this.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, button: 0 }));
+  }
+}
+
+export class HTMLFormElement extends Element {
+  requestSubmit(submitter: Element | null = null): void {
+    this.dispatchEvent(
+      new SubmitEvent("submit", {
+        bubbles: true,
+        cancelable: true,
+        submitter: submitter as unknown as HTMLElement | null
+      })
+    );
   }
 }
 
@@ -623,17 +727,44 @@ export class Document extends Element {
     super();
     this.nodeType = 9;
     this.nodeName = "#document";
+    this.documentElement = this.createElement("html");
+    this.head = this.createElement("head");
     this.body = this.createElement("body");
+    this.documentElement.appendChild(this.head);
+    this.documentElement.appendChild(this.body);
+    this.appendChild(this.documentElement);
   }
 
+  documentElement: Element;
+  head: Element;
   body: Element;
+  location?: Location;
+
+  getElementById(id: string): Element | null {
+    const stack = Array.from(this.childNodes).reverse();
+    while (stack.length > 0) {
+      const node = stack.pop() as Node;
+      if (!(node instanceof Element)) {
+        continue;
+      }
+      if (node.getAttribute("id") === id) {
+        return node;
+      }
+      for (let index = node.childNodes.length - 1; index >= 0; index--) {
+        stack.push(node.childNodes[index]);
+      }
+    }
+    return null;
+  }
 
   createDocumentFragment(): DocumentFragment {
     return new DocumentFragment();
   }
 
-  createElement(type: string) {
-    const element = new Element();
+  createElement(type: "form"): HTMLFormElement;
+  createElement(type: string): Element;
+  createElement(type: string): Element {
+    const element = type.toLowerCase() === "form" ? new HTMLFormElement() : new Element();
     element.nodeName = type.toUpperCase();
     return element;
   }
@@ -647,6 +778,93 @@ export class Document extends Element {
   createTextNode(text: any) {
     return new Text(text);
   }
+}
+
+type SimpleSelector = {
+  tag: string | null;
+  id: string | null;
+  className: string | null;
+  attribute: string | null;
+  attributeValue: string | null;
+};
+
+function parseSimpleSelector(selector: string): SimpleSelector {
+  const match = selector.match(
+    /^(?:([A-Za-z][A-Za-z0-9-]*))?(?:(#[A-Za-z_][A-Za-z0-9_-]*)|(\.[A-Za-z_][A-Za-z0-9_-]*)|\[([A-Za-z_][A-Za-z0-9_-]*)(?:="([^"]*)")?\])?$/
+  );
+  if (!match || (!match[1] && !match[2] && !match[3] && !match[4])) {
+    throw new SyntaxError(`Unsupported selector: ${selector}`);
+  }
+  return {
+    tag: match[1]?.toLowerCase() ?? null,
+    id: match[2]?.slice(1) ?? null,
+    className: match[3]?.slice(1) ?? null,
+    attribute: match[4] ?? null,
+    attributeValue: typeof match[5] === "string" ? match[5] : null
+  };
+}
+
+function parseSelector(selector: string): SimpleSelector[] {
+  if (selector.trim() !== selector || selector.length === 0 || /\s{2,}/.test(selector)) {
+    throw new SyntaxError(`Unsupported selector: ${selector}`);
+  }
+  return selector.split(" ").map(parseSimpleSelector);
+}
+
+function matchesSimpleSelector(element: Element, selector: SimpleSelector): boolean {
+  if (selector.tag && element.nodeName.toLowerCase() !== selector.tag) {
+    return false;
+  }
+  if (selector.id && element.id !== selector.id) {
+    return false;
+  }
+  if (selector.className && !element.className.split(/\s+/).includes(selector.className)) {
+    return false;
+  }
+  if (selector.attribute) {
+    const attributeValue = element.getAttribute(selector.attribute);
+    if (attributeValue === null) {
+      return false;
+    }
+    if (selector.attributeValue !== null) {
+      return attributeValue === selector.attributeValue;
+    }
+  }
+  return true;
+}
+
+function querySelectorWithin(root: Node, selector: string, limit = Number.POSITIVE_INFINITY): Element[] {
+  const parts = parseSelector(selector);
+  const targetSelector = parts[parts.length - 1];
+  const matches: Element[] = [];
+  const stack = Array.from(root.childNodes).reverse();
+
+  while (stack.length > 0) {
+    const node = stack.pop() as Node;
+    if (!(node instanceof Element)) {
+      continue;
+    }
+    if (matchesSimpleSelector(node, targetSelector)) {
+      let ancestor = node.parentElement;
+      let partIndex = parts.length - 2;
+      while (partIndex >= 0 && ancestor) {
+        if (matchesSimpleSelector(ancestor, parts[partIndex])) {
+          partIndex--;
+        }
+        ancestor = ancestor.parentElement;
+      }
+      if (partIndex < 0) {
+        matches.push(node);
+        if (matches.length === limit) {
+          return matches;
+        }
+      }
+    }
+    for (let index = node.childNodes.length - 1; index >= 0; index--) {
+      stack.push(node.childNodes[index]);
+    }
+  }
+  return matches;
 }
 
 const ESCAPE_LOOKUP: { [key: string]: string } = {
@@ -739,7 +957,7 @@ export function domToHyperscript(childNodes: ChildNodes, depth = 1) {
       } else if (item.nodeType === 3) {
         return `\n${spaces}"${item.nodeValue}"`;
       } else {
-        let str = `\n${spaces}v("${item.nodeName}", `;
+        let str = `\n${spaces}v("${item.nodeName.toLowerCase()}", `;
 
         if (item.attributes) {
           const attrs: Record<string, any> = {};
@@ -1063,7 +1281,3 @@ export function htmlToHyperscript(html: string) {
 }
 
 export const document = new Document();
-
-const html = document.createElement("html");
-html.appendChild(document.createElement("head"));
-html.appendChild(document.body);

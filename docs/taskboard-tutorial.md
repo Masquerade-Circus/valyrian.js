@@ -353,7 +353,7 @@ Next step: render the routed application for each server request.
 
 Starting state: Stage 5 has shared state, routes, async initial data and a local validated form.
 
-Applied change: create a Node.js server that opens a fresh application for each request, loads initial tasks, resolves `request.url` through `router.go()` and renders a full TSX document inside `ServerStorage.run()`.
+Applied change: create a Node.js server that opens a fresh application for each request, loads initial tasks, resolves `request.url` through `router.go()` and renders a full TSX document inside `NodeRuntime.run()`.
 
 Files changed:
 

@@ -7,16 +7,24 @@ import {
   htmlToDom,
   domToHtml,
   ServerStorage,
-  document as nodeDocument
+  document as nodeDocument,
+  MouseEvent as NodeMouseEvent,
+  NodeRuntime
 } from "valyrian.js/node";
-import type { InlineOptions } from "valyrian.js/node";
+import type {
+  Document,
+  DocumentFragment,
+  Element as NodeElement,
+  InlineOptions,
+  Node as NodeType
+} from "valyrian.js/node";
 import { SwRuntimeManager } from "valyrian.js/sw";
 
 import { expect, describe, test as it } from "bun:test";
 import fs from "fs";
 import path from "path";
 import packageJson from "../package.json";
-import { trust, v } from "valyrian.js";
+import { mount, trust, v } from "valyrian.js";
 
 describe("Node test", () => {
   it("Get hyperscript string from html", () => {
@@ -686,6 +694,219 @@ span.hello{display: inline-block}
     }
     expect(jsxDevRuntimeTypes).toContain("export declare function jsxDEV(");
   }, 20000);
+});
+
+describe("Node browser DOM runtime", () => {
+  it("exports the public DOM types and connects one coherent document tree", () => {
+    NodeRuntime.run(() => {
+      const typedDocument: Document = nodeDocument;
+      const typedNode: NodeType = typedDocument.documentElement;
+      const typedElement: NodeElement = typedDocument.body;
+      const typedFragment: DocumentFragment = typedDocument.createDocumentFragment();
+
+      expect(typedDocument.nodeType).toEqual(9);
+      expect(typedDocument.documentElement.nodeName).toEqual("HTML");
+      expect(typedDocument.documentElement.parentNode).toBe(typedDocument);
+      expect(typedDocument.head.parentNode).toBe(typedDocument.documentElement);
+      expect(typedDocument.body.parentNode).toBe(typedDocument.documentElement);
+      expect(typedDocument.documentElement.childNodes).toEqual([typedDocument.head, typedDocument.body]);
+      expect(typedNode).toBe(typedDocument.documentElement);
+      expect(typedElement).toBe(typedDocument.body);
+      expect(typedFragment.nodeType).toEqual(11);
+    });
+  });
+
+  it("keeps getElementById on Document and searches the connected body", () => {
+    NodeRuntime.run(() => {
+      nodeDocument.body.innerHTML = '<main><section id="account"><span id="label">Account</span></section></main>';
+      const detached = nodeDocument.createElement("div");
+      detached.id = "detached";
+
+      expect(nodeDocument.getElementById("account")?.nodeName).toEqual("SECTION");
+      expect(nodeDocument.getElementById("label")?.textContent).toEqual("Account");
+      expect(nodeDocument.getElementById("missing")).toBeNull();
+      expect(nodeDocument.getElementById("detached")).toBeNull();
+      expect("getElementById" in nodeDocument.body).toBeFalse();
+    });
+  });
+
+  it("scopes the supported selectors to Document, DocumentFragment and Element in document order", () => {
+    NodeRuntime.run(() => {
+      nodeDocument.body.innerHTML = [
+        '<h1 id="login-title">Login</h1>',
+        '<form id="login-form">',
+        '  <div><input class="field primary" name="email" data-floating role="alert"/></div>',
+        '  <button class="login-submit" type="submit">Send</button>',
+        "</form>",
+        '<button class="login-submit" type="button">Outside</button>'
+      ].join("");
+
+      const form = nodeDocument.querySelector("form")!;
+      const input = form.querySelector('input[name="email"]');
+      const descendantButtons = nodeDocument.querySelectorAll('form button[type="submit"]');
+
+      expect(nodeDocument.querySelector("#login-title")?.textContent).toEqual("Login");
+      expect(nodeDocument.querySelector(".field")).toBe(input);
+      expect(nodeDocument.querySelector("[data-floating]")).toBe(input);
+      expect(nodeDocument.querySelector('[name="email"]')).toBe(input);
+      expect(nodeDocument.querySelector('[role="alert"]')).toBe(input);
+      expect(descendantButtons.length).toEqual(1);
+      expect(descendantButtons[0].textContent).toEqual("Send");
+      expect(form.querySelectorAll('button[type="submit"]')[0]).toBe(descendantButtons[0]);
+      expect(Array.from(nodeDocument.querySelectorAll(".login-submit"), (element) => element.textContent)).toEqual([
+        "Send",
+        "Outside"
+      ]);
+      expect(form.querySelector("#login-title")).toBeNull();
+
+      const fragment = nodeDocument.createDocumentFragment();
+      const fragmentButton = nodeDocument.createElement("button");
+      fragmentButton.className = "fragment-action";
+      fragment.appendChild(fragmentButton);
+      expect(fragment.querySelector(".fragment-action")).toBe(fragmentButton);
+      expect(fragment.querySelectorAll("input").length).toEqual(0);
+    });
+  });
+
+  it("rejects selectors outside the supported grammar", () => {
+    NodeRuntime.run(() => {
+      const invalidSelectors = ["", "form > button", "input, button", "button:first-child", "[name=email]"];
+
+      for (const selector of invalidSelectors) {
+        expect(() => nodeDocument.querySelector(selector), selector).toThrow(SyntaxError);
+        expect(() => nodeDocument.querySelectorAll(selector), selector).toThrow(SyntaxError);
+      }
+    });
+  });
+
+  it("normalizes attributes to strings and reports missing attributes as null", () => {
+    NodeRuntime.run(() => {
+      const input = nodeDocument.createElement("input");
+
+      expect(input.getAttribute("name")).toBeNull();
+      expect(input.hasAttribute("name")).toBeFalse();
+
+      input.setAttribute("name", "email");
+      input.setAttribute("tabindex", 0);
+      input.setAttribute("required", true);
+
+      expect(input.getAttribute("name")).toEqual("email");
+      expect(input.getAttribute("tabindex")).toEqual("0");
+      expect(input.getAttribute("required")).toEqual("true");
+      expect(input.hasAttribute("required")).toBeTrue();
+
+      input.removeAttribute("required");
+      expect(input.hasAttribute("required")).toBeFalse();
+      expect(input.getAttribute("required")).toBeNull();
+    });
+  });
+
+  it("exposes MouseEvent button state and keyboard modifiers", () => {
+    const event = new NodeMouseEvent("click", {
+      bubbles: true,
+      cancelable: true,
+      button: 2,
+      buttons: 4,
+      ctrlKey: true,
+      metaKey: true,
+      shiftKey: true,
+      altKey: true
+    });
+    const defaults = new NodeMouseEvent("click");
+
+    expect(event).toBeInstanceOf(Event);
+    expect(event.bubbles).toBeTrue();
+    expect(event.cancelable).toBeTrue();
+    expect(event.button).toEqual(2);
+    expect(event.buttons).toEqual(4);
+    expect(event.ctrlKey).toBeTrue();
+    expect(event.metaKey).toBeTrue();
+    expect(event.shiftKey).toBeTrue();
+    expect(event.altKey).toBeTrue();
+    expect(defaults.button).toEqual(0);
+    expect(defaults.buttons).toEqual(0);
+    expect(defaults.ctrlKey).toBeFalse();
+    expect(defaults.metaKey).toBeFalse();
+    expect(defaults.shiftKey).toBeFalse();
+    expect(defaults.altKey).toBeFalse();
+  });
+
+  it("removes an object listener using its original identity", () => {
+    NodeRuntime.run(() => {
+      const element = nodeDocument.createElement("button");
+      let calls = 0;
+      const listener = {
+        handleEvent() {
+          calls += 1;
+        }
+      };
+
+      element.addEventListener("click", listener);
+      element.dispatchEvent(new Event("click"));
+      element.removeEventListener("click", listener);
+      element.dispatchEvent(new Event("click"));
+
+      expect(calls).toEqual(1);
+    });
+  });
+
+  it("dispatches a bubbling cancelable primary click and suppresses disabled controls", () => {
+    NodeRuntime.run(() => {
+      const parent = nodeDocument.createElement("div");
+      const button = nodeDocument.createElement("button");
+      const input = nodeDocument.createElement("input");
+      const anchor = nodeDocument.createElement("a");
+      const seen: Array<{ currentTarget: NodeType; event: NodeMouseEvent }> = [];
+
+      parent.appendChild(button);
+      parent.appendChild(input);
+      parent.appendChild(anchor);
+      button.addEventListener("click", (event) => seen.push({ currentTarget: event.currentTarget, event }));
+      parent.addEventListener("click", (event) => seen.push({ currentTarget: event.currentTarget, event }));
+      input.addEventListener("click", (event) => seen.push({ currentTarget: event.currentTarget, event }));
+      anchor.addEventListener("click", (event) => seen.push({ currentTarget: event.currentTarget, event }));
+
+      button.click();
+      expect(seen.length).toEqual(2);
+      expect(seen[0].currentTarget).toBe(button);
+      expect(seen[1].currentTarget).toBe(parent);
+      expect(seen[0].event).toBeInstanceOf(NodeMouseEvent);
+      expect(seen[0].event.target).toBe(button);
+      expect(seen[0].event.button).toEqual(0);
+      expect(seen[0].event.bubbles).toBeTrue();
+      expect(seen[0].event.cancelable).toBeTrue();
+
+      button.setAttribute("disabled", true);
+      input.setAttribute("disabled", true);
+      button.click();
+      input.click();
+      expect(seen.length).toEqual(2);
+
+      anchor.setAttribute("disabled", true);
+      anchor.click();
+      expect(seen.length).toEqual(4);
+    });
+  });
+
+  it("mounts body components into the active document and keeps render output wrapper-free", () => {
+    NodeRuntime.run(() => {
+      expect(render(<main id="rendered">Rendered</main>)).toEqual('<main id="rendered">Rendered</main>');
+      expect(nodeDocument.body.innerHTML).toEqual("");
+
+      const mounted = mount("body", () => <main id="mounted">Mounted</main>);
+      expect(mounted).toEqual('<main id="mounted">Mounted</main>');
+      expect(nodeDocument.body.innerHTML).toEqual('<main id="mounted">Mounted</main>');
+      expect(nodeDocument.getElementById("mounted")?.parentNode).toBe(nodeDocument.body);
+    });
+  });
+
+  it("keeps normal SSR imports free of browser navigation capabilities", () => {
+    NodeRuntime.run(() => {
+      expect(typeof window).toEqual("undefined");
+      expect(typeof location).toEqual("undefined");
+      expect(typeof history).toEqual("undefined");
+    });
+  });
 });
 
 describe("All lib files", () => {
