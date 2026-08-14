@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.2.0](https://github.com/Masquerade-Circus/valyrian/compare/9.1.15...9.2.0) (2026-08-14)
+
+### Features
+
+* **node:**  unify isolated runtime and browser testing under NodeRuntime ([8fd192a](https://github.com/Masquerade-Circus/valyrian/commit/8fd192a6eebc6a293abb9df7677b48f51a5c8fe5))
+
 ## [9.1.15](https://github.com/Masquerade-Circus/valyrian/compare/9.1.14...9.1.15) (2026-08-06)
 
 ### Documentation
