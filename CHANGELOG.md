@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.2.1](https://github.com/Masquerade-Circus/valyrian/compare/9.2.0...9.2.1) (2026-08-19)
+
+### Bug Fixes
+
+* Fix stale root updates and fix FormStore on error and on success access reactivity ([5767305](https://github.com/Masquerade-Circus/valyrian/commit/5767305d77a91eb2d56527cba1b4b1bb3005d2e7))
+
 ## [9.2.0](https://github.com/Masquerade-Circus/valyrian/compare/9.1.15...9.2.0) (2026-08-14)
 
 ### Features
