@@ -1,7 +1,7 @@
 import "valyrian.js/node";
 
 import { afterEach, beforeEach, describe, expect, test as it } from "bun:test";
-import { mount, onCreate, onUpdate, unmount, update, v } from "valyrian.js";
+import { debouncedUpdate, mount, onCreate, onUpdate, unmount, update, v } from "valyrian.js";
 
 function createDeferred<T>() {
   let resolve!: (value: T) => void;
@@ -51,6 +51,87 @@ describe("Async lifecycle: onCreate", () => {
     await waitForAsyncLifecycleToSettle();
 
     expect(host.innerHTML).toEqual("<div>ready</div>");
+  });
+
+  it("does not let a debounced update from an unmounted root rerender its replacement", async () => {
+    const host = document.createElement("div");
+    let replacementRenders = 0;
+
+    const Replacement = () => <div>B:{++replacementRenders}</div>;
+
+    expect(mount(host, () => <div>A</div>)).toEqual("<div>A</div>");
+    debouncedUpdate(5);
+    expect(unmount()).toEqual("");
+    expect(mount(host, Replacement)).toEqual("<div>B:1</div>");
+
+    await waitForAsyncLifecycleToSettle();
+
+    expect(replacementRenders).toBe(1);
+    expect(host.innerHTML).toEqual("<div>B:1</div>");
+  });
+
+  it("does not let late onCreate resolution rerender a replacement root and preserves cleanup", async () => {
+    const deferred = createDeferred<void>();
+    const host = document.createElement("div");
+    let cleanupHits = 0;
+    let replacementRenders = 0;
+
+    const RootA = () => {
+      onCreate(() => deferred.promise);
+      onCreate(() => () => {
+        cleanupHits++;
+      });
+
+      return <div>A</div>;
+    };
+    const RootB = () => <div>B:{++replacementRenders}</div>;
+
+    expect(mount(host, RootA)).toEqual("<div>A</div>");
+    expect(unmount()).toEqual("");
+    expect(cleanupHits).toBe(1);
+    expect(mount(host, RootB)).toEqual("<div>B:1</div>");
+
+    deferred.resolve();
+    await waitForAsyncLifecycleToSettle();
+
+    expect(cleanupHits).toBe(1);
+    expect(replacementRenders).toBe(1);
+    expect(host.innerHTML).toEqual("<div>B:1</div>");
+  });
+
+  it("reports late onCreate rejection without rerendering a replacement root", async () => {
+    const deferred = createDeferred<void>();
+    const error = new Error("late failure");
+    const host = document.createElement("div");
+    const originalConsoleError = console.error;
+    const reportedErrors: unknown[][] = [];
+    let replacementRenders = 0;
+
+    const RootA = () => {
+      onCreate(() => deferred.promise);
+
+      return <div>A</div>;
+    };
+    const RootB = () => <div>B:{++replacementRenders}</div>;
+
+    try {
+      console.error = ((...args: unknown[]) => {
+        reportedErrors.push(args);
+      }) as typeof console.error;
+
+      expect(mount(host, RootA)).toEqual("<div>A</div>");
+      expect(unmount()).toEqual("");
+      expect(mount(host, RootB)).toEqual("<div>B:1</div>");
+
+      deferred.reject(error);
+      await waitForAsyncLifecycleToSettle();
+
+      expect(reportedErrors).toContainEqual(["Error in onCreate:", error]);
+      expect(replacementRenders).toBe(1);
+      expect(host.innerHTML).toEqual("<div>B:1</div>");
+    } finally {
+      console.error = originalConsoleError;
+    }
   });
 
   it("does not register cleanup returned asynchronously from onCreate", async () => {

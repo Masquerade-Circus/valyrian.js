@@ -1,4 +1,4 @@
-import { current, directive, DomElement, setAttribute, VnodeWithDom } from "valyrian.js";
+import { directive, DomElement, setAttribute, VnodeWithDom } from "valyrian.js";
 import { createPulseStore } from "valyrian.js/pulses";
 import { hasLength, isString } from "valyrian.js/utils";
 import { SchemaShield, ValidationError, Validator } from "schema-shield";
@@ -104,7 +104,6 @@ export class FormStore<TState extends FormState> {
   private clean: FormTransformMap<TState>;
   private format: FormTransformMap<TState>;
   private pulseStore: FormPulseStore<TState>;
-  private metaState: Omit<FormInternalState<TState>, "values" | "isDirty">;
 
   static get schemaShield() {
     return formSchemaShield;
@@ -115,12 +114,6 @@ export class FormStore<TState extends FormState> {
     this.onSubmit = options.onSubmit || null;
     this.clean = options.clean || {};
     this.format = options.format || {};
-    this.metaState = {
-      validationErrors: {},
-      submitError: null,
-      success: false,
-      isInflight: false
-    };
 
     const getValidationErrors = (values: TState) => {
       const result = this.validator(values);
@@ -174,19 +167,19 @@ export class FormStore<TState extends FormState> {
   }
 
   get validationErrors() {
-    return this.metaState.validationErrors;
+    return this.pulseStore.state.validationErrors;
   }
 
   get submitError() {
-    return this.metaState.submitError;
+    return this.pulseStore.state.submitError;
   }
 
   get success() {
-    return this.metaState.success;
+    return this.pulseStore.state.success;
   }
 
   get isInflight() {
-    return this.metaState.isInflight;
+    return this.pulseStore.state.isInflight;
   }
 
   get isDirty() {
@@ -194,41 +187,11 @@ export class FormStore<TState extends FormState> {
   }
 
   get hasValidationErrors() {
-    return Object.keys(this.metaState.validationErrors || {}).length > 0;
+    return Object.keys(this.pulseStore.state.validationErrors).length > 0;
   }
 
   get hasSubmitError() {
-    return this.metaState.submitError !== null;
-  }
-
-  private isDelegatedSubmitEvent(event?: Event) {
-    return Boolean(current.event && (!event || current.event === event));
-  }
-
-  private setValidationErrors(validationErrors: Record<string, string>, event?: Event) {
-    this.metaState.validationErrors = validationErrors;
-
-    if (!this.isDelegatedSubmitEvent(event)) {
-      this.pulseStore.validate();
-    }
-
-    return Object.keys(validationErrors).length === 0;
-  }
-
-  private setInflight(inflight: boolean, event?: Event) {
-    this.metaState.isInflight = inflight;
-
-    if (!this.isDelegatedSubmitEvent(event)) {
-      this.pulseStore.setInflight(inflight);
-    }
-  }
-
-  private setSubmitError(error: unknown, event?: Event) {
-    this.metaState.submitError = error;
-
-    if (!this.isDelegatedSubmitEvent(event)) {
-      this.pulseStore.setSubmitError(error);
-    }
+    return this.pulseStore.state.submitError !== null;
   }
 
   formatValue(name: string, value: unknown) {
@@ -238,31 +201,20 @@ export class FormStore<TState extends FormState> {
   setField(name: string, rawValue: unknown) {
     const cleanedValue = name in this.clean ? this.clean[name]!(rawValue, this.state) : rawValue;
     this.pulseStore.setField(name, cleanedValue);
-    this.metaState.success = false;
   }
 
-  setSuccess(success: boolean, event?: Event) {
-    this.metaState.success = success;
-    if (!this.isDelegatedSubmitEvent(event)) {
-      this.pulseStore.setSuccess(success);
-    }
+  setSuccess(success: boolean) {
+    this.pulseStore.setSuccess(success);
   }
 
   validate() {
-    const result = this.validator(this.state);
-    return this.setValidationErrors(result.valid ? {} : mapValidationError(result.error));
+    return this.pulseStore.validate();
   }
 
   async submit(event?: Event) {
     event?.preventDefault();
 
-    const validationErrors = this.validator(this.state);
-    const isValid = this.setValidationErrors(
-      validationErrors.valid ? {} : mapValidationError(validationErrors.error),
-      event
-    );
-
-    if (!isValid) {
+    if (!this.pulseStore.validate()) {
       return false;
     }
 
@@ -270,30 +222,26 @@ export class FormStore<TState extends FormState> {
       return false;
     }
 
-    this.setInflight(true, event);
-    this.setSuccess(false, event);
-    this.setSubmitError(null, event);
+    this.pulseStore.setInflight(true);
+    this.pulseStore.setSuccess(false);
+    this.pulseStore.setSubmitError(null);
 
     try {
       if (this.onSubmit) {
         await this.onSubmit(this.state);
       }
-      this.setSuccess(true, event);
+      this.pulseStore.setSuccess(true);
       return true;
     } catch (error) {
-      this.setSubmitError(error, event);
+      this.pulseStore.setSubmitError(error);
       return false;
     } finally {
-      this.setInflight(false, event);
+      this.pulseStore.setInflight(false);
     }
   }
 
   reset() {
     this.pulseStore.reset();
-    this.metaState.validationErrors = {};
-    this.metaState.submitError = null;
-    this.metaState.success = false;
-    this.metaState.isInflight = false;
   }
 }
 

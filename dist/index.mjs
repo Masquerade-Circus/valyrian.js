@@ -180,6 +180,8 @@ var onCreate = (callback) => {
   if (!hasComponentAsOldChild) {
     parentVnode["oncreate" /* onCreate */] = parentVnode["oncreate" /* onCreate */] || /* @__PURE__ */ new Set();
     parentVnode["oncreate" /* onCreate */].add(() => {
+      const state = getRendererState();
+      const mainVnode = state.mainVnode;
       const cleanup = callback();
       if (typeof cleanup === "function") {
         registerCleanup(cleanup, parentVnode);
@@ -189,7 +191,9 @@ var onCreate = (callback) => {
         Promise.resolve(cleanup).then(() => void 0).catch((error) => {
           console.error("Error in onCreate:", error);
         }).finally(() => {
-          debouncedUpdate();
+          if (mainVnode !== null && state.mainVnode === mainVnode) {
+            debouncedUpdate();
+          }
         });
       }
     });
@@ -1043,13 +1047,23 @@ function update() {
   }
   return "";
 }
-var debouncedUpdateMethod = isNodeJs ? update : () => requestAnimationFrame(update);
 function debouncedUpdate(timeout = 42) {
   preventUpdate();
   const state = getRendererState();
+  const mainVnode = state.mainVnode;
   clearTimeout(state.debouncedUpdateTimeout);
   state.debouncedUpdateTimeout = setTimeout(() => {
-    debouncedUpdateMethod();
+    if (mainVnode !== null && state.mainVnode === mainVnode) {
+      if (isNodeJs) {
+        update();
+        return;
+      }
+      requestAnimationFrame(() => {
+        if (mainVnode !== null && state.mainVnode === mainVnode) {
+          update();
+        }
+      });
+    }
   }, timeout);
 }
 function removeEventListeners(state) {

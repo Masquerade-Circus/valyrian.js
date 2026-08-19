@@ -277,6 +277,8 @@ export const onCreate = (callback: OnCreateCallback) => {
   if (!hasComponentAsOldChild) {
     parentVnode[SetType.onCreate] = parentVnode[SetType.onCreate] || new Set();
     parentVnode[SetType.onCreate].add(() => {
+      const state = getRendererState();
+      const mainVnode = state.mainVnode;
       const cleanup = callback();
       if (typeof cleanup === "function") {
         registerCleanup(cleanup, parentVnode);
@@ -290,7 +292,9 @@ export const onCreate = (callback: OnCreateCallback) => {
             console.error("Error in onCreate:", error);
           })
           .finally(() => {
-            debouncedUpdate();
+            if (mainVnode !== null && state.mainVnode === mainVnode) {
+              debouncedUpdate();
+            }
           });
       }
     });
@@ -1307,14 +1311,24 @@ export function update(): string {
   return "";
 }
 
-const debouncedUpdateMethod = isNodeJs ? update : () => requestAnimationFrame(update);
-
 export function debouncedUpdate(timeout = 42) {
   preventUpdate();
   const state = getRendererState();
+  const mainVnode = state.mainVnode;
   clearTimeout(state.debouncedUpdateTimeout);
   state.debouncedUpdateTimeout = setTimeout(() => {
-    debouncedUpdateMethod();
+    if (mainVnode !== null && state.mainVnode === mainVnode) {
+      if (isNodeJs) {
+        update();
+        return;
+      }
+
+      requestAnimationFrame(() => {
+        if (mainVnode !== null && state.mainVnode === mainVnode) {
+          update();
+        }
+      });
+    }
   }, timeout);
 }
 

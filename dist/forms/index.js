@@ -57,46 +57,46 @@ var ValidationError = class extends Error {
     this.message = message;
   }
   getCause() {
-    let current2 = this;
+    let current = this;
     let schemaPointer = "#";
     let instancePointer = "#";
     const seen = /* @__PURE__ */ new Set();
-    while (!seen.has(current2)) {
-      seen.add(current2);
-      let schemaPath = `${schemaPointer}/${current2.keyword}`;
+    while (!seen.has(current)) {
+      seen.add(current);
+      let schemaPath = `${schemaPointer}/${current.keyword}`;
       let instancePath = instancePointer;
-      if (typeof current2.item !== "undefined") {
-        if (typeof current2.item === "string" && current2.schema && typeof current2.schema === "object" && current2.item in current2.schema) {
-          schemaPath += `/${escapeJsonPointerToken(current2.item)}`;
+      if (typeof current.item !== "undefined") {
+        if (typeof current.item === "string" && current.schema && typeof current.schema === "object" && current.item in current.schema) {
+          schemaPath += `/${escapeJsonPointerToken(current.item)}`;
         }
-        instancePath += `/${escapeJsonPointerToken(current2.item)}`;
+        instancePath += `/${escapeJsonPointerToken(current.item)}`;
       }
-      current2.schemaPath = schemaPath;
-      current2.instancePath = instancePath;
-      if (!(current2.cause instanceof ValidationError) || seen.has(current2.cause)) {
-        return current2;
+      current.schemaPath = schemaPath;
+      current.instancePath = instancePath;
+      if (!(current.cause instanceof ValidationError) || seen.has(current.cause)) {
+        return current;
       }
       schemaPointer = schemaPath;
       instancePointer = instancePath;
-      current2 = current2.cause;
+      current = current.cause;
     }
-    return current2;
+    return current;
   }
   getTree() {
     this.getCause();
-    let current2 = this;
+    let current = this;
     let root;
     let target;
     const seen = /* @__PURE__ */ new Set();
-    while (current2 && !seen.has(current2)) {
-      seen.add(current2);
+    while (current && !seen.has(current)) {
+      seen.add(current);
       const node = {
-        message: current2.message,
-        keyword: current2.keyword,
-        item: current2.item,
-        schemaPath: current2.schemaPath,
-        instancePath: current2.instancePath,
-        data: current2.data
+        message: current.message,
+        keyword: current.keyword,
+        item: current.item,
+        schemaPath: current.schemaPath,
+        instancePath: current.instancePath,
+        data: current.data
       };
       if (!root) {
         root = node;
@@ -104,7 +104,7 @@ var ValidationError = class extends Error {
         target.cause = node;
       }
       target = node;
-      current2 = current2.cause instanceof ValidationError ? current2.cause : void 0;
+      current = current.cause instanceof ValidationError ? current.cause : void 0;
     }
     return root;
   }
@@ -154,17 +154,17 @@ function resolvePath(root, path) {
   }
   if (path.startsWith("#/")) {
     const parts = path.split("/").slice(1);
-    let current2 = root;
+    let current = root;
     for (const part of parts) {
       const decodedUriPart = decodeURIComponent(part);
       const key = decodedUriPart.replace(/~1/g, "/").replace(/~0/g, "~");
-      if (current2 && typeof current2 === "object" && key in current2) {
-        current2 = current2[key];
+      if (current && typeof current === "object" && key in current) {
+        current = current[key];
       } else {
         return;
       }
     }
-    return current2;
+    return current;
   }
   if (!path.includes("#")) {
     if (root.definitions && root.definitions[path]) {
@@ -628,35 +628,35 @@ var Types = {
   float32: false,
   float64: false
 };
-function hasChanged(prev, current2) {
-  if (Object.is(prev, current2)) {
+function hasChanged(prev, current) {
+  if (Object.is(prev, current)) {
     return false;
   }
   if (Array.isArray(prev)) {
-    if (Array.isArray(current2) === false) {
+    if (Array.isArray(current) === false) {
       return true;
     }
-    if (prev.length !== current2.length) {
+    if (prev.length !== current.length) {
       return true;
     }
-    for (let i = 0; i < current2.length; i++) {
-      if (hasChanged(prev[i], current2[i])) {
+    for (let i = 0; i < current.length; i++) {
+      if (hasChanged(prev[i], current[i])) {
         return true;
       }
     }
     return false;
   }
   if (typeof prev === "object" && prev !== null) {
-    if (typeof current2 !== "object" || current2 === null) {
+    if (typeof current !== "object" || current === null) {
       return true;
     }
-    for (const key in current2) {
-      if (hasChanged(prev[key], current2[key])) {
+    for (const key in current) {
+      if (hasChanged(prev[key], current[key])) {
         return true;
       }
     }
     for (const key in prev) {
-      if (key in current2) {
+      if (key in current) {
         continue;
       }
       if (hasChanged(prev[key], void 0)) {
@@ -2785,16 +2785,16 @@ var SchemaShield = class {
     return out;
   }
   flattenSingleWrapperOneOf(branches) {
-    let current2 = branches;
-    while (current2.length === 1) {
-      const item = current2[0];
+    let current = branches;
+    while (current.length === 1) {
+      const item = current[0];
       if (this.isPlainObject(item) && Object.keys(item).length === 1 && Array.isArray(item.oneOf)) {
-        current2 = item.oneOf;
+        current = item.oneOf;
         continue;
       }
       break;
     }
-    return current2;
+    return current;
   }
   normalizeSchemaForCompile(schema) {
     let normalized = schema;
@@ -3486,22 +3486,22 @@ function getFieldNameFromError(error) {
   return null;
 }
 function getFieldNameFromChain(error) {
-  let current2 = error;
-  while (current2) {
-    const fieldName = getFieldNameFromError(current2);
+  let current = error;
+  while (current) {
+    const fieldName = getFieldNameFromError(current);
     if (fieldName) {
       return fieldName;
     }
-    current2 = current2.cause;
+    current = current.cause;
   }
   return null;
 }
 function getRootError(error) {
-  let current2 = error;
-  while (current2.cause) {
-    current2 = current2.cause;
+  let current = error;
+  while (current.cause) {
+    current = current.cause;
   }
-  return current2;
+  return current;
 }
 var formSchemaShield = new SchemaShield({
   failFast: false,
@@ -3528,7 +3528,6 @@ var FormStore = class {
   clean;
   format;
   pulseStore;
-  metaState;
   static get schemaShield() {
     return formSchemaShield;
   }
@@ -3537,12 +3536,6 @@ var FormStore = class {
     this.onSubmit = options.onSubmit || null;
     this.clean = options.clean || {};
     this.format = options.format || {};
-    this.metaState = {
-      validationErrors: {},
-      submitError: null,
-      success: false,
-      isInflight: false
-    };
     const getValidationErrors = (values) => {
       const result = this.validator(values);
       return result.valid ? {} : mapValidationError(result.error);
@@ -3591,47 +3584,25 @@ var FormStore = class {
     return this.pulseStore.state.values;
   }
   get validationErrors() {
-    return this.metaState.validationErrors;
+    return this.pulseStore.state.validationErrors;
   }
   get submitError() {
-    return this.metaState.submitError;
+    return this.pulseStore.state.submitError;
   }
   get success() {
-    return this.metaState.success;
+    return this.pulseStore.state.success;
   }
   get isInflight() {
-    return this.metaState.isInflight;
+    return this.pulseStore.state.isInflight;
   }
   get isDirty() {
     return this.pulseStore.state.isDirty;
   }
   get hasValidationErrors() {
-    return Object.keys(this.metaState.validationErrors || {}).length > 0;
+    return Object.keys(this.pulseStore.state.validationErrors).length > 0;
   }
   get hasSubmitError() {
-    return this.metaState.submitError !== null;
-  }
-  isDelegatedSubmitEvent(event) {
-    return Boolean(import_valyrian.current.event && (!event || import_valyrian.current.event === event));
-  }
-  setValidationErrors(validationErrors, event) {
-    this.metaState.validationErrors = validationErrors;
-    if (!this.isDelegatedSubmitEvent(event)) {
-      this.pulseStore.validate();
-    }
-    return Object.keys(validationErrors).length === 0;
-  }
-  setInflight(inflight, event) {
-    this.metaState.isInflight = inflight;
-    if (!this.isDelegatedSubmitEvent(event)) {
-      this.pulseStore.setInflight(inflight);
-    }
-  }
-  setSubmitError(error, event) {
-    this.metaState.submitError = error;
-    if (!this.isDelegatedSubmitEvent(event)) {
-      this.pulseStore.setSubmitError(error);
-    }
+    return this.pulseStore.state.submitError !== null;
   }
   formatValue(name, value) {
     return name in this.format ? this.format[name](value, this.state) : value;
@@ -3639,53 +3610,39 @@ var FormStore = class {
   setField(name, rawValue) {
     const cleanedValue = name in this.clean ? this.clean[name](rawValue, this.state) : rawValue;
     this.pulseStore.setField(name, cleanedValue);
-    this.metaState.success = false;
   }
-  setSuccess(success, event) {
-    this.metaState.success = success;
-    if (!this.isDelegatedSubmitEvent(event)) {
-      this.pulseStore.setSuccess(success);
-    }
+  setSuccess(success) {
+    this.pulseStore.setSuccess(success);
   }
   validate() {
-    const result = this.validator(this.state);
-    return this.setValidationErrors(result.valid ? {} : mapValidationError(result.error));
+    return this.pulseStore.validate();
   }
   async submit(event) {
     event?.preventDefault();
-    const validationErrors = this.validator(this.state);
-    const isValid = this.setValidationErrors(
-      validationErrors.valid ? {} : mapValidationError(validationErrors.error),
-      event
-    );
-    if (!isValid) {
+    if (!this.pulseStore.validate()) {
       return false;
     }
     if (this.isInflight) {
       return false;
     }
-    this.setInflight(true, event);
-    this.setSuccess(false, event);
-    this.setSubmitError(null, event);
+    this.pulseStore.setInflight(true);
+    this.pulseStore.setSuccess(false);
+    this.pulseStore.setSubmitError(null);
     try {
       if (this.onSubmit) {
         await this.onSubmit(this.state);
       }
-      this.setSuccess(true, event);
+      this.pulseStore.setSuccess(true);
       return true;
     } catch (error) {
-      this.setSubmitError(error, event);
+      this.pulseStore.setSubmitError(error);
       return false;
     } finally {
-      this.setInflight(false, event);
+      this.pulseStore.setInflight(false);
     }
   }
   reset() {
     this.pulseStore.reset();
-    this.metaState.validationErrors = {};
-    this.metaState.submitError = null;
-    this.metaState.success = false;
-    this.metaState.isInflight = false;
   }
 };
 (0, import_valyrian.directive)("form", (formStore, vnode) => {

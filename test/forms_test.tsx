@@ -1,9 +1,10 @@
 import "valyrian.js/node";
 
 import { describe, expect, test as it } from "bun:test";
-import { mount, preventUpdate, update, v } from "valyrian.js";
+import { mount, v } from "valyrian.js";
 import { FormStore, formSchemaShield } from "../lib/forms";
 import { Money, formatMoney, parseMoneyInput } from "valyrian.js/money";
+import { createEffect } from "valyrian.js/pulses";
 import {
   HTMLFormElement,
   NodeRuntime,
@@ -336,7 +337,7 @@ describe("Forms", () => {
     expect(submitCalls).toEqual(1);
   });
 
-  it("should auto-rerender inflight and success states on async submit even when submit preventDefault is used", async () => {
+  it("should prevent the native submit, skip the global render, and notify fine-grained metadata subscribers", async () => {
     let resolveSubmit!: () => void;
     const submitDone = new Promise<void>((resolve) => {
       resolveSubmit = resolve;
@@ -356,12 +357,23 @@ describe("Forms", () => {
       }
     });
 
+    const metadataStates: Array<{ isInflight: boolean; success: boolean }> = [];
+    const dispose = createEffect(() => {
+      metadataStates.push({
+        isInflight: form.isInflight,
+        success: form.success
+      });
+    });
+    let globalRenders = 0;
     const dom = document.createElement("div");
-    mount(dom, () => (
-      <form v-form={form}>
-        <button type="submit">{form.isInflight ? "sending" : form.success ? "sent" : "idle"}</button>
-      </form>
-    ));
+    mount(dom, () => {
+      globalRenders += 1;
+      return (
+        <form v-form={form}>
+          <button type="submit">Send</button>
+        </form>
+      );
+    });
 
     const formDom = dom.childNodes[0] as any;
     const submitEvent = new Event("submit", { bubbles: true, cancelable: true });
@@ -376,21 +388,62 @@ describe("Forms", () => {
     expect(submitEvent.defaultPrevented).toBeTrue();
     expect(preventDefaultCalls).toEqual(1);
 
-    await wait(10);
-    expect(dom.innerHTML).toEqual("<form><button type=\"submit\">sending</button></form>");
+    await wait(0);
+    expect(globalRenders).toEqual(1);
+    expect(metadataStates).toEqual([
+      { isInflight: false, success: false },
+      { isInflight: true, success: false }
+    ]);
 
     resolveSubmit();
     await wait(10);
     expect(preventDefaultCalls).toEqual(1);
-    expect(dom.innerHTML).toEqual("<form><button type=\"submit\">sent</button></form>");
+    expect(globalRenders).toEqual(1);
+    expect(metadataStates).toEqual([
+      { isInflight: false, success: false },
+      { isInflight: true, success: false },
+      { isInflight: false, success: true }
+    ]);
+    dispose();
   });
 
-  it("should let async submit opt out of automatic rerenders with preventUpdate", async () => {
-    let resolveSubmit!: () => void;
-    const submitDone = new Promise<void>((resolve) => {
-      resolveSubmit = resolve;
+  it("should notify validation metadata subscribers after an invalid delegated submit", async () => {
+    const form = new FormStore({
+      state: { email: "" },
+      schema: {
+        type: "object",
+        properties: {
+          email: { type: "string", format: "email" }
+        },
+        required: ["email"]
+      }
     });
 
+    const validationStates: Array<{ hasValidationErrors: boolean; errorCount: number }> = [];
+    const dispose = createEffect(() => {
+      validationStates.push({
+        hasValidationErrors: form.hasValidationErrors,
+        errorCount: Object.keys(form.validationErrors).length
+      });
+    });
+    const dom = document.createElement("div");
+    mount(dom, () => (
+      <form v-form={form}>
+        <button type="submit">Send</button>
+      </form>
+    ));
+
+    const formDom = dom.childNodes[0] as any;
+    formDom.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    await wait(0);
+    expect(validationStates).toEqual([
+      { hasValidationErrors: false, errorCount: 0 },
+      { hasValidationErrors: true, errorCount: 1 }
+    ]);
+    dispose();
+  });
+
+  it("should notify submit error subscribers after a rejected delegated submit", async () => {
     const form = new FormStore({
       state: { email: "ok@example.com" },
       schema: {
@@ -401,29 +454,36 @@ describe("Forms", () => {
         required: ["email"]
       },
       onSubmit: async () => {
-        preventUpdate();
-        await submitDone;
+        throw new Error("Submit failed");
       }
     });
 
+    let resolveSubmitErrorNotification!: () => void;
+    const submitErrorNotification = new Promise<void>((resolve) => {
+      resolveSubmitErrorNotification = resolve;
+    });
+    const submitErrorStates: boolean[] = [];
+    const dispose = createEffect(() => {
+      const hasSubmitError = form.hasSubmitError;
+      submitErrorStates.push(hasSubmitError);
+      if (hasSubmitError) {
+        resolveSubmitErrorNotification();
+      }
+    });
     const dom = document.createElement("div");
     mount(dom, () => (
       <form v-form={form}>
-        <button type="submit">{form.isInflight ? "sending" : form.success ? "sent" : "idle"}</button>
+        <button type="submit">Send</button>
       </form>
     ));
 
     const formDom = dom.childNodes[0] as any;
     formDom.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-    expect(dom.innerHTML).toEqual("<form><button type=\"submit\">idle</button></form>");
+    await submitErrorNotification;
 
-    await wait(0);
-    expect(dom.innerHTML).toEqual("<form><button type=\"submit\">idle</button></form>");
-
-    resolveSubmit();
-    await wait(10);
-    expect(dom.innerHTML).toEqual("<form><button type=\"submit\">idle</button></form>");
-    expect(update()).toEqual("<form><button type=\"submit\">sent</button></form>");
+    expect(submitErrorStates).toEqual([false, true]);
+    expect(form.submitError).toBeInstanceOf(Error);
+    dispose();
   });
 
   it("should validate url format from JSON schema", () => {
@@ -518,12 +578,12 @@ describe("Forms", () => {
     expect(form.hasSubmitError).toBeTrue();
   });
 
-  it("should clear submitError on reset", async () => {
+  it("should reset validation, submit, success, inflight, and derived metadata", async () => {
     const form = new FormStore({
       state: { email: "test@example.com" },
       schema: {
         type: "object",
-        properties: { email: { type: "string" } }
+        properties: { email: { type: "string", minLength: 1 } }
       },
       onSubmit: async () => {
         throw new Error("Error");
@@ -533,8 +593,47 @@ describe("Forms", () => {
     await form.submit();
     expect(form.hasSubmitError).toBeTrue();
 
+    form.setField("email", "");
+    expect(form.validate()).toBeFalse();
+    form.setSuccess(true);
+    expect(form.hasValidationErrors).toBeTrue();
+    expect(form.success).toBeTrue();
+
     form.reset();
+    expect(form.validationErrors).toEqual({});
+    expect(form.hasValidationErrors).toBeFalse();
     expect(form.submitError).toBeNull();
+    expect(form.hasSubmitError).toBeFalse();
+    expect(form.success).toBeFalse();
+    expect(form.isInflight).toBeFalse();
+    expect(form.isDirty).toBeFalse();
+  });
+
+  it("should clear inflight metadata without cancelling a pending submit", async () => {
+    let resolveSubmit!: () => void;
+    const submitDone = new Promise<void>((resolve) => {
+      resolveSubmit = resolve;
+    });
+    const form = new FormStore({
+      state: { email: "test@example.com" },
+      schema: {
+        type: "object",
+        properties: { email: { type: "string" } }
+      },
+      onSubmit: async () => {
+        await submitDone;
+      }
+    });
+
+    const submission = form.submit();
+    expect(form.isInflight).toBeTrue();
+
+    form.reset();
+    expect(form.isInflight).toBeFalse();
+
+    resolveSubmit();
+    expect(await submission).toBeTrue();
+    expect(form.success).toBeTrue();
   });
 
   it("should clear submitError before each submit", async () => {
@@ -606,7 +705,11 @@ describe("Forms", () => {
     });
   });
 
-  it("should set isInflight during submit", async () => {
+  it("should notify inflight and success subscribers during a programmatic submit", async () => {
+    let resolveSubmit!: () => void;
+    const submitDone = new Promise<void>((resolve) => {
+      resolveSubmit = resolve;
+    });
     const form = new FormStore({
       state: { email: "test@example.com" },
       schema: {
@@ -614,14 +717,37 @@ describe("Forms", () => {
         properties: { email: { type: "string" } }
       },
       onSubmit: async () => {
-        await wait(50);
+        await submitDone;
       }
     });
 
+    const metadataStates: Array<{ isInflight: boolean; success: boolean }> = [];
+    const dispose = createEffect(() => {
+      metadataStates.push({
+        isInflight: form.isInflight,
+        success: form.success
+      });
+    });
+
     expect(form.isInflight).toBeFalse();
-    form.submit();
+    const submission = form.submit();
     expect(form.isInflight).toBeTrue();
-    await wait(100);
+    await wait(0);
+    expect(metadataStates).toEqual([
+      { isInflight: false, success: false },
+      { isInflight: true, success: false }
+    ]);
+
+    resolveSubmit();
+    expect(await submission).toBeTrue();
+    await wait(0);
     expect(form.isInflight).toBeFalse();
+    expect(form.success).toBeTrue();
+    expect(metadataStates).toEqual([
+      { isInflight: false, success: false },
+      { isInflight: true, success: false },
+      { isInflight: false, success: true }
+    ]);
+    dispose();
   });
 });
