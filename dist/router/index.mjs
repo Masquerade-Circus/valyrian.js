@@ -144,6 +144,7 @@ var RouteTree = class {
       currentNode = currentNode.children.get(key);
     }
     currentNode.middlewares = middlewares;
+    currentNode.pattern = path;
     this.registeredRoutes.add(path);
   }
   // Search for a route in the tree
@@ -154,6 +155,7 @@ var RouteTree = class {
     let currentNode = this.root;
     const params = {};
     const wildcardMiddlewares = [];
+    let wildcardPattern = "";
     const segmentsLength = segments.length;
     for (let i = 0; i < segmentsLength; i++) {
       if (!currentNode) {
@@ -175,11 +177,18 @@ var RouteTree = class {
         }
         if (key === ".*" && !found) {
           wildcardMiddlewares.push(...child.middlewares || []);
+          wildcardPattern = child.pattern || "";
         }
       }
       if (!found) {
-        if (currentNode.children.has(".*")) {
-          return { middlewares: wildcardMiddlewares, params };
+        const wildcardNode = currentNode.children.get(".*");
+        if (wildcardNode) {
+          return {
+            middlewares: wildcardMiddlewares,
+            params,
+            pattern: wildcardNode.pattern || "",
+            matches: [segments.slice(i).join("/")]
+          };
         }
         return null;
       }
@@ -188,7 +197,14 @@ var RouteTree = class {
     if (allMiddlewares.length === 0) {
       return null;
     }
-    return { middlewares: allMiddlewares, params };
+    const pattern = currentNode.middlewares ? currentNode.pattern || "" : wildcardPattern;
+    const wildcardIndex = pattern.split("/").filter(Boolean).indexOf(".*");
+    return {
+      middlewares: allMiddlewares,
+      params,
+      pattern,
+      matches: wildcardIndex === -1 ? [] : [segments.slice(wildcardIndex).join("/")]
+    };
   }
 };
 var RouterError = class RouterError2 extends Error {
@@ -202,6 +218,7 @@ var Router = class _Router {
   url = "";
   path = "";
   params = {};
+  pattern = "";
   matches = [];
   pathPrefix = "";
   errorHandlers = /* @__PURE__ */ new Map();
@@ -309,6 +326,8 @@ var Router = class _Router {
         const wildcardRoute = this.routeTree.findRoute(finalPathParts.join("/") + "/.*");
         if (wildcardRoute) {
           route = wildcardRoute;
+          const wildcardIndex = route.pattern.split("/").filter(Boolean).indexOf(".*");
+          route.matches = [finalPath.split("/").filter(Boolean).slice(wildcardIndex).join("/")];
           break;
         }
       }
@@ -319,7 +338,7 @@ var Router = class _Router {
         return isRenderedNavigationResult(result) ? result.html : result;
       }
     }
-    const { middlewares, params } = route;
+    const { middlewares, params, pattern, matches } = route;
     return runWithContext(routerContextScope, this, async () => {
       const nextRoute = {
         path: publicPath,
@@ -330,7 +349,9 @@ var Router = class _Router {
         url: this.url,
         query: this.query,
         path: this.path,
-        params: this.params
+        params: this.params,
+        pattern: this.pattern,
+        matches: this.matches
       };
       const routeChanged = hasRouteChanged(nextRoute, this.currentRoute);
       if (routeChanged) {
@@ -350,6 +371,8 @@ var Router = class _Router {
         this.query = nextQuery;
         this.path = publicPath;
         this.params = params;
+        this.pattern = pattern;
+        this.matches = matches;
         let component = await this.searchComponent(middlewares, parentComponent);
         if (isRenderedNavigationResult(component)) {
           return component.html;
@@ -406,6 +429,8 @@ var Router = class _Router {
           this.query = previousPublicState.query;
           this.path = previousPublicState.path;
           this.params = previousPublicState.params;
+          this.pattern = previousPublicState.pattern;
+          this.matches = previousPublicState.matches;
         }
         throw error;
       } finally {
@@ -447,6 +472,7 @@ var Router = class _Router {
       query: this.query,
       url: this.url,
       path: this.path,
+      pattern: this.pattern,
       matches: this.matches,
       redirect: async (path) => createRenderedNavigationResult(await this.go(path))
     };

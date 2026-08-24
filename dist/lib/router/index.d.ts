@@ -4,6 +4,7 @@ export interface Request {
     query: Record<string, any>;
     url: string;
     path: string;
+    pattern: string;
     matches: string[];
     redirect: (path: string) => Promise<string | void>;
 }
@@ -54,6 +55,7 @@ export declare class Router {
     url: string;
     path: string;
     params: Record<string, string | number | any>;
+    pattern: string;
     matches: string[];
     pathPrefix: string;
     private errorHandlers;

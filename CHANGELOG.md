@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.3.0](https://github.com/Masquerade-Circus/valyrian/compare/9.2.1...9.3.0) (2026-08-24)
+
+### Features
+
+* **router:** expose route patterns and complete node location ([a76b142](https://github.com/Masquerade-Circus/valyrian/commit/a76b14267573dac9f1f86be868e7fb489317df8c))
+
 ## [9.2.1](https://github.com/Masquerade-Circus/valyrian/compare/9.2.0...9.2.1) (2026-08-19)
 
 ### Bug Fixes
