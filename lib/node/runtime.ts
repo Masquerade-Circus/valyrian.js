@@ -126,6 +126,18 @@ class BrowserLocation {
     return this.url.origin;
   }
 
+  get hostname(): string {
+    return this.url.hostname;
+  }
+
+  get protocol(): string {
+    return this.url.protocol;
+  }
+
+  get port(): string {
+    return this.url.port;
+  }
+
   get pathname(): string {
     return this.url.pathname;
   }

@@ -849,6 +849,28 @@ describe("Router", () => {
     expect(dynamicResult).toEqual("<div>Dynamic Route hi</div>");
   });
 
+  it("exposes the winning pattern with wildcard-only matches per navigation", async () => {
+    const requests: Array<{ pattern: string; matches: string[] }> = [];
+    const router = new Router();
+
+    router.add("/assets/.*", (req) => {
+      requests.push({ pattern: req.pattern, matches: [...req.matches] });
+      return () => <div>Asset</div>;
+    });
+    router.add("/:page", (req) => {
+      requests.push({ pattern: req.pattern, matches: [...req.matches] });
+      return () => <div>Page</div>;
+    });
+    mountRouter("body", router);
+
+    expect(await router.go("/assets/images/logo.png?size=2#preview")).toEqual("<div>Asset</div>");
+    expect(await router.go("/home")).toEqual("<div>Page</div>");
+    expect(requests).toEqual([
+      { pattern: "/assets/.*", matches: ["images/logo.png"] },
+      { pattern: "/:page", matches: [] }
+    ]);
+  });
+
   it("Test multiple subrouters mounted under the same prefix", async () => {
     const SubComponent1 = () => <div>Sub Route 1</div>;
     const SubComponent2 = () => <div>Sub Route 2</div>;

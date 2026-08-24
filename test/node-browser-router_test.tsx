@@ -8,13 +8,16 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe("Node browser navigation runtime", () => {
   it("activates window navigation explicitly and exposes coherent location fields", () => {
-    NodeRuntime.runBrowser({ url: "https://example.test/account?tab=profile#security" }, () => {
+    NodeRuntime.runBrowser({ url: "https://example.test:8443/account?tab=profile#security" }, () => {
       expect(window.window).toBe(window);
       expect(window.document).toBe(document);
       expect(window.location).toBe(location);
       expect(window.history).toBe(history);
-      expect(location.href).toEqual("https://example.test/account?tab=profile#security");
-      expect(location.origin).toEqual("https://example.test");
+      expect(location.href).toEqual("https://example.test:8443/account?tab=profile#security");
+      expect(location.origin).toEqual("https://example.test:8443");
+      expect(location.hostname).toEqual("example.test");
+      expect(location.protocol).toEqual("https:");
+      expect(location.port).toEqual("8443");
       expect(location.pathname).toEqual("/account");
       expect(location.search).toEqual("?tab=profile");
       expect(location.hash).toEqual("#security");
