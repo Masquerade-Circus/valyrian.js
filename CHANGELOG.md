@@ -1,5 +1,16 @@
 # Changelog
 
+## [9.3.1](https://github.com/Masquerade-Circus/valyrian/compare/9.3.0...9.3.1) (2026-10-22)
+
+### Bug Fixes
+
+* **pulses:** clean up dom subscriptions and stabilize notifications ([284acb8](https://github.com/Masquerade-Circus/valyrian/commit/284acb8656eae7a49af500f871ae533a331b0fe9))
+* remediate vulnerable dependency chains ([c1ded2f](https://github.com/Masquerade-Circus/valyrian/commit/c1ded2fab9d04e68cf5ddd05b38a2b1a3616dcda))
+
+### Miscellaneous Chores
+
+* update dependencies and preserve form format validation ([1744147](https://github.com/Masquerade-Circus/valyrian/commit/1744147d45c8f3281d6799845621d5a532af6934))
+
 ## [9.3.0](https://github.com/Masquerade-Circus/valyrian/compare/9.2.1...9.3.0) (2026-08-24)
 
 ### Features

@@ -2440,7 +2440,7 @@ When you read a pulse or a pulse store state property:
 
 That is why components re-render only when they actually read the pulse, and why effects re-run only after they touch a pulse during execution.
 
-For DOM subscriptions, the runtime records the vnode DOM node and calls `updateVnode(...)` for that subtree when the subscriber fires. If that DOM node has already been detached, the subscription is removed on the next notification pass that reaches it; cleanup is not immediate at detach time.
+For DOM subscriptions, the runtime records the vnode DOM node and calls `updateVnode(...)` for that subtree when the subscriber fires. Renderer cleanup removes the subscription before an update or unmount, and reactive reads during the next render register a fresh subscription. Notifications already queued for a disposed subscription are ignored. If a DOM node is detached directly, the next notification removes its subscription before rendering it.
 
 ### Writes and notification timing
 
@@ -2453,6 +2453,8 @@ setCount((current) => current + 1);
 ```
 
 If the value actually changed, `write(...)` updates the stored value and runs subscribers right away in the same call stack.
+
+Each notification pass uses a snapshot of its subscribers. Subscriptions added during that pass wait until the next notification. A newly created effect still runs once immediately during initialization.
 
 `createPulseStore` behaves differently:
 
@@ -7332,3 +7334,4 @@ Expected result: the SSR server serves the Taskboard document, generated manifes
 - Use [Recipes and Integrations](./9-recipes-and-integrations.md) when you want a focused task outside the cumulative tutorial.
 - Use [Runtime Core API](./3.1-runtime-core.md) to inspect the mount, update, lifecycle and hydration contracts behind these stages.
 - Use [Run the Same Application in Browser and Node.js](./7-full-stack-capability.md) when you want the server-side path in more depth.
+
