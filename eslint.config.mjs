@@ -25,12 +25,7 @@ export default [
           varsIgnorePattern: "^v$"
         }
       ],
-      "sonarjs/no-nested-functions": [
-        "error",
-        {
-          allow: ["^describe", "^it"]
-        }
-      ]
+      "sonarjs/no-nested-functions": ["error", { threshold: 5 }]
     }
   }
 ];

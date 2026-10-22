@@ -75,7 +75,8 @@ function getRootError(error: ValidationError) {
 
 export const formSchemaShield = new SchemaShield({
   failFast: false,
-  immutable: false
+  immutable: false,
+  format: true
 });
 
 function mapValidationError(error: ValidationError | true | null) {

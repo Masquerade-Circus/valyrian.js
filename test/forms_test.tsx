@@ -14,7 +14,14 @@ import {
 import { wait } from "./utils/helpers";
 
 describe("Forms", () => {
-  it("should validate JSON schema and submit cleaned values", async () => {
+  it.each([
+    { label: "without an explicit dialect", dialect: {} },
+    { label: "draft-04", dialect: { $schema: "http://json-schema.org/draft-04/schema#" } },
+    { label: "draft-06", dialect: { $schema: "http://json-schema.org/draft-06/schema#" } },
+    { label: "draft-07", dialect: { $schema: "http://json-schema.org/draft-07/schema#" } },
+    { label: "draft 2019-09", dialect: { $schema: "https://json-schema.org/draft/2019-09/schema" } },
+    { label: "draft 2020-12", dialect: { $schema: "https://json-schema.org/draft/2020-12/schema" } }
+  ])("should validate JSON schema and submit cleaned values ($label)", async ({ dialect }) => {
     const submissions: Array<Record<string, unknown>> = [];
 
     const form = new FormStore({
@@ -23,6 +30,7 @@ describe("Forms", () => {
         age: 0
       },
       schema: {
+        ...dialect,
         type: "object",
         properties: {
           email: { type: "string", format: "email" },
@@ -40,6 +48,11 @@ describe("Forms", () => {
 
     form.setField("email", "bad-email");
     expect(form.validate()).toBeFalse();
+    expect(form.validationErrors.email).toBeTruthy();
+    expect(await form.submit()).toBeFalse();
+    expect(submissions).toHaveLength(0);
+    expect(form.isInflight).toBeFalse();
+    expect(form.success).toBeFalse();
 
     form.setField("email", "  USER@example.com  ");
     form.setField("age", 31);
@@ -522,7 +535,10 @@ describe("Forms", () => {
     expect(form.validate()).toBeTrue();
   });
 
-  it("should use shared schema shield formats across form instances", () => {
+  it.each([
+    { label: "without an explicit dialect", dialect: {} },
+    { label: "draft 2020-12", dialect: { $schema: "https://json-schema.org/draft/2020-12/schema" } }
+  ])("should use shared schema shield formats across form instances ($label)", async ({ dialect }) => {
     const formatName = `starts-with-a-${Math.random().toString(36).slice(2)}`;
 
     formSchemaShield.addFormat(
@@ -534,6 +550,7 @@ describe("Forms", () => {
     );
 
     const schema = {
+      ...dialect,
       type: "object",
       properties: {
         code: { type: "string", format: formatName }
@@ -541,9 +558,13 @@ describe("Forms", () => {
       required: ["code"]
     };
 
+    const submissions: Array<Record<string, unknown>> = [];
     const formA = new FormStore({
       state: { code: "" },
-      schema
+      schema,
+      onSubmit: (values) => {
+        submissions.push({ ...values });
+      }
     });
 
     const formB = new FormStore({
@@ -554,9 +575,16 @@ describe("Forms", () => {
     formA.setField("code", "B-001");
     expect(formA.validate()).toBeFalse();
     expect(formA.validationErrors.code).toBeTruthy();
+    expect(await formA.submit()).toBeFalse();
+    expect(submissions).toHaveLength(0);
 
     formB.setField("code", "A-001");
     expect(formB.validate()).toBeTrue();
+
+    formA.setField("code", "A-002");
+    expect(await formA.submit()).toBeTrue();
+    expect(submissions).toHaveLength(1);
+    expect(submissions[0].code).toBe("A-002");
   });
 
   it("should capture submit error when onSubmit throws", async () => {

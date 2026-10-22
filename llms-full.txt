@@ -4,7 +4,7 @@ Purpose
 This file aggregates the official documentation sources from the `docs/` directory as a single reference for AI agents and tooling.
 
 Generated
-- Date (UTC): 2026-08-24
+- Date (UTC): 2026-10-22
 - Source root: `docs/`
 - File count: 51
 
@@ -2294,6 +2294,14 @@ formSchemaShield.addFormat("starts-with-a", (value) => typeof value === "string"
 ```
 
 Formats/keywords/types added there are shared by all `FormStore` instances.
+
+### Migrating extensions to SchemaShield 2
+
+Forms enable `format: true` explicitly, so built-in and custom formats remain validation assertions even when a schema declares an official JSON Schema dialect.
+
+SchemaShield 2 changes extension callback results. Custom keywords must return `true` or omit a return value for success, and return `false` or a validation error for rejection. Boolean keyword results have the opposite meaning from SchemaShield 1. Custom types and formats that previously relied on an omitted return value to reject input must return `false` explicitly. Existing boolean format callbacks, such as the example above, remain supported.
+
+Schema compilation now checks schemas against their declared dialect. Correct invalid keyword values before constructing a `FormStore`, for example a string supplied to `minimum` instead of a number. Compilation errors propagate to the caller.
 
 ## Common Beginner Mistakes
 
@@ -7324,4 +7332,3 @@ Expected result: the SSR server serves the Taskboard document, generated manifes
 - Use [Recipes and Integrations](./9-recipes-and-integrations.md) when you want a focused task outside the cumulative tutorial.
 - Use [Runtime Core API](./3.1-runtime-core.md) to inspect the mount, update, lifecycle and hydration contracts behind these stages.
 - Use [Run the Same Application in Browser and Node.js](./7-full-stack-capability.md) when you want the server-side path in more depth.
-
