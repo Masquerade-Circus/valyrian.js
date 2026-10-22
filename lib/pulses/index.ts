@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
 
-import { updateVnode, VnodeWithDom, current, DomElement, preventUpdate } from "valyrian.js";
+import { updateVnode, VnodeWithDom, current, DomElement, preventUpdate, onCleanup } from "valyrian.js";
 import { deepCloneUnfreeze, deepFreeze, hasChanged } from "valyrian.js/utils";
 
 type State = Record<string, any>;
@@ -66,21 +66,31 @@ function registerDomSubscription(
   }
 
   const dom = currentVnode.dom;
+  let disposed = false;
+  const dispose = () => {
+    disposed = true;
+    for (const subscriberSet of domSubscription.subscriberSets) {
+      subscriberSet.delete(domSubscription.subscription);
+    }
+    domSubscription.subscriberSets.clear();
+    domSubscriptions.delete(dom);
+  };
   const domSubscription: DomSubscription = {
     subscription: () => {
-      updateVnode(dom.vnode);
-      if (!dom.parentElement) {
-        for (const subscriberSet of domSubscription.subscriberSets) {
-          subscriberSet.delete(domSubscription.subscription);
-        }
-        domSubscription.subscriberSets.clear();
-        domSubscriptions.delete(dom);
+      if (disposed) {
+        return;
       }
+      if (!dom.parentElement) {
+        dispose();
+        return;
+      }
+      updateVnode(dom.vnode);
     },
     subscriberSets: new Set()
   };
   addDomSubscription(subscribers, domSubscription);
   domSubscriptions.set(dom, domSubscription);
+  onCleanup(dispose);
 }
 
 function createStore<StateType extends State, PulsesType extends Record<string, Pulse<StateType, any>>>(
@@ -418,7 +428,7 @@ export function createPulse<T>(initialValue: T): [() => T, (newValue: T | ((curr
   const domSubscriptions = new WeakMap<DomElement, DomSubscription>();
 
   const runSubscribers = () => {
-    for (const subscriber of subscribers) {
+    for (const subscriber of Array.from(subscribers)) {
       subscriber();
     }
   };

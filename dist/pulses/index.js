@@ -55,21 +55,31 @@ function registerDomSubscription(subscribers, domSubscriptions, currentVnode) {
     parent = parent.parentElement;
   }
   const dom = currentVnode.dom;
+  let disposed = false;
+  const dispose = () => {
+    disposed = true;
+    for (const subscriberSet of domSubscription.subscriberSets) {
+      subscriberSet.delete(domSubscription.subscription);
+    }
+    domSubscription.subscriberSets.clear();
+    domSubscriptions.delete(dom);
+  };
   const domSubscription = {
     subscription: () => {
-      (0, import_valyrian.updateVnode)(dom.vnode);
-      if (!dom.parentElement) {
-        for (const subscriberSet of domSubscription.subscriberSets) {
-          subscriberSet.delete(domSubscription.subscription);
-        }
-        domSubscription.subscriberSets.clear();
-        domSubscriptions.delete(dom);
+      if (disposed) {
+        return;
       }
+      if (!dom.parentElement) {
+        dispose();
+        return;
+      }
+      (0, import_valyrian.updateVnode)(dom.vnode);
     },
     subscriberSets: /* @__PURE__ */ new Set()
   };
   addDomSubscription(subscribers, domSubscription);
   domSubscriptions.set(dom, domSubscription);
+  (0, import_valyrian.onCleanup)(dispose);
 }
 function createStore(initialState, pulses, immutable = false) {
   const domSubscriptions = /* @__PURE__ */ new WeakMap();
@@ -335,7 +345,7 @@ function createPulse(initialValue) {
   const subscribers = /* @__PURE__ */ new Set();
   const domSubscriptions = /* @__PURE__ */ new WeakMap();
   const runSubscribers = () => {
-    for (const subscriber of subscribers) {
+    for (const subscriber of Array.from(subscribers)) {
       subscriber();
     }
   };

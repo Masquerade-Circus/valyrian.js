@@ -1,5 +1,5 @@
 // lib/pulses/index.ts
-import { updateVnode, current, preventUpdate } from "valyrian.js";
+import { updateVnode, current, preventUpdate, onCleanup } from "valyrian.js";
 import { deepCloneUnfreeze, deepFreeze, hasChanged } from "valyrian.js/utils";
 var effectStack = [];
 function addDomSubscription(subscribers, domSubscription) {
@@ -28,21 +28,31 @@ function registerDomSubscription(subscribers, domSubscriptions, currentVnode) {
     parent = parent.parentElement;
   }
   const dom = currentVnode.dom;
+  let disposed = false;
+  const dispose = () => {
+    disposed = true;
+    for (const subscriberSet of domSubscription.subscriberSets) {
+      subscriberSet.delete(domSubscription.subscription);
+    }
+    domSubscription.subscriberSets.clear();
+    domSubscriptions.delete(dom);
+  };
   const domSubscription = {
     subscription: () => {
-      updateVnode(dom.vnode);
-      if (!dom.parentElement) {
-        for (const subscriberSet of domSubscription.subscriberSets) {
-          subscriberSet.delete(domSubscription.subscription);
-        }
-        domSubscription.subscriberSets.clear();
-        domSubscriptions.delete(dom);
+      if (disposed) {
+        return;
       }
+      if (!dom.parentElement) {
+        dispose();
+        return;
+      }
+      updateVnode(dom.vnode);
     },
     subscriberSets: /* @__PURE__ */ new Set()
   };
   addDomSubscription(subscribers, domSubscription);
   domSubscriptions.set(dom, domSubscription);
+  onCleanup(dispose);
 }
 function createStore(initialState, pulses, immutable = false) {
   const domSubscriptions = /* @__PURE__ */ new WeakMap();
@@ -308,7 +318,7 @@ function createPulse(initialValue) {
   const subscribers = /* @__PURE__ */ new Set();
   const domSubscriptions = /* @__PURE__ */ new WeakMap();
   const runSubscribers = () => {
-    for (const subscriber of subscribers) {
+    for (const subscriber of Array.from(subscribers)) {
       subscriber();
     }
   };

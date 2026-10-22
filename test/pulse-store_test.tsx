@@ -566,8 +566,54 @@ describe("PulseStore", () => {
     unmount();
 
     pulseStore.increment();
+    await wait(0);
     expect(renderCount).toEqual(2); // Should not re-render after component unmount
   });
+
+  it("should ignore queued store notifications after unmount and container reuse", async () => NodeRuntime.run(async () => {
+    const store = createPulseStore(
+      { count: 0, label: "initial" },
+      {
+        change(state: any) {
+          state.count += 1;
+          state.label = "changed";
+        }
+      }
+    );
+    const dom = document.createElement("div");
+    document.body.appendChild(dom);
+    let oldRenders = 0;
+    let replacementRenders = 0;
+
+    function Original() {
+      oldRenders += 1;
+      return <span>{store.state.label}: {store.state.count}</span>;
+    }
+
+    function Replacement() {
+      replacementRenders += 1;
+      return <p>Replacement</p>;
+    }
+
+    try {
+      mount(dom, <Original />);
+      store.change();
+      unmount();
+      mount(dom, <Replacement />);
+      await wait(0);
+
+      expect(oldRenders).toEqual(1);
+      expect(replacementRenders).toEqual(1);
+      expect(dom.textContent).toEqual("Replacement");
+
+      store.change();
+      await wait(0);
+      expect(replacementRenders).toEqual(1);
+      expect(dom.textContent).toEqual("Replacement");
+    } finally {
+      unmount();
+    }
+  }));
 
   it("should handle null or undefined initial state", () => {
     const pulses = {
@@ -1121,6 +1167,29 @@ describe("Single pulses", () => {
   });
 
   describe("createEffect", () => {
+    it("should not notify effects added during the current pulse notification twice", () => {
+      const [count, setCount] = createPulse(0);
+      const observed: number[] = [];
+      let disposeAddedEffect = () => {};
+      const dispose = createEffect(() => {
+        if (count() === 1) {
+          disposeAddedEffect = createEffect(() => {
+            observed.push(count());
+          });
+        }
+      });
+
+      try {
+        setCount(1);
+        expect(observed).toEqual([1]);
+        setCount(2);
+        expect(observed).toEqual([1, 2]);
+      } finally {
+        dispose();
+        disposeAddedEffect();
+      }
+    });
+
     it("should execute the effect when initialized", () => {
       let effectExecuted = false;
       createEffect(() => {
@@ -1230,6 +1299,60 @@ describe("Single pulses", () => {
   });
 
   describe("Components using signals", () => {
+    it("should skip detached pulse subscribers before rendering", () => NodeRuntime.run(() => {
+      const dom = document.createElement("div");
+      document.body.appendChild(dom);
+      const [count, setCount, notify] = createPulse(0);
+      let renders = 0;
+
+      function Counter() {
+        renders += 1;
+        return <span>{count()}</span>;
+      }
+
+      try {
+        mount(dom, <Counter />);
+        document.body.removeChild(dom);
+        setCount(1);
+        notify();
+        expect(renders).toEqual(1);
+        expect(dom.textContent).toEqual("0");
+      } finally {
+        unmount();
+      }
+    }));
+
+    it("should stop pulse subscriptions after unmount even when the container stays attached", () => NodeRuntime.run(() => {
+      const dom = document.createElement("div");
+      document.body.appendChild(dom);
+      const [count, setCount, notify] = createPulse(0);
+      let renders = 0;
+
+      function Counter() {
+        renders += 1;
+        return <span>{count()}</span>;
+      }
+
+      try {
+        mount(dom, <Counter />);
+        unmount();
+        mount(dom, <Counter />);
+        setCount(1);
+        expect(renders).toEqual(3);
+        expect(dom.textContent).toEqual("1");
+        notify();
+        expect(renders).toEqual(4);
+
+        unmount();
+        setCount(2);
+        notify();
+        expect(renders).toEqual(4);
+        expect(dom.textContent).toEqual("");
+      } finally {
+        unmount();
+      }
+    }));
+
     it("should render a component using a signal", () => {
       const dom = document.createElement("div");
       const [count] = createPulse(0);
@@ -1259,6 +1382,9 @@ describe("Single pulses", () => {
       setCount(5);
 
       expect(dom.innerHTML).toEqual("<span>Count: 5</span>");
+
+      setCount(6);
+      expect(dom.textContent).toEqual("Count: 6");
     });
 
     it("should update the component when any of the signals change", () => {
