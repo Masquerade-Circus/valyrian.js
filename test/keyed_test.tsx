@@ -1,6 +1,5 @@
-import "valyrian.js/node";
-
-import { mount, update, v } from "valyrian.js";
+import { directive, mount, unmount, update, updateVnode, v, type VnodeWithDom } from "valyrian.js";
+import { NodeRuntime } from "valyrian.js/node";
 
 import { expect, describe, test as it } from "bun:test";
 
@@ -225,40 +224,200 @@ describe("Keyed lists", () => {
     expect(update()).toEqual("<ul><li>constructor</li><li>__proto__</li></ul>");
   });
 
-  it("Keyed list: runs lifecycle hooks when a keyed survivor displaces a removed node", () => {
-    const host = document.createElement("div");
-    const events: string[] = [];
-    let keys = ["A", "B"];
+  const lifecycleCases = [
+    { name: "removal", initialKeys: ["A", "B"], nextKeys: ["B"] },
+    { name: "insertion before a survivor", initialKeys: ["B", "A"], nextKeys: ["C", "B"] }
+  ];
+  for (const { name, initialKeys, nextKeys } of lifecycleCases) {
+    it(`Keyed list lifecycle: ${name}`, () => NodeRuntime.run(() => {
+      const host = document.createElement("div");
+      const removals: string[] = [];
+      const removedNodeConnections: boolean[] = [];
+      let keys = initialKeys;
 
-    const component = () => (
-      <ul>
-        {keys.map((key) => {
-          if (key === "A") {
+      const component = () => (
+        <ul>
+          {keys.map((key) => (
+            <li
+              key={key}
+              v-cleanup={({ dom }: VnodeWithDom) => {
+                if (key === "A") {
+                  removedNodeConnections.push(dom.parentNode !== null);
+                }
+              }}
+              v-remove={({ dom }: VnodeWithDom) => {
+                removals.push(key);
+                if (key === "A") {
+                  removedNodeConnections.push(dom.parentNode !== null);
+                }
+              }}
+            >
+              {key}
+            </li>
+          ))}
+        </ul>
+      );
+
+      try {
+        mount(host, component);
+        const list = host.querySelector("ul")!;
+        const survivor = list.childNodes[initialKeys.indexOf("B")];
+        const removed = list.childNodes[initialKeys.indexOf("A")];
+
+        keys = nextKeys;
+        update();
+
+        expect(Array.from(list.childNodes, (node) => node.textContent)).toEqual(nextKeys);
+        expect(list.childNodes[list.childNodes.length - 1]).toBe(survivor);
+        expect(removed.parentNode).toBeNull();
+        expect(removals).toEqual(["A"]);
+        expect(removedNodeConnections).toEqual([true, false]);
+      } finally {
+        unmount();
+      }
+    }));
+  }
+
+  it("Keyed list lifecycle: keeps a removed sibling mounted through surviving directives", () => {
+    NodeRuntime.run(() => {
+      const host = document.createElement("div");
+      const calls: string[] = [];
+      let keys = ["A", "B", "C"];
+      let removed: Element | null = null;
+      directive("observe-keyed-removal", (key) => {
+        if (removed) {
+          calls.push(`${key}:${removed.parentNode !== null}`);
+        }
+      });
+      const App = () => (
+        <ul>
+          {keys.map((key) => (
+            <li
+              key={key}
+              v-observe-keyed-removal={key}
+              {...(key === "A" ? { "v-cleanup": () => calls.push("cleanup"), "v-remove": () => calls.push("remove") } : {})}
+            >
+              {key}
+            </li>
+          ))}
+        </ul>
+      );
+
+      try {
+        mount(host, App);
+        removed = host.querySelector("li")!;
+        keys = ["B", "C"];
+        update();
+        expect(calls).toEqual(["B:true", "C:true", "cleanup", "remove"]);
+      } finally {
+        removed = null;
+        unmount();
+      }
+    });
+  });
+
+  it("Keyed list: dispatches the current delegated handler after moving a node", () => {
+    NodeRuntime.run(() => {
+      const host = document.createElement("div");
+      let keys = ["A", "B"];
+      let version = 1;
+      let selected = "";
+      const component = () => (
+        <section>
+          {keys.map((key) => {
+            const label = `${key}:${version}`;
             return (
-              <li
-                key={key}
-                v-cleanup={() => events.push("cleanup:A")}
-                v-remove={() => events.push("remove:A")}
-              >
+              <button key={key} onclick={() => (selected = label)}>
                 {key}
-              </li>
+              </button>
             );
-          }
+          })}
+          <output>{selected}</output>
+        </section>
+      );
 
-          return <li key={key}>{key}</li>;
-        })}
-      </ul>
-    );
+      try {
+        mount(host, component);
+        const button = host.querySelector("button") as HTMLButtonElement;
+        keys = ["B", "A"];
+        version = 2;
+        update();
 
-    expect(mount(host, component)).toEqual("<ul><li>A</li><li>B</li></ul>");
+        expect(host.querySelectorAll("button")[1]).toBe(button);
+        button.click();
+        expect(host.querySelector("output")?.textContent).toBe("A:2");
+      } finally {
+        unmount();
+      }
+    });
+  });
 
-    const list = host.childNodes[0] as Element;
-    const survivor = list.childNodes[1];
+  it("Keyed list: hydrates existing nodes and applies directives after reordering", () => {
+    NodeRuntime.run(() => {
+      const host = document.createElement("div");
+      host.innerHTML = "<ul><li>A</li><li>B</li></ul>";
+      const [first, second] = Array.from(host.querySelectorAll("li"));
+      let keys = [0, 1];
+      let showFirst = true;
+      const component = () => (
+        <ul>
+          {keys.map((key) => (
+            <li key={key} v-show={key !== 0 || showFirst}>
+              {key === 0 ? "A" : "B"}
+            </li>
+          ))}
+        </ul>
+      );
 
-    keys = ["B"];
+      try {
+        mount(host, component);
+        expect(host.querySelectorAll("li")[0]).toBe(first);
+        expect(host.querySelectorAll("li")[1]).toBe(second);
 
-    expect(update()).toEqual("<ul><li>B</li></ul>");
-    expect(Array.from(list.childNodes)).toEqual([survivor]);
-    expect(events).toEqual(["cleanup:A", "remove:A"]);
+        keys = [1, 0];
+        showFirst = false;
+        update();
+
+        expect(host.querySelectorAll("li")[1]).toBe(first);
+        expect(first.style.display).toBe("none");
+      } finally {
+        unmount();
+      }
+    });
+  });
+
+  it("Keyed list: updateVnode reorders a subtree without updating its sibling", () => {
+    NodeRuntime.run(() => {
+      const host = document.createElement("div");
+      let keys = ["A", "B"];
+      let siblingValue = "initial";
+      let listVnode: VnodeWithDom | null = null;
+      const Items = () => keys.map((key) => <li key={key}>{key}</li>);
+      const component = () => (
+        <section>
+          <ul
+            v-create={(vnode: VnodeWithDom) => {
+              listVnode = vnode;
+            }}
+          >
+            <Items />
+          </ul>
+          <output>{siblingValue}</output>
+        </section>
+      );
+
+      try {
+        mount(host, component);
+        const first = host.querySelector("li");
+        keys = ["B", "A"];
+        siblingValue = "changed";
+        updateVnode(listVnode!);
+
+        expect(host.querySelectorAll("li")[1]).toBe(first);
+        expect(host.querySelector("output")?.textContent).toBe("initial");
+      } finally {
+        unmount();
+      }
+    });
   });
 });

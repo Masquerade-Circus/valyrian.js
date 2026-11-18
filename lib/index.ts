@@ -988,47 +988,198 @@ function flatTree(newVnode: VnodeWithDom) {
   return out;
 }
 
-function processNewChild(newChild: VnodeWithDom, parentVnode: VnodeWithDom, oldDom?: DomElement, appendTarget?: Node) {
+function processNewChild(
+  newChild: VnodeWithDom,
+  parentVnode: VnodeWithDom,
+  oldDom?: DomElement,
+  appendTarget?: Node,
+  before?: Node
+) {
   const dom = createElement(newChild.tag, newChild.isSVG);
 
   if (oldDom) {
     newChild.dom = dom;
     strictReplaceChild(parentVnode.dom, newChild.dom, oldDom);
+  } else if (before) {
+    newChild.dom = parentVnode.dom.insertBefore(dom, before) as unknown as DomElement;
   } else {
     newChild.dom = (appendTarget || parentVnode.dom).appendChild(dom) as unknown as DomElement;
   }
   newChild.isSVG ? updateSVGAttributes(newChild) : updateDomAttributes(newChild);
   if ("v-text" in newChild.props) {
     newChild.dom.textContent = newChild.props["v-text"];
-    if (newChild.oncreate?.size) {
-      commitSet(newChild.oncreate);
+  } else {
+    const currentState = getRendererState().current;
+    currentState.oldVnode = null;
+    currentState.vnode = newChild;
+
+    const children = flatTree(newChild);
+    if (children.length === 0) {
+      newChild.dom.textContent = "";
+    } else {
+      appendNewChildren({ parentVnode: newChild, children, start: 0, target: newChild.dom });
     }
-    return;
   }
 
-  const currentState = getRendererState().current;
-  currentState.oldVnode = null;
-  currentState.vnode = newChild;
-
-  const children = flatTree(newChild);
-  if (children.length === 0) {
-    newChild.dom.textContent = "";
-    if (newChild.oncreate?.size) {
-      commitSet(newChild.oncreate);
-    }
-    return;
-  }
-
-  for (let i = 0, l = children.length; i < l; i++) {
-    if (children[i] instanceof Vnode === false) {
-      newChild.dom.appendChild(document.createTextNode(children[i]));
-      continue;
-    }
-    processNewChild(children[i] as VnodeWithDom, newChild);
-  }
   if (newChild.oncreate?.size) {
     commitSet(newChild.oncreate);
   }
+}
+
+function appendNewChildren({
+  parentVnode,
+  children,
+  start,
+  target
+}: {
+  parentVnode: VnodeWithDom;
+  children: Children;
+  start: number;
+  target: Node;
+}): void {
+  const dom = parentVnode.dom;
+  const useFragment = target !== dom;
+  let hasFragmentLifecycle = false;
+  for (let i = start, length = children.length; i < length; i++) {
+    const child = children[i] as VnodeWithDom;
+    if (child instanceof Vnode === false) {
+      target.appendChild(document.createTextNode(child));
+      continue;
+    }
+    processNewChild(child, parentVnode, undefined, target);
+    if (useFragment && (child.dom as any)[SUBTREE_LC]) {
+      hasFragmentLifecycle = true;
+    }
+  }
+  if (useFragment) {
+    dom.appendChild(target);
+    if (hasFragmentLifecycle) {
+      markSubtreeLifecycle(dom);
+    }
+  }
+}
+
+// Indices are relative to the changed range. The values are old DOM positions.
+// Leave the longest increasing subsequence in place, keeping the focused child
+// connected even if it takes more moves. Each tail tracks the smallest old end
+// position for a subsequence of that length.
+function stableKeyedPositions({ positions, focusedIndex }: { positions: number[]; focusedIndex: number }): Set<number> {
+  const tails: number[] = [];
+  const previous: number[] = [];
+  const focusedPosition = positions[focusedIndex];
+  for (let i = 0; i < positions.length; i++) {
+    const position = positions[i];
+    if (position === -1) {
+      continue;
+    }
+    // A focused child must stay connected. Only extend the subsequence with
+    // positions that can stay on the same side of that child in both orders.
+    if (focusedIndex >= 0 && i !== focusedIndex && (i < focusedIndex) !== (position < focusedPosition)) {
+      continue;
+    }
+    let low = 0;
+    let high = tails.length;
+    while (low < high) {
+      const mid = (low + high) >>> 1;
+      if (positions[tails[mid]] < position) {
+        low = mid + 1;
+      } else {
+        high = mid;
+      }
+    }
+    previous[i] = low > 0 ? tails[low - 1] : -1;
+    tails[low] = i;
+  }
+
+  const stable = new Set<number>();
+  for (let i = tails[tails.length - 1]; i >= 0; i = previous[i]) {
+    stable.add(i);
+  }
+  return stable;
+}
+
+function reconcileKeyedRange({
+  dom,
+  childNodes,
+  children,
+  start
+}: {
+  dom: DomElement;
+  childNodes: DomElement[];
+  children: Children;
+  start: number;
+}): { matches: (DomElement | null)[]; removals: DomElement[] } {
+  const oldKeys = new Map<string | number, number>();
+  for (let i = start; i < childNodes.length; i++) {
+    const key = childNodes[i].vnode?.key;
+    if (key != null) {
+      oldKeys.set(key, i);
+    }
+  }
+
+  const matches: (DomElement | null)[] = [];
+  const positions: number[] = [];
+  const retained: boolean[] = [];
+  let lastPosition = -1;
+  let reordered = false;
+  for (let i = start; i < children.length; i++) {
+    const child = children[i] as VnodeWithDom;
+    const key = child instanceof Vnode ? child.key : null;
+    const position = key == null ? i : oldKeys.get(key);
+    const candidate = position == null ? null : childNodes[position];
+    const match =
+      candidate &&
+      (key != null || candidate.vnode?.key == null) &&
+      (child instanceof Vnode
+        ? child.tag === (candidate.vnode?.tag || candidate.nodeName.toLowerCase())
+        : candidate.nodeType === 3);
+
+    if (!match || position == null || retained[position]) {
+      matches.push(null);
+      positions.push(-1);
+      continue;
+    }
+
+    matches.push(candidate);
+    positions.push(position);
+    retained[position] = true;
+    reordered = reordered || position < lastPosition;
+    lastPosition = position;
+  }
+
+  // Keep unmatched children mounted until their surviving siblings have run directives.
+  const removals: DomElement[] = [];
+  for (let i = childNodes.length - 1; i >= start; i--) {
+    if (!retained[i]) {
+      removals.push(childNodes[i]);
+    }
+  }
+
+  if (reordered) {
+    let focusedIndex = -1;
+    if (dom.ownerDocument) {
+      let focused: Node | null = (dom.getRootNode() as Document | ShadowRoot).activeElement ?? null;
+      while (focused && focused !== dom && focused.parentNode !== dom) {
+        focused = focused.parentNode;
+      }
+      if (focused?.parentNode === dom) {
+        focusedIndex = matches.indexOf(focused as DomElement);
+      }
+    }
+    const stable = stableKeyedPositions({ positions, focusedIndex });
+    let before: DomElement | null = null;
+    for (let i = matches.length - 1; i >= 0; i--) {
+      const child = matches[i];
+      if (child) {
+        if (!stable.has(i)) {
+          dom.insertBefore(child, before);
+        }
+        before = child;
+      }
+    }
+  }
+
+  return { matches, removals };
 }
 
 // eslint-disable-next-line complexity
@@ -1036,6 +1187,8 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
   const currentState = getRendererState().current;
   currentState.oldVnode = oldVnode;
   currentState.vnode = newVnode;
+  // Hydrated vnodes have never been flattened and have no rendered key state.
+  const hydrating = typeof (oldVnode || newVnode).hasKeys === "undefined";
   const children = flatTree(newVnode);
   const dom = newVnode.dom;
 
@@ -1068,72 +1221,48 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
   const oldChildrenLength = childNodes.length;
   const childrenLength = children.length;
   if (oldChildrenLength === 0) {
-    const appendTarget = childrenLength > 1 ? document.createDocumentFragment() : dom;
-    let hasFragmentLifecycle = false;
-    for (let i = 0; i < childrenLength; i++) {
-      const newChild = children[i] as VnodeWithDom;
-      if (newChild instanceof Vnode === false) {
-        appendTarget.appendChild(document.createTextNode(newChild));
-        continue;
-      }
-      processNewChild(newChild, newVnode, undefined, appendTarget);
-      if (appendTarget !== dom && (newChild.dom as any)[SUBTREE_LC]) {
-        hasFragmentLifecycle = true;
-      }
-    }
-    if (appendTarget !== dom) {
-      dom.appendChild(appendTarget);
-      if (hasFragmentLifecycle) {
-        markSubtreeLifecycle(dom);
-      }
-    }
+    const target = childrenLength > 1 ? document.createDocumentFragment() : dom;
+    appendNewChildren({ parentVnode: newVnode, children, start: 0, target });
     if (newVnode.oncreate?.size) {
       commitSet(newVnode.oncreate);
     }
     return;
   }
 
-  let oldTree = childNodes as unknown as DomElement[];
-  const oldKeyedList: Record<string | number, number> = Object.create(null);
-
-  if (newVnode.hasKeys) {
-    const newOldTree = [];
-    for (let i = 0, l = oldTree.length; i < l; i++) {
-      newOldTree[i] = oldTree[i];
-      const oldVnode = oldTree[i].vnode as VnodeWithDom;
-      oldKeyedList[(oldVnode?.key ?? i) as any] = i;
-    }
-    oldTree = newOldTree;
-  }
-
+  let keyedStart = 0;
+  let keyedChildren: ReturnType<typeof reconcileKeyedRange> | null = null;
+  let nextMatch = 0;
   for (let i = 0; i < childrenLength; i++) {
     const newChild = children[i] as VnodeWithDom;
+    const currentChild = childNodes[i];
+    if (newVnode.hasKeys && !hydrating && !keyedChildren && currentChild) {
+      const key = newChild instanceof Vnode ? newChild.key : null;
+      if ((key ?? null) !== (currentChild.vnode?.key ?? null)) {
+        keyedStart = i;
+        keyedChildren = reconcileKeyedRange({ dom, childNodes, children, start: i });
+      }
+    }
+    const offset = i - keyedStart;
+    const oldChild = keyedChildren ? keyedChildren.matches[offset] : currentChild;
+    let before: DomElement | null = null;
+    if (keyedChildren && !oldChild) {
+      const { matches } = keyedChildren;
+      nextMatch = Math.max(nextMatch, offset + 1);
+      while (nextMatch < matches.length && !matches[nextMatch]) {
+        nextMatch++;
+      }
+      before = matches[nextMatch] ?? null;
+    }
+
+    if (!oldChild && !keyedChildren) {
+      const target = newVnode.hasKeys ? dom : document.createDocumentFragment();
+      appendNewChildren({ parentVnode: newVnode, children, start: i, target });
+      break;
+    }
 
     if (newChild instanceof Vnode === false) {
-      const oldChild = oldTree[i];
       if (!oldChild) {
-        if (newVnode.hasKeys) {
-          dom.appendChild(document.createTextNode(newChild));
-        } else {
-          const fragment = document.createDocumentFragment();
-          let hasFragmentLifecycle = false;
-          for (let j = i; j < childrenLength; j++) {
-            const tailChild = children[j] as VnodeWithDom;
-            if (tailChild instanceof Vnode === false) {
-              fragment.appendChild(document.createTextNode(tailChild));
-            } else {
-              processNewChild(tailChild, newVnode, undefined, fragment);
-              if ((tailChild.dom as any)[SUBTREE_LC]) {
-                hasFragmentLifecycle = true;
-              }
-            }
-          }
-          dom.appendChild(fragment);
-          if (hasFragmentLifecycle) {
-            markSubtreeLifecycle(dom);
-          }
-          break;
-        }
+        dom.insertBefore(document.createTextNode(newChild), before);
         continue;
       }
 
@@ -1149,59 +1278,36 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
       continue;
     }
 
-    const oldChild = oldTree[newVnode.hasKeys ? oldKeyedList[(newChild.key ?? i) as any] : i] as DomElement;
-
     if (
       !oldChild ||
       newChild.tag !== ((oldChild.vnode as VnodeWithDom | undefined)?.tag || oldChild.nodeName.toLowerCase())
     ) {
-      if (!oldChild && !newVnode.hasKeys) {
-        const fragment = document.createDocumentFragment();
-        let hasFragmentLifecycle = false;
-        for (let j = i; j < childrenLength; j++) {
-          const tailChild = children[j] as VnodeWithDom;
-          if (tailChild instanceof Vnode === false) {
-            fragment.appendChild(document.createTextNode(tailChild));
-          } else {
-            processNewChild(tailChild, newVnode, undefined, fragment);
-            if ((tailChild.dom as any)[SUBTREE_LC]) {
-              hasFragmentLifecycle = true;
-            }
-          }
-        }
-        dom.appendChild(fragment);
-        if (hasFragmentLifecycle) {
-          markSubtreeLifecycle(dom);
-        }
-        break;
+      if (keyedChildren) {
+        processNewChild(newChild, newVnode, undefined, undefined, before ?? undefined);
+      } else {
+        processNewChild(newChild, newVnode, oldChild ?? undefined);
       }
-      processNewChild(newChild, newVnode, childNodes[i] as DomElement);
       continue;
     }
 
     newChild.dom = oldChild;
-    const currentChild = childNodes[i];
     const oldChildVnode = oldChild.vnode as VnodeWithDom;
-    if (!currentChild) {
-      dom.appendChild(oldChild);
-    } else if (currentChild !== oldChild) {
-      dom.insertBefore(oldChild, currentChild);
-    }
 
     if ("v-keep" in newChild.props && oldChildVnode) {
       if (oldChildVnode.props["v-keep"] === newChild.props["v-keep"]) {
         continue;
       }
 
-      const nextOldVnode = childNodes[i + 1]?.vnode as VnodeWithDom | undefined;
-      const oldProps = nextOldVnode?.props;
-      const nextKey = nextOldVnode?.key;
-      if (oldProps && typeof nextKey === "undefined" && oldProps["v-keep"] === newChild.props["v-keep"]) {
-        strictRemoveNode(oldChild);
-        if (newVnode.hasKeys) {
-          oldTree.splice(i, 1);
+      if (!keyedChildren && typeof newChild.key === "undefined") {
+        const nextOldVnode = childNodes[i + 1]?.vnode as VnodeWithDom | undefined;
+        if (
+          nextOldVnode?.props &&
+          typeof nextOldVnode.key === "undefined" &&
+          nextOldVnode.props["v-keep"] === newChild.props["v-keep"]
+        ) {
+          strictRemoveNode(oldChild);
+          continue;
         }
-        continue;
       }
     }
 
@@ -1224,8 +1330,10 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
     patch(newChild as VnodeWithDom, oldChildVnode || null);
   }
 
-  for (let i = childNodes.length; i > childrenLength; i--) {
-    const toRemove = childNodes[i - 1];
+  const removals = keyedChildren?.removals;
+  const removalCount = removals ? removals.length : childNodes.length - childrenLength;
+  for (let i = 0; i < removalCount; i++) {
+    const toRemove = removals ? removals[i] : childNodes[childNodes.length - 1];
     if (toRemove && toRemove.nodeType === 1) {
       strictRemoveNode(toRemove);
     } else {
