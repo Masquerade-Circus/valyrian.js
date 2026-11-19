@@ -882,7 +882,7 @@ export function createElement(tag: string, isSVG?: boolean): DomElement {
     : (document.createElement(tag) as DomElement);
 }
 
-function flatTree(newVnode: VnodeWithDom) {
+function flatTree(newVnode: VnodeWithDom, mounting = false) {
   let children: Children;
   const newChildren = newVnode.children;
   const parentIsSVG = newVnode.isSVG;
@@ -928,6 +928,9 @@ function flatTree(newVnode: VnodeWithDom) {
     children = fallbackChildren;
   } else {
     const newChildrenLength = newChildren.length;
+    if (newChildrenLength === 0 && mounting) {
+      return [];
+    }
     children = new Array(newChildrenLength);
     for (let i = newChildrenLength - 1, l = 0; i >= 0; i--, l++) {
       children[l] = newChildren[i];
@@ -1013,7 +1016,7 @@ function processNewChild(
     currentState.oldVnode = null;
     currentState.vnode = newChild;
 
-    const children = flatTree(newChild);
+    const children = flatTree(newChild, true);
     if (children.length === 0) {
       newChild.dom.textContent = "";
     } else {
