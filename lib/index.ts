@@ -1077,14 +1077,17 @@ function stableKeyedPositions({ positions, focusedIndex }: { positions: number[]
     if (focusedIndex >= 0 && i !== focusedIndex && (i < focusedIndex) !== (position < focusedPosition)) {
       continue;
     }
-    let low = 0;
-    let high = tails.length;
-    while (low < high) {
-      const mid = (low + high) >>> 1;
-      if (positions[tails[mid]] < position) {
-        low = mid + 1;
-      } else {
-        high = mid;
+    let low = tails.length;
+    if (low > 0 && positions[tails[low - 1]] >= position) {
+      let high = low - 1;
+      low = 0;
+      while (low < high) {
+        const mid = (low + high) >>> 1;
+        if (positions[tails[mid]] < position) {
+          low = mid + 1;
+        } else {
+          high = mid;
+        }
       }
     }
     previous[i] = low > 0 ? tails[low - 1] : -1;

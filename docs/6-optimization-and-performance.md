@@ -45,13 +45,17 @@ Move to `FormStore` when you need validation, canonical formatting, async submit
 
 ## 6.3. Keyed Lists and Node Reuse
 
-When list order can change, give siblings stable `key` values.
+Give each item a `key` that is unique among its siblings and stays the same in both value and type across renders.
 
 ```tsx
 <ul v-for={users}>
   {(user) => <li key={user.id}>{user.name}</li>}
 </ul>
 ```
+
+Valyrian.js accepts strings and numbers as keys and compares them without converting their types. The number `1` and the string `"1"` can identify different siblings. If the same item switches from `1` to `"1"` between renders, Valyrian.js treats it as a different item and may replace its DOM node. That can reset local state, such as which input has focus.
+
+If your data source sends the same ID as both a number and a string, normalize the ID to a consistent type when you receive the data, before using it as a key.
 
 Why it matters:
 
