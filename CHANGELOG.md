@@ -1,5 +1,17 @@
 # Changelog
 
+## [9.3.2](https://github.com/Masquerade-Circus/valyrian/compare/9.3.1...9.3.2) (2026-11-20)
+
+### Bug Fixes
+
+* preserve directive lifecycles during hydration ([8d835f0](https://github.com/Masquerade-Circus/valyrian/commit/8d835f0601552b4bc20d895369758bc4dd92dc93))
+
+### Performance Improvements
+
+* optimize keyed list reconciliation ([d8139cc](https://github.com/Masquerade-Circus/valyrian/commit/d8139cca6782298b24fd245fed298b7601846193))
+* skip child normalization when mounting empty nodes ([19e6521](https://github.com/Masquerade-Circus/valyrian/commit/19e6521fa0db1ba7cc12caf538157614989117a8))
+* streamline keyed LIS and document key identity ([06d3156](https://github.com/Masquerade-Circus/valyrian/commit/06d31564c10970740465f8440cf2b81d01be1f93))
+
 ## [9.3.1](https://github.com/Masquerade-Circus/valyrian/compare/9.3.0...9.3.1) (2026-10-22)
 
 ### Bug Fixes

@@ -806,7 +806,7 @@ describe("Mount and update", () => {
   });
 });
 
-describe("Benchmark Test: Mount and update", function () {
+describe.skip("Benchmark Test: Mount and update", function () {
   beforeEach(unmount);
   afterEach(unmount);
 

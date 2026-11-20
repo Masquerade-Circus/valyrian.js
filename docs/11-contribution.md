@@ -34,3 +34,11 @@ bun run dev:test
 bun run build:source
 bun run badges
 ```
+
+## 11.4. Releases and Changelog
+
+`npm run release` is the maintainer command for publishing a version. It runs Release It, which first invokes `bun run build` to build the distribution, run tests with coverage, and regenerate badges and `llms-full.txt`. Those steps are part of the release command.
+
+Release It bumps the version and uses the conventional changelog plugin to update `CHANGELOG.md` from commit history. Use Conventional Commit messages for contributions and leave the changelog for the release tool to generate. The release workflow creates the release commit and tag, pushes to Git, publishes to npm, and creates a GitHub release.
+
+The release configuration allows a working tree with changes. The workflow itself writes build outputs and updates the changelog. Review any pre-existing changes before publishing so the release starts from the intended contents.

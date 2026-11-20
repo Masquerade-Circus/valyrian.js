@@ -35,21 +35,29 @@ export declare const isNodeJs: boolean;
 export declare const fragment: unique symbol;
 export type Fragment = typeof fragment;
 export type VnodeTag = string | ValyrianComponent | Fragment;
+declare const OLD_CHILD_COMPONENTS: unique symbol;
+declare const CHILD_COMPONENTS: unique symbol;
+declare const HAS_KEYS: unique symbol;
+declare const IS_SVG: unique symbol;
+declare const ON_CREATE: unique symbol;
+declare const ON_UPDATE: unique symbol;
+declare const ON_CLEANUP: unique symbol;
+declare const ON_REMOVE: unique symbol;
 export declare class Vnode {
     tag: VnodeTag;
     props: null | Properties;
     children: Children;
     key?: string | number | undefined;
     dom?: DomElement | undefined;
-    isSVG?: boolean | undefined;
-    oldChildComponents?: Set<ValyrianComponent> | undefined;
-    childComponents?: Set<ValyrianComponent> | undefined;
-    hasKeys?: boolean | undefined;
-    oncreate?: Set<Function> | undefined;
-    oncleanup?: Set<Function> | undefined;
-    onupdate?: Set<Function> | undefined;
-    onremove?: Set<Function> | undefined;
-    constructor(tag: VnodeTag, props: null | Properties, children: Children, key?: string | number | undefined, dom?: DomElement | undefined, isSVG?: boolean | undefined, oldChildComponents?: Set<ValyrianComponent> | undefined, childComponents?: Set<ValyrianComponent> | undefined, hasKeys?: boolean | undefined, oncreate?: Set<Function> | undefined, oncleanup?: Set<Function> | undefined, onupdate?: Set<Function> | undefined, onremove?: Set<Function> | undefined);
+    [IS_SVG]?: boolean;
+    [OLD_CHILD_COMPONENTS]?: Set<ValyrianComponent>;
+    [CHILD_COMPONENTS]?: Set<ValyrianComponent>;
+    [HAS_KEYS]?: boolean;
+    [ON_CREATE]?: Set<Function>;
+    [ON_CLEANUP]?: Set<Function>;
+    [ON_UPDATE]?: Set<Function>;
+    [ON_REMOVE]?: Set<Function>;
+    constructor(tag: VnodeTag, props: null | Properties, children: Children, key?: string | number | undefined, dom?: DomElement | undefined, isSVG?: boolean, oldChildComponents?: Set<ValyrianComponent>, childComponents?: Set<ValyrianComponent>, hasKeys?: boolean, oncreate?: Set<Function>, oncleanup?: Set<Function>, onupdate?: Set<Function>, onremove?: Set<Function>);
 }
 export interface VnodeWithDom extends Vnode {
     tag: string;

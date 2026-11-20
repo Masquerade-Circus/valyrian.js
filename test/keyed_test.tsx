@@ -228,53 +228,54 @@ describe("Keyed lists", () => {
     { name: "insertion before a survivor", initialKeys: ["B", "A"], nextKeys: ["C", "B"] }
   ];
   for (const { name, initialKeys, nextKeys } of lifecycleCases) {
-    it(`Keyed list lifecycle: ${name}`, () => NodeRuntime.run(() => {
-      const host = document.createElement("div");
-      const removals: string[] = [];
-      const removedNodeConnections: boolean[] = [];
-      let keys = initialKeys;
+    it(`Keyed list lifecycle: ${name}`, () =>
+      NodeRuntime.run(() => {
+        const host = document.createElement("div");
+        const removals: string[] = [];
+        const removedNodeConnections: boolean[] = [];
+        let keys = initialKeys;
 
-      const component = () => (
-        <ul>
-          {keys.map((key) => (
-            <li
-              key={key}
-              v-cleanup={({ dom }: VnodeWithDom) => {
-                if (key === "A") {
-                  removedNodeConnections.push(dom.parentNode !== null);
-                }
-              }}
-              v-remove={({ dom }: VnodeWithDom) => {
-                removals.push(key);
-                if (key === "A") {
-                  removedNodeConnections.push(dom.parentNode !== null);
-                }
-              }}
-            >
-              {key}
-            </li>
-          ))}
-        </ul>
-      );
+        const component = () => (
+          <ul>
+            {keys.map((key) => (
+              <li
+                key={key}
+                v-cleanup={({ dom }: VnodeWithDom) => {
+                  if (key === "A") {
+                    removedNodeConnections.push(dom.parentNode !== null);
+                  }
+                }}
+                v-remove={({ dom }: VnodeWithDom) => {
+                  removals.push(key);
+                  if (key === "A") {
+                    removedNodeConnections.push(dom.parentNode !== null);
+                  }
+                }}
+              >
+                {key}
+              </li>
+            ))}
+          </ul>
+        );
 
-      try {
-        mount(host, component);
-        const list = host.querySelector("ul")!;
-        const survivor = list.childNodes[initialKeys.indexOf("B")];
-        const removed = list.childNodes[initialKeys.indexOf("A")];
+        try {
+          mount(host, component);
+          const list = host.querySelector("ul")!;
+          const survivor = list.childNodes[initialKeys.indexOf("B")];
+          const removed = list.childNodes[initialKeys.indexOf("A")];
 
-        keys = nextKeys;
-        update();
+          keys = nextKeys;
+          update();
 
-        expect(Array.from(list.childNodes, (node) => node.textContent)).toEqual(nextKeys);
-        expect(list.childNodes[list.childNodes.length - 1]).toBe(survivor);
-        expect(removed.parentNode).toBeNull();
-        expect(removals).toEqual(["A"]);
-        expect(removedNodeConnections).toEqual([true, false]);
-      } finally {
-        unmount();
-      }
-    }));
+          expect(Array.from(list.childNodes, (node) => node.textContent)).toEqual(nextKeys);
+          expect(list.childNodes[list.childNodes.length - 1]).toBe(survivor);
+          expect(removed.parentNode).toBeNull();
+          expect(removals).toEqual(["A"]);
+          expect(removedNodeConnections).toEqual([true, false]);
+        } finally {
+          unmount();
+        }
+      }));
   }
 
   it("Keyed list lifecycle: keeps a removed sibling mounted through surviving directives", () => {
@@ -294,7 +295,9 @@ describe("Keyed lists", () => {
             <li
               key={key}
               v-observe-keyed-removal={key}
-              {...(key === "A" ? { "v-cleanup": () => calls.push("cleanup"), "v-remove": () => calls.push("remove") } : {})}
+              {...(key === "A"
+                ? { "v-cleanup": () => calls.push("cleanup"), "v-remove": () => calls.push("remove") }
+                : {})}
             >
               {key}
             </li>

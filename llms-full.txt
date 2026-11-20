@@ -4,7 +4,7 @@ Purpose
 This file aggregates the official documentation sources from the `docs/` directory as a single reference for AI agents and tooling.
 
 Generated
-- Date (UTC): 2026-10-22
+- Date (UTC): 2026-11-20
 - Source root: `docs/`
 - File count: 51
 
@@ -2819,13 +2819,17 @@ Move to `FormStore` when you need validation, canonical formatting, async submit
 
 ## 6.3. Keyed Lists and Node Reuse
 
-When list order can change, give siblings stable `key` values.
+Give each item a `key` that is unique among its siblings and stays the same in both value and type across renders.
 
 ```tsx
 <ul v-for={users}>
   {(user) => <li key={user.id}>{user.name}</li>}
 </ul>
 ```
+
+Valyrian.js accepts strings and numbers as keys and compares them without converting their types. The number `1` and the string `"1"` can identify different siblings. If the same item switches from `1` to `"1"` between renders, Valyrian.js treats it as a different item and may replace its DOM node. That can reset local state, such as which input has focus.
+
+If your data source sends the same ID as both a number and a string, normalize the ID to a consistent type when you receive the data, before using it as a key.
 
 Why it matters:
 
@@ -5903,6 +5907,14 @@ bun run build:source
 bun run badges
 ```
 
+## 11.4. Releases and Changelog
+
+`npm run release` is the maintainer command for publishing a version. It runs Release It, which first invokes `bun run build` to build the distribution, run tests with coverage, and regenerate badges and `llms-full.txt`. Those steps are part of the release command.
+
+Release It bumps the version and uses the conventional changelog plugin to update `CHANGELOG.md` from commit history. Use Conventional Commit messages for contributions and leave the changelog for the release tool to generate. The release workflow creates the release commit and tag, pushes to Git, publishes to npm, and creates a GitHub release.
+
+The release configuration allows a working tree with changes. The workflow itself writes build outputs and updates the changelog. Review any pre-existing changes before publishing so the release starts from the intended contents.
+
 
 ____________________________________________
 # Source: docs/12-versioning-policy.md
@@ -7340,3 +7352,4 @@ Expected result: the SSR server serves the Taskboard document, generated manifes
 - Use [Recipes and Integrations](./9-recipes-and-integrations.md) when you want a focused task outside the cumulative tutorial.
 - Use [Runtime Core API](./3.1-runtime-core.md) to inspect the mount, update, lifecycle and hydration contracts behind these stages.
 - Use [Run the Same Application in Browser and Node.js](./7-full-stack-capability.md) when you want the server-side path in more depth.
+
