@@ -126,18 +126,17 @@ describe("Hyperscript", () => {
   });
 
   it("should create a div element from string", () => {
-    expect(trust('<div id="unique" class="unique">Hola mundo</div>')).toEqual([
-      {
-        tag: "div",
-        props: {
-          id: "unique",
-          class: "unique"
-        },
-        isSVG: false,
-        children: ["Hola mundo"],
-        dom: expect.anything()
-      }
-    ]);
+    const nodes = trust('<div id="unique" class="unique">Hola mundo</div>');
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0]).toMatchObject({
+      tag: "div",
+      props: {
+        id: "unique",
+        class: "unique"
+      },
+      children: ["Hola mundo"],
+      dom: expect.anything()
+    });
   });
 
   it("should expose hydrateDomToVnode with the corrected spelling", () => {
@@ -145,15 +144,15 @@ describe("Hyperscript", () => {
     dom.setAttribute("id", "unique");
     dom.appendChild(document.createTextNode("Hola mundo"));
 
-    expect(hydrateDomToVnode(dom)).toEqual({
+    const vnode = hydrateDomToVnode(dom);
+    expect(vnode).toMatchObject({
       tag: "div",
       props: {
         id: "unique"
       },
-      isSVG: false,
-      children: ["Hola mundo"],
-      dom
+      children: ["Hola mundo"]
     });
+    expect(typeof vnode === "object" ? vnode?.dom : null).toBe(dom);
   });
 
   it("should handle different types of data", () => {

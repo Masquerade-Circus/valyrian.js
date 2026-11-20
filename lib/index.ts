@@ -45,22 +45,49 @@ export const fragment = Symbol.for("valyrian.fragment");
 export type Fragment = typeof fragment;
 export type VnodeTag = string | ValyrianComponent | Fragment;
 
+const OLD_CHILD_COMPONENTS = Symbol("oldChildComponents");
+const CHILD_COMPONENTS = Symbol("childComponents");
+const HAS_KEYS = Symbol("hasKeys");
+const IS_SVG = Symbol("isSVG");
+const ON_CREATE = Symbol("oncreate");
+const ON_UPDATE = Symbol("onupdate");
+const ON_CLEANUP = Symbol("oncleanup");
+const ON_REMOVE = Symbol("onremove");
+
 export class Vnode {
+  declare [IS_SVG]?: boolean;
+  declare [OLD_CHILD_COMPONENTS]?: Set<ValyrianComponent>;
+  declare [CHILD_COMPONENTS]?: Set<ValyrianComponent>;
+  declare [HAS_KEYS]?: boolean;
+  declare [ON_CREATE]?: Set<Function>;
+  declare [ON_CLEANUP]?: Set<Function>;
+  declare [ON_UPDATE]?: Set<Function>;
+  declare [ON_REMOVE]?: Set<Function>;
+
   constructor(
     public tag: VnodeTag,
     public props: null | Properties,
     public children: Children,
     public key?: string | number,
     public dom?: DomElement,
-    public isSVG?: boolean,
-    public oldChildComponents?: Set<ValyrianComponent>,
-    public childComponents?: Set<ValyrianComponent>,
-    public hasKeys?: boolean,
-    public oncreate?: Set<Function>,
-    public oncleanup?: Set<Function>,
-    public onupdate?: Set<Function>,
-    public onremove?: Set<Function>
-  ) {}
+    isSVG?: boolean,
+    oldChildComponents?: Set<ValyrianComponent>,
+    childComponents?: Set<ValyrianComponent>,
+    hasKeys?: boolean,
+    oncreate?: Set<Function>,
+    oncleanup?: Set<Function>,
+    onupdate?: Set<Function>,
+    onremove?: Set<Function>
+  ) {
+    this[IS_SVG] = isSVG;
+    this[OLD_CHILD_COMPONENTS] = oldChildComponents;
+    this[CHILD_COMPONENTS] = childComponents;
+    this[HAS_KEYS] = hasKeys;
+    this[ON_CREATE] = oncreate;
+    this[ON_CLEANUP] = oncleanup;
+    this[ON_UPDATE] = onupdate;
+    this[ON_REMOVE] = onremove;
+  }
 }
 
 export interface VnodeWithDom extends Vnode {
@@ -92,6 +119,9 @@ export function v(tagOrComponent: VnodeTag, props: Properties | null, ...childre
 
 v.fragment = (_: any, ...children: Children) => children;
 
+const DOM_SNAPSHOT = Symbol("valyrian.domSnapshot");
+type VnodeWithOrigin = VnodeWithDom & { [DOM_SNAPSHOT]?: true };
+
 export function hydrateDomToVnode(dom: any): VnodeWithDom | string | null | void {
   if (dom.nodeType === 3) {
     return dom.nodeValue;
@@ -119,9 +149,11 @@ export function hydrateDomToVnode(dom: any): VnodeWithDom | string | null | void
     }
 
     const vnode = new Vnode(tag, props, children);
+    // Keep the internal origin out of enumerable VNode data.
+    Object.defineProperty(vnode, DOM_SNAPSHOT, { value: true });
     vnode.dom = dom;
     dom.vnode = vnode;
-    vnode.isSVG = tag === "svg";
+    vnode[IS_SVG] = tag === "svg";
     return vnode as VnodeWithDom;
   }
 }
@@ -219,12 +251,7 @@ export const reservedProps = new Set<string>([
   "srcdoc"
 ]);
 
-enum SetType {
-  onCreate = "oncreate",
-  onUpdate = "onupdate",
-  onCleanup = "oncleanup",
-  onRemove = "onremove"
-}
+type SetType = typeof ON_CREATE | typeof ON_UPDATE | typeof ON_CLEANUP | typeof ON_REMOVE;
 
 const SUBTREE_LC = Symbol.for("valyrian.subtreeLifecycle");
 
@@ -237,8 +264,7 @@ function markSubtreeLifecycle(dom: DomElement) {
 }
 
 function registerCleanup(cleanup: Function, vnode: VnodeWithDom) {
-  vnode[SetType.onCleanup] = vnode[SetType.onCleanup] || new Set();
-  vnode[SetType.onCleanup].add(cleanup);
+  (vnode[ON_CLEANUP] ||= new Set()).add(cleanup);
 
   if (vnode.dom) {
     markSubtreeLifecycle(vnode.dom);
@@ -246,13 +272,13 @@ function registerCleanup(cleanup: Function, vnode: VnodeWithDom) {
 }
 
 function addCallbackToSet(callback: Function, setType: SetType, vnode: VnodeWithDom) {
-  vnode[setType] = vnode[setType] || new Set();
+  const callbacks = (vnode[setType] ||= new Set());
 
-  if (vnode.dom && (setType === SetType.onCleanup || setType === SetType.onRemove)) {
+  if (vnode.dom && (setType === ON_CLEANUP || setType === ON_REMOVE)) {
     markSubtreeLifecycle(vnode.dom);
   }
 
-  vnode[setType].add(() => {
+  callbacks.add(() => {
     const cleanup = callback();
     if (typeof cleanup === "function") {
       registerCleanup(cleanup, vnode);
@@ -272,11 +298,10 @@ export const onCreate = (callback: OnCreateCallback) => {
   const currentState = getCurrentComponentState();
   const parentVnode = currentState.vnode as VnodeWithDom;
   const component = currentState.component as ValyrianComponent;
-  const hasComponentAsOldChild = parentVnode.oldChildComponents && parentVnode.oldChildComponents.has(component);
+  const hasComponentAsOldChild = parentVnode[OLD_CHILD_COMPONENTS]?.has(component);
 
   if (!hasComponentAsOldChild) {
-    parentVnode[SetType.onCreate] = parentVnode[SetType.onCreate] || new Set();
-    parentVnode[SetType.onCreate].add(() => {
+    (parentVnode[ON_CREATE] ||= new Set()).add(() => {
       const state = getRendererState();
       const mainVnode = state.mainVnode;
       const cleanup = callback();
@@ -304,14 +329,14 @@ export const onUpdate = (callback: OnUpdateCallback) => {
   const currentState = getCurrentComponentState();
   const parentVnode = currentState.vnode as VnodeWithDom;
   const component = currentState.component as ValyrianComponent;
-  const hasComponentAsChild = parentVnode.childComponents && parentVnode.childComponents.has(component);
+  const hasComponentAsChild = parentVnode[CHILD_COMPONENTS]?.has(component);
   if (hasComponentAsChild) {
-    addCallbackToSet(callback, SetType.onUpdate, parentVnode);
+    addCallbackToSet(callback, ON_UPDATE, parentVnode);
   }
 };
 export const onCleanup = (callback: Function) => {
   const currentState = getCurrentComponentState();
-  addCallbackToSet(callback, SetType.onCleanup, currentState.vnode as VnodeWithDom);
+  addCallbackToSet(callback, ON_CLEANUP, currentState.vnode as VnodeWithDom);
 };
 export const onRemove = (callback: Function) => {
   const currentState = getCurrentComponentState();
@@ -320,7 +345,7 @@ export const onRemove = (callback: Function) => {
   let removed = false;
 
   function removeCallback() {
-    const hasComponentAsChild = parentVnode.childComponents && parentVnode.childComponents.has(component);
+    const hasComponentAsChild = parentVnode[CHILD_COMPONENTS]?.has(component);
 
     if (hasComponentAsChild || removed) {
       return;
@@ -330,7 +355,7 @@ export const onRemove = (callback: Function) => {
     callback();
   }
 
-  addCallbackToSet(removeCallback, SetType.onRemove, parentVnode);
+  addCallbackToSet(removeCallback, ON_REMOVE, parentVnode);
 };
 const callSet = (set?: Set<Function> | null) => {
   if (!set) {
@@ -376,16 +401,18 @@ function collectVnodesPostOrder(dom: DomElement, out: VnodeWithDom[]) {
 
 function callCleanupOnVnodes(vnodes: VnodeWithDom[]) {
   for (let i = 0; i < vnodes.length; i++) {
-    if (vnodes[i].oncleanup?.size) {
-      callSet(vnodes[i].oncleanup);
+    const callbacks = vnodes[i][ON_CLEANUP];
+    if (callbacks?.size) {
+      callSet(callbacks);
     }
   }
 }
 
 function callRemoveOnVnodes(vnodes: VnodeWithDom[]) {
   for (let i = 0; i < vnodes.length; i++) {
-    if (vnodes[i].onremove?.size) {
-      callSet(vnodes[i].onremove);
+    const callbacks = vnodes[i][ON_REMOVE];
+    if (callbacks?.size) {
+      callSet(callbacks);
     }
   }
 }
@@ -426,25 +453,23 @@ export const directives: Record<string, Directive> = {
       return;
     }
 
-    addCallbackToSet(() => callback(vnode), SetType.onCreate, vnode);
+    addCallbackToSet(() => callback(vnode), ON_CREATE, vnode);
   },
 
   "v-update": (callback, vnode, oldProps) => {
     if (!oldProps) {
       return;
     }
-    addCallbackToSet(() => callback(vnode, oldProps), SetType.onUpdate, vnode);
+    addCallbackToSet(() => callback(vnode, oldProps), ON_UPDATE, vnode);
   },
 
   "v-cleanup": (callback, vnode) => {
-    vnode.oncleanup = vnode.oncleanup || new Set();
-    vnode.oncleanup.add(() => callback(vnode));
+    (vnode[ON_CLEANUP] ||= new Set()).add(() => callback(vnode));
     markSubtreeLifecycle(vnode.dom);
   },
 
   "v-remove": (callback, vnode) => {
-    vnode.onremove = vnode.onremove || new Set();
-    vnode.onremove.add(() => callback(vnode));
+    (vnode[ON_REMOVE] ||= new Set()).add(() => callback(vnode));
     markSubtreeLifecycle(vnode.dom);
   },
 
@@ -634,7 +659,7 @@ export const directives: Record<string, Directive> = {
   style: (value, newVnode) => {
     const vnodeDom = newVnode.dom;
     if (typeof value === "string") {
-      if (newVnode.isSVG) {
+      if (newVnode[IS_SVG]) {
         vnodeDom.setAttribute("style", value);
         return;
       }
@@ -643,7 +668,7 @@ export const directives: Record<string, Directive> = {
     }
 
     if (typeof value === "object") {
-      if (newVnode.isSVG) {
+      if (newVnode[IS_SVG]) {
         vnodeDom.setAttribute("style", "");
       } else {
         vnodeDom.style = "";
@@ -689,7 +714,7 @@ function sharedSetAttribute(name: string, value: any, newVnode: VnodeWithDom): v
   }
 
   const newVnodeDom = newVnode.dom;
-  if (!newVnode.isSVG && name in newVnodeDom) {
+  if (!newVnode[IS_SVG] && name in newVnodeDom) {
     newVnodeDom[name] = value;
     return;
   }
@@ -754,10 +779,12 @@ export function setAttribute(name: string, value: any, newVnode: VnodeWithDom): 
   }
 }
 
-function updateSVGAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void | false {
+function updateSVGAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithOrigin): void | false {
   const vnodeDom = newVnode.dom;
   const vnodeProps = newVnode.props;
   const oldVnodeProps = oldVnode?.props;
+  // null means directive props have not been resolved yet.
+  let oldDirectiveProps: Properties | undefined | null = null;
   vnodeDom.vnode = newVnode;
 
   if (oldVnodeProps) {
@@ -793,8 +820,11 @@ function updateSVGAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): v
     }
 
     if (name in directives) {
+      if (oldDirectiveProps === null) {
+        oldDirectiveProps = oldVnode?.[DOM_SNAPSHOT] ? void 0 : oldVnodeProps;
+      }
       const runDirective = directives[name];
-      const result = runDirective(value, newVnode, oldVnodeProps);
+      const result = runDirective(value, newVnode, oldDirectiveProps);
       if (result === false) {
         return;
       }
@@ -810,10 +840,11 @@ function updateSVGAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): v
   }
 }
 
-function updateDomAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void | false {
+function updateDomAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithOrigin): void | false {
   const vnodeDom = newVnode.dom;
   const vnodeProps = newVnode.props;
   const oldVnodeProps = oldVnode?.props;
+  let oldDirectiveProps: Properties | undefined | null = null;
   vnodeDom.vnode = newVnode;
 
   if (oldVnodeProps) {
@@ -853,8 +884,11 @@ function updateDomAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): v
     }
 
     if (name in directives) {
+      if (oldDirectiveProps === null) {
+        oldDirectiveProps = oldVnode?.[DOM_SNAPSHOT] ? void 0 : oldVnodeProps;
+      }
       const runDirective = directives[name];
-      const result = runDirective(value, newVnode, oldVnodeProps);
+      const result = runDirective(value, newVnode, oldDirectiveProps);
       if (result === false) {
         return;
       }
@@ -871,7 +905,7 @@ function updateDomAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): v
 }
 
 export function updateAttributes(newVnode: VnodeWithDom, oldVnode?: VnodeWithDom): void | false {
-  return newVnode.isSVG ? updateSVGAttributes(newVnode, oldVnode) : updateDomAttributes(newVnode, oldVnode);
+  return newVnode[IS_SVG] ? updateSVGAttributes(newVnode, oldVnode) : updateDomAttributes(newVnode, oldVnode);
 }
 
 const SvgElementNS = "http://www.w3.org/2000/svg";
@@ -885,10 +919,10 @@ export function createElement(tag: string, isSVG?: boolean): DomElement {
 function flatTree(newVnode: VnodeWithDom, mounting = false) {
   let children: Children;
   const newChildren = newVnode.children;
-  const parentIsSVG = newVnode.isSVG;
-  newVnode.hasKeys = false;
-  newVnode.oldChildComponents = newVnode.childComponents;
-  newVnode.childComponents = undefined;
+  const parentIsSVG = newVnode[IS_SVG];
+  newVnode[HAS_KEYS] = false;
+  newVnode[OLD_CHILD_COMPONENTS] = newVnode[CHILD_COMPONENTS];
+  newVnode[CHILD_COMPONENTS] = void 0;
 
   if ("v-for" in newVnode.props) {
     const callback = newVnode.children[0];
@@ -906,8 +940,8 @@ function flatTree(newVnode: VnodeWithDom, mounting = false) {
       const newChild = callback(set[i], i);
       if (fallbackChildren === null && newChild instanceof Vnode && typeof newChild.tag === "string") {
         newChild.props = newChild.props || {};
-        newChild.isSVG = parentIsSVG || newChild.tag === "svg";
-        newVnode.hasKeys = newVnode.hasKeys || typeof newChild.key !== "undefined";
+        newChild[IS_SVG] = parentIsSVG || newChild.tag === "svg";
+        newVnode[HAS_KEYS] = newVnode[HAS_KEYS] || typeof newChild.key !== "undefined";
         simpleChildren[i] = newChild;
         continue;
       }
@@ -955,7 +989,7 @@ function flatTree(newVnode: VnodeWithDom, mounting = false) {
 
     if (newChild instanceof Vnode) {
       newChild.props = newChild.props || {};
-      newChild.isSVG = parentIsSVG || newChild.tag === "svg";
+      newChild[IS_SVG] = parentIsSVG || newChild.tag === "svg";
 
       if (newChild.tag === fragment) {
         for (let l = newChild.children.length - 1; l >= 0; l--) {
@@ -966,8 +1000,7 @@ function flatTree(newVnode: VnodeWithDom, mounting = false) {
 
       if (typeof newChild.tag !== "string") {
         const component = (current.component = newChild.tag);
-        newVnode.childComponents = newVnode.childComponents || new Set();
-        newVnode.childComponents.add(component);
+        (newVnode[CHILD_COMPONENTS] ||= new Set()).add(component);
 
         children.push(
           (typeof component === "function" ? component : component.view).call(
@@ -980,7 +1013,7 @@ function flatTree(newVnode: VnodeWithDom, mounting = false) {
         continue;
       }
 
-      newVnode.hasKeys = newVnode.hasKeys || typeof newChild.key !== "undefined";
+      newVnode[HAS_KEYS] = newVnode[HAS_KEYS] || typeof newChild.key !== "undefined";
       out.push(newChild);
       continue;
     }
@@ -998,7 +1031,7 @@ function processNewChild(
   appendTarget?: Node,
   before?: Node
 ) {
-  const dom = createElement(newChild.tag, newChild.isSVG);
+  const dom = createElement(newChild.tag, newChild[IS_SVG]);
 
   if (oldDom) {
     newChild.dom = dom;
@@ -1008,7 +1041,7 @@ function processNewChild(
   } else {
     newChild.dom = (appendTarget || parentVnode.dom).appendChild(dom) as unknown as DomElement;
   }
-  newChild.isSVG ? updateSVGAttributes(newChild) : updateDomAttributes(newChild);
+  newChild[IS_SVG] ? updateSVGAttributes(newChild) : updateDomAttributes(newChild);
   if ("v-text" in newChild.props) {
     newChild.dom.textContent = newChild.props["v-text"];
   } else {
@@ -1024,8 +1057,8 @@ function processNewChild(
     }
   }
 
-  if (newChild.oncreate?.size) {
-    commitSet(newChild.oncreate);
+  if (newChild[ON_CREATE]?.size) {
+    commitSet(newChild[ON_CREATE]);
   }
 }
 
@@ -1194,7 +1227,7 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
   currentState.oldVnode = oldVnode;
   currentState.vnode = newVnode;
   // Hydrated vnodes have never been flattened and have no rendered key state.
-  const hydrating = typeof (oldVnode || newVnode).hasKeys === "undefined";
+  const hydrating = typeof (oldVnode || newVnode)[HAS_KEYS] === "undefined";
   const children = flatTree(newVnode);
   const dom = newVnode.dom;
 
@@ -1214,11 +1247,11 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
         }
       }
     }
-    if (newVnode.oncreate?.size) {
-      commitSet(newVnode.oncreate);
+    if (newVnode[ON_CREATE]?.size) {
+      commitSet(newVnode[ON_CREATE]);
     }
-    if (newVnode.onupdate?.size) {
-      commitSet(newVnode.onupdate);
+    if (newVnode[ON_UPDATE]?.size) {
+      commitSet(newVnode[ON_UPDATE]);
     }
     return;
   }
@@ -1229,8 +1262,8 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
   if (oldChildrenLength === 0) {
     const target = childrenLength > 1 ? document.createDocumentFragment() : dom;
     appendNewChildren({ parentVnode: newVnode, children, start: 0, target });
-    if (newVnode.oncreate?.size) {
-      commitSet(newVnode.oncreate);
+    if (newVnode[ON_CREATE]?.size) {
+      commitSet(newVnode[ON_CREATE]);
     }
     return;
   }
@@ -1241,7 +1274,7 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
   for (let i = 0; i < childrenLength; i++) {
     const newChild = children[i] as VnodeWithDom;
     const currentChild = childNodes[i];
-    if (newVnode.hasKeys && !hydrating && !keyedChildren && currentChild) {
+    if (newVnode[HAS_KEYS] && !hydrating && !keyedChildren && currentChild) {
       const key = newChild instanceof Vnode ? newChild.key : null;
       if ((key ?? null) !== (currentChild.vnode?.key ?? null)) {
         keyedStart = i;
@@ -1261,7 +1294,7 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
     }
 
     if (!oldChild && !keyedChildren) {
-      const target = newVnode.hasKeys ? dom : document.createDocumentFragment();
+      const target = newVnode[HAS_KEYS] ? dom : document.createDocumentFragment();
       appendNewChildren({ parentVnode: newVnode, children, start: i, target });
       break;
     }
@@ -1317,10 +1350,11 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
       }
     }
 
-    if (oldChildVnode?.oncleanup?.size) {
-      callSet(oldChildVnode.oncleanup);
+    const cleanup = oldChildVnode?.[ON_CLEANUP];
+    if (cleanup?.size) {
+      callSet(cleanup);
     }
-    newChild.isSVG
+    newChild[IS_SVG]
       ? updateSVGAttributes(newChild as VnodeWithDom, oldChildVnode)
       : updateDomAttributes(newChild as VnodeWithDom, oldChildVnode);
 
@@ -1328,6 +1362,12 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
       // eslint-disable-next-line eqeqeq
       if (oldChild.textContent != newChild.props["v-text"]) {
         oldChild.textContent = newChild.props["v-text"];
+      }
+      if (newChild[ON_CREATE]?.size) {
+        commitSet(newChild[ON_CREATE]);
+      }
+      if (newChild[ON_UPDATE]?.size) {
+        commitSet(newChild[ON_UPDATE]);
       }
       continue;
     }
@@ -1349,11 +1389,11 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
 
   // In here we could have new children or/and patched children
   // So we need to call the oncreate and onupdate callbacks
-  if (newVnode.oncreate?.size) {
-    commitSet(newVnode.oncreate);
+  if (newVnode[ON_CREATE]?.size) {
+    commitSet(newVnode[ON_CREATE]);
   }
-  if (newVnode.onupdate?.size) {
-    commitSet(newVnode.onupdate);
+  if (newVnode[ON_UPDATE]?.size) {
+    commitSet(newVnode[ON_UPDATE]);
   }
 }
 
@@ -1363,15 +1403,16 @@ export function updateVnode(vnode: VnodeWithDom, shouldCleanup = true): string |
   vnode.props = vnode.props || {};
   const previousCommitQueue = state.commitQueue;
   state.commitQueue = null;
-  if (shouldCleanup && vnode.oncleanup?.size) {
+  const cleanup = vnode[ON_CLEANUP];
+  if (shouldCleanup && cleanup?.size) {
     // The clean up must be from the old vnode
     // and in here the vnode is the old one
     // so, we need to call the cleanup before the patch
     // inside  the patch the clean up will be called only for the old children
-    callSet(vnode.oncleanup);
+    callSet(cleanup);
   }
   // Clone the old on remove set to call it after the patch
-  const oldOnRemoveSet = vnode.onremove?.size ? new Set(vnode.onremove) : null;
+  const oldOnRemoveSet = vnode[ON_REMOVE]?.size ? new Set(vnode[ON_REMOVE]) : null;
   currentState.vnode = vnode;
   try {
     patch(vnode, shouldCleanup ? vnode : null);

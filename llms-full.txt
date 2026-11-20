@@ -816,7 +816,7 @@ Register directives with `directive(name, handler)`. The runtime exposes:
 
 1. `value`: directive input value.
 2. `vnode`: current vnode (with `vnode.dom`).
-3. `oldProps`: previous props (`undefined` on mount).
+3. `oldProps`: props from the previous app render, or `undefined` on the first render of the element, including when hydration reuses existing DOM.
 
 If a custom directive needs to mutate vnode props, use `setAttribute(...)` for reliable integration with patch behavior.
 
@@ -900,6 +900,10 @@ Valyrian exposes two first-class vnode authoring surfaces:
 - automatic TSX/JSX runtime helpers through `valyrian.js/jsx-runtime` and `valyrian.js/jsx-dev-runtime`
 
 Both surfaces build `Vnode` instances directly and share the same runtime contract.
+
+Use the structural fields `tag`, `props`, `children`, `key`, and `dom` (once attached to a DOM node). If you construct a `Vnode` directly, pass `key` fourth and `dom` fifth: `new Vnode(tag, props, children, key?, dom?)`.
+
+The renderer now stores SVG state, child-component tracking, keyed-child bookkeeping, and lifecycle queues under internal symbols. Code that read `isSVG`, `oldChildComponents`, `childComponents`, `hasKeys`, `oncreate`, `onupdate`, `oncleanup`, or `onremove` from a VNode should use observable behavior instead: check the DOM namespace, read each child's `key`, or register lifecycle callbacks through the public helpers and directives.
 
 ## Render Lifecycle APIs
 
@@ -1149,7 +1153,9 @@ const Form = () => (
 
 At mount time, existing DOM is converted to vnode structure (including text and attributes), then patching continues from that structure.
 
-This allows SSR HTML and pre-existing markup to become interactive without replacing the full container tree.
+When the first app render matches an existing element, Valyrian reuses that DOM node and reconciles its attributes, including removing attributes the app no longer supplies. The DOM snapshot provides attributes for reconciliation, but it does not provide previous app props to directives. On that first render, directives receive `oldProps` as `undefined` and `v-create` runs instead of `v-update`. Subsequent patches of the same element pass the previous app props to directives.
+
+On elements with `v-text`, creation and update callbacks run after text reconciliation, even when the DOM already contains the requested text.
 
 If you need the learning path version (instead of reference style), start at [./3-the-essentials.md](./3-the-essentials.md). For async/data-flow tooling built on top of these public APIs, see [./4.2-data-fetching-and-async.md](./4.2-data-fetching-and-async.md).
 
@@ -7334,4 +7340,3 @@ Expected result: the SSR server serves the Taskboard document, generated manifes
 - Use [Recipes and Integrations](./9-recipes-and-integrations.md) when you want a focused task outside the cumulative tutorial.
 - Use [Runtime Core API](./3.1-runtime-core.md) to inspect the mount, update, lifecycle and hydration contracts behind these stages.
 - Use [Run the Same Application in Browser and Node.js](./7-full-stack-capability.md) when you want the server-side path in more depth.
-

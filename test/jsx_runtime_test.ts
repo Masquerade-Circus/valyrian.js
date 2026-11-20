@@ -1,7 +1,8 @@
 import { describe, expect, test as it } from "bun:test";
+import "valyrian.js/node";
 import fs from "fs";
 import path from "path";
-import { Vnode, fragment, v } from "valyrian.js";
+import { Vnode, fragment, mount, unmount, v } from "valyrian.js";
 import { Fragment, jsx, jsxs } from "valyrian.js/jsx-runtime";
 import { jsxDEV } from "valyrian.js/jsx-dev-runtime";
 
@@ -16,12 +17,27 @@ describe("JSX runtime", () => {
   });
 
   it("uses the structural constructor order after key", () => {
-    const dom = { nodeType: 1 } as any;
-    const vnode = new Vnode("div", { id: "x" }, [], "row-1", dom, true);
+    const dom = document.createElement("div");
+    const vnode = new Vnode("div", { id: "x" }, [], "row-1", dom);
 
     expect(vnode.key).toBe("row-1");
     expect(vnode.dom).toBe(dom);
-    expect(vnode.isSVG).toBeTrue();
+  });
+
+  it("renders JSX SVG elements and descendants in the SVG namespace", () => {
+    const host = document.createElement("div");
+    const namespace = "http://www.w3.org/2000/svg";
+
+    try {
+      mount(host, () => jsx("svg", { children: jsx("circle", { r: 4 }) }));
+      const svg = host.querySelector("svg");
+      const circle = host.querySelector("circle");
+      // The Node DOM adapter stores the namespace in baseURI.
+      expect(svg?.namespaceURI ?? svg?.baseURI).toBe(namespace);
+      expect(circle?.namespaceURI ?? circle?.baseURI).toBe(namespace);
+    } finally {
+      unmount();
+    }
   });
 
   it("rejects the legacy constructor positional layout at type level", () => {

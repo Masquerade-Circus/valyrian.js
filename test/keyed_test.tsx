@@ -142,7 +142,7 @@ describe("Keyed lists", () => {
     expect(after).toEqual("<ul><li>5</li><li>4</li><li>3</li><li>2</li><li>1</li></ul>");
   });
 
-  it("marks keyed children from structural vnode.key during flatten", () => {
+  it("preserves structural keys on rendered children", () => {
     const host = document.createElement("div");
     const component = () => (
       <ul>
@@ -156,7 +156,6 @@ describe("Keyed lists", () => {
 
     const listDom = host.childNodes[0] as any;
 
-    expect(listDom?.vnode?.hasKeys).toBeTrue();
     expect(listDom?.vnode?.children?.[0]?.key).toBe(1);
     expect(listDom?.vnode?.children?.[1]?.key).toBe(2);
   });

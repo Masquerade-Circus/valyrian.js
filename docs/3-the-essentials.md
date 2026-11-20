@@ -360,7 +360,7 @@ Register directives with `directive(name, handler)`. The runtime exposes:
 
 1. `value`: directive input value.
 2. `vnode`: current vnode (with `vnode.dom`).
-3. `oldProps`: previous props (`undefined` on mount).
+3. `oldProps`: props from the previous app render, or `undefined` on the first render of the element, including when hydration reuses existing DOM.
 
 If a custom directive needs to mutate vnode props, use `setAttribute(...)` for reliable integration with patch behavior.
 

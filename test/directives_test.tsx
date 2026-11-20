@@ -45,15 +45,13 @@ describe("Directives", () => {
       update();
       update();
 
-      expect(newVnode).toEqual({
+      expect(newVnode).toMatchObject({
         tag: "div",
         props: {
           "v-test2": true
         },
         dom: expect.any(Object),
-        children: [],
-        hasKeys: false,
-        isSVG: false
+        children: []
       } as any);
 
       expect(oldProps).toEqual({
@@ -62,9 +60,15 @@ describe("Directives", () => {
     });
 
     it("should be able to identify if this is first render or update", () => {
-      const app = () => <div v-render />;
+      const host = document.createElement("div");
+      host.innerHTML = '<div data-stale="server">Server render</div>';
+      const original = host.childNodes[0] as HTMLElement;
+      let phase = "initial";
+      const previousProps: Array<Properties | undefined> = [];
+      const app = () => <div data-phase={phase} v-render />;
 
       directive("render", (v, vnode, oldProps) => {
+        previousProps.push(oldProps);
         if (!oldProps) {
           vnode.children = ["First render, vnode created"];
         } else {
@@ -72,12 +76,20 @@ describe("Directives", () => {
         }
       });
 
-      const result = mount("body", app);
+      const result = mount(host, app);
 
-      expect(result).toEqual("<div>First render, vnode created</div>");
+      expect(host.childNodes[0]).toBe(original);
+      expect(original.hasAttribute("data-stale")).toBeFalse();
+      expect(previousProps).toHaveLength(1);
+      expect(previousProps[0]).toBeUndefined();
+      expect(result).toEqual('<div data-phase="initial">First render, vnode created</div>');
 
+      phase = "updated";
       const result2 = update();
-      expect(result2).toEqual("<div>Second render, vnode updated</div>");
+      expect(result2).toEqual('<div data-phase="updated">Second render, vnode updated</div>');
+      expect(host.childNodes[0]).toBe(original);
+      expect(previousProps).toHaveLength(2);
+      expect(previousProps[1]?.["data-phase"]).toBe("initial");
     });
 
     it("should be able to modify the children of a vnode", () => {
@@ -890,6 +902,9 @@ describe("Directives", () => {
     });
 
     it("should allow to identify lifecycles", () => {
+      const host = document.createElement("div");
+      host.innerHTML = "<div></div>";
+      const original = host.childNodes[0];
       const events: string[] = [];
       const Component = () => (
         <div
@@ -898,7 +913,9 @@ describe("Directives", () => {
           v-cleanup={() => events.push("cleanup")}
         />
       );
-      const result = mount("body", Component); // create and mount
+      const result = mount(host, Component); // hydrate and create
+      expect(host.childNodes[0]).toBe(original);
+      expect(events).toEqual(["create"]);
       update(); // cleanup and update
       update(); // cleanup and update
       update(); // cleanup and update
@@ -906,6 +923,37 @@ describe("Directives", () => {
       unmount(); // does nothing because unmounted
       expect(result).toEqual("<div></div>");
       expect(events).toEqual(["create", "cleanup", "update", "cleanup", "update", "cleanup", "update", "cleanup"]);
+    });
+
+    it.each(["Client text", "Server text"])("runs v-text lifecycle hooks with preloaded %s", (serverText) => {
+      const host = document.createElement("div");
+      host.innerHTML = `<div>${serverText}</div>`;
+      const original = host.childNodes[0];
+      const events: string[] = [];
+      let text = "Client text";
+      const Component = () => (
+        <div v-text={text} v-create={() => events.push("create")} v-update={() => events.push("update")} />
+      );
+
+      mount(host, Component);
+      try {
+        expect(host.childNodes[0]).toBe(original);
+        expect(original.textContent).toBe(text);
+        expect(events).toEqual(["create"]);
+
+        text = "Updated text";
+        update();
+        expect(host.childNodes[0]).toBe(original);
+        expect(original.textContent).toBe(text);
+        expect(events).toEqual(["create", "update"]);
+
+        update();
+        expect(host.childNodes[0]).toBe(original);
+        expect(original.textContent).toBe(text);
+        expect(events).toEqual(["create", "update", "update"]);
+      } finally {
+        unmount();
+      }
     });
 
     it("keeps v-create sync-only when a Promise is returned", async () => {
