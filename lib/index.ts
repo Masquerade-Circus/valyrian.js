@@ -167,6 +167,7 @@ export function trust(htmlString: string) {
 type RendererState = {
   mainComponent: VnodeComponentInterface | null;
   mainVnode: VnodeWithDom | null;
+  moveCommand: "moveBefore" | "insertBefore";
   isMounted: boolean;
   current: {
     oldVnode: Vnode | null;
@@ -187,6 +188,7 @@ function createRendererState(): RendererState {
   return {
     mainComponent: null,
     mainVnode: null,
+    moveCommand: "insertBefore",
     isMounted: false,
     current: { oldVnode: null, vnode: null, component: null, event: null },
     commitQueue: null,
@@ -520,7 +522,6 @@ export const directives: Record<string, Directive> = {
 
   // The "v-model" directive binds the value of an input element to a model property
   "v-model": (model, vnode) => {
-    // eslint-disable-next-line prefer-const
     if ("name" in vnode.props === false) {
       return;
     }
@@ -626,7 +627,7 @@ export const directives: Record<string, Directive> = {
     const prevHandler = vnode.props[event];
 
     // Set the event handler on the element
-    // eslint-disable-next-line no-use-before-define
+
     setAttribute(
       event,
       (e: Event) => {
@@ -752,7 +753,6 @@ function eventListener(e: Event) {
       }
 
       if (preventedUpdates.get(e) !== true) {
-        // eslint-disable-next-line no-use-before-define
         update();
       }
 
@@ -1096,21 +1096,14 @@ function appendNewChildren({
 }
 
 // Indices are relative to the changed range. The values are old DOM positions.
-// Leave the longest increasing subsequence in place, keeping the focused child
-// connected even if it takes more moves. Each tail tracks the smallest old end
-// position for a subsequence of that length.
-function stableKeyedPositions({ positions, focusedIndex }: { positions: number[]; focusedIndex: number }): Set<number> {
+// Leave the longest increasing subsequence in place. Each tail tracks the
+// smallest old end position for a subsequence of that length.
+function stableKeyedPositions(positions: number[]): Set<number> {
   const tails: number[] = [];
   const previous: number[] = [];
-  const focusedPosition = positions[focusedIndex];
   for (let i = 0; i < positions.length; i++) {
     const position = positions[i];
     if (position === -1) {
-      continue;
-    }
-    // A focused child must stay connected. Only extend the subsequence with
-    // positions that can stay on the same side of that child in both orders.
-    if (focusedIndex >= 0 && i !== focusedIndex && (i < focusedIndex) !== (position < focusedPosition)) {
       continue;
     }
     let low = tails.length;
@@ -1195,23 +1188,14 @@ function reconcileKeyedRange({
   }
 
   if (reordered) {
-    let focusedIndex = -1;
-    if (dom.ownerDocument) {
-      let focused: Node | null = (dom.getRootNode() as Document | ShadowRoot).activeElement ?? null;
-      while (focused && focused !== dom && focused.parentNode !== dom) {
-        focused = focused.parentNode;
-      }
-      if (focused?.parentNode === dom) {
-        focusedIndex = matches.indexOf(focused as DomElement);
-      }
-    }
-    const stable = stableKeyedPositions({ positions, focusedIndex });
+    const moveCommand = getRendererState().moveCommand;
+    const stable = stableKeyedPositions(positions);
     let before: DomElement | null = null;
     for (let i = matches.length - 1; i >= 0; i--) {
       const child = matches[i];
       if (child) {
         if (!stable.has(i)) {
-          dom.insertBefore(child, before);
+          dom[moveCommand](child, before);
         }
         before = child;
       }
@@ -1221,7 +1205,6 @@ function reconcileKeyedRange({
   return { matches, removals };
 }
 
-// eslint-disable-next-line complexity
 function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
   const currentState = getRendererState().current;
   currentState.oldVnode = oldVnode;
@@ -1310,7 +1293,6 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
         continue;
       }
 
-      // eslint-disable-next-line eqeqeq
       if (oldChild.nodeValue != newChild) {
         oldChild.nodeValue = newChild;
       }
@@ -1336,18 +1318,6 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
       if (oldChildVnode.props["v-keep"] === newChild.props["v-keep"]) {
         continue;
       }
-
-      if (!keyedChildren && typeof newChild.key === "undefined") {
-        const nextOldVnode = childNodes[i + 1]?.vnode as VnodeWithDom | undefined;
-        if (
-          nextOldVnode?.props &&
-          typeof nextOldVnode.key === "undefined" &&
-          nextOldVnode.props["v-keep"] === newChild.props["v-keep"]
-        ) {
-          strictRemoveNode(oldChild);
-          continue;
-        }
-      }
     }
 
     const cleanup = oldChildVnode?.[ON_CLEANUP];
@@ -1359,7 +1329,6 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
       : updateDomAttributes(newChild as VnodeWithDom, oldChildVnode);
 
     if ("v-text" in newChild.props) {
-      // eslint-disable-next-line eqeqeq
       if (oldChild.textContent != newChild.props["v-text"]) {
         oldChild.textContent = newChild.props["v-text"];
       }
@@ -1372,7 +1341,6 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
       continue;
     }
 
-    // eslint-disable-next-line no-use-before-define
     patch(newChild as VnodeWithDom, oldChildVnode || null);
   }
 
@@ -1506,6 +1474,7 @@ export function unmount() {
 
     state.mainComponent = null;
     state.mainVnode = null;
+    state.moveCommand = "insertBefore";
     state.isMounted = false;
     state.current.vnode = null;
     state.current.component = null;
@@ -1525,6 +1494,10 @@ export function mount(dom: string | DomElement, component: ValyrianComponent | V
         : document.querySelector(dom)
       : dom;
 
+  if (!container) {
+    throw new Error(`The container element "${dom}" was not found in the DOM.`);
+  }
+
   if (state.mainVnode && state.mainVnode.dom !== container) {
     removeEventListeners(state);
   }
@@ -1538,5 +1511,7 @@ export function mount(dom: string | DomElement, component: ValyrianComponent | V
   }
 
   state.mainVnode = hydrateDomToVnode(container) as VnodeWithDom;
+  state.moveCommand =
+    "moveBefore" in container && typeof container?.moveBefore === "function" ? "moveBefore" : "insertBefore";
   return update();
 }

@@ -8,11 +8,11 @@ import {
   domToHtml,
   ServerStorage,
   document as nodeDocument,
+  Document,
   MouseEvent as NodeMouseEvent,
   NodeRuntime
 } from "valyrian.js/node";
 import type {
-  Document,
   DocumentFragment,
   Element as NodeElement,
   InlineOptions,
@@ -174,6 +174,89 @@ describe("Node test", () => {
 
     expect(parent.innerHTML).toEqual("<em>before</em><span>one</span><strong>two</strong><i>after</i>");
     expect(fragment.childNodes.length).toEqual(0);
+  });
+
+  it("Node adapter moveBefore rejects invalid moves without changing the tree", () => {
+    const doc = new Document();
+    const parent = doc.body.appendChild(doc.createElement("section"));
+    const element = parent.appendChild(doc.createElement("span"));
+    const text = parent.appendChild(doc.createTextNode("text"));
+    const detached = doc.createElement("i");
+    const fragment = doc.createDocumentFragment();
+    const foreign = fragment.appendChild(doc.createElement("b"));
+
+    const invalidMoves = [
+      { label: "missing reference", move: () => Reflect.apply(parent.moveBefore, parent, [element]), error: "TypeError" },
+      {
+        label: "non-node reference",
+        move: () => Reflect.apply(parent.moveBefore, parent, [element, 0]),
+        error: "TypeError"
+      },
+      { label: "detached node", move: () => parent.moveBefore(detached, null), error: "HierarchyRequestError" },
+      { label: "different root", move: () => parent.moveBefore(foreign, null), error: "HierarchyRequestError" },
+      { label: "cycle", move: () => element.moveBefore(parent, null), error: "HierarchyRequestError" },
+      { label: "foreign reference", move: () => parent.moveBefore(element, doc.head), error: "NotFoundError" },
+      { label: "fragment as node", move: () => parent.moveBefore(fragment, null), error: "HierarchyRequestError" },
+      { label: "text in document", move: () => doc.moveBefore(text, null), error: "HierarchyRequestError" },
+      { label: "second root element", move: () => doc.moveBefore(element, null), error: "HierarchyRequestError" }
+    ];
+
+    for (const { label, move, error } of invalidMoves) {
+      expect(move, label).toThrow(expect.objectContaining({ name: error }));
+      expect(parent.childNodes, label).toEqual([element, text]);
+      expect(element.parentNode, label).toBe(parent);
+      expect(text.parentNode, label).toBe(parent);
+      expect(foreign.parentNode, label).toBe(fragment);
+      expect(detached.parentNode, label).toBeNull();
+      expect(doc.childNodes, label).toEqual([doc.documentElement]);
+    }
+  });
+
+  it("Node adapter moveBefore reorders existing children without replacing them", () => {
+    const parent = nodeDocument.createElement("section");
+    const first = parent.appendChild(nodeDocument.createElement("span"));
+    const text = parent.appendChild(nodeDocument.createTextNode("text"));
+    const last = parent.appendChild(nodeDocument.createElement("strong"));
+
+    expect(parent.moveBefore(last, first)).toBeUndefined();
+    expect(parent.childNodes[0]).toBe(last);
+    expect(parent.innerHTML).toBe("<strong></strong><span></span>text");
+
+    parent.moveBefore(last, text);
+    parent.moveBefore(last, last);
+    expect(parent.innerHTML).toBe("<span></span><strong></strong>text");
+
+    parent.moveBefore(text, first);
+    expect(parent.childNodes[0]).toBe(text);
+    parent.moveBefore(text, null);
+    expect(parent.childNodes[2]).toBe(text);
+    expect(text.parentNode).toBe(parent);
+    expect(parent.innerHTML).toBe("<span></span><strong></strong>text");
+  });
+
+  it("Node adapter moveBefore preserves a node and its listeners across parents in one fragment", () => {
+    const fragment = nodeDocument.createDocumentFragment();
+    const source = fragment.appendChild(nodeDocument.createElement("section"));
+    const destination = fragment.appendChild(nodeDocument.createElement("section"));
+    const node = source.appendChild(nodeDocument.createElement("button"));
+    const text = node.appendChild(nodeDocument.createTextNode("move me"));
+    const anchor = destination.appendChild(nodeDocument.createElement("span"));
+    let clicks = 0;
+    node.addEventListener("click", () => clicks++);
+
+    destination.moveBefore(node, anchor);
+    expect(source.childNodes.length).toBe(0);
+    expect(destination.childNodes[0]).toBe(node);
+    expect(destination.childNodes[1]).toBe(anchor);
+    expect(node.parentElement).toBe(destination);
+    expect(node.childNodes[0]).toBe(text);
+    node.click();
+    expect(clicks).toBe(1);
+
+    fragment.moveBefore(node, null);
+    expect(destination.childNodes[0]).toBe(anchor);
+    expect(fragment.childNodes[2]).toBe(node);
+    expect(node.parentNode).toBe(fragment);
   });
 
   it("Node adapter expands DocumentFragment in replaceChild", () => {

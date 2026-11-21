@@ -1,7 +1,16 @@
-/* eslint-disable sonarjs/no-nested-functions */
-import "valyrian.js/node";
+import { NodeRuntime } from "valyrian.js/node";
 
-import { directive, DomElement, mount, Properties, setAttribute, trust, unmount, update, v, VnodeWithDom } from "valyrian.js";
+import {
+  directive,
+  DomElement,
+  mount,
+  Properties,
+  setAttribute,
+  trust,
+  unmount,
+  update,
+  VnodeWithDom
+} from "valyrian.js";
 
 import dayjs from "dayjs";
 import { expect, describe, test as it } from "bun:test";
@@ -165,8 +174,7 @@ describe("Directives", () => {
       directive("switch", (value, vnode) => {
         for (let i = 0, l = vnode.children.length; i < l; i++) {
           const [test, handler] = vnode.children[i];
-          let result = false;
-          result = typeof test === "function" ? test(value) : value === test;
+          const result = typeof test === "function" ? test(value) : value === test;
 
           if (result) {
             vnode.children = [typeof handler === "function" ? handler(value) : handler];
@@ -461,6 +469,46 @@ describe("Directives", () => {
         expect(host.innerHTML).toEqual("<main><section>Second</section></main>");
         expect(snapshotOnlyIndexReads).toEqual(1);
       });
+
+      for (const keyed of [false, true]) {
+        it(`uses ${keyed ? "keyed identity" : "positional identity"} when removing the first guarded sibling`, () =>
+          NodeRuntime.run(() => {
+            const host = document.createElement("div");
+            const updates: string[] = [];
+            const clicks: string[] = [];
+            let entries = ["first", "second"];
+            const App = () => (
+              <main>
+                {entries.map((entry) => (
+                  <section key={keyed ? entry : void 0} v-keep={entry}>
+                    <button type="button" v-update={() => updates.push(entry)} onclick={() => clicks.push(entry)}>
+                      {entry}
+                    </button>
+                  </section>
+                ))}
+              </main>
+            );
+
+            try {
+              mount(host, App);
+              const [first, second] = Array.from(host.querySelectorAll("section"));
+
+              entries = ["second"];
+              update();
+
+              const [remaining, ...others] = Array.from(host.querySelectorAll("section"));
+              expect(others).toHaveLength(0);
+              expect(remaining).toBe(keyed ? second : first);
+              expect((keyed ? first : second).parentNode).toBeNull();
+              expect(remaining.textContent).toBe("second");
+              expect(updates).toEqual(keyed ? [] : ["second"]);
+              remaining.querySelector("button")!.click();
+              expect(clicks).toEqual(["second"]);
+            } finally {
+              unmount();
+            }
+          }));
+      }
     });
 
     describe("v-model", () => {
@@ -495,11 +543,9 @@ describe("Directives", () => {
         );
 
         mount(host, app);
-        expect(Array.from((host.childNodes[0] as HTMLSelectElement).childNodes).map((child) => child.textContent)).toEqual([
-          "a",
-          "b",
-          "c"
-        ]);
+        expect(
+          Array.from((host.childNodes[0] as HTMLSelectElement).childNodes).map((child) => child.textContent)
+        ).toEqual(["a", "b", "c"]);
         expect(host.innerHTML).toEqual(
           '<select name="choice"><option value="a">a</option><option value="b" selected="true">b</option><option value="c">c</option></select>'
         );
@@ -641,11 +687,20 @@ describe("Directives", () => {
       const events: string[] = [];
       const state = { label: "first" };
       const Component = () => (
-        <section v-create={() => events.push(`create:section:${host.innerHTML}`)} v-update={() => events.push(`update:section:${host.innerHTML}`)}>
-          <span v-create={() => events.push(`create:first:${host.innerHTML}`)} v-update={() => events.push(`update:first:${host.innerHTML}`)}>
+        <section
+          v-create={() => events.push(`create:section:${host.innerHTML}`)}
+          v-update={() => events.push(`update:section:${host.innerHTML}`)}
+        >
+          <span
+            v-create={() => events.push(`create:first:${host.innerHTML}`)}
+            v-update={() => events.push(`update:first:${host.innerHTML}`)}
+          >
             {state.label}
           </span>
-          <span v-create={() => events.push(`create:second:${host.innerHTML}`)} v-update={() => events.push(`update:second:${host.innerHTML}`)}>
+          <span
+            v-create={() => events.push(`create:second:${host.innerHTML}`)}
+            v-update={() => events.push(`update:second:${host.innerHTML}`)}
+          >
             static
           </span>
         </section>
@@ -793,7 +848,11 @@ describe("Directives", () => {
     it("calls function refs with DOM and then null on removal", () => {
       const events: Array<string | null> = [];
       let show = true;
-      const Component = () => <div>{show ? <span v-ref={(dom: DomElement | null) => events.push(dom?.nodeName.toLowerCase() || null)} /> : null}</div>;
+      const Component = () => (
+        <div>
+          {show ? <span v-ref={(dom: DomElement | null) => events.push(dom?.nodeName.toLowerCase() || null)} /> : null}
+        </div>
+      );
 
       expect(mount("body", Component)).toEqual("<div><span></span></div>");
       show = false;
@@ -831,7 +890,9 @@ describe("Directives", () => {
 
     it("cleans a function ref on unmount", () => {
       const events: string[] = [];
-      const Component = () => <span v-ref={(dom: DomElement | null) => events.push(dom?.nodeName.toLowerCase() || "null")} />;
+      const Component = () => (
+        <span v-ref={(dom: DomElement | null) => events.push(dom?.nodeName.toLowerCase() || "null")} />
+      );
 
       expect(mount("body", Component)).toEqual("<span></span>");
       expect(unmount()).toEqual("");

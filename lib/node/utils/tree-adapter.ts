@@ -1,8 +1,8 @@
-/* eslint-disable no-use-before-define */
-/* eslint-disable complexity */
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
+
 import { isString } from "../../utils";
 
-interface ChildNodes extends Array<Node | Element | Text | DocumentFragment> {}
+type ChildNodes = Array<Node | Element | Text | DocumentFragment>;
 
 type EventPath = globalThis.EventTarget[] & [(globalThis.EventTarget | undefined)?];
 
@@ -17,10 +17,10 @@ export class Event implements globalThis.Event {
     this.cancelable = options.cancelable ?? false;
   }
   bubbles: boolean = false;
-  readonly NONE: 0 = 0;
-  readonly CAPTURING_PHASE: 1 = 1;
-  readonly AT_TARGET: 2 = 2;
-  readonly BUBBLING_PHASE: 3 = 3;
+  readonly NONE = 0 as const;
+  readonly CAPTURING_PHASE = 1 as const;
+  readonly AT_TARGET = 2 as const;
+  readonly BUBBLING_PHASE = 3 as const;
   cancelBubble = false;
   cancelable: boolean = false;
   composed = false;
@@ -103,7 +103,6 @@ type LocalEventListener<TEvent extends Event = Event> =
   | { handleEvent(event: TEvent): void };
 
 export class Node {
-  // eslint-disable-next-line no-use-before-define
   childNodes: ChildNodes = [];
   baseURI: string = "";
 
@@ -178,7 +177,6 @@ export class Node {
     return this.node_value;
   }
 
-  // eslint-disable-next-line no-use-before-define
   parent_node: Node | null = null;
   get parentNode() {
     return this.parent_node;
@@ -213,7 +211,9 @@ export class Node {
     }
 
     if (node) {
-      node.parentNode && node.parentNode.removeChild(node as Node);
+      if (node.parentNode) {
+        node.parentNode.removeChild(node as Node);
+      }
       this.childNodes.push(node);
       node.parentNode = this;
       node.parentElement = this instanceof Element ? this : null;
@@ -231,7 +231,9 @@ export class Node {
     }
 
     if (node) {
-      node.parentNode && node.parentNode.removeChild(node as Node);
+      if (node.parentNode) {
+        node.parentNode.removeChild(node as Node);
+      }
       node.parentNode = this;
       node.parentElement = this instanceof Element ? this : null;
       if (child) {
@@ -247,7 +249,9 @@ export class Node {
   replaceChild<T extends Node>(node: Node, child: T): T {
     if (node && child && child.parentNode === this) {
       this.insertBefore(node, child);
-      child.parentNode && child.parentNode.removeChild(child);
+      if (child.parentNode) {
+        child.parentNode.removeChild(child);
+      }
     }
     return child;
   }
@@ -310,7 +314,12 @@ export class Node {
         break;
       }
     }
-    idx === -1 ? this.attributes.push(attr as Attr) : this.attributes.splice(idx, 1, attr as Attr);
+
+    if (idx === -1) {
+      this.attributes.push(attr as Attr);
+    } else {
+      this.attributes.splice(idx, 1, attr as Attr);
+    }
   }
 
   getAttribute(name: string): string | null {
@@ -401,9 +410,11 @@ export class Node {
   // PROCESSING_INSTRUCTION_NODE!: number;
   // TEXT_NODE!: number;
   addEventListener(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     type: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     callback: LocalEventListener<any> | null,
-    // eslint-disable-next-line no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options?: boolean | AddEventListenerOptions | undefined
   ): void {
     // throw new Error("Method not implemented.");
@@ -412,9 +423,11 @@ export class Node {
   //   throw new Error("Method not implemented.");
   // }
   removeEventListener(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     type: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     callback: LocalEventListener | null,
-    // eslint-disable-next-line no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     options?: boolean | EventListenerOptions | undefined
   ): void {
     // throw new Error("Method not implemented.");
@@ -447,6 +460,7 @@ function updateElementStyles(element: Element, state: Record<string, any>) {
 
 export class Element extends Node {
   #listeners: Map<string, Set<Function>> = new Map();
+
   #objectListeners = new WeakMap<object, Function>();
   protected get _listeners() {
     return this.#listeners;
@@ -459,6 +473,58 @@ export class Element extends Node {
     this.nodeType = 1;
     this.attributes = [];
     this.childNodes = [];
+  }
+
+  // eslint-disable-next-line sonarjs/cognitive-complexity
+  moveBefore(node: Node, child: Node | null): void {
+    if (arguments.length < 2 || !(node instanceof Node) || (child != null && !(child instanceof Node))) {
+      throw new TypeError("moveBefore requires a node and a reference node or null.");
+    }
+
+    const oldParent = node.parentNode;
+    const oldIndex = oldParent?.childNodes.indexOf(node) ?? -1;
+    if (!oldParent || oldIndex < 0) {
+      throw new DOMException("The node to move must already have a parent.", "HierarchyRequestError");
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    let root: Node = this;
+    while (root.parentNode) {
+      if (root === node) {
+        throw new DOMException("The move would create a cycle.", "HierarchyRequestError");
+      }
+      root = root.parentNode;
+    }
+    let oldRoot = oldParent;
+    while (oldRoot.parentNode) {
+      oldRoot = oldRoot.parentNode;
+    }
+    if (root !== oldRoot) {
+      throw new DOMException("The node and destination must share a root.", "HierarchyRequestError");
+    }
+
+    const before = child === node ? (oldParent.childNodes[oldIndex + 1] ?? null) : (child ?? null);
+    const index = before ? this.childNodes.indexOf(before) : this.childNodes.length;
+    if (before && (before.parentNode !== this || index < 0)) {
+      throw new DOMException("The reference node is not a child of the destination.", "NotFoundError");
+    }
+
+    const type = node.nodeType;
+    if (type !== 1 && type !== 3 && type !== 4 && type !== 7 && type !== 8) {
+      throw new DOMException("Only elements and character data can be moved.", "HierarchyRequestError");
+    }
+    if (
+      this.nodeType === 9 &&
+      (type === 3 ||
+        type === 4 ||
+        (type === 1 && this.childNodes.some((item, i) => item.nodeType === 1 || (item.nodeType === 10 && i >= index))))
+    ) {
+      throw new DOMException("The move would violate the document structure.", "HierarchyRequestError");
+    }
+
+    oldParent.childNodes.splice(oldIndex, 1);
+    this.childNodes.splice(oldParent === this && oldIndex < index ? index - 1 : index, 0, node);
+    node.parentNode = this;
   }
 
   get value(): string {
@@ -509,6 +575,7 @@ export class Element extends Node {
   addEventListener(
     type: string,
     callback: LocalEventListener<any> | null,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _options?: boolean | AddEventListenerOptions | undefined
   ): void {
     if (!callback) return;
@@ -535,6 +602,7 @@ export class Element extends Node {
   removeEventListener(
     type: string,
     callback: LocalEventListener | null,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _options?: boolean | EventListenerOptions | undefined
   ): void {
     if (!callback) return;
@@ -571,6 +639,7 @@ export class Element extends Node {
   set style(value: string) {
     if (isString(value)) {
       // should match pairs like "color: red; font-size: 12px; background: url(http://example.com/image.png?s=1024x1024&amp;w=is&amp;k=20&amp;c=ASa_AG8uP5Di7azXgJraSA6ME7fbLB0GX4YT_OzCARI=);"
+      // eslint-disable-next-line sonarjs/super-linear-regex
       const regex = /([^:\s]+):\s*((url\([^)]+\))|[^;]+(?=(;|$)))/g;
       let match;
 
@@ -790,6 +859,7 @@ type SimpleSelector = {
 
 function parseSimpleSelector(selector: string): SimpleSelector {
   const match = selector.match(
+    // eslint-disable-next-line sonarjs/regex-complexity
     /^(?:([A-Za-z][A-Za-z0-9-]*))?(?:(#[A-Za-z_][A-Za-z0-9_-]*)|(\.[A-Za-z_][A-Za-z0-9_-]*)|\[([A-Za-z_][A-Za-z0-9_-]*)(?:="([^"]*)")?\])?$/
   );
   if (!match || (!match[1] && !match[2] && !match[3] && !match[4])) {
@@ -833,6 +903,7 @@ function matchesSimpleSelector(element: Element, selector: SimpleSelector): bool
   return true;
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function querySelectorWithin(root: Node, selector: string, limit = Number.POSITIVE_INFINITY): Element[] {
   const parts = parseSelector(selector);
   const targetSelector = parts[parts.length - 1];
@@ -909,6 +980,7 @@ const selfClosingTags = [
 
 const rawTextTags = ["script", "style"];
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function domToHtml(dom: Element | Text | DocumentFragment, rawText = false): string {
   if (dom.nodeType === 3) {
     return rawText ? dom.textContent : escapeHtml(dom.textContent);
@@ -999,7 +1071,7 @@ interface ObjectIndexItemWithContent extends ObjectIndexItem {
   children: ObjectIndexItemWithContent[];
 }
 
-interface ObjectIndexList extends Array<ObjectIndexItem> {}
+type ObjectIndexList = Array<ObjectIndexItem>;
 
 const MAX_HTML_PARSER_DEPTH = 15000;
 const MAX_HTML_PARSER_NODES = 100000;
@@ -1029,6 +1101,7 @@ function createTextIndexItem(startsAt: number, endsAt: number, nodeValue: string
   };
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function findTexts(item: ObjectIndexItemWithContent, html: string) {
   const stack = [item];
 
@@ -1116,6 +1189,7 @@ function convertToDom<T extends Node>(item: ObjectIndexItemWithContent): T {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function getObjectIndexTree(html: string): DocumentFragment {
   let item;
+  // eslint-disable-next-line sonarjs/super-linear-regex
   const regex = RegExp("<([^>|^!]+)>", "g");
   const items: ObjectIndexList = [];
   const openItems: ObjectIndexList = [];
@@ -1160,6 +1234,7 @@ function getObjectIndexTree(html: string): DocumentFragment {
 
     // Find the attributes of the tag.
     let string = (item[1] || "").substring(element.tagName.length + 1).replace(/\/$/g, "");
+    // eslint-disable-next-line sonarjs/super-linear-regex
     const attributesWithValues = string.match(/\S+="[^"]+"/g);
 
     if (attributesWithValues) {
@@ -1249,11 +1324,12 @@ function getObjectIndexTree(html: string): DocumentFragment {
 // This resulting array is populated with a object node version of the object index.
 // If the final result have more than 1 node, then return a document fragment node.
 // If the final result have 1 node, then return the node.
-// eslint-disable-next-line complexity
+
 export function htmlToDom(html: string): Element | Text | DocumentFragment {
   // Search for the opening and closing tags of the root element.
   // The opening tag could be in the middle of the string, so we need to
   // search for the first opening tag.
+  // eslint-disable-next-line sonarjs/super-linear-regex
   const openingTag = html.match(/<[^>]+>/g);
 
   const document = new Document();
