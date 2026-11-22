@@ -23,6 +23,7 @@ import { SwRuntimeManager } from "valyrian.js/sw";
 import { expect, describe, test as it } from "bun:test";
 import fs from "fs";
 import path from "path";
+import { runInNewContext } from "node:vm";
 import packageJson from "../package.json";
 import { mount, trust, v } from "valyrian.js";
 
@@ -631,6 +632,84 @@ span.hello{display: inline-block}
     expect(component).not.toContain('from "valyrian.js/jsx-runtime"');
     expect(component).not.toContain("v.fragment");
     expect(component).not.toMatch(/\bcreateAutomaticVNode\b/);
+  });
+
+  for (const [mode, compact, jsxDev, normalization] of [
+    ["default unminified", false, false, {}],
+    ["normalization disabled, unminified", false, false, { normalizeChildren: false }],
+    ["normalization disabled, minified", true, false, { normalizeChildren: false }],
+    ["normalized unminified", false, false, { normalizeChildren: true }],
+    ["normalized minified", true, false, { normalizeChildren: true }],
+    ["JSX development fallback", false, true, { normalizeChildren: true }]
+  ] as const) {
+    it(`preserves observable JSX children semantics in the ${mode} inline bundle`, async () => {
+      const { raw } = await inline("./test/utils/children-automatic.tsx", {
+        compact,
+        ...normalization,
+        noValidate: true,
+        esbuild: { format: "esm", jsxDev }
+      });
+      const { mountChildren, unmount, update }: typeof import("./utils/children-automatic") = await import(
+        `data:text/javascript;base64,${Buffer.from(raw).toString("base64")}`
+      );
+
+      NodeRuntime.run(() => {
+        const host = document.createElement("div");
+        try {
+          const app = mountChildren(host);
+          const renderEffects = ["tag", "prop", "child", "key", "spread"];
+
+          expect(host.querySelector("#empty")?.textContent).toBe("");
+          expect(host.querySelector("#nullish")?.textContent).toBe("");
+          expect(host.querySelector("#literal")?.textContent).toBe("A&B");
+          const groups = host.querySelectorAll("#mixed span");
+          expect(Array.from(groups, (group) => group.textContent)).toEqual(["A", "B", "CD"]);
+          expect(host.querySelector("#array")?.textContent).toBe("EF");
+          expect(host.querySelector("#spread")?.textContent).toBe("EF");
+          expect(host.querySelector("#override")?.textContent).toBe("G");
+          expect(host.querySelector("#callback li")?.textContent).toBe("H");
+          expect(app.receivedArrays[0]).toBe(app.sharedChildren);
+          expect(app.receivedArrays[1]).toBe(app.sharedChildren);
+
+          expect(host.querySelector("#tracked")?.textContent).toBe("count:0");
+          expect(host.querySelector("#tracked strong")?.textContent).toBe("0");
+          expect(app.effects).toEqual(renderEffects);
+          expect("children" in app.receivedProps[0]).toBeFalse();
+          expect("key" in app.receivedProps[0]).toBeFalse();
+
+          const first = app.views[0];
+          const firstChild = first.tracked.children[0];
+          expect(first.tracked.key).toBe(0);
+
+          app.state.count = 1;
+          update();
+
+          expect(host.querySelector("#tracked")?.textContent).toBe("count:1");
+          expect(host.querySelector("#tracked strong")?.textContent).toBe("1");
+          expect(app.effects).toEqual([...renderEffects, ...renderEffects]);
+          const next = app.views[1];
+          expect(next.tracked.key).toBe(0);
+          expect(next.tracked).not.toBe(first.tracked);
+          expect(next.tracked.children[0]).not.toBe(firstChild);
+          expect(next.literal).not.toBe(first.literal);
+        } finally {
+          unmount();
+        }
+      });
+    });
+  }
+
+  it("preserves module startup effects when inline normalizes JSX children", async () => {
+    for (const normalizeChildren of [false, true]) {
+      const { raw } = await inline("./test/utils/children-initialization.tsx", {
+        normalizeChildren,
+        noValidate: true,
+        esbuild: { format: "cjs" }
+      });
+      const entry = { exports: {} as typeof import("./utils/children-initialization") };
+      runInNewContext(raw, { module: entry, exports: entry.exports });
+      expect(entry.exports.result, `normalizeChildren: ${normalizeChildren}`).toEqual(["fixture", true, "x"]);
+    }
   });
 
   it("should typecheck automatic jsx runtime for an external consumer package", () => {

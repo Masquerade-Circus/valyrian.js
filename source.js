@@ -280,6 +280,7 @@ async function copy({ entryPoint, outfileName }) {
         "favicons",
         "purgecss",
         "tsc-prog",
+        "typescript",
         "sharp",
         "clean-css",
         "form-data",

@@ -9,6 +9,7 @@ import type { MinifyOptions } from "terser";
 /* eslint-disable sonarjs/cognitive-complexity */
 import fs from "fs";
 import { isString } from "../../utils";
+import { normalizeJsxChildren } from "./normalize-jsx-children";
 
 export type InlineInput = string | { raw: string; map?: string | null; file: string };
 
@@ -30,6 +31,7 @@ export type InlineEsbuildOptions = Omit<BuildOptions, InlineOwnedEsbuildOptions>
 export interface InlineOptions {
   compact?: boolean;
   bundle?: boolean;
+  normalizeChildren?: boolean;
   noValidate?: boolean;
   declarationDir?: string;
   tsc?: Record<string, any>;
@@ -122,6 +124,19 @@ export async function inline(file: InlineInput, options: InlineOptions = {}): Pr
         sourcemap: "external",
         write: false
       };
+
+      const { normalizeChildren = true } = options;
+      if (
+        normalizeChildren === true &&
+        esbuildOptions.bundle &&
+        !esbuildOptions.jsxDev &&
+        /\.[jt]sx$/.test(file) &&
+        Object.keys(safeEsbuildOptions).every((key) =>
+          ["format", "platform", "jsxDev", "tsconfig", "tsconfigRaw"].includes(key)
+        )
+      ) {
+        esbuildOptions.plugins = [normalizeJsxChildren(file)];
+      }
 
       const result = await esbuild.build(esbuildOptions);
       if (result.outputFiles?.length !== 2) {
