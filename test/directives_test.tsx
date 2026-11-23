@@ -4,11 +4,13 @@ import {
   directive,
   DomElement,
   mount,
+  onUpdate,
   Properties,
   setAttribute,
   trust,
   unmount,
   update,
+  Vnode,
   VnodeWithDom
 } from "valyrian.js";
 
@@ -782,6 +784,74 @@ describe("Directives", () => {
       ]);
     });
 
+    it("retires constructor callbacks in postorder after a keyed move", () => {
+      const host = document.createElement("div");
+      const events: string[] = [];
+      let keys = ["section", "aside"];
+      const record = (event: string) => () => {
+        events.push(`${event}:${host.querySelector("section") !== null}`);
+      };
+      const trackedSpan = () =>
+        new Vnode(
+          "span",
+          null,
+          [],
+          void 0,
+          void 0,
+          void 0,
+          void 0,
+          void 0,
+          void 0,
+          void 0,
+          new Set([record("cleanup:span")]),
+          void 0,
+          new Set([record("remove:span")])
+        );
+      const App = () => (
+        <main>
+          {keys.map((key) =>
+            key === "aside" ? (
+              <aside key={key} />
+            ) : (
+              <section
+                key={key}
+                v-keep="retained"
+                v-cleanup={record("cleanup:section")}
+                v-remove={record("remove:section")}
+              >
+                <div>
+                  <i />
+                  {trackedSpan()}
+                </div>
+              </section>
+            )
+          )}
+        </main>
+      );
+
+      try {
+        mount(host, App);
+        const section = host.querySelector("section");
+        const span = host.querySelector("span");
+        keys = ["aside", "section"];
+        update();
+        expect(host.querySelector("main")?.childNodes[1]).toBe(section as ChildNode);
+        expect(host.querySelector("span")).toBe(span);
+        expect(events).toEqual([]);
+
+        keys = ["aside"];
+        update();
+        expect(events).toEqual([
+          "cleanup:span:true",
+          "cleanup:section:true",
+          "remove:span:false",
+          "remove:section:false"
+        ]);
+      } finally {
+        unmount();
+      }
+    });
+
     it("runs persistent vnode cleanup before applying updated attributes", () => {
       const events: string[] = [];
       const state = { phase: "old" };
@@ -822,11 +892,13 @@ describe("Directives", () => {
 
     it("registers v-update returned cleanup for the next cycle", () => {
       const events: string[] = [];
+      const patchedVnodes: VnodeWithDom[] = [];
       const state = { phase: "first" };
       const Component = () => (
         <div
           data-phase={state.phase}
           v-update={(vnode: VnodeWithDom) => {
+            patchedVnodes.push(vnode);
             events.push(`update:${vnode.dom.getAttribute("data-phase")}`);
             return () => {
               events.push(`cleanup:${vnode.dom.getAttribute("data-phase")}`);
@@ -843,6 +915,10 @@ describe("Directives", () => {
       state.phase = "third";
       expect(update()).toEqual('<div data-phase="third"></div>');
       expect(events).toEqual(["update:second", "cleanup:second", "update:third"]);
+      const [previous, next] = patchedVnodes;
+      expect(next).not.toBe(previous);
+      expect(next.dom).toBe(previous.dom);
+      expect(previous.props["data-phase"]).toBe("second");
     });
 
     it("calls function refs with DOM and then null on removal", () => {
@@ -941,25 +1017,40 @@ describe("Directives", () => {
     });
 
     it("defers update calls made during commit until the current commit finishes", () => {
+      const host = document.createElement("div");
+      const events: string[] = [];
       const state = { label: "first", rerendered: false };
+      const Content = () => {
+        onUpdate(() => {
+          events.push(`observe:${host.textContent}`);
+        });
+        return state.label;
+      };
       const Component = () => (
         <section
           v-update={() => {
+            events.push(`request:${host.textContent}`);
             if (!state.rerendered) {
               state.rerendered = true;
               state.label = "third";
               update();
+              update();
             }
           }}
         >
-          {state.label}
+          <Content />
         </section>
       );
 
-      expect(mount("body", Component)).toEqual("<section>first</section>");
-      state.label = "second";
+      try {
+        expect(mount(host, Component)).toEqual("<section>first</section>");
+        state.label = "second";
 
-      expect(update()).toEqual("<section>third</section>");
+        expect(update()).toEqual("<section>third</section>");
+        expect(events).toEqual(["request:second", "observe:second", "request:third", "observe:third"]);
+      } finally {
+        unmount();
+      }
     });
 
     it("should allow to identify lifecycles", () => {

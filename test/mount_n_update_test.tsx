@@ -1,4 +1,3 @@
-/* eslint-disable max-lines-per-function */
 import "valyrian.js/node";
 
 import * as Valyrian from "valyrian.js";
@@ -6,17 +5,22 @@ import {
   mount,
   trust,
   update,
+  updateVnode,
   v,
   unmount,
   debouncedUpdate,
+  current,
+  onCleanup,
   onCreate,
+  onRemove,
+  onUpdate,
   Properties,
   Children,
   VnodeWithDom,
   Component
 } from "valyrian.js";
 
-import { expect, describe, test as it, beforeEach, afterEach } from "bun:test";
+import { expect, describe, test as it } from "bun:test";
 import { pathToFileURL } from "node:url";
 
 describe("Mount and update", () => {
@@ -88,6 +92,7 @@ describe("Mount and update", () => {
   }
 
   it("exports current without a Proxy when the Node.js runtime is unavailable", async () => {
+    // eslint-disable-next-line sonarjs/no-nested-template-literals
     const moduleUrl = `${pathToFileURL(`${process.cwd()}/lib/index.ts`).href}?browser-runtime=${Date.now()}`;
     const script = `
       import { types } from "node:util";
@@ -170,6 +175,125 @@ describe("Mount and update", () => {
       before: '<div id="example">Hello World</div>',
       after: '<div id="example">Hello John Doe</div>'
     });
+  });
+
+  it("keeps component order and lifecycle membership across a subtree update", () => {
+    const host = document.createElement("div");
+    const events: string[] = [];
+    const labels = ["a", "b"];
+    let listVnode: VnodeWithDom | null = null;
+
+    const Row = function (this: Component, { label }: { label: string }) {
+      expect(this).toBe(Row as unknown as Component);
+      expect(current.component).toBe(Row as unknown as Component);
+      expect(current.vnode?.dom).toBe(host.querySelector("ul") as Valyrian.DomElement);
+      events.push(`render:${label}`);
+      onCreate(() => {
+        events.push(`create:${label}`);
+      });
+      return <li>{label}</li>;
+    };
+
+    const Extra = {
+      view() {
+        expect(this).toBe(Extra);
+        expect(current.component).toBe(Extra);
+        expect(current.vnode?.dom).toBe(host.querySelector("ul") as Valyrian.DomElement);
+        events.push("render:extra");
+        onCreate(() => {
+          events.push("create:extra");
+        });
+        onUpdate(() => {
+          events.push(`update:extra:${host.textContent}`);
+          return () => {
+            events.push(`returned:extra:${host.textContent}`);
+          };
+        });
+        onCleanup(() => events.push(`cleanup:extra:${host.textContent}`));
+        onRemove(() => events.push(`remove:extra:${host.textContent}`));
+        return <li>extra</li>;
+      }
+    };
+
+    const App = () => (
+      <ul
+        v-create={(vnode: VnodeWithDom) => {
+          listVnode = vnode;
+        }}
+        v-for={labels}
+      >
+        {(label: string) => (label === "extra" ? v(Extra, null) : <Row label={label} />)}
+      </ul>
+    );
+
+    try {
+      mount(host, App);
+      expect(host.textContent).toBe("ab");
+      expect(events.splice(0)).toEqual(["render:a", "render:b", "create:a", "create:b"]);
+
+      labels.splice(1, 0, "extra");
+      updateVnode(listVnode!);
+      expect(host.textContent).toBe("aextrab");
+      expect(events.splice(0)).toEqual([
+        "render:a",
+        "render:extra",
+        "render:b",
+        "create:extra",
+        "update:extra:aextrab"
+      ]);
+
+      labels.splice(1, 1);
+      updateVnode(listVnode!);
+      expect(host.textContent).toBe("ab");
+      expect(events).toEqual([
+        "cleanup:extra:aextrab",
+        "returned:extra:aextrab",
+        "render:a",
+        "render:b",
+        "remove:extra:ab"
+      ]);
+    } finally {
+      unmount();
+    }
+  });
+
+  it("renders proxied object components without inspecting their prototypes", () => {
+    const host = document.createElement("div");
+    const events: string[] = [];
+    const First = new Proxy(
+      {
+        view() {
+          events.push("first");
+          onCreate(() => {
+            events.push("create:first");
+          });
+          return <i>a</i>;
+        }
+      },
+      {
+        getPrototypeOf() {
+          throw new Error("The renderer must not inspect a component prototype");
+        }
+      }
+    );
+    const Second = () => {
+      events.push("second");
+      return <b>b</b>;
+    };
+    const App = () => (
+      <main>
+        {v(First, null)}
+        <Second />
+      </main>
+    );
+
+    try {
+      mount(host, App);
+      expect(host.textContent).toBe("ab");
+      expect(events).toEqual(["first", "second", "create:first"]);
+    } finally {
+      unmount();
+    }
   });
 
   it("Mount and update with Vnode Component", () => {
@@ -594,20 +718,20 @@ describe("Mount and update", () => {
   it("Should handle different types of data", () => {
     const date = new Date();
 
+    // eslint-disable-next-line no-sparse-arrays
     const Component = () => v("div", null, [null, "Hello", , 1, date, { hello: "world" }, ["Hello"]]);
     expect(mount("body", Component)).toEqual(`<div>Hello1${date}[object Object]Hello</div>`);
   });
 
   it("Should handle svgs", () => {
     const svg =
-      // eslint-disable-next-line max-len
       '<svg enable-background="new 0 0 320.523 320.523" version="1.1" viewBox="0 0 320.523 320.523" xml:space="preserve" xmlns="http://www.w3.org/2000/svg"><path d="m254.41 225.55l-69.147-69.148 65.289-65.29-91.113-91.113v130.58l-82.726-82.726-10.607 10.606 93.333 93.333v9.222l-93.333 93.333 10.606 10.606 82.726-82.726v138.3l94.972-94.972zm-79.971-189.34l54.9 54.9-54.683 54.683-0.218-0.217 1e-3 -109.37zm0 131.01l0.218-0.217 58.541 58.542-58.759 58.759v-117.08z"></path></svg>';
     const Component = () => trust(svg);
 
-    // eslint-disable-next-line max-len
     expect(mount("body", Component)).toEqual(svg);
   });
 
+  // eslint-disable-next-line sonarjs/assertions-in-tests
   it("should fail silently if try to update before mount", () => {
     unmount();
     update();
@@ -660,6 +784,7 @@ describe("Mount and update", () => {
   });
 
   it("should keep html stable when mounting and updating a direct fragment", () => {
+    // eslint-disable-next-line sonarjs/no-identical-functions
     const renderDirectFragment = () => (
       <>
         <span>Hello</span>
@@ -677,17 +802,14 @@ describe("Mount and update", () => {
 
   it("should expand a keyed fragment without introducing wrapper semantics", () => {
     const renderKeyedFragment = () =>
-      v(
-        "div",
-        null,
-        v(v.fragment, { key: "group-1" }, v("span", null, "Hello"), v("span", null, "World"))
-      );
+      v("div", null, v(v.fragment, { key: "group-1" }, v("span", null, "Hello"), v("span", null, "World")));
 
     expect(mount("body", renderKeyedFragment)).toEqual("<div><span>Hello</span><span>World</span></div>");
     expect(update()).toEqual("<div><span>Hello</span><span>World</span></div>");
   });
 
   it("should allow to use fragments in subcomponents", () => {
+    // eslint-disable-next-line sonarjs/no-identical-functions
     const SubComponent = () => (
       <>
         <span>Hello</span>
@@ -803,43 +925,5 @@ describe("Mount and update", () => {
     /* for (let i = 0; i < 1000000; i++) {
       update();
     } */
-  });
-});
-
-describe.skip("Benchmark Test: Mount and update", function () {
-  beforeEach(unmount);
-  afterEach(unmount);
-
-  it("should benchmark mount and update times", function () {
-    const iterations = 1000;
-    const createComponent = (index: number) =>
-      v("div", { id: `test-${index}`, class: `class-${index}` }, [
-        v("span", { "data-index": index }, `Texto del nodo ${index}`),
-        v("input", { type: "text", value: `input-${index}` })
-      ]);
-
-    const children: any = [];
-    for (let i = 0; i < iterations; i++) {
-      children.push(createComponent(i));
-    }
-    function Component() {
-      return v("div", null, children);
-    }
-
-    // eslint-disable-next-line no-console
-    console.time("Mount");
-    mount("body", Component);
-    // eslint-disable-next-line no-console
-    console.timeEnd("Mount");
-
-    children.length = 0;
-    // eslint-disable-next-line no-console
-    console.time("Update");
-    for (let i = 0; i < iterations; i++) {
-      children.push(createComponent(i));
-      update();
-    }
-    // eslint-disable-next-line no-console
-    console.timeEnd("Update");
   });
 });

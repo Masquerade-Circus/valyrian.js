@@ -49,20 +49,34 @@ const OLD_CHILD_COMPONENTS = Symbol("oldChildComponents");
 const CHILD_COMPONENTS = Symbol("childComponents");
 const HAS_KEYS = Symbol("hasKeys");
 const IS_SVG = Symbol("isSVG");
-const ON_CREATE = Symbol("oncreate");
-const ON_UPDATE = Symbol("onupdate");
-const ON_CLEANUP = Symbol("oncleanup");
-const ON_REMOVE = Symbol("onremove");
+const LIFECYCLE = Symbol("lifecycle");
+
+type VnodeLifecycle = {
+  create?: Set<Function>;
+  cleanup?: Set<Function>;
+  update?: Set<Function>;
+  remove?: Set<Function>;
+};
+
+// A component can itself be a Set with a view method.
+class MultipleComponentIdentities {
+  #brand = true;
+
+  constructor(readonly entries: Set<ValyrianComponent>) {}
+
+  static is(identities?: ComponentIdentities): identities is MultipleComponentIdentities {
+    // Private brand checks do not invoke Proxy traps on application components.
+    return typeof identities === "object" && identities !== null && #brand in identities;
+  }
+}
+type ComponentIdentities = ValyrianComponent | MultipleComponentIdentities;
 
 export class Vnode {
   declare [IS_SVG]?: boolean;
-  declare [OLD_CHILD_COMPONENTS]?: Set<ValyrianComponent>;
-  declare [CHILD_COMPONENTS]?: Set<ValyrianComponent>;
+  declare [OLD_CHILD_COMPONENTS]?: ComponentIdentities;
+  declare [CHILD_COMPONENTS]?: ComponentIdentities;
   declare [HAS_KEYS]?: boolean;
-  declare [ON_CREATE]?: Set<Function>;
-  declare [ON_CLEANUP]?: Set<Function>;
-  declare [ON_UPDATE]?: Set<Function>;
-  declare [ON_REMOVE]?: Set<Function>;
+  declare [LIFECYCLE]?: VnodeLifecycle;
 
   constructor(
     public tag: VnodeTag,
@@ -80,13 +94,13 @@ export class Vnode {
     onremove?: Set<Function>
   ) {
     this[IS_SVG] = isSVG;
-    this[OLD_CHILD_COMPONENTS] = oldChildComponents;
-    this[CHILD_COMPONENTS] = childComponents;
+    this[OLD_CHILD_COMPONENTS] = oldChildComponents ? new MultipleComponentIdentities(oldChildComponents) : void 0;
+    this[CHILD_COMPONENTS] = childComponents ? new MultipleComponentIdentities(childComponents) : void 0;
     this[HAS_KEYS] = hasKeys;
-    this[ON_CREATE] = oncreate;
-    this[ON_CLEANUP] = oncleanup;
-    this[ON_UPDATE] = onupdate;
-    this[ON_REMOVE] = onremove;
+    this[LIFECYCLE] =
+      oncreate || oncleanup || onupdate || onremove
+        ? { create: oncreate, cleanup: oncleanup, update: onupdate, remove: onremove }
+        : void 0;
   }
 }
 
@@ -175,7 +189,7 @@ type RendererState = {
     component: ValyrianComponent | null;
     event: Event | null;
   };
-  commitQueue: Function[] | null;
+  commitQueue: Function[][] | null;
   isFlushingCommit: boolean;
   pendingUpdateAfterCommit: boolean;
   eventListenerNames: Set<string>;
@@ -253,8 +267,6 @@ export const reservedProps = new Set<string>([
   "srcdoc"
 ]);
 
-type SetType = typeof ON_CREATE | typeof ON_UPDATE | typeof ON_CLEANUP | typeof ON_REMOVE;
-
 const SUBTREE_LC = Symbol.for("valyrian.subtreeLifecycle");
 
 function markSubtreeLifecycle(dom: DomElement) {
@@ -266,17 +278,17 @@ function markSubtreeLifecycle(dom: DomElement) {
 }
 
 function registerCleanup(cleanup: Function, vnode: VnodeWithDom) {
-  (vnode[ON_CLEANUP] ||= new Set()).add(cleanup);
+  ((vnode[LIFECYCLE] ||= {}).cleanup ||= new Set()).add(cleanup);
 
   if (vnode.dom) {
     markSubtreeLifecycle(vnode.dom);
   }
 }
 
-function addCallbackToSet(callback: Function, setType: SetType, vnode: VnodeWithDom) {
-  const callbacks = (vnode[setType] ||= new Set());
+function addCallbackToSet(callback: Function, phase: keyof VnodeLifecycle, vnode: VnodeWithDom) {
+  const callbacks = ((vnode[LIFECYCLE] ||= {})[phase] ||= new Set());
 
-  if (vnode.dom && (setType === ON_CLEANUP || setType === ON_REMOVE)) {
+  if (vnode.dom && (phase === "cleanup" || phase === "remove")) {
     markSubtreeLifecycle(vnode.dom);
   }
 
@@ -296,14 +308,21 @@ function getCurrentComponentState(): RendererState["current"] {
   return currentState;
 }
 
+function hasComponent({ identities, component }: { identities?: ComponentIdentities; component: ValyrianComponent }) {
+  return (
+    (identities !== void 0 && identities === component) ||
+    (MultipleComponentIdentities.is(identities) && identities.entries.has(component))
+  );
+}
+
 export const onCreate = (callback: OnCreateCallback) => {
   const currentState = getCurrentComponentState();
   const parentVnode = currentState.vnode as VnodeWithDom;
   const component = currentState.component as ValyrianComponent;
-  const hasComponentAsOldChild = parentVnode[OLD_CHILD_COMPONENTS]?.has(component);
+  const hasComponentAsOldChild = hasComponent({ identities: parentVnode[OLD_CHILD_COMPONENTS], component });
 
   if (!hasComponentAsOldChild) {
-    (parentVnode[ON_CREATE] ||= new Set()).add(() => {
+    ((parentVnode[LIFECYCLE] ||= {}).create ||= new Set()).add(() => {
       const state = getRendererState();
       const mainVnode = state.mainVnode;
       const cleanup = callback();
@@ -331,14 +350,14 @@ export const onUpdate = (callback: OnUpdateCallback) => {
   const currentState = getCurrentComponentState();
   const parentVnode = currentState.vnode as VnodeWithDom;
   const component = currentState.component as ValyrianComponent;
-  const hasComponentAsChild = parentVnode[CHILD_COMPONENTS]?.has(component);
+  const hasComponentAsChild = hasComponent({ identities: parentVnode[CHILD_COMPONENTS], component });
   if (hasComponentAsChild) {
-    addCallbackToSet(callback, ON_UPDATE, parentVnode);
+    addCallbackToSet(callback, "update", parentVnode);
   }
 };
 export const onCleanup = (callback: Function) => {
   const currentState = getCurrentComponentState();
-  addCallbackToSet(callback, ON_CLEANUP, currentState.vnode as VnodeWithDom);
+  addCallbackToSet(callback, "cleanup", currentState.vnode as VnodeWithDom);
 };
 export const onRemove = (callback: Function) => {
   const currentState = getCurrentComponentState();
@@ -347,7 +366,7 @@ export const onRemove = (callback: Function) => {
   let removed = false;
 
   function removeCallback() {
-    const hasComponentAsChild = parentVnode[CHILD_COMPONENTS]?.has(component);
+    const hasComponentAsChild = hasComponent({ identities: parentVnode[CHILD_COMPONENTS], component });
 
     if (hasComponentAsChild || removed) {
       return;
@@ -357,7 +376,7 @@ export const onRemove = (callback: Function) => {
     callback();
   }
 
-  addCallbackToSet(removeCallback, ON_REMOVE, parentVnode);
+  addCallbackToSet(removeCallback, "remove", parentVnode);
 };
 const callSet = (set?: Set<Function> | null) => {
   if (!set) {
@@ -379,11 +398,7 @@ const commitSet = (set?: Set<Function> | null) => {
   if (!state.commitQueue) {
     state.commitQueue = [];
   }
-  state.commitQueue.push(() => {
-    for (let i = 0; i < callbacks.length; i++) {
-      callbacks[i]();
-    }
-  });
+  state.commitQueue.push(callbacks);
 };
 
 function collectVnodesPostOrder(dom: DomElement, out: VnodeWithDom[]) {
@@ -403,7 +418,7 @@ function collectVnodesPostOrder(dom: DomElement, out: VnodeWithDom[]) {
 
 function callCleanupOnVnodes(vnodes: VnodeWithDom[]) {
   for (let i = 0; i < vnodes.length; i++) {
-    const callbacks = vnodes[i][ON_CLEANUP];
+    const callbacks = vnodes[i][LIFECYCLE]?.cleanup;
     if (callbacks?.size) {
       callSet(callbacks);
     }
@@ -412,7 +427,7 @@ function callCleanupOnVnodes(vnodes: VnodeWithDom[]) {
 
 function callRemoveOnVnodes(vnodes: VnodeWithDom[]) {
   for (let i = 0; i < vnodes.length; i++) {
-    const callbacks = vnodes[i][ON_REMOVE];
+    const callbacks = vnodes[i][LIFECYCLE]?.remove;
     if (callbacks?.size) {
       callSet(callbacks);
     }
@@ -455,23 +470,23 @@ export const directives: Record<string, Directive> = {
       return;
     }
 
-    addCallbackToSet(() => callback(vnode), ON_CREATE, vnode);
+    addCallbackToSet(() => callback(vnode), "create", vnode);
   },
 
   "v-update": (callback, vnode, oldProps) => {
     if (!oldProps) {
       return;
     }
-    addCallbackToSet(() => callback(vnode, oldProps), ON_UPDATE, vnode);
+    addCallbackToSet(() => callback(vnode, oldProps), "update", vnode);
   },
 
   "v-cleanup": (callback, vnode) => {
-    (vnode[ON_CLEANUP] ||= new Set()).add(() => callback(vnode));
+    ((vnode[LIFECYCLE] ||= {}).cleanup ||= new Set()).add(() => callback(vnode));
     markSubtreeLifecycle(vnode.dom);
   },
 
   "v-remove": (callback, vnode) => {
-    (vnode[ON_REMOVE] ||= new Set()).add(() => callback(vnode));
+    ((vnode[LIFECYCLE] ||= {}).remove ||= new Set()).add(() => callback(vnode));
     markSubtreeLifecycle(vnode.dom);
   },
 
@@ -1000,7 +1015,16 @@ function flatTree(newVnode: VnodeWithDom, mounting = false) {
 
       if (typeof newChild.tag !== "string") {
         const component = (current.component = newChild.tag);
-        (newVnode[CHILD_COMPONENTS] ||= new Set()).add(component);
+        const identities: ComponentIdentities | undefined = newVnode[CHILD_COMPONENTS];
+        if (identities !== component) {
+          if (identities === void 0) {
+            newVnode[CHILD_COMPONENTS] = component;
+          } else if (MultipleComponentIdentities.is(identities)) {
+            identities.entries.add(component);
+          } else {
+            newVnode[CHILD_COMPONENTS] = new MultipleComponentIdentities(new Set([identities, component]));
+          }
+        }
 
         children.push(
           (typeof component === "function" ? component : component.view).call(
@@ -1057,8 +1081,9 @@ function processNewChild(
     }
   }
 
-  if (newChild[ON_CREATE]?.size) {
-    commitSet(newChild[ON_CREATE]);
+  const create = newChild[LIFECYCLE]?.create;
+  if (create?.size) {
+    commitSet(create);
   }
 }
 
@@ -1230,11 +1255,12 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
         }
       }
     }
-    if (newVnode[ON_CREATE]?.size) {
-      commitSet(newVnode[ON_CREATE]);
+    const lifecycle = newVnode[LIFECYCLE];
+    if (lifecycle?.create?.size) {
+      commitSet(lifecycle.create);
     }
-    if (newVnode[ON_UPDATE]?.size) {
-      commitSet(newVnode[ON_UPDATE]);
+    if (lifecycle?.update?.size) {
+      commitSet(lifecycle.update);
     }
     return;
   }
@@ -1245,8 +1271,9 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
   if (oldChildrenLength === 0) {
     const target = childrenLength > 1 ? document.createDocumentFragment() : dom;
     appendNewChildren({ parentVnode: newVnode, children, start: 0, target });
-    if (newVnode[ON_CREATE]?.size) {
-      commitSet(newVnode[ON_CREATE]);
+    const create = newVnode[LIFECYCLE]?.create;
+    if (create?.size) {
+      commitSet(create);
     }
     return;
   }
@@ -1320,7 +1347,7 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
       }
     }
 
-    const cleanup = oldChildVnode?.[ON_CLEANUP];
+    const cleanup = oldChildVnode?.[LIFECYCLE]?.cleanup;
     if (cleanup?.size) {
       callSet(cleanup);
     }
@@ -1332,11 +1359,12 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
       if (oldChild.textContent != newChild.props["v-text"]) {
         oldChild.textContent = newChild.props["v-text"];
       }
-      if (newChild[ON_CREATE]?.size) {
-        commitSet(newChild[ON_CREATE]);
+      const lifecycle = newChild[LIFECYCLE];
+      if (lifecycle?.create?.size) {
+        commitSet(lifecycle.create);
       }
-      if (newChild[ON_UPDATE]?.size) {
-        commitSet(newChild[ON_UPDATE]);
+      if (lifecycle?.update?.size) {
+        commitSet(lifecycle.update);
       }
       continue;
     }
@@ -1357,11 +1385,12 @@ function patch(newVnode: VnodeWithDom, oldVnode: VnodeWithDom | null): void {
 
   // In here we could have new children or/and patched children
   // So we need to call the oncreate and onupdate callbacks
-  if (newVnode[ON_CREATE]?.size) {
-    commitSet(newVnode[ON_CREATE]);
+  const lifecycle = newVnode[LIFECYCLE];
+  if (lifecycle?.create?.size) {
+    commitSet(lifecycle.create);
   }
-  if (newVnode[ON_UPDATE]?.size) {
-    commitSet(newVnode[ON_UPDATE]);
+  if (lifecycle?.update?.size) {
+    commitSet(lifecycle.update);
   }
 }
 
@@ -1371,7 +1400,7 @@ export function updateVnode(vnode: VnodeWithDom, shouldCleanup = true): string |
   vnode.props = vnode.props || {};
   const previousCommitQueue = state.commitQueue;
   state.commitQueue = null;
-  const cleanup = vnode[ON_CLEANUP];
+  const cleanup = vnode[LIFECYCLE]?.cleanup;
   if (shouldCleanup && cleanup?.size) {
     // The clean up must be from the old vnode
     // and in here the vnode is the old one
@@ -1380,20 +1409,24 @@ export function updateVnode(vnode: VnodeWithDom, shouldCleanup = true): string |
     callSet(cleanup);
   }
   // Clone the old on remove set to call it after the patch
-  const oldOnRemoveSet = vnode[ON_REMOVE]?.size ? new Set(vnode[ON_REMOVE]) : null;
+  const remove = vnode[LIFECYCLE]?.remove;
+  const oldOnRemoveSet = remove?.size ? new Set(remove) : null;
   currentState.vnode = vnode;
   try {
     patch(vnode, shouldCleanup ? vnode : null);
     if (oldOnRemoveSet?.size) {
       callSet(oldOnRemoveSet);
     }
-    const nextCommitQueue = state.commitQueue as Function[] | null;
+    const nextCommitQueue = state.commitQueue as Function[][] | null;
     if (nextCommitQueue) {
       const previousIsFlushingCommit = state.isFlushingCommit;
       state.isFlushingCommit = true;
       try {
         for (let i = 0; i < nextCommitQueue.length; i++) {
-          nextCommitQueue[i]();
+          const callbacks = nextCommitQueue[i];
+          for (let j = 0; j < callbacks.length; j++) {
+            callbacks[j]();
+          }
         }
       } finally {
         state.isFlushingCommit = previousIsFlushingCommit;
