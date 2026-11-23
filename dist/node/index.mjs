@@ -100,7 +100,6 @@ var PopStateEvent = class extends Event {
   }
 };
 var Node = class _Node {
-  // eslint-disable-next-line no-use-before-define
   childNodes = [];
   baseURI = "";
   tag_name;
@@ -165,7 +164,6 @@ var Node = class _Node {
   get nodeValue() {
     return this.node_value;
   }
-  // eslint-disable-next-line no-use-before-define
   parent_node = null;
   get parentNode() {
     return this.parent_node;
@@ -193,7 +191,9 @@ var Node = class _Node {
       return this.insertBefore(node, null);
     }
     if (node) {
-      node.parentNode && node.parentNode.removeChild(node);
+      if (node.parentNode) {
+        node.parentNode.removeChild(node);
+      }
       this.childNodes.push(node);
       node.parentNode = this;
       node.parentElement = this instanceof Element ? this : null;
@@ -209,7 +209,9 @@ var Node = class _Node {
       return node;
     }
     if (node) {
-      node.parentNode && node.parentNode.removeChild(node);
+      if (node.parentNode) {
+        node.parentNode.removeChild(node);
+      }
       node.parentNode = this;
       node.parentElement = this instanceof Element ? this : null;
       if (child) {
@@ -224,7 +226,9 @@ var Node = class _Node {
   replaceChild(node, child) {
     if (node && child && child.parentNode === this) {
       this.insertBefore(node, child);
-      child.parentNode && child.parentNode.removeChild(child);
+      if (child.parentNode) {
+        child.parentNode.removeChild(child);
+      }
     }
     return child;
   }
@@ -280,7 +284,11 @@ var Node = class _Node {
         break;
       }
     }
-    idx === -1 ? this.attributes.push(attr) : this.attributes.splice(idx, 1, attr);
+    if (idx === -1) {
+      this.attributes.push(attr);
+    } else {
+      this.attributes.splice(idx, 1, attr);
+    }
   }
   getAttribute(name) {
     for (let i = 0, l = this.attributes.length; i < l; i++) {
@@ -409,6 +417,46 @@ var Element = class extends Node {
     this.nodeType = 1;
     this.attributes = [];
     this.childNodes = [];
+  }
+  // eslint-disable-next-line sonarjs/cognitive-complexity
+  moveBefore(node, child) {
+    if (arguments.length < 2 || !(node instanceof Node) || child != null && !(child instanceof Node)) {
+      throw new TypeError("moveBefore requires a node and a reference node or null.");
+    }
+    const oldParent = node.parentNode;
+    const oldIndex = oldParent?.childNodes.indexOf(node) ?? -1;
+    if (!oldParent || oldIndex < 0) {
+      throw new DOMException("The node to move must already have a parent.", "HierarchyRequestError");
+    }
+    let root = this;
+    while (root.parentNode) {
+      if (root === node) {
+        throw new DOMException("The move would create a cycle.", "HierarchyRequestError");
+      }
+      root = root.parentNode;
+    }
+    let oldRoot = oldParent;
+    while (oldRoot.parentNode) {
+      oldRoot = oldRoot.parentNode;
+    }
+    if (root !== oldRoot) {
+      throw new DOMException("The node and destination must share a root.", "HierarchyRequestError");
+    }
+    const before = child === node ? oldParent.childNodes[oldIndex + 1] ?? null : child ?? null;
+    const index = before ? this.childNodes.indexOf(before) : this.childNodes.length;
+    if (before && (before.parentNode !== this || index < 0)) {
+      throw new DOMException("The reference node is not a child of the destination.", "NotFoundError");
+    }
+    const type = node.nodeType;
+    if (type !== 1 && type !== 3 && type !== 4 && type !== 7 && type !== 8) {
+      throw new DOMException("Only elements and character data can be moved.", "HierarchyRequestError");
+    }
+    if (this.nodeType === 9 && (type === 3 || type === 4 || type === 1 && this.childNodes.some((item, i) => item.nodeType === 1 || item.nodeType === 10 && i >= index))) {
+      throw new DOMException("The move would violate the document structure.", "HierarchyRequestError");
+    }
+    oldParent.childNodes.splice(oldIndex, 1);
+    this.childNodes.splice(oldParent === this && oldIndex < index ? index - 1 : index, 0, node);
+    node.parentNode = this;
   }
   get value() {
     if (this.#value.length > 0) {
@@ -664,6 +712,7 @@ var Document = class extends Element {
 };
 function parseSimpleSelector(selector) {
   const match = selector.match(
+    // eslint-disable-next-line sonarjs/regex-complexity
     /^(?:([A-Za-z][A-Za-z0-9-]*))?(?:(#[A-Za-z_][A-Za-z0-9_-]*)|(\.[A-Za-z_][A-Za-z0-9_-]*)|\[([A-Za-z_][A-Za-z0-9_-]*)(?:="([^"]*)")?\])?$/
   );
   if (!match || !match[1] && !match[2] && !match[3] && !match[4]) {
@@ -1144,8 +1193,172 @@ icons.options = {
 import * as tsc from "tsc-prog";
 import CleanCSS from "clean-css";
 import { PurgeCSS } from "purgecss";
+import esbuild2 from "esbuild";
+import fs3 from "fs";
+
+// lib/node/utils/normalize-jsx-children.ts
 import esbuild from "esbuild";
 import fs2 from "fs";
+import { dirname, extname, resolve } from "path";
+var runtime = "valyrian.js/jsx-runtime";
+function normalizeJsxChildren(entry) {
+  return {
+    name: "valyrian-normalize-children",
+    setup(build2) {
+      const entryPath = resolve(entry);
+      build2.onLoad({ filter: /\.[jt]sx$/ }, async ({ path: path2 }) => {
+        if (path2 !== entryPath) {
+          return;
+        }
+        const source = await fs2.promises.readFile(path2, "utf8");
+        if (/\b(?:jsx|jsxs|eval|require|module|exports|sourceMappingURL)\b|\\u/.test(source)) {
+          return;
+        }
+        const resolveOptions = { kind: "import-statement", importer: path2, resolveDir: dirname(path2) };
+        const jsx = await build2.resolve(runtime, resolveOptions);
+        const core = await build2.resolve("valyrian.js", resolveOptions);
+        const ext = extname(jsx.path);
+        if (jsx.external || core.external || jsx.namespace !== "file" || core.namespace !== "file" || ![".ts", ".mjs", ".js"].includes(ext) || extname(core.path) !== ext || jsx.path !== resolve(dirname(core.path), `jsx-runtime/index${ext}`)) {
+          return;
+        }
+        const jsxCore = await build2.resolve("valyrian.js", {
+          ...resolveOptions,
+          importer: jsx.path,
+          resolveDir: dirname(jsx.path)
+        });
+        if (jsxCore.external || jsxCore.path !== core.path) {
+          return;
+        }
+        const lowered = await esbuild.build({
+          entryPoints: [path2],
+          bundle: false,
+          write: false,
+          outdir: build2.initialOptions.outdir,
+          target: "esnext",
+          platform: build2.initialOptions.platform,
+          jsx: "automatic",
+          jsxImportSource: "valyrian.js",
+          sourcemap: "external",
+          tsconfig: build2.initialOptions.tsconfig,
+          tsconfigRaw: build2.initialOptions.tsconfigRaw,
+          logLevel: "silent"
+        }).catch((error) => {
+          if (Array.isArray(error.errors)) {
+            return null;
+          }
+          throw error;
+        });
+        if (!lowered || lowered.warnings.length) {
+          return;
+        }
+        const [mapFile, jsFile] = lowered.outputFiles;
+        const map = JSON.parse(mapFile.text);
+        if (map.sourcesContent?.length !== 1 || map.sourcesContent[0] !== source) {
+          return;
+        }
+        const code = await rewriteChildren(jsFile.text);
+        if (code === null) {
+          return;
+        }
+        map.sources = map.sources.map((name) => resolve(dirname(mapFile.path), name));
+        const encoded = Buffer.from(JSON.stringify(map)).toString("base64");
+        return {
+          contents: `${code}
+//# sourceMappingURL=data:application/json;base64,${encoded}`,
+          loader: "js",
+          resolveDir: dirname(path2)
+        };
+      });
+    }
+  };
+}
+async function rewriteChildren(code) {
+  const { default: ts } = await import("typescript");
+  const file = ts.createSourceFile("lowered.js", code, ts.ScriptTarget.ESNext, true, ts.ScriptKind.JS);
+  const runtimeImport = file.statements.filter(ts.isImportDeclaration).find(
+    (node) => ts.isStringLiteral(node.moduleSpecifier) && node.moduleSpecifier.text === runtime
+  );
+  if (!runtimeImport) {
+    return null;
+  }
+  const bindings = runtimeImport.importClause?.namedBindings;
+  if (!bindings || !ts.isNamedImports(bindings)) {
+    return null;
+  }
+  const factories = /* @__PURE__ */ new Set();
+  for (const binding of bindings.elements) {
+    const imported = (binding.propertyName ?? binding.name).text;
+    if (binding.name.text === imported && (imported === "jsx" || imported === "jsxs")) {
+      factories.add(imported);
+    }
+  }
+  const identifiers = new Set(code.match(/[$\w]+/g));
+  const ctor = [..."ABCDEFGHIJKLMNOPQRSTUVWXYZ"].find((name) => !identifiers.has(name));
+  if (!ctor) {
+    return null;
+  }
+  const edits = [];
+  function visit(node) {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+      const factory = node.expression.text;
+      const [, props] = node.arguments;
+      if (factories.has(factory) && !node.questionDotToken && (node.arguments.length === 2 || node.arguments.length === 3) && !node.arguments.some(ts.isSpreadElement) && ts.isObjectLiteralExpression(props)) {
+        const names = /* @__PURE__ */ new Set();
+        const plainProps = props.properties.every((prop) => {
+          if (!ts.isPropertyAssignment(prop) || !(ts.isIdentifier(prop.name) || ts.isStringLiteral(prop.name))) {
+            return false;
+          }
+          const name = prop.name.text;
+          if (name === "__proto__" || names.has(name)) {
+            return false;
+          }
+          names.add(name);
+          return true;
+        });
+        const child = props.properties.at(-1);
+        if (plainProps && child && ts.isPropertyAssignment(child) && (ts.isIdentifier(child.name) || ts.isStringLiteral(child.name)) && child.name.text === "children") {
+          const value = child.initializer;
+          const multiple = factory === "jsxs" && ts.isArrayLiteralExpression(value);
+          const single = factory === "jsx" && (ts.isStringLiteral(value) || ts.isCallExpression(value) && ts.isIdentifier(value.expression) && factories.has(value.expression.text));
+          const calleeStart = node.expression.getStart(file);
+          const annotation = "/* @__PURE__ */ ";
+          const start = calleeStart - annotation.length;
+          const closeProps = props.properties.at(-2)?.end ?? props.getStart(file) + 1;
+          const colon = child.name.end + 1;
+          if ((multiple || single) && start >= 0 && code.slice(start, calleeStart) === annotation && /^[,\w"'\t ]+:$/.test(code.slice(closeProps, colon)) && /^[\t ]*}$/.test(code.slice(value.end, props.end))) {
+            edits.push(
+              { start, end: node.expression.end, text: `/*#__PURE__*/new ${ctor}` },
+              { start: closeProps, end: colon, text: multiple ? "}," : "},[" },
+              { start: value.end, end: props.end, text: multiple ? "" : "]" }
+            );
+          }
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(file);
+  if (!edits.length) {
+    return null;
+  }
+  const importAt = runtimeImport.getStart(file);
+  const automaticImport = code.slice(importAt, runtimeImport.end);
+  edits.push({ start: importAt, end: runtimeImport.end, text: automaticImport.replace(/[^\r\n]/g, " ") });
+  const result = [];
+  let offset = 0;
+  for (const edit of edits.sort((a, b) => a.start - b.start)) {
+    result.push(code.slice(offset, edit.start), edit.text.padEnd(edit.end - edit.start));
+    offset = edit.end;
+  }
+  result.push(code.slice(offset));
+  result.push(`
+${automaticImport}
+import { Vnode as ${ctor} } from "valyrian.js";
+`);
+  return result.join("");
+}
+
+// lib/node/utils/inline.ts
 async function inline(file, options = {}) {
   if (isString(file)) {
     const ext = file.split(".").pop();
@@ -1217,7 +1430,13 @@ async function inline(file, options = {}) {
         sourcemap: "external",
         write: false
       };
-      const result = await esbuild.build(esbuildOptions);
+      const { normalizeChildren = true } = options;
+      if (normalizeChildren === true && esbuildOptions.bundle && !esbuildOptions.jsxDev && /\.[jt]sx$/.test(file) && Object.keys(safeEsbuildOptions).every(
+        (key) => ["format", "platform", "jsxDev", "tsconfig", "tsconfigRaw"].includes(key)
+      )) {
+        esbuildOptions.plugins = [normalizeJsxChildren(file)];
+      }
+      const result = await esbuild2.build(esbuildOptions);
       if (result.outputFiles?.length !== 2) {
         throw new Error(result.errors.join("\n"));
       }
@@ -1263,7 +1482,7 @@ async function inline(file, options = {}) {
       }).minify([file]);
       return { raw: result.styles, map: null, file };
     } else {
-      return { raw: fs2.readFileSync(file, "utf8"), map: null, file };
+      return { raw: fs3.readFileSync(file, "utf8"), map: null, file };
     }
   } else if (typeof file === "object" && "raw" in file) {
     return { map: null, ...file };
@@ -1305,11 +1524,11 @@ inline.uncss = async function(renderedHtml, css, options = {}) {
 };
 
 // lib/node/utils/sw.ts
-import fs3 from "fs";
+import fs4 from "fs";
 import path from "path";
 function sw(file, options = {}) {
   const swfiletemplate = path.resolve(__dirname, "./node.sw.js");
-  const swTpl = fs3.readFileSync(swfiletemplate, "utf8");
+  const swTpl = fs4.readFileSync(swfiletemplate, "utf8");
   const criticalUrls = options.criticalUrls ?? options.urls ?? ["/"];
   const optionalUrls = options.optionalUrls ?? [];
   const opt = {
@@ -1325,7 +1544,7 @@ function sw(file, options = {}) {
   if (!opt.debug) {
     contents = contents.replace("console.log", "() => {}");
   }
-  fs3.writeFileSync(file, contents, "utf8");
+  fs4.writeFileSync(file, contents, "utf8");
 }
 
 // lib/node/runtime.ts

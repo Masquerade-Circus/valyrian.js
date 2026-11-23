@@ -12,6 +12,7 @@ export type InlineEsbuildOptions = Omit<BuildOptions, InlineOwnedEsbuildOptions>
 export interface InlineOptions {
     compact?: boolean;
     bundle?: boolean;
+    normalizeChildren?: boolean;
     noValidate?: boolean;
     declarationDir?: string;
     tsc?: Record<string, any>;

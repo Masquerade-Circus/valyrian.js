@@ -1,5 +1,4 @@
-interface ChildNodes extends Array<Node | Element | Text | DocumentFragment> {
-}
+type ChildNodes = Array<Node | Element | Text | DocumentFragment>;
 type EventPath = globalThis.EventTarget[] & [(globalThis.EventTarget | undefined)?];
 export declare class Event implements globalThis.Event {
     type: string;
@@ -97,6 +96,7 @@ export declare class Element extends Node {
     #private;
     protected get _listeners(): Map<string, Set<Function>>;
     constructor();
+    moveBefore(node: Node, child: Node | null): void;
     get value(): string;
     set value(val: string);
     get checked(): boolean;

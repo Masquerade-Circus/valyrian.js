@@ -12,5 +12,10 @@ coverageSkipTestFiles = true
 coverageThreshold = { lines = 0.0, functions = 0.0, statements = 0.85 }
 coveragePathIgnorePatterns = [
   "tests/**",
-  "scripts/**"
+  "scripts/**",
+  "**/data:text/**",
+  "tmp/**",
+  ".tmp/**",
+  "node_modules/**",
+  "dist/**"
 ]

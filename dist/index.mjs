@@ -5,10 +5,17 @@ var OLD_CHILD_COMPONENTS = /* @__PURE__ */ Symbol("oldChildComponents");
 var CHILD_COMPONENTS = /* @__PURE__ */ Symbol("childComponents");
 var HAS_KEYS = /* @__PURE__ */ Symbol("hasKeys");
 var IS_SVG = /* @__PURE__ */ Symbol("isSVG");
-var ON_CREATE = /* @__PURE__ */ Symbol("oncreate");
-var ON_UPDATE = /* @__PURE__ */ Symbol("onupdate");
-var ON_CLEANUP = /* @__PURE__ */ Symbol("oncleanup");
-var ON_REMOVE = /* @__PURE__ */ Symbol("onremove");
+var LIFECYCLE = /* @__PURE__ */ Symbol("lifecycle");
+var MultipleComponentIdentities = class {
+  constructor(entries) {
+    this.entries = entries;
+  }
+  entries;
+  #brand = true;
+  static is(identities) {
+    return typeof identities === "object" && identities !== null && #brand in identities;
+  }
+};
 var Vnode = class {
   constructor(tag, props, children, key, dom, isSVG, oldChildComponents, childComponents, hasKeys, oncreate, oncleanup, onupdate, onremove) {
     this.tag = tag;
@@ -17,13 +24,10 @@ var Vnode = class {
     this.key = key;
     this.dom = dom;
     this[IS_SVG] = isSVG;
-    this[OLD_CHILD_COMPONENTS] = oldChildComponents;
-    this[CHILD_COMPONENTS] = childComponents;
+    this[OLD_CHILD_COMPONENTS] = oldChildComponents ? new MultipleComponentIdentities(oldChildComponents) : void 0;
+    this[CHILD_COMPONENTS] = childComponents ? new MultipleComponentIdentities(childComponents) : void 0;
     this[HAS_KEYS] = hasKeys;
-    this[ON_CREATE] = oncreate;
-    this[ON_CLEANUP] = oncleanup;
-    this[ON_UPDATE] = onupdate;
-    this[ON_REMOVE] = onremove;
+    this[LIFECYCLE] = oncreate || oncleanup || onupdate || onremove ? { create: oncreate, cleanup: oncleanup, update: onupdate, remove: onremove } : void 0;
   }
   tag;
   props;
@@ -86,6 +90,7 @@ function createRendererState() {
   return {
     mainComponent: null,
     mainVnode: null,
+    moveCommand: "insertBefore",
     isMounted: false,
     current: { oldVnode: null, vnode: null, component: null, event: null },
     commitQueue: null,
@@ -149,14 +154,14 @@ function markSubtreeLifecycle(dom) {
   }
 }
 function registerCleanup(cleanup, vnode) {
-  (vnode[ON_CLEANUP] ||= /* @__PURE__ */ new Set()).add(cleanup);
+  ((vnode[LIFECYCLE] ||= {}).cleanup ||= /* @__PURE__ */ new Set()).add(cleanup);
   if (vnode.dom) {
     markSubtreeLifecycle(vnode.dom);
   }
 }
-function addCallbackToSet(callback, setType, vnode) {
-  const callbacks = vnode[setType] ||= /* @__PURE__ */ new Set();
-  if (vnode.dom && (setType === ON_CLEANUP || setType === ON_REMOVE)) {
+function addCallbackToSet(callback, phase, vnode) {
+  const callbacks = (vnode[LIFECYCLE] ||= {})[phase] ||= /* @__PURE__ */ new Set();
+  if (vnode.dom && (phase === "cleanup" || phase === "remove")) {
     markSubtreeLifecycle(vnode.dom);
   }
   callbacks.add(() => {
@@ -173,13 +178,16 @@ function getCurrentComponentState() {
   }
   return currentState;
 }
+function hasComponent({ identities, component }) {
+  return identities !== void 0 && identities === component || MultipleComponentIdentities.is(identities) && identities.entries.has(component);
+}
 var onCreate = (callback) => {
   const currentState = getCurrentComponentState();
   const parentVnode = currentState.vnode;
   const component = currentState.component;
-  const hasComponentAsOldChild = parentVnode[OLD_CHILD_COMPONENTS]?.has(component);
+  const hasComponentAsOldChild = hasComponent({ identities: parentVnode[OLD_CHILD_COMPONENTS], component });
   if (!hasComponentAsOldChild) {
-    (parentVnode[ON_CREATE] ||= /* @__PURE__ */ new Set()).add(() => {
+    ((parentVnode[LIFECYCLE] ||= {}).create ||= /* @__PURE__ */ new Set()).add(() => {
       const state = getRendererState();
       const mainVnode = state.mainVnode;
       const cleanup = callback();
@@ -203,14 +211,14 @@ var onUpdate = (callback) => {
   const currentState = getCurrentComponentState();
   const parentVnode = currentState.vnode;
   const component = currentState.component;
-  const hasComponentAsChild = parentVnode[CHILD_COMPONENTS]?.has(component);
+  const hasComponentAsChild = hasComponent({ identities: parentVnode[CHILD_COMPONENTS], component });
   if (hasComponentAsChild) {
-    addCallbackToSet(callback, ON_UPDATE, parentVnode);
+    addCallbackToSet(callback, "update", parentVnode);
   }
 };
 var onCleanup = (callback) => {
   const currentState = getCurrentComponentState();
-  addCallbackToSet(callback, ON_CLEANUP, currentState.vnode);
+  addCallbackToSet(callback, "cleanup", currentState.vnode);
 };
 var onRemove = (callback) => {
   const currentState = getCurrentComponentState();
@@ -218,14 +226,14 @@ var onRemove = (callback) => {
   const component = currentState.component;
   let removed = false;
   function removeCallback() {
-    const hasComponentAsChild = parentVnode[CHILD_COMPONENTS]?.has(component);
+    const hasComponentAsChild = hasComponent({ identities: parentVnode[CHILD_COMPONENTS], component });
     if (hasComponentAsChild || removed) {
       return;
     }
     removed = true;
     callback();
   }
-  addCallbackToSet(removeCallback, ON_REMOVE, parentVnode);
+  addCallbackToSet(removeCallback, "remove", parentVnode);
 };
 var callSet = (set) => {
   if (!set) {
@@ -246,11 +254,7 @@ var commitSet = (set) => {
   if (!state.commitQueue) {
     state.commitQueue = [];
   }
-  state.commitQueue.push(() => {
-    for (let i = 0; i < callbacks.length; i++) {
-      callbacks[i]();
-    }
-  });
+  state.commitQueue.push(callbacks);
 };
 function collectVnodesPostOrder(dom, out) {
   const childNodes = dom.childNodes;
@@ -268,7 +272,7 @@ function collectVnodesPostOrder(dom, out) {
 }
 function callCleanupOnVnodes(vnodes) {
   for (let i = 0; i < vnodes.length; i++) {
-    const callbacks = vnodes[i][ON_CLEANUP];
+    const callbacks = vnodes[i][LIFECYCLE]?.cleanup;
     if (callbacks?.size) {
       callSet(callbacks);
     }
@@ -276,7 +280,7 @@ function callCleanupOnVnodes(vnodes) {
 }
 function callRemoveOnVnodes(vnodes) {
   for (let i = 0; i < vnodes.length; i++) {
-    const callbacks = vnodes[i][ON_REMOVE];
+    const callbacks = vnodes[i][LIFECYCLE]?.remove;
     if (callbacks?.size) {
       callSet(callbacks);
     }
@@ -313,20 +317,20 @@ var directives = {
     if (oldProps) {
       return;
     }
-    addCallbackToSet(() => callback(vnode), ON_CREATE, vnode);
+    addCallbackToSet(() => callback(vnode), "create", vnode);
   },
   "v-update": (callback, vnode, oldProps) => {
     if (!oldProps) {
       return;
     }
-    addCallbackToSet(() => callback(vnode, oldProps), ON_UPDATE, vnode);
+    addCallbackToSet(() => callback(vnode, oldProps), "update", vnode);
   },
   "v-cleanup": (callback, vnode) => {
-    (vnode[ON_CLEANUP] ||= /* @__PURE__ */ new Set()).add(() => callback(vnode));
+    ((vnode[LIFECYCLE] ||= {}).cleanup ||= /* @__PURE__ */ new Set()).add(() => callback(vnode));
     markSubtreeLifecycle(vnode.dom);
   },
   "v-remove": (callback, vnode) => {
-    (vnode[ON_REMOVE] ||= /* @__PURE__ */ new Set()).add(() => callback(vnode));
+    ((vnode[LIFECYCLE] ||= {}).remove ||= /* @__PURE__ */ new Set()).add(() => callback(vnode));
     markSubtreeLifecycle(vnode.dom);
   },
   "v-ref": (ref, vnode) => {
@@ -761,7 +765,16 @@ function flatTree(newVnode, mounting = false) {
       }
       if (typeof newChild.tag !== "string") {
         const component = current.component = newChild.tag;
-        (newVnode[CHILD_COMPONENTS] ||= /* @__PURE__ */ new Set()).add(component);
+        const identities = newVnode[CHILD_COMPONENTS];
+        if (identities !== component) {
+          if (identities === void 0) {
+            newVnode[CHILD_COMPONENTS] = component;
+          } else if (MultipleComponentIdentities.is(identities)) {
+            identities.entries.add(component);
+          } else {
+            newVnode[CHILD_COMPONENTS] = new MultipleComponentIdentities(/* @__PURE__ */ new Set([identities, component]));
+          }
+        }
         children.push(
           (typeof component === "function" ? component : component.view).call(
             component,
@@ -803,8 +816,9 @@ function processNewChild(newChild, parentVnode, oldDom, appendTarget, before) {
       appendNewChildren({ parentVnode: newChild, children, start: 0, target: newChild.dom });
     }
   }
-  if (newChild[ON_CREATE]?.size) {
-    commitSet(newChild[ON_CREATE]);
+  const create = newChild[LIFECYCLE]?.create;
+  if (create?.size) {
+    commitSet(create);
   }
 }
 function appendNewChildren({
@@ -834,16 +848,12 @@ function appendNewChildren({
     }
   }
 }
-function stableKeyedPositions({ positions, focusedIndex }) {
+function stableKeyedPositions(positions) {
   const tails = [];
   const previous = [];
-  const focusedPosition = positions[focusedIndex];
   for (let i = 0; i < positions.length; i++) {
     const position = positions[i];
     if (position === -1) {
-      continue;
-    }
-    if (focusedIndex >= 0 && i !== focusedIndex && i < focusedIndex !== position < focusedPosition) {
       continue;
     }
     let low = tails.length;
@@ -910,23 +920,14 @@ function reconcileKeyedRange({
     }
   }
   if (reordered) {
-    let focusedIndex = -1;
-    if (dom.ownerDocument) {
-      let focused = dom.getRootNode().activeElement ?? null;
-      while (focused && focused !== dom && focused.parentNode !== dom) {
-        focused = focused.parentNode;
-      }
-      if (focused?.parentNode === dom) {
-        focusedIndex = matches.indexOf(focused);
-      }
-    }
-    const stable = stableKeyedPositions({ positions, focusedIndex });
+    const moveCommand = getRendererState().moveCommand;
+    const stable = stableKeyedPositions(positions);
     let before = null;
     for (let i = matches.length - 1; i >= 0; i--) {
       const child = matches[i];
       if (child) {
         if (!stable.has(i)) {
-          dom.insertBefore(child, before);
+          dom[moveCommand](child, before);
         }
         before = child;
       }
@@ -957,11 +958,12 @@ function patch(newVnode, oldVnode) {
         }
       }
     }
-    if (newVnode[ON_CREATE]?.size) {
-      commitSet(newVnode[ON_CREATE]);
+    const lifecycle2 = newVnode[LIFECYCLE];
+    if (lifecycle2?.create?.size) {
+      commitSet(lifecycle2.create);
     }
-    if (newVnode[ON_UPDATE]?.size) {
-      commitSet(newVnode[ON_UPDATE]);
+    if (lifecycle2?.update?.size) {
+      commitSet(lifecycle2.update);
     }
     return;
   }
@@ -971,8 +973,9 @@ function patch(newVnode, oldVnode) {
   if (oldChildrenLength === 0) {
     const target = childrenLength > 1 ? document.createDocumentFragment() : dom;
     appendNewChildren({ parentVnode: newVnode, children, start: 0, target });
-    if (newVnode[ON_CREATE]?.size) {
-      commitSet(newVnode[ON_CREATE]);
+    const create = newVnode[LIFECYCLE]?.create;
+    if (create?.size) {
+      commitSet(create);
     }
     return;
   }
@@ -1033,15 +1036,8 @@ function patch(newVnode, oldVnode) {
       if (oldChildVnode.props["v-keep"] === newChild.props["v-keep"]) {
         continue;
       }
-      if (!keyedChildren && typeof newChild.key === "undefined") {
-        const nextOldVnode = childNodes[i + 1]?.vnode;
-        if (nextOldVnode?.props && typeof nextOldVnode.key === "undefined" && nextOldVnode.props["v-keep"] === newChild.props["v-keep"]) {
-          strictRemoveNode(oldChild);
-          continue;
-        }
-      }
     }
-    const cleanup = oldChildVnode?.[ON_CLEANUP];
+    const cleanup = oldChildVnode?.[LIFECYCLE]?.cleanup;
     if (cleanup?.size) {
       callSet(cleanup);
     }
@@ -1050,11 +1046,12 @@ function patch(newVnode, oldVnode) {
       if (oldChild.textContent != newChild.props["v-text"]) {
         oldChild.textContent = newChild.props["v-text"];
       }
-      if (newChild[ON_CREATE]?.size) {
-        commitSet(newChild[ON_CREATE]);
+      const lifecycle2 = newChild[LIFECYCLE];
+      if (lifecycle2?.create?.size) {
+        commitSet(lifecycle2.create);
       }
-      if (newChild[ON_UPDATE]?.size) {
-        commitSet(newChild[ON_UPDATE]);
+      if (lifecycle2?.update?.size) {
+        commitSet(lifecycle2.update);
       }
       continue;
     }
@@ -1070,11 +1067,12 @@ function patch(newVnode, oldVnode) {
       toRemove?.remove();
     }
   }
-  if (newVnode[ON_CREATE]?.size) {
-    commitSet(newVnode[ON_CREATE]);
+  const lifecycle = newVnode[LIFECYCLE];
+  if (lifecycle?.create?.size) {
+    commitSet(lifecycle.create);
   }
-  if (newVnode[ON_UPDATE]?.size) {
-    commitSet(newVnode[ON_UPDATE]);
+  if (lifecycle?.update?.size) {
+    commitSet(lifecycle.update);
   }
 }
 function updateVnode(vnode, shouldCleanup = true) {
@@ -1083,11 +1081,12 @@ function updateVnode(vnode, shouldCleanup = true) {
   vnode.props = vnode.props || {};
   const previousCommitQueue = state.commitQueue;
   state.commitQueue = null;
-  const cleanup = vnode[ON_CLEANUP];
+  const cleanup = vnode[LIFECYCLE]?.cleanup;
   if (shouldCleanup && cleanup?.size) {
     callSet(cleanup);
   }
-  const oldOnRemoveSet = vnode[ON_REMOVE]?.size ? new Set(vnode[ON_REMOVE]) : null;
+  const remove = vnode[LIFECYCLE]?.remove;
+  const oldOnRemoveSet = remove?.size ? new Set(remove) : null;
   currentState.vnode = vnode;
   try {
     patch(vnode, shouldCleanup ? vnode : null);
@@ -1100,7 +1099,10 @@ function updateVnode(vnode, shouldCleanup = true) {
       state.isFlushingCommit = true;
       try {
         for (let i = 0; i < nextCommitQueue.length; i++) {
-          nextCommitQueue[i]();
+          const callbacks = nextCommitQueue[i];
+          for (let j = 0; j < callbacks.length; j++) {
+            callbacks[j]();
+          }
         }
       } finally {
         state.isFlushingCommit = previousIsFlushingCommit;
@@ -1172,6 +1174,7 @@ function unmount() {
     removeEventListeners(state);
     state.mainComponent = null;
     state.mainVnode = null;
+    state.moveCommand = "insertBefore";
     state.isMounted = false;
     state.current.vnode = null;
     state.current.component = null;
@@ -1183,6 +1186,9 @@ function unmount() {
 function mount(dom, component) {
   const state = getRendererState();
   const container = typeof dom === "string" ? isNodeJs ? document.querySelector(dom) || createElement(dom, dom === "svg") : document.querySelector(dom) : dom;
+  if (!container) {
+    throw new Error(`The container element "${dom}" was not found in the DOM.`);
+  }
   if (state.mainVnode && state.mainVnode.dom !== container) {
     removeEventListeners(state);
   }
@@ -1194,6 +1200,7 @@ function mount(dom, component) {
     state.mainComponent = v(() => component, {}, []);
   }
   state.mainVnode = hydrateDomToVnode(container);
+  state.moveCommand = "moveBefore" in container && typeof container?.moveBefore === "function" ? "moveBefore" : "insertBefore";
   return update();
 }
 export {

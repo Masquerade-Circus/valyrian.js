@@ -1,5 +1,16 @@
 # Changelog
 
+## [9.3.3](https://github.com/Masquerade-Circus/valyrian/compare/9.3.2...9.3.3) (2026-11-23)
+
+### Bug Fixes
+
+* use moveBefore and keep unkeyed reconciliation positional ([91d8036](https://github.com/Masquerade-Circus/valyrian/commit/91d8036f477ba8c7f57d4134ff4cf7e0f59b0bf6))
+
+### Performance Improvements
+
+* normalize JSX children by default in inline builds ([e72dfb4](https://github.com/Masquerade-Circus/valyrian/commit/e72dfb4615fd067060120c66a88aa5e95e7fb83d))
+* reduce renderer allocations and improve memory ([4b10434](https://github.com/Masquerade-Circus/valyrian/commit/4b1043497c45b2c588a90ec975a5be773c1c53e4))
+
 ## [9.3.2](https://github.com/Masquerade-Circus/valyrian/compare/9.3.1...9.3.2) (2026-11-20)
 
 ### Bug Fixes

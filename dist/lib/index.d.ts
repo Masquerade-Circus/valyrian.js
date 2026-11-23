@@ -39,10 +39,20 @@ declare const OLD_CHILD_COMPONENTS: unique symbol;
 declare const CHILD_COMPONENTS: unique symbol;
 declare const HAS_KEYS: unique symbol;
 declare const IS_SVG: unique symbol;
-declare const ON_CREATE: unique symbol;
-declare const ON_UPDATE: unique symbol;
-declare const ON_CLEANUP: unique symbol;
-declare const ON_REMOVE: unique symbol;
+declare const LIFECYCLE: unique symbol;
+type VnodeLifecycle = {
+    create?: Set<Function>;
+    cleanup?: Set<Function>;
+    update?: Set<Function>;
+    remove?: Set<Function>;
+};
+declare class MultipleComponentIdentities {
+    #private;
+    readonly entries: Set<ValyrianComponent>;
+    constructor(entries: Set<ValyrianComponent>);
+    static is(identities?: ComponentIdentities): identities is MultipleComponentIdentities;
+}
+type ComponentIdentities = ValyrianComponent | MultipleComponentIdentities;
 export declare class Vnode {
     tag: VnodeTag;
     props: null | Properties;
@@ -50,13 +60,10 @@ export declare class Vnode {
     key?: string | number | undefined;
     dom?: DomElement | undefined;
     [IS_SVG]?: boolean;
-    [OLD_CHILD_COMPONENTS]?: Set<ValyrianComponent>;
-    [CHILD_COMPONENTS]?: Set<ValyrianComponent>;
+    [OLD_CHILD_COMPONENTS]?: ComponentIdentities;
+    [CHILD_COMPONENTS]?: ComponentIdentities;
     [HAS_KEYS]?: boolean;
-    [ON_CREATE]?: Set<Function>;
-    [ON_CLEANUP]?: Set<Function>;
-    [ON_UPDATE]?: Set<Function>;
-    [ON_REMOVE]?: Set<Function>;
+    [LIFECYCLE]?: VnodeLifecycle;
     constructor(tag: VnodeTag, props: null | Properties, children: Children, key?: string | number | undefined, dom?: DomElement | undefined, isSVG?: boolean, oldChildComponents?: Set<ValyrianComponent>, childComponents?: Set<ValyrianComponent>, hasKeys?: boolean, oncreate?: Set<Function>, oncleanup?: Set<Function>, onupdate?: Set<Function>, onremove?: Set<Function>);
 }
 export interface VnodeWithDom extends Vnode {
